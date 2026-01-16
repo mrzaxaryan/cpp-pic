@@ -110,6 +110,7 @@ if(PLATFORM_LC STREQUAL "windows")
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
         ${CMAKE_SOURCE_DIR}/include/runtime/
+        ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
         ${CMAKE_SOURCE_DIR}/include/tests/
     )
     file(GLOB_RECURSE SOURCES
@@ -186,6 +187,7 @@ elseif(PLATFORM_LC STREQUAL "linux")
         ${CMAKE_SOURCE_DIR}/include/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/
+        ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
         ${CMAKE_SOURCE_DIR}/include/tests/
     )
     file(GLOB_RECURSE SOURCES
@@ -243,6 +245,7 @@ elseif(PLATFORM_LC STREQUAL "uefi")
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/uefi/
         ${CMAKE_SOURCE_DIR}/include/runtime/
+        ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
         ${CMAKE_SOURCE_DIR}/include/tests/
     )
     file(GLOB_RECURSE SOURCES

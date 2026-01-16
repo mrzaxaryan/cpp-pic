@@ -5,8 +5,8 @@
         "windowsIncludePath": [
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
+            "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/primitives",
             "${workspaceFolder}/include/runtime/platform/windows",
             "${workspaceFolder}/include/tests"
         ],
@@ -21,9 +21,8 @@
         "linuxIncludePath": [
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
+            "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/primitives",
-            "${workspaceFolder}/include/runtime/platform/linux",
             "${workspaceFolder}/include/tests"
         ],
         "linuxSourcePath": [
@@ -37,8 +36,8 @@
         "uefiIncludePath": [
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
+            "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/primitives",
             "${workspaceFolder}/include/runtime/platform/uefi",
             "${workspaceFolder}/include/tests"
         ],

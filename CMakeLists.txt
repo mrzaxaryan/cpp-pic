@@ -106,12 +106,12 @@ set(BASE_LINKER_FLAGS
 # Platform-specific configuration
 if(PLATFORM_LC STREQUAL "windows")
     set(INCLUDE_PATHS
+        ${CMAKE_SOURCE_DIR}/
         ${CMAKE_SOURCE_DIR}/include/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
         ${CMAKE_SOURCE_DIR}/include/runtime/
         ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
-        ${CMAKE_SOURCE_DIR}/include/tests/
     )
     file(GLOB_RECURSE SOURCES
         ${CMAKE_SOURCE_DIR}/src/*.cc
@@ -184,11 +184,11 @@ if(PLATFORM_LC STREQUAL "windows")
 
 elseif(PLATFORM_LC STREQUAL "linux")
     set(INCLUDE_PATHS
+        ${CMAKE_SOURCE_DIR}/
         ${CMAKE_SOURCE_DIR}/include/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/
         ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
-        ${CMAKE_SOURCE_DIR}/include/tests/
     )
     file(GLOB_RECURSE SOURCES
         ${CMAKE_SOURCE_DIR}/src/*.cc
@@ -241,12 +241,12 @@ elseif(PLATFORM_LC STREQUAL "linux")
 
 elseif(PLATFORM_LC STREQUAL "uefi")
     set(INCLUDE_PATHS
+        ${CMAKE_SOURCE_DIR}/
         ${CMAKE_SOURCE_DIR}/include/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/uefi/
         ${CMAKE_SOURCE_DIR}/include/runtime/
         ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
-        ${CMAKE_SOURCE_DIR}/include/tests/
     )
     file(GLOB_RECURSE SOURCES
         ${CMAKE_SOURCE_DIR}/src/*.cc

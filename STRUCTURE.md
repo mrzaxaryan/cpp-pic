@@ -7,30 +7,21 @@ This document provides an overview of the reorganized project structure.
 ```
 cpp-pic-private/
 ├── include/                         # Public API headers
-│   ├── runtime/
-│   │   ├── platform/               # Platform abstraction layer
-│   │   │   ├── primitives/        # Core types (EMBEDDED_STRING, UINT64, etc.)
-│   │   │   ├── windows/           # Windows-specific headers
-│   │   │   ├── linux/             # Linux-specific headers
-│   │   │   ├── uefi/              # UEFI-specific headers
-│   │   │   ├── allocator.h        # Memory allocation interface
-│   │   │   └── platform.h         # Platform initialization
-│   │   ├── console.h              # Console I/O abstraction
-│   │   ├── logger.h               # Logging utilities
-│   │   ├── memory.h               # Memory operations
-│   │   ├── string.h               # String utilities
-│   │   ├── string_formatter.h     # Printf-style formatting
-│   │   ├── djb2.h                 # Hash function
-│   │   └── runtime.h              # Master runtime header
-│   └── tests/                      # Test suite headers
-│       ├── tests.h                # Master test header
-│       ├── uint64_tests.h
-│       ├── int64_tests.h
-│       ├── double_tests.h
-│       ├── string_tests.h
-│       ├── string_formatter_tests.h
-│       ├── djb2_tests.h
-│       └── memory_tests.h
+│   └── runtime/
+│       ├── platform/               # Platform abstraction layer
+│       │   ├── primitives/        # Core types (EMBEDDED_STRING, UINT64, etc.)
+│       │   ├── windows/           # Windows-specific headers
+│       │   ├── linux/             # Linux-specific headers
+│       │   ├── uefi/              # UEFI-specific headers
+│       │   ├── allocator.h        # Memory allocation interface
+│       │   └── platform.h         # Platform initialization
+│       ├── console.h              # Console I/O abstraction
+│       ├── logger.h               # Logging utilities
+│       ├── memory.h               # Memory operations
+│       ├── string.h               # String utilities
+│       ├── string_formatter.h     # Printf-style formatting
+│       ├── djb2.h                 # Hash function
+│       └── runtime.h              # Master runtime header
 │
 ├── src/                            # Implementation files
 │   └── runtime/
@@ -101,9 +92,16 @@ cpp-pic-private/
 │   ├── architecture.md            # Architecture overview
 │   └── platform_guide.md          # Platform implementation guide
 │
-├── tests/                          # 🆕 Test files
-│   ├── README.md                  # Test documentation
-│   └── unit/                      # Unit tests (future)
+├── tests/                          # Test suite headers
+│   ├── tests.h                    # Master test header
+│   ├── uint64_tests.h             # Unsigned 64-bit integer tests
+│   ├── int64_tests.h              # Signed 64-bit integer tests
+│   ├── double_tests.h             # Floating-point tests
+│   ├── string_tests.h             # String utility tests
+│   ├── string_formatter_tests.h   # Printf-style formatting tests
+│   ├── djb2_tests.h               # Hash function tests
+│   ├── memory_tests.h             # Memory operations tests
+│   └── README.md                  # Test documentation
 │
 ├── .vscode/                        # VSCode integration
 │   ├── launch.json                # Debug/run configurations
@@ -184,7 +182,7 @@ cpp-pic-private/
 | Category | Count | Location |
 |----------|-------|----------|
 | **Header files** | 26 | `include/runtime/` |
-| **Test headers** | 8 | `include/tests/` |
+| **Test headers** | 8 | `tests/` |
 | **Source files** | 21 | `src/runtime/` |
 | **CMake scripts** | 3 | `cmake/` |
 | **Automation scripts** | 4 | `scripts/` |

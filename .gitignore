@@ -79,6 +79,9 @@ project.fragment.lock.json
 build/
 bin/
 
+# Windows null device artifact
+nul
+
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 

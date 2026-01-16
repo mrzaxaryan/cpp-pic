@@ -3,12 +3,12 @@
     "enableConfigurationSquiggles": true,
     "env": {
         "windowsIncludePath": [
+            "${workspaceFolder}",
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
             "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/windows",
-            "${workspaceFolder}/include/tests"
+            "${workspaceFolder}/include/runtime/platform/windows"
         ],
         "windowsSourcePath": [
             "${workspaceFolder}/src",
@@ -19,11 +19,11 @@
             "${workspaceFolder}/src/runtime/platform/windows"
         ],
         "linuxIncludePath": [
+            "${workspaceFolder}",
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
             "${workspaceFolder}/include/runtime/primitives",
-            "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/tests"
+            "${workspaceFolder}/include/runtime/platform"
         ],
         "linuxSourcePath": [
             "${workspaceFolder}/src",
@@ -34,12 +34,12 @@
             "${workspaceFolder}/src/runtime/platform/linux"
         ],
         "uefiIncludePath": [
+            "${workspaceFolder}",
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
             "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/uefi",
-            "${workspaceFolder}/include/tests"
+            "${workspaceFolder}/include/runtime/platform/uefi"
         ],
         "uefiSourcePath": [
             "${workspaceFolder}/src",

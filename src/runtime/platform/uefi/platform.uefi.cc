@@ -13,6 +13,7 @@ extern "C" __attribute__((used)) int __fltused = 0;
 // Global UEFI pointers - initialized by Initialize()
 EFI_SYSTEM_TABLE *gST = NULL;
 EFI_BOOT_SERVICES *gBS = NULL;
+EFI_RUNTIME_SERVICES *gRT = NULL;
 EFI_HANDLE gImageHandle = NULL;
 
 VOID Initialize(PENVIRONMENT_DATA envData)
@@ -21,6 +22,7 @@ VOID Initialize(PENVIRONMENT_DATA envData)
     gImageHandle = envData->ImageHandle;
     gST = envData->SystemTable;
     gBS = envData->SystemTable->BootServices;
+    gRT = envData->SystemTable->RuntimeServices;
 
     // Mark as not requiring relocation (UEFI handles loading)
     envData->BaseAddress = NULL;
@@ -29,12 +31,19 @@ VOID Initialize(PENVIRONMENT_DATA envData)
 
 NO_RETURN VOID ExitProcess(USIZE code)
 {
+    // Use ResetSystem to properly shut down (works with QEMU)
+    if (gRT && gRT->ResetSystem)
+    {
+        gRT->ResetSystem(EfiResetShutdown, (EFI_STATUS)code, 0, NULL);
+    }
+
+    // Fallback: try Exit boot service
     if (gBS && gImageHandle)
     {
         gBS->Exit(gImageHandle, (EFI_STATUS)code, 0, NULL);
     }
 
-    // If Exit returns or we don't have boot services, halt
+    // If all else fails, halt
     while (1)
     {
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_I386)

@@ -2,6 +2,7 @@
 
 #include "uefi_types.h"
 #include "efi_boot_services.h"
+#include "efi_runtime_services.h"
 #include "efi_simple_text_output.h"
 
 // EFI System Table signature

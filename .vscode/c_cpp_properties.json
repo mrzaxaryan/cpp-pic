@@ -8,7 +8,8 @@
             "${workspaceFolder}/include/runtime",
             "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/windows"
+            "${workspaceFolder}/include/runtime/platform/windows",
+            "${workspaceFolder}/tests"
         ],
         "windowsSourcePath": [
             "${workspaceFolder}/src",
@@ -23,7 +24,9 @@
             "${workspaceFolder}/include",
             "${workspaceFolder}/include/runtime",
             "${workspaceFolder}/include/runtime/primitives",
-            "${workspaceFolder}/include/runtime/platform"
+            "${workspaceFolder}/include/runtime/platform",
+            "${workspaceFolder}/include/runtime/platform/linux",
+            "${workspaceFolder}/tests"
         ],
         "linuxSourcePath": [
             "${workspaceFolder}/src",
@@ -39,7 +42,8 @@
             "${workspaceFolder}/include/runtime",
             "${workspaceFolder}/include/runtime/primitives",
             "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/uefi"
+            "${workspaceFolder}/include/runtime/platform/uefi",
+            "${workspaceFolder}/tests"
         ],
         "uefiSourcePath": [
             "${workspaceFolder}/src",

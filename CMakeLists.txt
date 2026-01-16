@@ -18,8 +18,9 @@ project(cpp-pic LANGUAGES CXX)
 
 # Configuration options
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
-set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux")
+set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux, uefi")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
+option(LAUNCH_QEMU "Enable QEMU launch targets for UEFI/Linux platforms" ON)
 
 # Normalize inputs to lowercase (except BUILD_TYPE keeps original case for output dir)
 string(TOLOWER "${ARCHITECTURE}" ARCHITECTURE_LC)
@@ -112,6 +113,7 @@ if(PLATFORM_LC STREQUAL "windows")
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
         ${CMAKE_SOURCE_DIR}/include/runtime/
         ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
+        ${CMAKE_SOURCE_DIR}/tests/
     )
     file(GLOB_RECURSE SOURCES
         ${CMAKE_SOURCE_DIR}/src/*.cc
@@ -189,6 +191,7 @@ elseif(PLATFORM_LC STREQUAL "linux")
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/
         ${CMAKE_SOURCE_DIR}/include/runtime/
         ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
+        ${CMAKE_SOURCE_DIR}/tests/
     )
     file(GLOB_RECURSE SOURCES
         ${CMAKE_SOURCE_DIR}/src/*.cc
@@ -247,6 +250,7 @@ elseif(PLATFORM_LC STREQUAL "uefi")
         ${CMAKE_SOURCE_DIR}/include/runtime/platform/uefi/
         ${CMAKE_SOURCE_DIR}/include/runtime/
         ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
+        ${CMAKE_SOURCE_DIR}/tests/
     )
     file(GLOB_RECURSE SOURCES
         ${CMAKE_SOURCE_DIR}/src/*.cc
@@ -374,5 +378,11 @@ message(STATUS "BUILD_TYPE:       ${BUILD_TYPE_LC}")
 message(STATUS "TARGET_TRIPLE:    ${TARGET_TRIPLE}")
 message(STATUS "OUTPUT_DIR:       ${OUTPUT_DIR}")
 message(STATUS "OUTPUT:           output${OUTPUT_EXT}")
+message(STATUS "LAUNCH_QEMU:      ${LAUNCH_QEMU}")
 message(STATUS "===========================")
 message(STATUS "")
+
+# Include QEMU launch support for UEFI and Linux builds
+if(LAUNCH_QEMU AND (PLATFORM_LC STREQUAL "uefi" OR PLATFORM_LC STREQUAL "linux"))
+    include(${CMAKE_SOURCE_DIR}/cmake/launch_qemu.cmake)
+endif()

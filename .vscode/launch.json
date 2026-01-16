@@ -75,7 +75,7 @@
             "program": "${workspaceFolder}/build/windows/i386/debug/output.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "preLaunchTask": "i386-pc-windows-gnu-debug",
+            "preLaunchTask": "i386-pc-windows-gnu-debug"
         },
         {
             "name": "x86_64-pc-windows-gnu-debug",
@@ -142,111 +142,24 @@
         },
         {
             "name": "i386-unknown-uefi-debug (QEMU)",
-            "type": "cppvsdbg",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/run-uefi-qemu.ps1",
-                "i386",
-                "debug"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "i386-unknown-uefi-debug"
+            "command": "cmake -B build/uefi/i386/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/i386/debug/cmake --target launch }",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "x86_64-unknown-uefi-debug (QEMU)",
-            "type": "cppvsdbg",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/run-uefi-qemu.ps1",
-                "x86_64",
-                "debug"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "x86_64-unknown-uefi-debug"
+            "command": "cmake -B build/uefi/x86_64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/x86_64/debug/cmake --target launch }",
+            "cwd": "${workspaceFolder}"
         },
         {
             "name": "aarch64-unknown-uefi-debug (QEMU)",
-            "type": "cppvsdbg",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/run-uefi-qemu.ps1",
-                "aarch64",
-                "debug"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "aarch64-unknown-uefi-debug"
-        },
-        {
-            "name": "i386-unknown-uefi-release (QEMU)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/run-uefi-qemu.ps1",
-                "i386",
-                "release"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "i386-unknown-uefi-release"
-        },
-        {
-            "name": "x86_64-unknown-uefi-release (QEMU)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/run-uefi-qemu.ps1",
-                "x86_64",
-                "release"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "x86_64-unknown-uefi-release"
-        },
-        {
-            "name": "aarch64-unknown-uefi-release (QEMU)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/run-uefi-qemu.ps1",
-                "aarch64",
-                "release"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "preLaunchTask": "aarch64-unknown-uefi-release"
+            "command": "cmake -B build/uefi/aarch64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/aarch64/debug/cmake --target launch }",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

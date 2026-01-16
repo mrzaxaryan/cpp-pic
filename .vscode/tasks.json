@@ -1,13 +1,21 @@
 {
   "version": "2.0.0",
+  "options": {
+    "cwd": "${workspaceFolder}"
+  },
+  "presentation": {
+    "echo": true,
+    "reveal": "always",
+    "focus": false,
+    "panel": "shared",
+    "showReuseMessage": false,
+    "clear": true
+  },
   "tasks": [
     {
       "label": "i386-pc-windows-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/windows/i386/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/i386/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -15,9 +23,6 @@
       "label": "i386-pc-windows-gnu-release",
       "type": "shell",
       "command": "cmake -B build/windows/i386/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/i386/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -25,9 +30,6 @@
       "label": "x86_64-pc-windows-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/windows/x86_64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/x86_64/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -35,9 +37,6 @@
       "label": "x86_64-pc-windows-gnu-release",
       "type": "shell",
       "command": "cmake -B build/windows/x86_64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/x86_64/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -45,9 +44,6 @@
       "label": "armv7a-pc-windows-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/windows/armv7a/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/armv7a/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -55,9 +51,6 @@
       "label": "armv7a-pc-windows-gnu-release",
       "type": "shell",
       "command": "cmake -B build/windows/armv7a/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/armv7a/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -65,9 +58,6 @@
       "label": "aarch64-pc-windows-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/windows/aarch64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/aarch64/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -75,9 +65,6 @@
       "label": "aarch64-pc-windows-gnu-release",
       "type": "shell",
       "command": "cmake -B build/windows/aarch64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/aarch64/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -85,9 +72,6 @@
       "label": "i386-unknown-linux-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/linux/i386/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/linux/i386/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -95,9 +79,6 @@
       "label": "i386-unknown-linux-gnu-release",
       "type": "shell",
       "command": "cmake -B build/linux/i386/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/linux/i386/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -105,9 +86,6 @@
       "label": "x86_64-unknown-linux-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/linux/x86_64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/linux/x86_64/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -115,9 +93,6 @@
       "label": "x86_64-unknown-linux-gnu-release",
       "type": "shell",
       "command": "cmake -B build/linux/x86_64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/linux/x86_64/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -125,9 +100,6 @@
       "label": "armv7a-unknown-linux-gnueabi-debug",
       "type": "shell",
       "command": "cmake -B build/linux/armv7a/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/linux/armv7a/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -135,9 +107,6 @@
       "label": "armv7a-unknown-linux-gnueabi-release",
       "type": "shell",
       "command": "cmake -B build/linux/armv7a/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/linux/armv7a/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -145,9 +114,6 @@
       "label": "aarch64-unknown-linux-gnu-debug",
       "type": "shell",
       "command": "cmake -B build/linux/aarch64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/linux/aarch64/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -155,9 +121,6 @@
       "label": "aarch64-unknown-linux-gnu-release",
       "type": "shell",
       "command": "cmake -B build/linux/aarch64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/linux/aarch64/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -165,9 +128,6 @@
       "label": "i386-unknown-uefi-debug",
       "type": "shell",
       "command": "cmake -B build/uefi/i386/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/i386/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -175,9 +135,6 @@
       "label": "i386-unknown-uefi-release",
       "type": "shell",
       "command": "cmake -B build/uefi/i386/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/uefi/i386/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -185,9 +142,6 @@
       "label": "x86_64-unknown-uefi-debug",
       "type": "shell",
       "command": "cmake -B build/uefi/x86_64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/x86_64/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -195,9 +149,6 @@
       "label": "x86_64-unknown-uefi-release",
       "type": "shell",
       "command": "cmake -B build/uefi/x86_64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/uefi/x86_64/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -205,9 +156,6 @@
       "label": "aarch64-unknown-uefi-debug",
       "type": "shell",
       "command": "cmake -B build/uefi/aarch64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/aarch64/debug/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
@@ -215,9 +163,48 @@
       "label": "aarch64-unknown-uefi-release",
       "type": "shell",
       "command": "cmake -B build/uefi/aarch64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/uefi/aarch64/release/cmake }",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "i386-unknown-uefi-debug-qemu",
+      "type": "shell",
+      "command": "cmake -B build/uefi/i386/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/i386/debug/cmake --target launch }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "i386-unknown-uefi-release-qemu",
+      "type": "shell",
+      "command": "cmake -B build/uefi/i386/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/uefi/i386/release/cmake --target launch }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "x86_64-unknown-uefi-debug-qemu",
+      "type": "shell",
+      "command": "cmake -B build/uefi/x86_64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/x86_64/debug/cmake --target launch }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "x86_64-unknown-uefi-release-qemu",
+      "type": "shell",
+      "command": "cmake -B build/uefi/x86_64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/uefi/x86_64/release/cmake --target launch }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-unknown-uefi-debug-qemu",
+      "type": "shell",
+      "command": "cmake -B build/uefi/aarch64/debug/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/uefi/aarch64/debug/cmake --target launch }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-unknown-uefi-release-qemu",
+      "type": "shell",
+      "command": "cmake -B build/uefi/aarch64/release/cmake -DCMAKE_TOOLCHAIN_FILE='cmake/toolchain-clang.cmake' -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/uefi/aarch64/release/cmake --target launch }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },

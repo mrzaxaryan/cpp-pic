@@ -2,8 +2,6 @@
 
 #include "uint64.h"
 
-#define MAXINT64 (INT64((UINT32)0x7FFFFFFF, (UINT32)0xFFFFFFFF))
-
 /**
  * INT64 - Position-independent 64-bit signed integer class
  *
@@ -18,6 +16,11 @@ private:
     INT32 high;   // Upper 32 bits (signed for proper sign extension)
 
 public:
+    // Maximum value for INT64: 0x7FFFFFFFFFFFFFFF (9,223,372,036,854,775,807)
+    static constexpr INT64 MAX() noexcept
+    {
+        return INT64((INT32)0x7FFFFFFF, (UINT32)0xFFFFFFFF);
+    }
     // Default constructor
     constexpr INT64() noexcept : low(0), high(0) {}
 

@@ -53,9 +53,6 @@
 
 #include "primitives.h"
 
-// Maximum value for UINT64: 0xFFFFFFFFFFFFFFFF (18,446,744,073,709,551,615)
-#define MAXUINT64 (UINT64((UINT32)-1, (UINT32)-1))
-
 /**
  * UINT64 - Position-independent 64-bit unsigned integer class
  *
@@ -86,6 +83,11 @@ private:
     UINT32 high;  // Upper 32 bits
 
 public:
+    // Maximum value for UINT64: 0xFFFFFFFFFFFFFFFF (18,446,744,073,709,551,615)
+    static constexpr UINT64 MAX() noexcept
+    {
+        return UINT64((UINT32)-1, (UINT32)-1);
+    }
     // Default constructor
     constexpr UINT64() noexcept : low(0), high(0) {}
 

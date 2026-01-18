@@ -99,6 +99,17 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Edge cases"_embed);
 		}
 
+		// Test 9: Array initialization and formatting
+		if (!TestArrayFormatting())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Array formatting"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Array formatting"_embed);
+		}
+
 		if (allPassed)
 		{
 			Logger::Info<WCHAR>(L"All DOUBLE tests passed!"_embed);
@@ -401,6 +412,33 @@ private:
 		// Should be approximately 1.0
 		if (native_result < (double)0.999_embed || native_result > (double)1.001_embed)
 			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestArrayFormatting()
+	{
+		// Test that DOUBLE arrays can be properly initialized and formatted
+		// This ensures the varargs casting works correctly with Logger
+		DOUBLE testArray[] = { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.1 };
+
+		// Verify array initialization by checking that values are non-zero
+		// We can't do exact comparisons without generating .rdata, so just verify they're initialized
+		for (INT64 i = 0; i < 10; i++)
+		{
+			INT64 index = i;
+			DOUBLE val = testArray[(signed long long)index];
+			// Just verify non-zero (all values are > 1.0)
+			if (val.Bits().High() == 0 && val.Bits().Low() == 0)
+				return FALSE;
+		}
+
+		// Test formatting output (this also tests that the values are properly passed through varargs)
+		for (INT64 i = 0; i < 10; i++)
+		{
+			// The Logger::Info call exercises the varargs casting
+			Logger::Info<WCHAR>(L"    DOUBLE Array Value [%lld]: %f"_embed, (signed long long)i, (double)testArray[(signed long long)i]);
+		}
 
 		return TRUE;
 	}

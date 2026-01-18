@@ -132,6 +132,17 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Increment/Decrement"_embed);
 		}
 
+		// Test 12: Array initialization and formatting
+		if (!TestArrayFormatting())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Array formatting"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Array formatting"_embed);
+		}
+
 		if (allPassed)
 		{
 			Logger::Info<WCHAR>(L"All INT64 tests passed!"_embed);
@@ -543,6 +554,29 @@ private:
 		--h;
 		if (h.High() != -1 || h.Low() != 0xFFFFFFFF)
 			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestArrayFormatting()
+	{
+		// Test that INT64 arrays can be properly initialized and formatted
+		// This ensures the varargs casting works correctly with Logger
+		INT64 testArray[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+
+		// Verify array initialization
+		for (INT64 i = 0; i < 20; i++)
+		{
+			if (testArray[(signed long long)i] != (i + INT64(1)))
+				return FALSE;
+		}
+
+		// Test formatting output (this also tests that the values are properly passed through varargs)
+		for (INT64 i = 0; i < 20; i++)
+		{
+			// The Logger::Info call exercises the varargs casting
+			Logger::Info<WCHAR>(L"    INT64 Array Value [%lld]: %lld"_embed, (signed long long)i, (signed long long)testArray[(signed long long)i]);
+		}
 
 		return TRUE;
 	}

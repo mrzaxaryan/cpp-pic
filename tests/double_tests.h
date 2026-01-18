@@ -131,7 +131,7 @@ private:
 			return FALSE;
 
 		// Construction from embedded double
-		DOUBLE b = 1.0_embed;
+		DOUBLE b = 1.0;
 		// IEEE-754: 1.0 = 0x3FF0000000000000
 		if (b.Bits().High() != 0x3FF00000 || b.Bits().Low() != 0x00000000)
 			return FALSE;
@@ -188,31 +188,31 @@ private:
 	static BOOL TestDoubleToInt()
 	{
 		// 1.0 -> 1
-		DOUBLE one = 1.0_embed;
+		DOUBLE one = 1.0;
 		INT32 int_one = (INT32)one;
 		if (int_one != 1)
 			return FALSE;
 
 		// 1.9 -> 1 (truncation)
-		DOUBLE one_nine = 1.9_embed;
+		DOUBLE one_nine = 1.9;
 		INT32 int_one_nine = (INT32)one_nine;
 		if (int_one_nine != 1)
 			return FALSE;
 
 		// 100.5 -> 100
-		DOUBLE hundred = 100.5_embed;
+		DOUBLE hundred = 100.5;
 		INT32 int_hundred = (INT32)hundred;
 		if (int_hundred != 100)
 			return FALSE;
 
 		// -1.0 -> -1
-		DOUBLE neg_one = -1.0_embed;
+		DOUBLE neg_one = -1.0;
 		INT32 int_neg_one = (INT32)neg_one;
 		if (int_neg_one != -1)
 			return FALSE;
 
 		// 0.5 -> 0
-		DOUBLE half = 0.5_embed;
+		DOUBLE half = 0.5;
 		INT32 int_half = (INT32)half;
 		if (int_half != 0)
 			return FALSE;
@@ -223,8 +223,8 @@ private:
 	static BOOL TestArithmetic()
 	{
 		// Addition
-		DOUBLE a = 2.0_embed;
-		DOUBLE b = 3.0_embed;
+		DOUBLE a = 2.0;
+		DOUBLE b = 3.0;
 		DOUBLE c = a + b;
 		double native_c = (double)c;
 		if (native_c != (double)5.0_embed)
@@ -243,14 +243,14 @@ private:
 			return FALSE;
 
 		// Division
-		DOUBLE six = 6.0_embed;
+		DOUBLE six = 6.0;
 		DOUBLE f = six / a;
 		double native_f = (double)f;
 		if (native_f != (double)3.0_embed)
 			return FALSE;
 
 		// Compound assignment +=
-		DOUBLE g = 10.0_embed;
+		DOUBLE g = 10.0;
 		g += a;
 		if ((double)g != (double)12.0_embed)
 			return FALSE;
@@ -275,9 +275,9 @@ private:
 
 	static BOOL TestComparisons()
 	{
-		DOUBLE a = 1.0_embed;
-		DOUBLE b = 2.0_embed;
-		DOUBLE c = 1.0_embed;
+		DOUBLE a = 1.0;
+		DOUBLE b = 2.0;
+		DOUBLE c = 1.0;
 
 		// Equality
 		if (!(a == c))
@@ -329,21 +329,21 @@ private:
 	static BOOL TestNegation()
 	{
 		// Negate positive
-		DOUBLE pos = 5.0_embed;
+		DOUBLE pos = 5.0;
 		DOUBLE neg = -pos;
 		double native_neg = (double)neg;
 		if (native_neg != (double)-5.0_embed)
 			return FALSE;
 
 		// Negate negative
-		DOUBLE neg2 = -3.0_embed;
+		DOUBLE neg2 = -3.0;
 		DOUBLE pos2 = -neg2;
 		double native_pos2 = (double)pos2;
 		if (native_pos2 != (double)3.0_embed)
 			return FALSE;
 
 		// Double negation
-		DOUBLE val = 7.0_embed;
+		DOUBLE val = 7.0;
 		DOUBLE dbl_neg = -(-val);
 		if ((double)dbl_neg != (double)7.0_embed)
 			return FALSE;
@@ -354,26 +354,26 @@ private:
 	static BOOL TestEmbeddedLiterals()
 	{
 		// Test _embed suffix for double literals
-		DOUBLE a = 1.5_embed;
+		DOUBLE a = 1.5;
 		if ((double)a != (double)1.5_embed)
 			return FALSE;
 
-		DOUBLE b = 3.14159_embed;
+		DOUBLE b = 3.14159;
 		double native_b = (double)b;
 		// Allow small tolerance for floating point
 		if (native_b < (double)3.14158_embed || native_b > (double)3.14160_embed)
 			return FALSE;
 
-		DOUBLE c = 0.5_embed;
+		DOUBLE c = 0.5;
 		if ((double)c != (double)0.5_embed)
 			return FALSE;
 
-		DOUBLE d = 100.0_embed;
+		DOUBLE d = 100.0;
 		if ((double)d != (double)100.0_embed)
 			return FALSE;
 
 		// Negative embedded
-		DOUBLE e = -2.5_embed;
+		DOUBLE e = -2.5;
 		if ((double)e != (double)-2.5_embed)
 			return FALSE;
 
@@ -383,12 +383,12 @@ private:
 	static BOOL TestEdgeCases()
 	{
 		// Zero
-		DOUBLE zero = 0.0_embed;
+		DOUBLE zero = 0.0;
 		if ((double)zero != (double)0.0_embed)
 			return FALSE;
 
 		// Adding zero
-		DOUBLE val = 5.0_embed;
+		DOUBLE val = 5.0;
 		DOUBLE result = val + zero;
 		if ((double)result != (double)5.0_embed)
 			return FALSE;
@@ -399,14 +399,14 @@ private:
 			return FALSE;
 
 		// Multiplying by one
-		DOUBLE one = 1.0_embed;
+		DOUBLE one = 1.0;
 		result = val * one;
 		if ((double)result != (double)5.0_embed)
 			return FALSE;
 
 		// Small values
-		DOUBLE small = 0.001_embed;
-		DOUBLE thousand = 1000.0_embed;
+		DOUBLE small = 0.001;
+		DOUBLE thousand = 1000.0;
 		result = small * thousand;
 		double native_result = (double)result;
 		// Should be approximately 1.0

@@ -86,8 +86,8 @@ jobs:
             runs-on: windows-2022
             can-run: true
           - target: aarch64-windows
-            runs-on: [self-hosted, windows, ARM64]
-            can-run: true
+            runs-on: windows-2022
+            can-run: false
     runs-on: ${{ matrix.runs-on }}
     name: test-${{ matrix.target }}
     steps:

@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "i386-pc-windows-gnu-pic",
+            "name": "i386-pc-windows-gnu (PIC)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "C:/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe",
@@ -19,7 +19,7 @@
             "preLaunchTask": "i386-pc-windows-gnu-release"
         },
         {
-            "name": "x86_64-pc-windows-gnu-pic",
+            "name": "x86_64-pc-windows-gnu (PIC)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "cmd.exe",
@@ -44,7 +44,7 @@
             "preLaunchTask": "x86_64-pc-windows-gnu-release"
         },
         {
-            "name": "aarch64-pc-windows-gnu-pic",
+            "name": "aarch64-pc-windows-gnu (PIC)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "cmd.exe",

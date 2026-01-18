@@ -1,18 +1,16 @@
 # CPP-PIC Project Structure
 
-This document provides an overview of the reorganized project structure.
+This document provides an overview of the project organization.
 
 ## Directory Layout
 
 ```
-cpp-pic-private/
+cpp-pic/
 ├── include/                         # Public API headers
 │   └── runtime/
 │       ├── platform/               # Platform abstraction layer
 │       │   ├── primitives/        # Core types (EMBEDDED_STRING, UINT64, etc.)
 │       │   ├── windows/           # Windows-specific headers
-│       │   ├── linux/             # Linux-specific headers
-│       │   ├── uefi/              # UEFI-specific headers
 │       │   ├── allocator.h        # Memory allocation interface
 │       │   └── platform.h         # Platform initialization
 │       ├── console.h              # Console I/O abstraction
@@ -33,47 +31,24 @@ cpp-pic-private/
 │       │   │   ├── ntdll.cc
 │       │   │   ├── peb.cc
 │       │   │   └── pe.cc
-│       │   ├── linux/             # Linux platform code
-│       │   │   ├── platform.linux.cc
-│       │   │   ├── platform.linux.i386.cc
-│       │   │   ├── platform.linux.x86_64.cc
-│       │   │   ├── platform.linux.armv7a.cc
-│       │   │   ├── platform.linux.aarch64.cc
-│       │   │   ├── allocator.linux.cc
-│       │   │   └── syscall.cc
-│       │   ├── uefi/              # UEFI platform code
-│       │   │   ├── platform.uefi.cc
-│       │   │   └── allocator.uefi.cc
 │       │   ├── allocator.cc       # Generic allocator
 │       │   └── platform.cc        # Generic platform
 │       ├── console/               # Console implementations
 │       │   ├── console.cc         # Generic console
-│       │   ├── windows/
-│       │   │   └── console.windows.cc
-│       │   ├── linux/
-│       │   │   └── console.linux.cc
-│       │   └── uefi/
-│       │       └── console.uefi.cc
+│       │   └── windows/
+│       │       └── console.windows.cc
 │       └── start.cc               # Entry point
 │
 ├── build/                          # Build artifacts (generated)
-│   ├── windows/
-│   │   └── <arch>/
-│   │       ├── debug/
-│   │       │   ├── cmake/         # CMake build files
-│   │       │   ├── output.exe     # Executable
-│   │       │   ├── output.bin     # PIC blob
-│   │       │   ├── output.b64.txt # Base64 PIC blob
-│   │       │   ├── output.txt     # Disassembly
-│   │       │   └── output.map.txt # Linker map
-│   │       └── release/
-│   ├── linux/
-│   │   └── <arch>/
-│   │       ├── debug/
-│   │       └── release/
-│   └── uefi/
+│   └── windows/
 │       └── <arch>/
 │           ├── debug/
+│           │   ├── cmake/         # CMake build files
+│           │   ├── output.exe     # Executable
+│           │   ├── output.bin     # PIC blob
+│           │   ├── output.b64.txt # Base64 PIC blob
+│           │   ├── output.txt     # Disassembly
+│           │   └── output.map.txt # Linker map
 │           └── release/
 │
 ├── cmake/                          # Build system modules
@@ -81,14 +56,11 @@ cpp-pic-private/
 │   ├── base64_encode.cmake        # Base64 encoding script
 │   └── verify_no_rdata.cmake      # .rdata validation script
 │
-├── scripts/                        # 🆕 Automation scripts
+├── scripts/                        # Automation scripts
 │   ├── README.md                  # Scripts documentation
-│   ├── install.sh                 # Linux/macOS dependency installer
-│   ├── run-uefi-qemu.sh           # UEFI testing (Linux/macOS)
-│   ├── run-uefi-qemu.ps1          # UEFI testing (Windows)
 │   └── loader.ps1                 # PIC blob loader (Windows)
 │
-├── docs/                           # 🆕 Documentation
+├── docs/                           # Documentation
 │   ├── architecture.md            # Architecture overview
 │   └── platform_guide.md          # Platform implementation guide
 │
@@ -105,12 +77,15 @@ cpp-pic-private/
 │
 ├── .vscode/                        # VSCode integration
 │   ├── launch.json                # Debug/run configurations
-│   ├── tasks.json                 # Build tasks (20+ configs)
+│   ├── tasks.json                 # Build tasks
 │   ├── c_cpp_properties.json      # IntelliSense config
 │   └── settings.json              # Workspace settings
 │
+├── .github/                        # GitHub Actions CI/CD
+│   └── workflows/
+│       └── build.yml              # Build and test workflow
+│
 ├── CMakeLists.txt                  # Root build configuration
-├── linker.script                   # Linux linker script
 ├── orderfile.txt                   # Windows function ordering
 ├── LICENSE                         # Proprietary license
 ├── README.md                       # Main documentation
@@ -118,75 +93,104 @@ cpp-pic-private/
 
 ```
 
-## What Changed (Step 2 Reorganization)
+## Key Components
 
-### 🆕 New Directories
+### Headers (`include/runtime/`)
 
-1. **scripts/** - Centralized automation scripts
-   - Moved: `install.sh`, `run-uefi-qemu.sh`, `run-uefi-qemu.ps1`, `loader.ps1`
-   - Added: `scripts/README.md` for documentation
+**Platform Abstraction:**
+- `platform/platform.h` - Platform initialization
+- `platform/allocator.h` - Memory allocation interface
+- `platform/windows/` - Windows-specific types and APIs
 
-2. **docs/** - Architecture and platform documentation
-   - Added: `architecture.md` - Comprehensive architecture guide
-   - Added: `platform_guide.md` - Platform-specific implementation details
+**Primitives (`platform/primitives/`):**
+- `embedded_string.h` - Compile-time string embedding
+- `embedded_double.h` - IEEE-754 double embedding
+- `uint64.h` / `int64.h` - Software 64-bit integers
+- `double.h` - IEEE-754 operations
 
-3. **tests/** - Test organization
-   - Added: `tests/README.md` - Test documentation
-   - Added: `tests/unit/` - Placeholder for future unit test sources
+**Utilities:**
+- `console.h` - Console I/O abstraction
+- `logger.h` - Logging framework
+- `memory.h` - Memory operations (Copy, Zero, Compare)
+- `string.h` - String manipulation
+- `string_formatter.h` - Printf-style formatting
+- `djb2.h` - DJB2 hash function
 
-### 📝 Updated Files
+### Source Files (`src/runtime/`)
 
-1. **README.md**
-   - Updated all script paths to use `scripts/` directory
-   - Added "Documentation" section with links to new docs
-   - Updated project structure diagram
+**Entry Point:**
+- `start.cc` - Main entry point (`_start`)
 
-2. **.vscode/launch.json**
-   - Updated all `loader.ps1` references to `scripts/loader.ps1`
-   - Updated all `run-uefi-qemu.ps1` references to `scripts/run-uefi-qemu.ps1`
+**Windows Platform (`platform/windows/`):**
+- `platform.windows.cc` - Platform initialization
+- `allocator.windows.cc` - Memory allocation (NtAllocateVirtualMemory)
+- `peb.cc` - Process Environment Block walking
+- `pe.cc` - PE file parsing
+- `ntdll.cc` - ntdll.dll API resolution
+- `kernel32.cc` - kernel32.dll API resolution
 
-3. **New Documentation**
-   - Created comprehensive architecture documentation
-   - Created platform implementation guide
-   - Created scripts usage guide
-   - Created tests documentation
+**Console (`console/windows/`):**
+- `console.windows.cc` - Windows console implementation (WriteConsoleW)
 
-## Benefits of New Structure
+### Build System (`cmake/`)
 
-### 📂 Better Organization
+- `toolchain-clang.cmake` - Clang/LLVM cross-compilation toolchain
+- `base64_encode.cmake` - Base64 encoding for PIC blobs
+- `verify_no_rdata.cmake` - Post-build .rdata section validation
 
-- **Cleaner Root** - Automation scripts moved to dedicated directory
-- **Discoverable Docs** - Architecture and platform guides easy to find
-- **Logical Grouping** - Related files organized together
+### Scripts (`scripts/`)
 
-### 📚 Improved Documentation
+- `loader.ps1` - Load and execute PIC blobs in memory (Windows)
 
-- **Architecture Guide** - Deep dive into system design and components
-- **Platform Guide** - Detailed platform-specific implementation details
-- **Scripts Guide** - Clear usage examples and troubleshooting
+### Tests (`tests/`)
 
-### 🔧 Easier Maintenance
+All tests are header-based and run from `src/start.cc`:
 
-- **Centralized Scripts** - All automation in one place
-- **Versioned Docs** - Documentation alongside code
-- **Test Structure** - Ready for test expansion
+- `uint64_tests.h` - UINT64 arithmetic tests
+- `int64_tests.h` - INT64 arithmetic tests
+- `double_tests.h` - Floating-point tests
+- `string_tests.h` - String operations
+- `string_formatter_tests.h` - Printf formatting
+- `djb2_tests.h` - Hash function tests
+- `memory_tests.h` - Memory operations
 
-### 👥 Better Developer Experience
+### VSCode Integration (`.vscode/`)
 
-- **Quick Onboarding** - New developers can find documentation easily
-- **Clear Patterns** - Consistent organization across project
-- **Future-Proof** - Structure supports growth
+- `tasks.json` - Build tasks for all Windows architectures
+- `launch.json` - Debug configurations
+- `c_cpp_properties.json` - IntelliSense settings
+- `settings.json` - Workspace configuration
+
+## Build Output Structure
+
+```
+build/
+└── windows/
+    ├── i386/
+    │   ├── debug/
+    │   │   ├── output.exe           # Main executable
+    │   │   ├── output.bin           # Extracted .text section
+    │   │   ├── output.txt           # Disassembly
+    │   │   ├── output.strings.txt   # Extracted strings
+    │   │   ├── output.b64.txt       # Base64-encoded blob
+    │   │   ├── output.map.txt       # Linker map
+    │   │   └── cmake/               # CMake build files
+    │   └── release/
+    ├── x86_64/
+    ├── armv7a/
+    └── aarch64/
+```
 
 ## File Counts
 
 | Category | Count | Location |
 |----------|-------|----------|
-| **Header files** | 26 | `include/runtime/` |
+| **Header files** | 20 | `include/runtime/` |
 | **Test headers** | 8 | `tests/` |
-| **Source files** | 21 | `src/runtime/` |
+| **Source files** | 10 | `src/runtime/` (Windows only) |
 | **CMake scripts** | 3 | `cmake/` |
-| **Automation scripts** | 4 | `scripts/` |
-| **Documentation** | 5 | `docs/`, `scripts/`, `tests/` |
+| **Automation scripts** | 1 | `scripts/` |
+| **Documentation** | 4 | `docs/`, `scripts/`, `tests/` |
 | **VSCode configs** | 4 | `.vscode/` |
 
 ## Quick Navigation
@@ -195,7 +199,7 @@ cpp-pic-private/
 
 - Start here: [README.md](README.md)
 - Understand architecture: [docs/architecture.md](docs/architecture.md)
-- Platform details: [docs/platform_guide.md](docs/platform_guide.md)
+- Windows implementation: [docs/platform_guide.md](docs/platform_guide.md)
 - Run scripts: [scripts/README.md](scripts/README.md)
 
 ### For Contributors
@@ -203,33 +207,35 @@ cpp-pic-private/
 - Project structure: This file
 - Build system: [CMakeLists.txt](CMakeLists.txt)
 - Test suite: [tests/README.md](tests/README.md)
-- VSCode setup: [.vscode/README.md](.vscode/README.md)
 
-## Future Enhancements
-
-Potential future directory additions:
+## Development Workflow
 
 ```
-cpp-pic-private/
-├── examples/              # Usage examples
-│   ├── basic/
-│   ├── advanced/
-│   └── README.md
-├── benchmarks/            # Performance benchmarks
-│   └── README.md
-├── libs/                  # Modular libraries (if needed)
-│   ├── core/
-│   ├── platform/
-│   └── primitives/
-└── tools/                 # Development tools
-    ├── analyzers/
-    └── README.md
+┌─────────────────────────────────────────────────────────────────┐
+│                      CPP-PIC Development                        │
+└─────────────────────────────────────────────────────────────────┘
+
+VSCode Integration:
+┌──────────────┐  Press F5   ┌──────────────┐  Auto-run  ┌─────────────┐
+│   Edit Code  │ ────────────▶│  Build Task  │ ──────────▶│  Run/Debug  │
+│   (C++23)    │              │  (CMake +    │            │  (Native)   │
+│              │              │   Ninja)     │            │             │
+└──────────────┘              └──────────────┘            └─────────────┘
+                                     │
+                                     ▼
+                              ┌─────────────┐
+                              │  Windows:   │
+                              │  • i386     │
+                              │  • x86_64   │
+                              │  • armv7a   │
+                              │  • aarch64  │
+                              └─────────────┘
 ```
 
 ## References
 
 - [Main README](README.md) - Getting started and build instructions
 - [Architecture Documentation](docs/architecture.md) - System design and components
-- [Platform Guide](docs/platform_guide.md) - Platform-specific implementations
+- [Platform Guide](docs/platform_guide.md) - Windows implementation details
 - [Scripts Guide](scripts/README.md) - Automation script reference
 - [Tests Guide](tests/README.md) - Testing documentation

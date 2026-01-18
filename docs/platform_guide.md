@@ -1,19 +1,21 @@
-# Platform Implementation Guide
+# Windows Platform Implementation Guide
 
-This guide provides detailed information about platform-specific implementations in CPP-PIC.
+This guide provides detailed information about the Windows-specific implementation in CPP-PIC.
 
 ## Table of Contents
 
-1. [Windows Implementation](#windows-implementation)
-2. [Linux Implementation](#linux-implementation)
-3. [UEFI Implementation](#uefi-implementation)
-4. [Adding New Platforms](#adding-new-platforms)
+1. [Architecture Support](#architecture-support)
+2. [Initialization Sequence](#initialization-sequence)
+3. [Key Components](#key-components)
+4. [Memory Management](#memory-management)
+5. [Console Output](#console-output)
+6. [Direct Syscalls](#direct-syscalls)
+7. [Linker Configuration](#linker-configuration)
+8. [Best Practices](#best-practices)
 
 ---
 
-## Windows Implementation
-
-### Architecture Support
+## Architecture Support
 
 | Architecture | Target Triple | Status |
 |-------------|---------------|--------|
@@ -22,17 +24,27 @@ This guide provides detailed information about platform-specific implementations
 | armv7a | `armv7a-pc-windows-gnu` | ✅ Supported |
 | aarch64 | `aarch64-pc-windows-gnu` | ✅ Supported |
 
-### Initialization Sequence
+All architectures support both debug and release builds.
+
+---
+
+## Initialization Sequence
+
+The Windows platform initialization follows these steps:
 
 1. **Entry Point** - `_start()` in [src/start.cc](../src/start.cc)
 2. **Platform Init** - `Initialize()` in [src/runtime/platform/windows/platform.windows.cc](../src/runtime/platform/windows/platform.windows.cc)
 3. **PEB Location** - `GetPEB()` in [src/runtime/platform/windows/peb.cc](../src/runtime/platform/windows/peb.cc)
 4. **Module Enumeration** - Walk `PEB->Ldr->InMemoryOrderModuleList`
-5. **API Resolution** - Parse PE exports, hash-based lookup
+5. **API Resolution** - Parse PE exports, hash-based lookup using DJB2
 
-### Key Components
+---
 
-#### PEB Walking ([peb.cc](../src/runtime/platform/windows/peb.cc))
+## Key Components
+
+### PEB Walking ([peb.cc](../src/runtime/platform/windows/peb.cc))
+
+The Process Environment Block (PEB) is the starting point for all Windows runtime initialization:
 
 ```cpp
 // Locate Process Environment Block
@@ -43,453 +55,412 @@ PEB_LDR_DATA* ldr = peb->Ldr;
 LIST_ENTRY* moduleList = &ldr->InMemoryOrderModuleList;
 ```
 
-**PEB Structure**:
-- **ImageBaseAddress** - Base of current executable
-- **Ldr** - Loader data (loaded modules)
-- **ProcessParameters** - Command line, environment
+**PEB Structure:**
+- **ImageBaseAddress** - Base address of current executable
+- **Ldr** - Loader data containing loaded modules list
+- **ProcessParameters** - Command line arguments and environment variables
 
-#### PE Parsing ([pe.cc](../src/runtime/platform/windows/pe.cc))
+**Accessing PEB:**
+- **x64**: Read from `GS:[0x60]`
+- **x86**: Read from `FS:[0x30]`
+- **ARM64**: Platform-specific TEB access
+
+### PE Parsing ([pe.cc](../src/runtime/platform/windows/pe.cc))
+
+Export tables are parsed to resolve API functions dynamically:
 
 ```cpp
-// Find export by hash
+// Find export by DJB2 hash
 FARPROC GetExportByHash(HMODULE module, UINT32 hash);
+
+// Example usage
+auto ntAllocate = GetExportByHash(ntdllBase, 0x12345678);
 ```
 
-**Process**:
-1. Read DOS header → PE header
-2. Locate Export Directory
-3. Iterate exports, hash names (DJB2)
-4. Return RVA when hash matches
+**Process:**
+1. Read DOS header (`IMAGE_DOS_HEADER`) → locate PE header
+2. Read PE header (`IMAGE_NT_HEADERS`) → locate Export Directory
+3. Iterate through export names, compute DJB2 hash
+4. Return function RVA when hash matches
+5. Convert RVA to absolute address
 
-#### API Resolution
+**Benefits:**
+- No import table required
+- Hash-based lookups prevent static string analysis
+- Fully position-independent
+- No GetProcAddress dependency
 
-**ntdll.dll** ([ntdll.cc](../src/runtime/platform/windows/ntdll.cc)):
-- `NtAllocateVirtualMemory` - Allocate memory
-- `NtFreeVirtualMemory` - Free memory
-- `NtTerminateProcess` - Exit process
+### API Resolution
 
-**kernel32.dll** ([kernel32.cc](../src/runtime/platform/windows/kernel32.cc)):
-- `GetStdHandle` - Get console handles
-- `WriteConsoleW` - Write wide strings to console
+Two primary DLLs are resolved for core functionality:
 
-### Memory Allocation
+#### ntdll.dll ([ntdll.cc](../src/runtime/platform/windows/ntdll.cc))
+
+System-level APIs for direct kernel interaction:
+
+| Function | Hash | Purpose |
+|----------|------|---------|
+| `NtAllocateVirtualMemory` | Computed at runtime | Allocate memory pages |
+| `NtFreeVirtualMemory` | Computed at runtime | Free memory pages |
+| `NtTerminateProcess` | Computed at runtime | Exit process |
+
+#### kernel32.dll ([kernel32.cc](../src/runtime/platform/windows/kernel32.cc))
+
+Higher-level Windows APIs:
+
+| Function | Hash | Purpose |
+|----------|------|---------|
+| `GetStdHandle` | Computed at runtime | Get console handles (stdin/stdout/stderr) |
+| `WriteConsoleW` | Computed at runtime | Write wide strings to console |
+
+---
+
+## Memory Management
+
+CPP-PIC uses direct syscalls for memory allocation, bypassing the standard Windows heap:
+
+### Allocation
 
 ```cpp
-// Direct syscall to ntdll
-NtAllocateVirtualMemory(
-    GetCurrentProcess(),
-    &baseAddress,
-    0,
-    &size,
-    MEM_COMMIT | MEM_RESERVE,
-    PAGE_READWRITE
+// Direct syscall to ntdll.NtAllocateVirtualMemory
+PVOID baseAddress = NULL;
+SIZE_T size = 4096;  // Page size
+
+NTSTATUS status = NtAllocateVirtualMemory(
+    GetCurrentProcess(),        // Process handle (-1)
+    &baseAddress,               // Base address (NULL = let kernel choose)
+    0,                          // Zero bits
+    &size,                      // Size (in/out parameter)
+    MEM_COMMIT | MEM_RESERVE,   // Allocation type
+    PAGE_READWRITE              // Protection
 );
 ```
 
-### Console Output
+**Parameters:**
+- `MEM_COMMIT` - Commit physical storage
+- `MEM_RESERVE` - Reserve address space
+- `PAGE_READWRITE` - Read/write access (no execute)
+
+### Deallocation
+
+```cpp
+// Direct syscall to ntdll.NtFreeVirtualMemory
+SIZE_T size = 0;  // 0 = free entire region
+
+NTSTATUS status = NtFreeVirtualMemory(
+    GetCurrentProcess(),
+    &baseAddress,
+    &size,
+    MEM_RELEASE
+);
+```
+
+### Why Direct Syscalls?
+
+- **No CRT dependency**: Bypasses C runtime heap (malloc/free)
+- **Position-independent**: No import table entries
+- **Minimal overhead**: Direct kernel interaction
+- **Fine-grained control**: Specify protection, allocation type
+
+---
+
+## Console Output
+
+CPP-PIC implements console output using `WriteConsoleW` for wide character support:
+
+### Basic Output
 
 ```cpp
 // Get stdout handle
 HANDLE stdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
 // Write wide string
-WriteConsoleW(stdOut, buffer, length, &written, NULL);
+WCHAR buffer[] = L"Hello, World!\n";
+DWORD written;
+WriteConsoleW(stdOut, buffer, wcslen(buffer), &written, NULL);
 ```
 
-### Linker Configuration
+### Formatted Output
+
+Printf-style formatting without CRT:
+
+```cpp
+Console::WriteFormatted<WCHAR>(L"Integer: %d\n"_embed, 42);
+Console::WriteFormatted<WCHAR>(L"Float: %.5f\n"_embed, 3.14159_embed);
+Console::WriteFormatted<WCHAR>(L"Hex: 0x%X\n"_embed, 255);
+Console::WriteFormatted<WCHAR>(L"String: %ls\n"_embed, L"Hello");
+```
+
+### Supported Format Specifiers
+
+| Specifier | Type | Example |
+|-----------|------|---------|
+| `%d` | Signed integer | `-42` |
+| `%u` | Unsigned integer | `42` |
+| `%ld` | Long integer | `1234567890` |
+| `%X` | Uppercase hex | `DEADBEEF` |
+| `%x` | Lowercase hex | `deadbeef` |
+| `%f` | Float (default precision) | `3.141590` |
+| `%.Nf` | Float (N decimals) | `3.14159` |
+| `%c` | Character | `A` |
+| `%s` | Narrow string | `Hello` |
+| `%ls` | Wide string | `L"Hello"` |
+| `%p` | Pointer | `0x00007FF6A1B2C3D4` |
+
+---
+
+## Direct Syscalls
+
+### Why Not Standard APIs?
+
+Traditional Windows programs use:
+- `VirtualAlloc` → requires `kernel32.dll` import
+- `printf` → requires CRT initialization
+- `GetProcAddress` → still requires imports
+
+CPP-PIC avoids all of this by:
+1. Walking the PEB to locate `ntdll.dll` base address
+2. Parsing PE exports to find function addresses
+3. Calling functions directly via function pointers
+
+### Syscall Flow
+
+```
+Application
+    ↓
+Direct Function Pointer Call
+    ↓
+ntdll.dll Export
+    ↓
+syscall instruction (x64) / int 2Eh (x86)
+    ↓
+Windows Kernel (ntoskrnl.exe)
+```
+
+**Traditional Flow (avoided):**
+```
+Application
+    ↓
+Import Table Lookup
+    ↓
+kernel32.dll/ntdll.dll Thunk
+    ↓
+syscall
+    ↓
+Kernel
+```
+
+---
+
+## Linker Configuration
+
+Critical linker flags for Windows position-independence:
+
+### Base Linker Flags
 
 ```cmake
-# Merge data into code
-/MERGE:.rdata=.text
-
-# Custom entry point
-/Entry:_start
-
-# Function ordering (i386 only)
-/ORDER:@orderfile.txt
-
-# i386-specific
-/BASE:0x400000
-/FILEALIGN:0x1000
+-fuse-ld=lld                    # Use LLVM LLD linker
+-nostdlib                       # No standard libraries
+-Wl,/Entry:_start              # Custom entry point (no CRT)
+-Wl,/SUBSYSTEM:CONSOLE         # Console application
+-Wl,/MERGE:.rdata=.text        # CRITICAL: Merge .rdata into .text
+-Wl,/ORDER:@orderfile.txt      # Function ordering (i386 only)
 ```
 
----
-
-## Linux Implementation
-
-### Architecture Support
-
-| Architecture | Target Triple | Syscall ABI | Status |
-|-------------|---------------|-------------|--------|
-| i386 | `i386-unknown-linux-gnu` | int 0x80 | ✅ Supported |
-| x86_64 | `x86_64-unknown-linux-gnu` | syscall | ✅ Supported |
-| armv7a | `armv7a-unknown-linux-gnueabi` | SVC 0 | ✅ Supported |
-| aarch64 | `aarch64-unknown-linux-gnu` | SVC 0 | ✅ Supported |
-
-### Initialization Sequence
-
-1. **Entry Point** - `_start()` in [src/start.cc](../src/start.cc)
-2. **Platform Init** - `Initialize()` in arch-specific files
-3. **No Dynamic Linking** - Direct syscalls only
-
-### Syscall Interface
-
-Each architecture has unique syscall numbers and calling conventions:
-
-#### x86_64 ([platform.linux.x86_64.cc](../src/runtime/platform/linux/platform.linux.x86_64.cc))
-
-```cpp
-// Syscall numbers
-#define SYS_write 1
-#define SYS_mmap 9
-#define SYS_munmap 11
-#define SYS_exit 60
-
-// Calling convention: rax, rdi, rsi, rdx, r10, r8, r9
-```
-
-#### i386 ([platform.linux.i386.cc](../src/runtime/platform/linux/platform.linux.i386.cc))
-
-```cpp
-// Syscall numbers
-#define SYS_exit 1
-#define SYS_write 4
-#define SYS_mmap2 192
-#define SYS_munmap 91
-
-// Calling convention: eax, ebx, ecx, edx, esi, edi, ebp
-// Uses int 0x80
-```
-
-#### aarch64 ([platform.linux.aarch64.cc](../src/runtime/platform/linux/platform.linux.aarch64.cc))
-
-```cpp
-// Syscall numbers
-#define SYS_write 64
-#define SYS_mmap 222
-#define SYS_munmap 215
-#define SYS_exit 93
-
-// Calling convention: x8 (syscall #), x0-x5 (args)
-// Uses SVC 0
-```
-
-#### armv7a ([platform.linux.armv7a.cc](../src/runtime/platform/linux/platform.linux.armv7a.cc))
-
-```cpp
-// Syscall numbers
-#define SYS_exit 1
-#define SYS_write 4
-#define SYS_mmap2 192
-#define SYS_munmap 91
-
-// Calling convention: r7 (syscall #), r0-r6 (args)
-// Uses SVC 0
-```
-
-### Memory Allocation
-
-```cpp
-// mmap syscall
-void* addr = mmap(
-    NULL,           // Let kernel choose address
-    size,           // Size
-    PROT_READ | PROT_WRITE,  // Protection
-    MAP_PRIVATE | MAP_ANONYMOUS,  // Flags
-    -1,             // fd (ignored for anonymous)
-    0               // offset
-);
-```
-
-### Console Output
-
-```cpp
-// write syscall to stdout (fd=1)
-write(1, buffer, length);
-```
-
-### Linker Script
-
-Custom linker script ([linker.script](../linker.script)) merges sections:
-
-```ld
-SECTIONS
-{
-    .text : {
-        *(.text .text.*)
-        *(.rodata .rodata.*)  /* Merge read-only data */
-        *(.bss .bss.*)        /* Merge uninitialized data */
-    }
-}
-```
-
----
-
-## UEFI Implementation
-
-### Architecture Support
-
-| Architecture | Target Triple | Status |
-|-------------|---------------|--------|
-| i386 | `i386-unknown-windows` | ⚠️ Fallback |
-| x86_64 | `x86_64-unknown-uefi` | ✅ Official |
-| aarch64 | `aarch64-unknown-windows` | ⚠️ Fallback |
-
-### Initialization Sequence
-
-1. **Entry Point** - `EfiMain(EFI_HANDLE, EFI_SYSTEM_TABLE*)` in [src/start.cc](../src/start.cc)
-2. **Platform Init** - `Initialize(&envData)` in [src/runtime/platform/uefi/platform.uefi.cc](../src/runtime/platform/uefi/platform.uefi.cc)
-3. **Boot Services** - Access via System Table
-
-### UEFI System Table
-
-```cpp
-typedef struct {
-    EFI_TABLE_HEADER Hdr;
-    CHAR16* FirmwareVendor;
-    UINT32 FirmwareRevision;
-    EFI_HANDLE ConsoleInHandle;
-    EFI_SIMPLE_INPUT_INTERFACE* ConIn;
-    EFI_HANDLE ConsoleOutHandle;
-    EFI_SIMPLE_TEXT_OUTPUT_INTERFACE* ConOut;  // Console output
-    EFI_HANDLE StandardErrorHandle;
-    EFI_SIMPLE_TEXT_OUTPUT_INTERFACE* StdErr;
-    EFI_RUNTIME_SERVICES* RuntimeServices;
-    EFI_BOOT_SERVICES* BootServices;           // Memory, events, protocols
-    // ...
-} EFI_SYSTEM_TABLE;
-```
-
-### Memory Allocation
-
-```cpp
-// AllocatePool via Boot Services
-EFI_STATUS status = gBS->AllocatePool(
-    EfiLoaderData,  // Memory type
-    size,           // Size
-    &buffer         // Output pointer
-);
-```
-
-### Console Output
-
-```cpp
-// Simple Text Output Protocol
-gST->ConOut->OutputString(
-    gST->ConOut,
-    L"Hello, UEFI!\r\n"
-);
-```
-
-### Testing with QEMU
-
-```powershell
-# Build and run UEFI
-.\scripts\run-uefi-qemu.ps1 -Architecture x86_64
-
-# Script creates FAT32 disk image with EFI\BOOT\BOOTX64.EFI
-# Launches QEMU with OVMF firmware
-```
-
-### Linker Configuration
+### i386-Specific Flags
 
 ```cmake
-# UEFI subsystem
-/SUBSYSTEM:EFI_APPLICATION
-
-# Entry point
-/Entry:EfiMain
-
-# No CRT
-/NODEFAULTLIB
+-Wl,/BASE:0x400000             # Preferred load address
+-Wl,/FILEALIGN:0x1000          # File section alignment (4KB)
+-Wl,/SAFESEH:NO                # Disable SafeSEH
 ```
 
----
-
-## Adding New Platforms
-
-### 1. Define Platform Constants
-
-In [include/runtime/platform/primitives/primitives.h](../include/runtime/platform/primitives/primitives.h):
-
-```cpp
-#define PLATFORM_MYOS 1
-
-#if defined(__myos__)
-    #define CURRENT_PLATFORM PLATFORM_MYOS
-#endif
-```
-
-### 2. Create Platform Headers
-
-Create `include/runtime/platform/myos/`:
-- `myos_types.h` - Platform-specific types
-- `myos_syscalls.h` - System call interface
-
-### 3. Implement Platform Functions
-
-Create `src/runtime/platform/myos/`:
-
-**platform.myos.cc**:
-```cpp
-#include "platform.h"
-
-#if defined(PLATFORM_MYOS)
-
-VOID Initialize(ENVIRONMENT_DATA* envData) {
-    // Platform-specific initialization
-}
-
-VOID ExitProcess(INT32 exitCode) {
-    // Exit implementation
-}
-
-#endif
-```
-
-**allocator.myos.cc**:
-```cpp
-#include "allocator.h"
-
-#if defined(PLATFORM_MYOS)
-
-VOID* Allocator::Allocate(SIZE_T size) {
-    // Memory allocation
-}
-
-VOID Allocator::Free(VOID* ptr) {
-    // Memory deallocation
-}
-
-#endif
-```
-
-### 4. Implement Console
-
-Create `src/runtime/console/myos/console.myos.cc`:
-
-```cpp
-#if defined(PLATFORM_MYOS)
-
-template<typename T>
-VOID Console::Write(const T* str, SIZE_T length) {
-    // Console output implementation
-}
-
-#endif
-```
-
-### 5. Update CMakeLists.txt
+### Debug Build Flags
 
 ```cmake
-# Add platform option
-if(PLATFORM STREQUAL "myos")
-    set(PLATFORM_MYOS 1)
-    add_compile_definitions(PLATFORM_MYOS=1)
-
-    # Add source files
-    target_sources(output PRIVATE
-        src/runtime/platform/myos/platform.myos.cc
-        src/runtime/platform/myos/allocator.myos.cc
-        src/runtime/console/myos/console.myos.cc
-    )
-
-    # Platform-specific flags
-    target_compile_options(output PRIVATE
-        -target ${CMAKE_TARGET_TRIPLE}
-    )
-endif()
+-Wl,/DEBUG                     # Include debug info
+-Wl,/MAP:output.map.txt        # Generate linker map
 ```
 
-### 6. Test
+### Release Build Flags
 
-```bash
-# Build for new platform
-cmake -B build/myos/x86_64/debug \
-      -DARCHITECTURE=x86_64 \
-      -DPLATFORM=myos \
-      -DBUILD_TYPE=debug
-
-cmake --build build/myos/x86_64/debug
+```cmake
+-Wl,--strip-all                # Remove all symbols
+-Wl,/OPT:REF                   # Remove unreferenced code/data
+-Wl,/OPT:ICF                   # Fold identical code
+-Wl,/RELEASE                   # Set release flag in PE header
+-Wl,/LTCG                      # Link-time code generation
+-Wl,/MAP:output.map.txt        # Generate linker map
 ```
 
----
+### Why /MERGE:.rdata=.text is Critical
 
-## Platform Comparison Matrix
+The `/MERGE:.rdata=.text` flag is **essential** for true position-independence:
 
-| Feature | Windows | Linux | UEFI |
-|---------|---------|-------|------|
-| **Memory Alloc** | NtAllocateVirtualMemory | mmap | AllocatePool |
-| **Memory Free** | NtFreeVirtualMemory | munmap | FreePool |
-| **Console** | WriteConsoleW | write(1) | ConOut->OutputString |
-| **Exit** | NtTerminateProcess | exit | Return from EfiMain |
-| **API Resolution** | PEB/PE parsing | Direct syscall | Boot Services |
-| **Entry Point** | `_start()` | `_start()` | `EfiMain()` |
-| **Linker** | MSVC LLD | GNU LD script | MSVC LLD |
-| **Dependencies** | None (PEB) | None (syscall) | System Table |
+- LTO (Link-Time Optimization) may generate `.rdata` constants
+- Without merging, these constants break PIC
+- Merging ensures all read-only data becomes part of executable code section
+- Result: Single `.text` section with no external data dependencies
 
 ---
 
 ## Best Practices
 
-### Platform Abstraction
+### 1. Hash Function Selection
 
-1. **Define Generic Interfaces** - Keep platform logic isolated
-2. **Use Conditional Compilation** - `#if defined(PLATFORM_XXX)`
-3. **Delegate Implementation** - Generic files call platform-specific functions
-4. **Avoid Platform Leakage** - Platform types stay in `platform/` directory
+Use DJB2 for API name hashing:
 
-### Testing
+```cpp
+constexpr UINT32 ComputeHash(const char* str) {
+    UINT32 hash = 5381;
+    while (*str) {
+        hash = ((hash << 5) + hash) + *str++;
+    }
+    return hash;
+}
+```
 
-1. **Test Each Platform** - Build and run on all supported platforms
-2. **Verify PIC** - Ensure no relocations in `.text` section
-3. **Check String Embedding** - Validate no `.rdata` section
-4. **Validate Syscalls** - Test all syscall paths
+**Pre-compute hashes at compile-time:**
+```cpp
+constexpr UINT32 HASH_NtAllocateVirtualMemory = ComputeHash("NtAllocateVirtualMemory");
+```
 
-### Documentation
+### 2. Error Handling
 
-1. **Document Syscall Numbers** - Vary by architecture
-2. **Document ABI** - Calling conventions differ
-3. **Document Limitations** - Platform-specific constraints
-4. **Provide Examples** - Show platform usage
+Always check NTSTATUS return values:
+
+```cpp
+NTSTATUS status = NtAllocateVirtualMemory(...);
+if (!NT_SUCCESS(status)) {
+    // Handle error
+    ExitProcess(status);
+}
+```
+
+### 3. String Embedding
+
+Always use `_embed` suffix for strings:
+
+```cpp
+// GOOD: Embedded in code
+auto msg = L"Error code: 0x%X\n"_embed;
+
+// BAD: Would go to .rdata
+const wchar_t* msg = L"Error code: 0x%X\n";
+```
+
+### 4. Memory Alignment
+
+Ensure proper alignment for architecture:
+
+```cpp
+// x64 requires 16-byte stack alignment
+// x86 requires 4-byte stack alignment
+// ARM64 requires 16-byte stack alignment
+```
+
+### 5. Testing Position Independence
+
+Verify no .rdata dependencies:
+
+```powershell
+# Check .rdata section (should be minimal)
+llvm-objdump -h output.exe | findstr .rdata
+
+# Verify section merge worked
+llvm-objdump -h output.exe | findstr ".text"
+
+# Check for string literals (should be empty or minimal)
+llvm-strings output.exe | findstr "your_string"
+```
 
 ---
 
 ## Troubleshooting
 
-### Windows
+### Problem: API Resolution Fails
 
-**Problem**: API resolution fails
-- **Solution**: Verify DJB2 hash matches export name
-- **Debug**: Print export names during initialization
+**Symptoms**: Crash on first API call, access violation
 
-**Problem**: Linker errors about .rdata
-- **Solution**: Ensure `/MERGE:.rdata=.text` flag is set
+**Solutions**:
+1. Verify DJB2 hash matches export name exactly
+2. Check module base address is valid
+3. Enable debug output to print export names
+4. Verify PE parsing logic for architecture
 
-### Linux
+**Debug Code**:
+```cpp
+// Print all exports
+for (DWORD i = 0; i < numberOfNames; i++) {
+    const char* name = (const char*)(moduleBase + nameRVAs[i]);
+    Console::Write<char>(name);
+    Console::Write<char>("\n"_embed);
+}
+```
 
-**Problem**: Illegal instruction
-- **Solution**: Check syscall numbers for architecture
-- **Solution**: Verify calling convention (registers)
+### Problem: Linker Errors About .rdata
 
-**Problem**: Segmentation fault
-- **Solution**: Check stack alignment (16-byte on x86_64)
+**Symptoms**: Build succeeds but binary has .rdata references
 
-### UEFI
+**Solutions**:
+1. Ensure `/MERGE:.rdata=.text` flag is set in `CMakeLists.txt`
+2. Check LTO is enabled for release builds (`-flto=full`)
+3. Verify no external constants are referenced
+4. Check compiler flags include `-fno-jump-tables`, `-fno-rtti`
 
-**Problem**: QEMU doesn't boot
-- **Solution**: Verify EFI file is at `EFI\BOOT\BOOT{arch}.EFI`
-- **Solution**: Check OVMF firmware is available
+### Problem: Import Table Not Empty
 
-**Problem**: No console output
-- **Solution**: Ensure `ConOut->OutputString()` is called
-- **Solution**: Add `\r\n` for line breaks
+**Symptoms**: Binary has import directory
+
+**Solutions**:
+1. Ensure `-nostdlib` flag is set
+2. Check no CRT functions are being called
+3. Verify all API calls go through hash-based resolution
+4. Review linker map file for unexpected dependencies
+
+### Problem: Stack Corruption on x64
+
+**Symptoms**: Random crashes, invalid pointers
+
+**Solutions**:
+1. Ensure stack is 16-byte aligned before function calls
+2. Check shadow space allocation for x64 calling convention
+3. Verify `_start` function sets up stack correctly
+4. Use debug build with frame pointers (`-fno-omit-frame-pointer`)
+
+---
+
+## Performance Considerations
+
+### API Resolution Overhead
+
+- Hash computation: O(n) where n = string length
+- PE export iteration: O(m) where m = number of exports
+- Typically < 1000 exports per DLL
+- Resolution happens once at startup
+- Cached in global variables
+
+### Memory Allocation Performance
+
+Direct `NtAllocateVirtualMemory` calls:
+- **Advantage**: No heap fragmentation
+- **Advantage**: No heap metadata overhead
+- **Disadvantage**: Page granularity (4KB minimum)
+- **Use case**: Suitable for larger allocations (>4KB)
+
+### Console Output Performance
+
+`WriteConsoleW` is slower than `WriteFile`:
+- **Why**: Console subsystem overhead
+- **Mitigation**: Buffer output when possible
+- **Alternative**: Use `WriteFile` to stdout for better performance
 
 ---
 
 ## References
 
 - [Windows PE Format](https://docs.microsoft.com/en-us/windows/win32/debug/pe-format)
-- [Linux System Calls](https://man7.org/linux/man-pages/man2/syscalls.2.html)
-- [UEFI Specification](https://uefi.org/specifications)
+- [Native API Reference](https://undocumented.ntinternals.net/)
+- [PEB Structure](https://www.geoffchappell.com/studies/windows/km/ntoskrnl/inc/api/pebteb/peb/index.htm)
 - [Architecture Documentation](architecture.md)
+- [Main README](../README.md)

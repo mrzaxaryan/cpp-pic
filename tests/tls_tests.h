@@ -8,23 +8,23 @@
 
 // =============================================================================
 // TLS Tests - TLS 1.3 Implementation Validation
-// Test Server: 0y.wtf (79.133.51.99:8443)
-// Protocol: TCP+TLS 1.3 Echo Server
+// Server: one.one.one.on (1.1.1.1
+// Protocol: TCP+TLS 1.3
 // =============================================================================
 
 class TlsTests
 {
 private:
-	// Test server IP address: 79.133.51.99 (0y.wtf)
-	static constexpr UINT32 TEST_SERVER_IP = 0x6333854F; // Network byte order
-	static constexpr UINT16 TLS_PORT = 8443;             // TCP+TLS Echo Server
+	// Test server IP address: 1.1.1.1
+	static constexpr UINT32 TEST_SERVER_IP = 0x01010101; // Network byte order
+	static constexpr UINT16 TLS_PORT = 443;             // TCP+TLS Echo Server
 
 	// Test 1: TLS Client creation
 	static BOOL TestTlsClientCreation()
 	{
 		LOG_INFO("Test: TLS Client Creation");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		LOG_INFO("TLS client created successfully");
 		return TRUE;
@@ -33,9 +33,9 @@ private:
 	// Test 2: TLS handshake and connection
 	static BOOL TestTlsHandshake()
 	{
-		LOG_INFO("Test: TLS Handshake (port 8443)");
+		LOG_INFO("Test: TLS Handshake (port 443)");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		if (!tlsClient.Open())
 		{
@@ -53,7 +53,7 @@ private:
 	{
 		LOG_INFO("Test: TLS Echo - Single Message");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		if (!tlsClient.Open())
 		{
@@ -124,7 +124,7 @@ private:
 	{
 		LOG_INFO("Test: TLS Echo - Multiple Messages");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		if (!tlsClient.Open())
 		{
@@ -207,7 +207,7 @@ private:
 	{
 		LOG_INFO("Test: TLS Echo - Variable Data Sizes");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		if (!tlsClient.Open())
 		{
@@ -350,7 +350,7 @@ private:
 	{
 		LOG_INFO("Test: TLS Echo - Binary Data");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		if (!tlsClient.Open())
 		{
@@ -415,7 +415,7 @@ private:
 
 		for (UINT32 i = 0; i < 3; i++)
 		{
-			TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+			TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 			if (!tlsClient.Open())
 			{
@@ -459,7 +459,7 @@ private:
 	{
 		LOG_INFO("Test: TLS Large Data Transfer");
 
-		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
+		TLSClient tlsClient("one.one.one.on"_embed, TEST_SERVER_IP, TLS_PORT);
 
 		if (!tlsClient.Open())
 		{

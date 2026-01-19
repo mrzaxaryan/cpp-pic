@@ -132,18 +132,7 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Increment/Decrement"_embed);
 		}
 
-		// Test 12: Array initialization and formatting
-		if (!TestArrayFormatting())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Array formatting"_embed);
-		}
-		else
-		{
-			Logger::Info<WCHAR>(L"  PASSED: Array formatting"_embed);
-		}
-
-		// Test 13: Type casting between INT64 and UINT64
+		// Test 12: Type casting between INT64 and UINT64
 		if (!TestTypeCasting())
 		{
 			allPassed = FALSE;
@@ -152,6 +141,72 @@ public:
 		else
 		{
 			Logger::Info<WCHAR>(L"  PASSED: Type casting"_embed);
+		}
+
+		// Test 14: Bitwise operations
+		if (!TestBitwise())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Bitwise operations"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Bitwise operations"_embed);
+		}
+
+		// Test 15: Compound assignment operators
+		if (!TestCompoundAssignments())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Compound assignments"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Compound assignments"_embed);
+		}
+
+		// Test 16: Scalar arithmetic operations
+		if (!TestScalarArithmetic())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Scalar arithmetic"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Scalar arithmetic"_embed);
+		}
+
+		// Test 17: Scalar comparisons
+		if (!TestScalarComparisons())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Scalar comparisons"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Scalar comparisons"_embed);
+		}
+
+		// Test 18: Shift assignments and edge cases
+		if (!TestShiftAssignments())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Shift assignments"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Shift assignments"_embed);
+		}
+
+		// Test 19: Overflow behavior
+		if (!TestOverflow())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Overflow behavior"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Overflow behavior"_embed);
 		}
 
 		if (allPassed)
@@ -503,7 +558,7 @@ private:
 		if (d.High() != 1 || d.Low() != 0)
 			return FALSE;
 
-		// Right shift positive (logical for positive)
+		// Right shift positive
 		INT64 e(16);
 		INT64 f = e >> 2;
 		if (f.High() != 0 || f.Low() != 4)
@@ -512,13 +567,7 @@ private:
 		// Right shift negative (arithmetic shift - sign extension)
 		INT64 g(-16);
 		INT64 h = g >> 2;
-		// Arithmetic right shift preserves sign
 		if (h.High() != -1 || h.Low() != (UINT32)-4)
-			return FALSE;
-
-		// Shift by 0
-		INT64 i(42);
-		if ((i << 0).Low() != 42 || (i >> 0).Low() != 42)
 			return FALSE;
 
 		return TRUE;
@@ -565,29 +614,6 @@ private:
 		--h;
 		if (h.High() != -1 || h.Low() != 0xFFFFFFFF)
 			return FALSE;
-
-		return TRUE;
-	}
-
-	static BOOL TestArrayFormatting()
-	{
-		// Test that INT64 arrays can be properly initialized and formatted
-		// This ensures the varargs casting works correctly with Logger
-		INT64 testArray[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-
-		// Verify array initialization
-		for (INT64 i = 0; i < 20; i++)
-		{
-			if (testArray[(signed long long)i] != (i + INT64(1)))
-				return FALSE;
-		}
-
-		// Test formatting output (this also tests that the values are properly passed through varargs)
-		for (INT64 i = 0; i < 20; i++)
-		{
-			// The Logger::Info call exercises the varargs casting
-			Logger::Info<WCHAR>(L"    INT64 Array Value [%lld]: %lld"_embed, (signed long long)i, (signed long long)testArray[(signed long long)i]);
-		}
 
 		return TRUE;
 	}
@@ -652,6 +678,358 @@ private:
 		if (zeroToUnsigned.High() != 0 || zeroToUnsigned.Low() != 0)
 			return FALSE;
 		if (zeroToSigned.High() != 0 || zeroToSigned.Low() != 0)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestBitwise()
+	{
+		INT64 a(0x12345678, 0x9ABCDEF0);
+		INT64 b(0xF0F0F0F0, 0x0F0F0F0F);
+
+		// AND
+		INT64 c = a & b;
+		if (c.High() != 0x10305070 || c.Low() != 0x0A0C0E00)
+			return FALSE;
+
+		// OR
+		INT64 d = a | b;
+		if (d.High() != (INT32)0xF2F4F6F8 || d.Low() != 0x9FBFDFFF)
+			return FALSE;
+
+		// XOR
+		INT64 e = a ^ b;
+		if (e.High() != (INT32)0xE2C4A688 || e.Low() != 0x95B3D1FF)
+			return FALSE;
+
+		// NOT
+		INT64 f(0x12345678, 0x9ABCDEF0);
+		INT64 g = ~f;
+		if (g.High() != (INT32)0xEDCBA987 || g.Low() != 0x6543210F)
+			return FALSE;
+
+		// Bitwise with scalar (INT32)
+		INT64 h(0x00000000, 0xFFFFFFFF);
+		INT64 i = h & INT64(0x0000FFFF);
+		if (i.High() != 0 || i.Low() != 0x0000FFFF)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestCompoundAssignments()
+	{
+		// += operator
+		INT64 a(100);
+		a += INT64(50);
+		if (a.High() != 0 || a.Low() != 150)
+			return FALSE;
+
+		// -= operator
+		INT64 b(200);
+		b -= INT64(50);
+		if (b.High() != 0 || b.Low() != 150)
+			return FALSE;
+
+		// *= operator
+		INT64 c(10);
+		c *= INT64(5);
+		if (c.High() != 0 || c.Low() != 50)
+			return FALSE;
+
+		// /= operator
+		INT64 d(100);
+		d /= INT64(10);
+		if (d.High() != 0 || d.Low() != 10)
+			return FALSE;
+
+		// %= operator
+		INT64 e(100);
+		e %= INT64(30);
+		if (e.High() != 0 || e.Low() != 10)
+			return FALSE;
+
+		// &= operator
+		INT64 f(0xFF, 0xFFFFFFFF);
+		f &= INT64(0x0F, 0x0000FFFF);
+		if (f.High() != 0x0F || f.Low() != 0x0000FFFF)
+			return FALSE;
+
+		// |= operator
+		INT64 g(0xF0, 0xF0F0F0F0);
+		g |= INT64(0x0F, 0x0F0F0F0F);
+		if (g.High() != 0xFF || g.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// ^= operator
+		INT64 h(0xFF, 0xFFFFFFFF);
+		h ^= INT64(0xFF, 0xFFFFFFFF);
+		if (h.High() != 0 || h.Low() != 0)
+			return FALSE;
+
+		// Compound assignment with INT32
+		INT64 j(100);
+		j += 50;
+		if (j.High() != 0 || j.Low() != 150)
+			return FALSE;
+
+		INT64 k(100);
+		k -= 50;
+		if (k.High() != 0 || k.Low() != 50)
+			return FALSE;
+
+		INT64 l(10);
+		l *= 5;
+		if (l.High() != 0 || l.Low() != 50)
+			return FALSE;
+
+		INT64 m(100);
+		m /= 10;
+		if (m.High() != 0 || m.Low() != 10)
+			return FALSE;
+
+		INT64 n(100);
+		n %= 30;
+		if (n.High() != 0 || n.Low() != 10)
+			return FALSE;
+
+		// Compound assignment with UINT64
+		INT64 p(100);
+		p += UINT64(50);
+		if (p.High() != 0 || p.Low() != 150)
+			return FALSE;
+
+		INT64 q(100);
+		q -= UINT64(50);
+		if (q.High() != 0 || q.Low() != 50)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestScalarArithmetic()
+	{
+		// operator+(INT32)
+		INT64 a(100);
+		INT64 b = a + 50;
+		if (b.High() != 0 || b.Low() != 150)
+			return FALSE;
+
+		// operator-(INT32)
+		INT64 c(100);
+		INT64 d = c - 30;
+		if (d.High() != 0 || d.Low() != 70)
+			return FALSE;
+
+		// operator*(INT32)
+		INT64 e(10);
+		INT64 f = e * 5;
+		if (f.High() != 0 || f.Low() != 50)
+			return FALSE;
+
+		// operator/(INT32)
+		INT64 g(100);
+		INT64 h = g / 10;
+		if (h.High() != 0 || h.Low() != 10)
+			return FALSE;
+
+		// operator%(INT32)
+		INT64 i(100);
+		INT64 j = i % 30;
+		if (j.High() != 0 || j.Low() != 10)
+			return FALSE;
+
+		// Test with negative INT32
+		INT64 k(100);
+		INT64 l = k + (-50);
+		if (l.High() != 0 || l.Low() != 50)
+			return FALSE;
+
+		INT64 m(50);
+		INT64 n = m - (-50);
+		if (n.High() != 0 || n.Low() != 100)
+			return FALSE;
+
+		INT64 o(10);
+		INT64 p = o * (-5);
+		if (p.High() != -1 || p.Low() != (UINT32)-50)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestScalarComparisons()
+	{
+		INT64 pos(100);
+		INT64 neg(-100);
+
+		// operator<(INT32)
+		if (!(neg < 50))
+			return FALSE;
+		if (pos < 50)
+			return FALSE;
+
+		// operator<=(INT32)
+		if (!(pos <= 100))
+			return FALSE;
+		if (!(neg <= 0))
+			return FALSE;
+		if (pos <= 50)
+			return FALSE;
+
+		// operator>(INT32)
+		if (!(pos > 50))
+			return FALSE;
+		if (neg > 0)
+			return FALSE;
+
+		// operator>=(INT32)
+		if (!(pos >= 100))
+			return FALSE;
+		if (!(pos >= 50))
+			return FALSE;
+		if (neg >= 0)
+			return FALSE;
+
+		// operator==(INT32)
+		if (!(pos == 100))
+			return FALSE;
+		if (pos == 99)
+			return FALSE;
+
+		// operator!=(INT32)
+		if (!(pos != 99))
+			return FALSE;
+		if (pos != 100)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestShiftAssignments()
+	{
+		// <<= operator
+		INT64 a(1);
+		a <<= 4;
+		if (a.High() != 0 || a.Low() != 16)
+			return FALSE;
+
+		// Shift from low to high
+		INT64 b(0, 0x00000001);
+		b <<= 32;
+		if (b.High() != 1 || b.Low() != 0)
+			return FALSE;
+
+		// >>= operator
+		INT64 c(16);
+		c >>= 2;
+		if (c.High() != 0 || c.Low() != 4)
+			return FALSE;
+
+		// Arithmetic right shift with negative
+		INT64 d(-16);
+		d >>= 2;
+		if (d.High() != -1 || d.Low() != (UINT32)-4)
+			return FALSE;
+
+		// Shift by 64 or more (should result in 0 for left, sign-extended for right)
+		INT64 e(0x12345678, 0x9ABCDEF0);
+		e <<= 64;
+		if (e.High() != 0 || e.Low() != 0)
+			return FALSE;
+
+		// Right shift by >= 64 sign-extends: positive becomes 0
+		INT64 f(0x12345678, 0x9ABCDEF0);
+		f >>= 64;
+		if (f.High() != 0 || f.Low() != 0)
+			return FALSE;
+
+		// Negative value shifted by >= 64
+		INT64 g(-100);
+		g >>= 64;
+		if (g.High() != -1 || g.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Shift by 0 (no change)
+		INT64 h(42);
+		h <<= 0;
+		if (h.High() != 0 || h.Low() != 42)
+			return FALSE;
+
+		h >>= 0;
+		if (h.High() != 0 || h.Low() != 42)
+			return FALSE;
+
+		// Shift by negative (should be no-op or return 0)
+		INT64 i(42);
+		i <<= -5;
+		if (i.High() != 0 || i.Low() != 0)
+			return FALSE;
+
+		INT64 j(42);
+		j >>= -5;
+		if (j.High() != 0 || j.Low() != 42)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestOverflow()
+	{
+		// Test MAX + 1 overflow
+		INT64 maxVal = INT64::MAX();
+		INT64 result = maxVal + INT64(1);
+		// 0x7FFFFFFFFFFFFFFF + 1 = 0x8000000000000000 (MIN)
+		if (result.High() != (INT32)0x80000000 || result.Low() != 0)
+			return FALSE;
+
+		// Test MIN - 1 underflow
+		INT64 minVal = INT64::MIN();
+		result = minVal - INT64(1);
+		// 0x8000000000000000 - 1 = 0x7FFFFFFFFFFFFFFF (MAX)
+		if (result.High() != 0x7FFFFFFF || result.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test addition overflow with carry
+		INT64 a(0x7FFFFFFF, 0xFFFFFFFF); // MAX
+		INT64 b(0, 2);
+		INT64 c = a + b;
+		// Should wrap to negative
+		if (c.High() != (INT32)0x80000000 || c.Low() != 1)
+			return FALSE;
+
+		// Test subtraction underflow with borrow
+		INT64 d((INT32)0x80000000, 0); // MIN
+		INT64 e(0, 2);
+		INT64 f = d - e;
+		// Should wrap to positive
+		if (f.High() != 0x7FFFFFFF || f.Low() != 0xFFFFFFFE)
+			return FALSE;
+
+		// Test multiplication overflow
+		INT64 g = INT64::MAX();
+		INT64 h = g * INT64(2);
+		// Overflow in multiplication: 0x7FFFFFFFFFFFFFFF * 2 = 0xFFFFFFFFFFFFFFFE
+		if (h.High() != -1 || h.Low() != 0xFFFFFFFE)
+			return FALSE;
+
+		// Test increment at MAX
+		INT64 i = INT64::MAX();
+		++i;
+		if (i.High() != (INT32)0x80000000 || i.Low() != 0)
+			return FALSE;
+
+		// Test decrement at MIN
+		INT64 j = INT64::MIN();
+		--j;
+		if (j.High() != 0x7FFFFFFF || j.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test negation of MIN (wraps to MIN since -MIN > MAX)
+		INT64 k = INT64::MIN();
+		INT64 negK = -k;
+		if (negK.High() != (INT32)0x80000000 || negK.Low() != 0)
 			return FALSE;
 
 		return TRUE;

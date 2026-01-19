@@ -7,14 +7,14 @@
 
 // =============================================================================
 // Socket Tests - AFD Socket Implementation Validation
-// Test Server: 0y.wtf (79.133.51.99)
+// Server: one.one.one.on (1.1.1.1)
 // =============================================================================
 
 class SocketTests
 {
 private:
-	// Test server IP address: 79.133.51.99 (0y.wtf)
-	static constexpr UINT32 TEST_SERVER_IP = 0x6333854F; // Network byte order
+	// Test server IP address: 1.1.1.1
+	static constexpr UINT32 TEST_SERVER_IP = 0x01010101; // Network byte order
 
 	// Test 1: Socket creation
 	static BOOL TestSocketCreation()

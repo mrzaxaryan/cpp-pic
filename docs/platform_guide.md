@@ -85,10 +85,10 @@ auto ntAllocate = GetExportByHash(ntdllBase, 0x12345678);
 5. Convert RVA to absolute address
 
 **Benefits:**
-- No import table required
-- Hash-based lookups prevent static string analysis
-- Fully position-independent
-- No GetProcAddress dependency
+- Import-Free Execution – No import table or GetProcAddress required
+- Hash-Based API Resolution – Avoids string-based function references
+- Fully Position-Independent – Can execute at arbitrary memory addresses
+
 
 ### API Resolution
 
@@ -100,9 +100,9 @@ System-level APIs for direct kernel interaction:
 
 | Function | Hash | Purpose |
 |----------|------|---------|
-| `NtAllocateVirtualMemory` | Computed at runtime | Allocate memory pages |
-| `NtFreeVirtualMemory` | Computed at runtime | Free memory pages |
-| `NtTerminateProcess` | Computed at runtime | Exit process |
+| `NtAllocateVirtualMemory` | Computed at runtime | Allocates virtual memory pages |
+| `NtFreeVirtualMemory` | Computed at runtime | Releases virtual memory pages |
+| `NtTerminateProcess` | Computed at runtime | Terminates the current process |
 
 #### kernel32.dll ([kernel32.cc](../src/runtime/platform/windows/kernel32.cc))
 
@@ -110,14 +110,14 @@ Higher-level Windows APIs:
 
 | Function | Hash | Purpose |
 |----------|------|---------|
-| `GetStdHandle` | Computed at runtime | Get console handles (stdin/stdout/stderr) |
-| `WriteConsoleW` | Computed at runtime | Write wide strings to console |
+| `GetStdHandle` | Computed at runtime | Retrieves standard console handles (stdin/stdout/stderr) |
+| `WriteConsoleW` | Computed at runtime | Writes wide-character output to the console |
 
 ---
 
 ## Memory Management
 
-CPP-PIC uses direct syscalls for memory allocation, bypassing the standard Windows heap:
+CPP-PIC manages memory via native Windows interfaces, avoiding the standard heap and runtime libraries.
 
 ### Allocation
 
@@ -155,12 +155,12 @@ NTSTATUS status = NtFreeVirtualMemory(
 );
 ```
 
-### Why Direct Syscalls?
+### Why Native Interfaces?
 
-- **No CRT dependency**: Bypasses C runtime heap (malloc/free)
-- **Position-independent**: No import table entries
-- **Minimal overhead**: Direct kernel interaction
-- **Fine-grained control**: Specify protection, allocation type
+- **Standalone Runtime**: No reliance on CRT or standard heap
+- **Position-Independent**: Operates without import table entries
+- **Low Overhead**: Direct kernel interaction
+- **Precise Memory Control**: Allocate, protect, and manage memory manually
 
 ---
 
@@ -443,10 +443,10 @@ for (DWORD i = 0; i < numberOfNames; i++) {
 ### Memory Allocation Performance
 
 Direct `NtAllocateVirtualMemory` calls:
-- **Advantage**: No heap fragmentation
-- **Advantage**: No heap metadata overhead
-- **Disadvantage**: Page granularity (4KB minimum)
-- **Use case**: Suitable for larger allocations (>4KB)
+- **Advantages**: Avoids heap fragmentation
+                  No heap metadata overhead
+- **Disadvantage**: Allocations are page-aligned (minimum 4 KB)
+- **Use case**: Best suited for larger memory allocations (greater than 4 KB)
 
 ### Console Output Performance
 

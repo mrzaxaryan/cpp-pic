@@ -144,7 +144,7 @@ VOID Logger::Info(const TChar *format, ...)
 	{
 		VA_LIST args;
 		VA_START(args, format);
-		LogWithPrefixV<TChar>(L"\033[0;32m[INFO] "_embed, format, args);
+		LogWithPrefixV<TChar>(L"\033[0;32m[INF] "_embed, format, args);
 		VA_END(args);
 	}
 	else
@@ -166,7 +166,7 @@ VOID Logger::Error(const TChar *format, ...)
 	{
 		VA_LIST args;
 		VA_START(args, format);
-		LogWithPrefixV<TChar>(L"\033[0;31m[ERROR] "_embed, format, args);
+		LogWithPrefixV<TChar>(L"\033[0;31m[ERR] "_embed, format, args);
 		VA_END(args);
 	}
 	else
@@ -188,7 +188,7 @@ VOID Logger::Warning(const TChar *format, ...)
 	{
 		VA_LIST args;
 		VA_START(args, format);
-		LogWithPrefixV<TChar>(L"\033[0;33m[WARNING] "_embed, format, args);
+		LogWithPrefixV<TChar>(L"\033[0;33m[WRN] "_embed, format, args);
 		VA_END(args);
 	}
 	else
@@ -210,7 +210,7 @@ VOID Logger::Debug(const TChar *format, ...)
 	{
 		VA_LIST args;
 		VA_START(args, format);
-		LogWithPrefixV<TChar>(L"\033[0;33m[DEBUG] "_embed, format, args);
+		LogWithPrefixV<TChar>(L"\033[0;33m[DBG] "_embed, format, args);
 		VA_END(args);
 	}
 	else

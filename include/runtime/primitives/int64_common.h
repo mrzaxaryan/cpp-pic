@@ -182,6 +182,146 @@
     }
 
 /**
+ * DEFINE_INT64_BASIC_ARITHMETIC
+ *
+ * Generates basic arithmetic operators: +, -
+ *
+ * These operators work identically on both signed and unsigned types,
+ * using carry/borrow propagation between low and high words.
+ *
+ * Parameters:
+ *   CLASS_NAME - UINT64 or INT64
+ *   WORD_TYPE  - UINT32 for UINT64, INT32 for INT64 (type of high word)
+ */
+#define DEFINE_INT64_BASIC_ARITHMETIC(CLASS_NAME, WORD_TYPE)                             \
+    constexpr CLASS_NAME operator+(const CLASS_NAME &other) const noexcept              \
+    {                                                                                     \
+        UINT32 newLow = low + other.low;                                                \
+        UINT32 carry = (newLow < low) ? 1 : 0;                                          \
+        WORD_TYPE newHigh = high + other.high + (WORD_TYPE)carry;                       \
+        return CLASS_NAME(newHigh, newLow);                                              \
+    }                                                                                     \
+                                                                                          \
+    constexpr CLASS_NAME operator-(const CLASS_NAME &other) const noexcept              \
+    {                                                                                     \
+        UINT32 newLow = low - other.low;                                                \
+        UINT32 borrow = (low < other.low) ? 1 : 0;                                      \
+        WORD_TYPE newHigh = high - other.high - (WORD_TYPE)borrow;                      \
+        return CLASS_NAME(newHigh, newLow);                                              \
+    }
+
+/**
+ * DEFINE_INT64_ARITHMETIC_ASSIGNMENTS
+ *
+ * Generates compound arithmetic assignment operators: +=, -=, *=, /=, %=
+ *
+ * These operators work identically on both signed and unsigned types.
+ *
+ * Parameters:
+ *   CLASS_NAME - UINT64 or INT64
+ *   WORD_TYPE  - UINT32 for UINT64, INT32 for INT64
+ */
+#define DEFINE_INT64_ARITHMETIC_ASSIGNMENTS(CLASS_NAME, WORD_TYPE)                       \
+    constexpr CLASS_NAME &operator+=(const CLASS_NAME &other) noexcept                   \
+    {                                                                                     \
+        UINT32 newLow = low + other.low;                                                \
+        UINT32 carry = (newLow < low) ? 1 : 0;                                          \
+        low = newLow;                                                                    \
+        high = high + other.high + (WORD_TYPE)carry;                                     \
+        return *this;                                                                     \
+    }                                                                                     \
+                                                                                          \
+    constexpr CLASS_NAME &operator-=(const CLASS_NAME &other) noexcept                   \
+    {                                                                                     \
+        UINT32 newLow = low - other.low;                                                \
+        UINT32 borrow = (low < other.low) ? 1 : 0;                                      \
+        low = newLow;                                                                    \
+        high = high - other.high - (WORD_TYPE)borrow;                                    \
+        return *this;                                                                     \
+    }                                                                                     \
+                                                                                          \
+    constexpr CLASS_NAME &operator*=(const CLASS_NAME &other) noexcept                   \
+    {                                                                                     \
+        *this = *this * other;                                                           \
+        return *this;                                                                     \
+    }                                                                                     \
+                                                                                          \
+    constexpr CLASS_NAME &operator/=(const CLASS_NAME &other) noexcept                   \
+    {                                                                                     \
+        *this = *this / other;                                                           \
+        return *this;                                                                     \
+    }                                                                                     \
+                                                                                          \
+    constexpr CLASS_NAME &operator%=(const CLASS_NAME &other) noexcept                   \
+    {                                                                                     \
+        *this = *this % other;                                                           \
+        return *this;                                                                     \
+    }
+
+/**
+ * DEFINE_INT64_LEFT_SHIFT
+ *
+ * Generates left shift operator: <<
+ *
+ * Left shift works identically on both signed and unsigned types.
+ *
+ * Parameters:
+ *   CLASS_NAME - UINT64 or INT64
+ *   WORD_TYPE  - UINT32 for UINT64, INT32 for INT64
+ */
+#define DEFINE_INT64_LEFT_SHIFT(CLASS_NAME, WORD_TYPE)                                   \
+    constexpr CLASS_NAME operator<<(int shift) const noexcept                            \
+    {                                                                                     \
+        if (shift < 0 || shift >= 64)                                                    \
+            return CLASS_NAME(0, 0);                                                     \
+        if (shift == 0)                                                                  \
+            return *this;                                                                 \
+        if (shift >= 32)                                                                 \
+            return CLASS_NAME((WORD_TYPE)(low << (shift - 32)), 0);                      \
+                                                                                          \
+        return CLASS_NAME((high << shift) | (WORD_TYPE)(low >> (32 - shift)), low << shift); \
+    }                                                                                     \
+                                                                                          \
+    constexpr CLASS_NAME operator<<(UINT32 shift) const noexcept                         \
+    {                                                                                     \
+        return *this << (int)shift;                                                      \
+    }
+
+/**
+ * DEFINE_INT64_LEFT_SHIFT_ASSIGN
+ *
+ * Generates left shift assignment operator: <<=
+ *
+ * Parameters:
+ *   CLASS_NAME - UINT64 or INT64
+ *   WORD_TYPE  - UINT32 for UINT64, INT32 for INT64
+ */
+#define DEFINE_INT64_LEFT_SHIFT_ASSIGN(CLASS_NAME, WORD_TYPE)                            \
+    constexpr CLASS_NAME &operator<<=(int shift) noexcept                                \
+    {                                                                                     \
+        if (shift < 0 || shift >= 64)                                                    \
+        {                                                                                 \
+            high = 0;                                                                    \
+            low = 0;                                                                     \
+        }                                                                                 \
+        else if (shift == 0)                                                             \
+        {                                                                                 \
+            /* Nothing to do */                                                          \
+        }                                                                                 \
+        else if (shift >= 32)                                                            \
+        {                                                                                 \
+            high = (WORD_TYPE)(low << (shift - 32));                                     \
+            low = 0;                                                                     \
+        }                                                                                 \
+        else                                                                              \
+        {                                                                                 \
+            high = (high << shift) | (WORD_TYPE)(low >> (32 - shift));                   \
+            low = low << shift;                                                          \
+        }                                                                                 \
+        return *this;                                                                     \
+    }
+
+/**
  * DEFINE_INT64_COMMON_OPERATIONS
  *
  * Master macro that expands all common operations.

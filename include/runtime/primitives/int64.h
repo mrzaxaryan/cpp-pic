@@ -136,22 +136,8 @@ public:
         return (high != valHigh) || (low != (UINT32)val);
     }
 
-    // Arithmetic operators
-    constexpr INT64 operator+(const INT64 &other) const noexcept
-    {
-        UINT32 newLow = low + other.low;
-        UINT32 carry = (newLow < low) ? 1 : 0;
-        INT32 newHigh = high + other.high + (INT32)carry;
-        return INT64(newHigh, newLow);
-    }
-
-    constexpr INT64 operator-(const INT64 &other) const noexcept
-    {
-        UINT32 newLow = low - other.low;
-        UINT32 borrow = (low < other.low) ? 1 : 0;
-        INT32 newHigh = high - other.high - (INT32)borrow;
-        return INT64(newHigh, newLow);
-    }
+    // Basic arithmetic operators (generated via int64_common.h macros)
+    DEFINE_INT64_BASIC_ARITHMETIC(INT64, INT32)
 
     constexpr INT64 operator-() const noexcept // Unary minus
     {
@@ -226,18 +212,10 @@ public:
     // Bitwise operators (generated via int64_common.h macros)
     DEFINE_INT64_BITWISE_OPERATORS(INT64)
 
-    constexpr INT64 operator<<(int shift) const noexcept
-    {
-        if (shift < 0 || shift >= 64)
-            return INT64(0, 0);
-        if (shift == 0)
-            return *this;
-        if (shift >= 32)
-            return INT64((INT32)(low << (shift - 32)), 0);
+    // Left shift operators (generated via int64_common.h macros)
+    DEFINE_INT64_LEFT_SHIFT(INT64, INT32)
 
-        return INT64((high << shift) | (INT32)(low >> (32 - shift)), low << shift);
-    }
-
+    // Right shift operator (signed - arithmetic shift with sign extension)
     constexpr INT64 operator>>(int shift) const noexcept
     {
         if (shift < 0)
@@ -252,79 +230,19 @@ public:
         return INT64(high >> shift, (low >> shift) | ((UINT32)high << (32 - shift)));
     }
 
-    constexpr INT64 operator<<(UINT32 shift) const noexcept
-    {
-        return *this << (int)shift;
-    }
-
     constexpr INT64 operator>>(UINT32 shift) const noexcept
     {
         return *this >> (int)shift;
     }
 
-    // Compound assignment operators
-    constexpr INT64 &operator+=(const INT64 &other) noexcept
-    {
-        UINT32 newLow = low + other.low;
-        UINT32 carry = (newLow < low) ? 1 : 0;
-        low = newLow;
-        high = high + other.high + (INT32)carry;
-        return *this;
-    }
-
-    constexpr INT64 &operator-=(const INT64 &other) noexcept
-    {
-        UINT32 newLow = low - other.low;
-        UINT32 borrow = (low < other.low) ? 1 : 0;
-        low = newLow;
-        high = high - other.high - (INT32)borrow;
-        return *this;
-    }
-
-    constexpr INT64 &operator*=(const INT64 &other) noexcept
-    {
-        *this = *this * other;
-        return *this;
-    }
-
-    constexpr INT64 &operator/=(const INT64 &other) noexcept
-    {
-        *this = *this / other;
-        return *this;
-    }
-
-    constexpr INT64 &operator%=(const INT64 &other) noexcept
-    {
-        *this = *this % other;
-        return *this;
-    }
+    // Arithmetic compound assignment operators (generated via int64_common.h macros)
+    DEFINE_INT64_ARITHMETIC_ASSIGNMENTS(INT64, INT32)
 
     // Compound bitwise assignment operators (generated via int64_common.h macros)
     DEFINE_INT64_BITWISE_ASSIGNMENTS(INT64)
 
-    constexpr INT64 &operator<<=(int shift) noexcept
-    {
-        if (shift < 0 || shift >= 64)
-        {
-            high = 0;
-            low = 0;
-        }
-        else if (shift == 0)
-        {
-            // Nothing to do
-        }
-        else if (shift >= 32)
-        {
-            high = (INT32)(low << (shift - 32));
-            low = 0;
-        }
-        else
-        {
-            high = (high << shift) | (INT32)(low >> (32 - shift));
-            low = low << shift;
-        }
-        return *this;
-    }
+    // Left shift assignment operator (generated via int64_common.h macros)
+    DEFINE_INT64_LEFT_SHIFT_ASSIGN(INT64, INT32)
 
     constexpr INT64 &operator>>=(int shift) noexcept
     {

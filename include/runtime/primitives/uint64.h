@@ -444,6 +444,30 @@ public:
         return (high != 0) || (low != (UINT32)(unsigned long long)val);
     }
 
+    constexpr bool operator<(int val) const noexcept
+    {
+        if (val < 0) return false;
+        return *this < UINT64((unsigned long long)val);
+    }
+
+    constexpr bool operator<=(int val) const noexcept
+    {
+        if (val < 0) return false;
+        return *this <= UINT64((unsigned long long)val);
+    }
+
+    constexpr bool operator>(int val) const noexcept
+    {
+        if (val < 0) return true;
+        return *this > UINT64((unsigned long long)val);
+    }
+
+    constexpr bool operator>=(int val) const noexcept
+    {
+        if (val < 0) return true;
+        return *this >= UINT64((unsigned long long)val);
+    }
+
     // Bitwise operators with integer literals
     constexpr UINT64 operator&(UINT32 val) const noexcept
     {
@@ -461,6 +485,22 @@ public:
     }
 
     constexpr UINT64 operator^(UINT32 val) const noexcept
+    {
+        return *this ^ UINT64(val);
+    }
+
+    // Additional bitwise operators for unsigned long long
+    constexpr UINT64 operator&(unsigned long long val) const noexcept
+    {
+        return *this & UINT64(val);
+    }
+
+    constexpr UINT64 operator|(unsigned long long val) const noexcept
+    {
+        return *this | UINT64(val);
+    }
+
+    constexpr UINT64 operator^(unsigned long long val) const noexcept
     {
         return *this ^ UINT64(val);
     }
@@ -508,6 +548,26 @@ public:
             return UINT64(0, high >> (shift - 32));
 
         return UINT64(high >> shift, (low >> shift) | (high << (32 - shift)));
+    }
+
+    constexpr UINT64 operator<<(UINT32 shift) const noexcept
+    {
+        return *this << (int)shift;
+    }
+
+    constexpr UINT64 operator>>(UINT32 shift) const noexcept
+    {
+        return *this >> (int)shift;
+    }
+
+    constexpr UINT64 operator<<(unsigned long long shift) const noexcept
+    {
+        return *this << (int)shift;
+    }
+
+    constexpr UINT64 operator>>(unsigned long long shift) const noexcept
+    {
+        return *this >> (int)shift;
     }
 
     // Compound assignment operators

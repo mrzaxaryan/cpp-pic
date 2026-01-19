@@ -299,6 +299,16 @@ public:
         return INT64(high >> shift, (low >> shift) | ((UINT32)high << (32 - shift)));
     }
 
+    constexpr INT64 operator<<(UINT32 shift) const noexcept
+    {
+        return *this << (int)shift;
+    }
+
+    constexpr INT64 operator>>(UINT32 shift) const noexcept
+    {
+        return *this >> (int)shift;
+    }
+
     // Compound assignment operators
     constexpr INT64 &operator+=(const INT64 &other) noexcept
     {
@@ -316,6 +326,15 @@ public:
         low = newLow;
         high = high - other.high - (INT32)borrow;
         return *this;
+    }
+    constexpr INT64 &operator+=(UINT64 val) noexcept
+    {
+        return *this += INT64((signed long long)val);
+    }
+
+    constexpr INT64 &operator-=(UINT64 val) noexcept
+    {
+        return *this -= INT64((signed long long)val);
     }
 
     constexpr INT64 &operator*=(const INT64 &other) noexcept

@@ -132,6 +132,17 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Overflow behavior"_embed);
 		}
 
+		// Test 12: Type casting between UINT64 and INT64
+		if (!TestTypeCasting())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Type casting"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Type casting"_embed);
+		}
+
 		if (allPassed)
 		{
 			Logger::Info<WCHAR>(L"All UINT64 tests passed!"_embed);
@@ -515,6 +526,66 @@ private:
 		UINT64 zero(0, 0);
 		UINT64 underflow = zero - one;
 		if (underflow.High() != 0xFFFFFFFF || underflow.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		return TRUE;
+	}
+
+	static BOOL TestTypeCasting()
+	{
+		// Test UINT64 to INT64 conversion (explicit constructor)
+		UINT64 unsignedSmall(0, 12345);
+		INT64 signedFromSmall = INT64(unsignedSmall);
+		if (signedFromSmall.High() != 0 || signedFromSmall.Low() != 12345)
+			return FALSE;
+
+		// Test UINT64 with high bit set to INT64 (will be negative)
+		UINT64 unsignedLarge(0x80000000, 0);
+		INT64 signedFromLarge = INT64(unsignedLarge);
+		if (signedFromLarge.High() != (INT32)0x80000000 || signedFromLarge.Low() != 0)
+			return FALSE;
+
+		// Test INT64 to UINT64 conversion (implicit via operator)
+		INT64 signedPos(42);
+		UINT64 unsignedFromPos = (UINT64)signedPos;
+		if (unsignedFromPos.High() != 0 || unsignedFromPos.Low() != 42)
+			return FALSE;
+
+		// Test INT64 negative to UINT64 (preserves bit pattern)
+		INT64 signedNeg(-1);
+		UINT64 unsignedFromNeg = (UINT64)signedNeg;
+		// -1 in INT64 is 0xFFFFFFFF_FFFFFFFF which equals UINT64::MAX
+		if (unsignedFromNeg.High() != 0xFFFFFFFF || unsignedFromNeg.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test roundtrip: UINT64 -> INT64 -> UINT64
+		UINT64 original(0x12345678, 0x9ABCDEF0);
+		INT64 intermediate = INT64(original);
+		UINT64 roundtrip = (UINT64)intermediate;
+		if (roundtrip.High() != original.High() || roundtrip.Low() != original.Low())
+			return FALSE;
+
+		// Test edge case: UINT64::MAX to INT64 (becomes -1)
+		UINT64 maxUnsigned = UINT64::MAX();
+		INT64 maxAsSigned = INT64(maxUnsigned);
+		if (maxAsSigned.High() != -1 || maxAsSigned.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test edge case: Half of UINT64 range (INT64::MAX + 1)
+		UINT64 halfRange(0x80000000, 0x00000000);
+		INT64 halfAsSigned = INT64(halfRange);
+		// This is INT64::MIN in two's complement
+		if (halfAsSigned.High() != (INT32)0x80000000 || halfAsSigned.Low() != 0)
+			return FALSE;
+
+		// Test zero conversion both ways
+		UINT64 zeroUnsigned(0ULL);
+		INT64 zeroSigned(0);
+		INT64 zeroToSigned = INT64(zeroUnsigned);
+		UINT64 zeroToUnsigned = (UINT64)zeroSigned;
+		if (zeroToSigned.High() != 0 || zeroToSigned.Low() != 0)
+			return FALSE;
+		if (zeroToUnsigned.High() != 0 || zeroToUnsigned.Low() != 0)
 			return FALSE;
 
 		return TRUE;

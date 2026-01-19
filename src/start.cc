@@ -39,7 +39,9 @@ ENTRYPOINT INT32 _start(VOID)
 	if (!DoubleTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
-
+	if(!ArrayStorageTests::RunAll())
+		allPassed = FALSE;
+	Logger::Info<WCHAR>(L""_embed);
 	if (!StringFormatterTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);

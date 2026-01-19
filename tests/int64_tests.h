@@ -143,6 +143,17 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Array formatting"_embed);
 		}
 
+		// Test 13: Type casting between INT64 and UINT64
+		if (!TestTypeCasting())
+		{
+			allPassed = FALSE;
+			Logger::Error<WCHAR>(L"  FAILED: Type casting"_embed);
+		}
+		else
+		{
+			Logger::Info<WCHAR>(L"  PASSED: Type casting"_embed);
+		}
+
 		if (allPassed)
 		{
 			Logger::Info<WCHAR>(L"All INT64 tests passed!"_embed);
@@ -577,6 +588,71 @@ private:
 			// The Logger::Info call exercises the varargs casting
 			Logger::Info<WCHAR>(L"    INT64 Array Value [%lld]: %lld"_embed, (signed long long)i, (signed long long)testArray[(signed long long)i]);
 		}
+
+		return TRUE;
+	}
+
+	static BOOL TestTypeCasting()
+	{
+		// Test INT64 to UINT64 conversion (implicit via operator)
+		INT64 signedPos(12345);
+		UINT64 unsignedFromPos = (UINT64)signedPos;
+		if (unsignedFromPos.High() != 0 || unsignedFromPos.Low() != 12345)
+			return FALSE;
+
+		// Test INT64 negative to UINT64 (preserves bit representation)
+		INT64 signedNeg(-1);
+		UINT64 unsignedFromNeg = (UINT64)signedNeg;
+		if (unsignedFromNeg.High() != 0xFFFFFFFF || unsignedFromNeg.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test UINT64 to INT64 conversion (explicit constructor)
+		UINT64 unsignedVal(0x12345678, 0x9ABCDEF0);
+		INT64 signedFromUnsigned = INT64(unsignedVal);
+		if (signedFromUnsigned.High() != (INT32)0x12345678 || signedFromUnsigned.Low() != 0x9ABCDEF0)
+			return FALSE;
+
+		// Test roundtrip: INT64 -> UINT64 -> INT64
+		INT64 original(42);
+		UINT64 intermediate = (UINT64)original;
+		INT64 roundtrip = INT64(intermediate);
+		if (roundtrip.High() != original.High() || roundtrip.Low() != original.Low())
+			return FALSE;
+
+		// Test roundtrip with negative value
+		INT64 negOriginal(-42);
+		UINT64 negIntermediate = (UINT64)negOriginal;
+		INT64 negRoundtrip = INT64(negIntermediate);
+		if (negRoundtrip.High() != negOriginal.High() || negRoundtrip.Low() != negOriginal.Low())
+			return FALSE;
+
+		// Test edge case: INT64::MAX
+		INT64 maxSigned = INT64::MAX();
+		UINT64 maxAsUnsigned = (UINT64)maxSigned;
+		if (maxAsUnsigned.High() != 0x7FFFFFFF || maxAsUnsigned.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test edge case: INT64::MIN
+		INT64 minSigned = INT64::MIN();
+		UINT64 minAsUnsigned = (UINT64)minSigned;
+		if (minAsUnsigned.High() != 0x80000000 || minAsUnsigned.Low() != 0x00000000)
+			return FALSE;
+
+		// Test UINT64::MAX to INT64 (will be negative when interpreted as signed)
+		UINT64 maxUnsigned = UINT64::MAX();
+		INT64 maxAsNegative = INT64(maxUnsigned);
+		if (maxAsNegative.High() != -1 || maxAsNegative.Low() != 0xFFFFFFFF)
+			return FALSE;
+
+		// Test zero conversion both ways
+		INT64 zeroSigned(0);
+		UINT64 zeroUnsigned(0ULL);
+		UINT64 zeroToUnsigned = (UINT64)zeroSigned;
+		INT64 zeroToSigned = INT64(zeroUnsigned);
+		if (zeroToUnsigned.High() != 0 || zeroToUnsigned.Low() != 0)
+			return FALSE;
+		if (zeroToSigned.High() != 0 || zeroToSigned.Low() != 0)
+			return FALSE;
 
 		return TRUE;
 	}

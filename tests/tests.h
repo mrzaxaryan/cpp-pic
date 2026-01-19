@@ -15,6 +15,7 @@
  *   RandomTests            - Random number generation tests
  *   SocketTests            - Socket and network tests
  *   TlsTests               - TLS 1.3 implementation tests
+ *   ArrayStorageTests      - Compile-time array storage tests
  *
  * USAGE:
  *   #include "tests.h"
@@ -22,6 +23,7 @@
  *   // Run all tests
  *   Djb2Tests::RunAll();
  *   MemoryTests::RunAll();
+ *   ArrayStorageTests::RunAll();
  *   SocketTests::RunAll();
  *   TlsTests::RunAll();
  *   // ... etc
@@ -39,3 +41,4 @@
 #include "random_tests.h"
 #include "socket_tests.h"
 #include "tls_tests.h"
+#include "array_storage_tests.h"

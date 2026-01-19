@@ -86,7 +86,7 @@ private:
         words[wi] = (words[wi] & ~mask) | ((USIZE)v << sh);
     }
 
-    consteval UINT8 GetByte(USIZE byteIndex) const
+    UINT8 GetByte(USIZE byteIndex) const
     {
         const USIZE wi = byteIndex / WordBytes;
         const USIZE sh = (byteIndex % WordBytes) * 8u;
@@ -110,7 +110,7 @@ public:
         }
     }
 
-    constexpr TChar operator[](USIZE index) const
+    TChar operator[](USIZE index) const
     {
         using U = typename UINT_OF_SIZE<sizeof(TChar)>::type;
 
@@ -118,7 +118,7 @@ public:
         const USIZE base = index * sizeof(TChar);
 
         for (USIZE b = 0; b < sizeof(TChar); ++b)
-            v |= (U)GetByte(base + b) << (b * 8u);
+            v |= static_cast<U>(static_cast<unsigned long long>(GetByte(base + b)) << (b * 8u));
 
         return (TChar)v;
     }

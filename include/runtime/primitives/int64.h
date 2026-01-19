@@ -40,6 +40,10 @@ public:
     // Constructor from UINT32
     constexpr explicit INT64(UINT32 val) noexcept : low(val), high(0) {}
 
+    // Constructor from UINT64 (explicit to avoid ambiguity)
+    constexpr explicit INT64(const UINT64 &val) noexcept
+        : low(val.Low()), high((INT32)val.High()) {}
+
     // Constructor from native signed long long (for compatibility)
     constexpr INT64(signed long long val) noexcept
         : low((UINT32)(val & 0xFFFFFFFFLL)),

@@ -169,6 +169,4 @@ typedef union _LARGE_INTEGER
 		(p)->SecurityQualityOfService = NULL;     \
 	} while (0)
 
-#define UINT16SwapByteOrder(x) ((UINT16)(((x) >> 8) | ((x) << 8)))
-
 #endif // PLATFORM_WINDOWS

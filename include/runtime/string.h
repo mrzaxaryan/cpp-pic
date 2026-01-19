@@ -3,7 +3,6 @@
 #include "primitives.h"
 #include "platform.h"
 
-c
 // Class to handle string operations
 class String
 {
@@ -205,21 +204,17 @@ inline INT32 String::ParseString<INT32>(const CHAR *str)
 template <>
 inline DOUBLE String::ParseString<DOUBLE>(const CHAR *s)
 {
-    // Initialize variables
-    INT64 zero = 0;
-    INT64 one = 1;
-    INT64 ten = 10;
     // Initialize result variables
-    DOUBLE sign = (DOUBLE)one;
-    DOUBLE result = (DOUBLE)zero;
-    DOUBLE frac = (DOUBLE)zero;
-    DOUBLE base = (DOUBLE)one;
-    DOUBLE tenDouble = (DOUBLE)ten;
+    DOUBLE sign = 1.0_embed;
+    DOUBLE result = 0.0_embed;
+    DOUBLE frac = 0.0_embed;
+    DOUBLE base = 1.0_embed;
+    DOUBLE tenDouble = 10.0_embed;
 
     // sign
     if (*s == '-')
     {
-        sign = -(DOUBLE)one;
+        sign = -1.0_embed;
         s++;
     }
     else if (*s == '+')
@@ -230,7 +225,7 @@ inline DOUBLE String::ParseString<DOUBLE>(const CHAR *s)
     // integer part
     while (*s >= '0' && *s <= '9')
     {
-        result = result * tenDouble + (*s - '0');
+        result = result * tenDouble + DOUBLE(INT32(*s - '0'));
         s++;
     }
 
@@ -240,7 +235,7 @@ inline DOUBLE String::ParseString<DOUBLE>(const CHAR *s)
         s++; // skip the decimal point
         while (*s >= '0' && *s <= '9')
         {
-            frac = frac * tenDouble + (*s - '0');
+            frac = frac * tenDouble + DOUBLE(INT32(*s - '0'));
             base = base * tenDouble;
             s++;
         }

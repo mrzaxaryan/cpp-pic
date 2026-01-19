@@ -85,6 +85,7 @@ set(INCLUDE_PATHS
     ${CMAKE_SOURCE_DIR}/
     ${CMAKE_SOURCE_DIR}/include/
     ${CMAKE_SOURCE_DIR}/include/runtime/
+    ${CMAKE_SOURCE_DIR}/include/runtime/crypt/
     ${CMAKE_SOURCE_DIR}/include/runtime/platform/
     ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
     ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
@@ -95,6 +96,10 @@ set(INCLUDE_PATHS
 
 # Collect all source files from src/ directory
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cc)
+
+# Exclude platform-specific files for non-target platforms
+list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
+list(FILTER SOURCES EXCLUDE REGEX ".*/uefi/.*")
 
 # =============================================================================
 # Base Compiler Flags (All Architectures)

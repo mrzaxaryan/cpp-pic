@@ -25,9 +25,9 @@ NO_RETURN VOID ExitProcess(USIZE code)
 
 #if defined(PLATFORM_WINDOWS_I386)
 
-// Initialize environment data for PIC-style rebasing
+// InitializeRuntime environment data for PIC-style rebasing
 // Must be called from _start with a stack-allocated ENVIRONMENT_DATA struct
-NOINLINE VOID Initialize(PENVIRONMENT_DATA envData)
+NOINLINE VOID InitializeRuntime(PENVIRONMENT_DATA envData)
 {
     // Get the return address (points inside _start)
     PCHAR currentAddress = (PCHAR)__builtin_return_address(0);

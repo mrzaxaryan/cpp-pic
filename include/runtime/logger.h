@@ -18,6 +18,7 @@
 #pragma once
 
 #include "console.h"
+#include "DateTime.h"
 
 // Convenience macros that automatically embed wide strings
 #define LOG_INFO(format, ...) Logger::Info<WCHAR>(L##format##_embed, ##__VA_ARGS__)
@@ -71,7 +72,14 @@ private:
 	template <TCHAR TChar>
 	FORCE_INLINE static VOID LogWithPrefixV(const WCHAR *prefix, const TChar *format, VA_LIST args)
 	{
-		Console::Write<WCHAR>(prefix);                 // Colored prefix
+		// Get current time
+		DateTime now = DateTime::Now();
+		TimeOnlyString<WCHAR> timeStr = now.ToTimeOnlyString<WCHAR>();
+
+		Console::Write<WCHAR>(prefix);                 // Colored prefix (e.g., "[INFO]")
+		Console::Write<WCHAR>(L"["_embed);             // Start time bracket
+		Console::Write<WCHAR>((const WCHAR *)timeStr); // Current time
+		Console::Write<WCHAR>(L"] "_embed);            // End time bracket + space
 		Console::WriteFormattedV<TChar>(format, args); // User message
 		Console::Write<WCHAR>(L"\033[0m\n"_embed);     // Reset color + newline
 	}

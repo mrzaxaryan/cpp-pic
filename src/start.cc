@@ -8,7 +8,7 @@
 ENTRYPOINT INT32 _start(VOID)
 {
 	ENVIRONMENT_DATA envData;
-	Initialize(&envData);
+	InitializeRuntime(&envData);
 
 	BOOL allPassed = TRUE;
 

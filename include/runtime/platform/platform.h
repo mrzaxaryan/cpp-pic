@@ -27,12 +27,12 @@ typedef struct _ENVIRONMENT_DATA
 #define IMAGE_LINK_BASE ((USIZE)0x401000)
 #define GetEnvironmentData() ((PENVIRONMENT_DATA)(GetCurrentPEB()->SubSystemData))
 
-NOINLINE VOID Initialize(PENVIRONMENT_DATA envData);
+NOINLINE VOID InitializeRuntime(PENVIRONMENT_DATA envData);
 PVOID PerformRelocation(PVOID p);
 
 #else
 #define PerformRelocation(p) (p)
-#define Initialize(envData) ((VOID)envData)
+#define InitializeRuntime(envData) ((VOID)envData)
 #endif
 
 // Entry point macro

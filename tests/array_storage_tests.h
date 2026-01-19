@@ -190,7 +190,7 @@ private:
 
 	static BOOL TestArrayIndexing()
 	{
-		constexpr UINT32 testData[] = {100, 200, 300, 400, 500};
+		static constexpr UINT32 testData[] = {100, 200, 300, 400, 500};
 		auto storage = MakeEmbedArray(testData);
 
 		// Test indexing operator

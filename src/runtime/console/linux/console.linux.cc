@@ -1,21 +1,5 @@
 /**
  * console.linux.cc - Linux Console Output Implementation
- *
- * This file implements the Console::Write() methods for Linux, providing
- * console output functionality via direct syscalls to the kernel.
- *   - Native UTF-8 encoding
- *   - Single write() syscall for all text
- *   - WCHAR must be converted to UTF-8 before output
- *   - Direct syscall, no library resolution needed
- *
- *   - CHAR* (narrow strings): Write directly via syscall
- *   - WCHAR* (wide strings): Convert to UTF-8 using String::WideToUtf8
- *
- *   For wide strings, we process in chunks of 256 WCHARs to balance
- *   stack usage and syscall overhead. Each chunk is:
- *   1. Copied to a temporary buffer with null terminator
- *   2. Converted to UTF-8 via String::WideToUtf8
- *   3. Written to stdout
  */
 
 #if defined(PLATFORM_LINUX)

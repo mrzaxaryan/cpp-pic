@@ -49,14 +49,6 @@ typedef bool BOOL, *PBOOL, **PPBOOL;
 
 /*
  * USIZE/SSIZE - Platform-specific pointer-sized types
- *
- * These must match the platform's size_t/ssize_t for operator new compatibility:
- *   Windows x86_64:  unsigned long long (8 bytes)
- *   Windows i386:    unsigned int (4 bytes)
- *   Linux x86_64:    unsigned long (8 bytes) - NOT long long!
- *   Linux i386:      unsigned int (4 bytes)
- *   ARM64:           Platform-dependent
- *   ARM32:           unsigned int (4 bytes)
  */
 #if defined(PLATFORM_WINDOWS)
 /* Windows uses LLP64 model: long is 32-bit, long long is 64-bit */
@@ -72,15 +64,6 @@ typedef signed int SSIZE, *PSSIZE;
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
 typedef unsigned long USIZE, *PUSIZE;
 typedef signed long SSIZE, *PSSIZE;
-#else
-typedef unsigned int USIZE, *PUSIZE;
-typedef signed int SSIZE, *PSSIZE;
-#endif
-#else
-/* Fallback for unknown platforms */
-#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
-typedef unsigned long long USIZE, *PUSIZE;
-typedef signed long long SSIZE, *PSSIZE;
 #else
 typedef unsigned int USIZE, *PUSIZE;
 typedef signed int SSIZE, *PSSIZE;

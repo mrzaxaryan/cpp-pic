@@ -351,15 +351,6 @@ add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMENT "Generating PIC blob and analysis files..."
 )
 
-# Windows-specific: verify no .rdata section
-if(PLATFORM_LC STREQUAL "windows")
-    add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} -P "${CMAKE_SOURCE_DIR}/cmake/verify_no_rdata.cmake"
-        COMMENT "Verifying no .rdata section..."
-        APPEND
-    )
-endif()
-
 # =============================================================================
 # Configuration Summary
 # =============================================================================

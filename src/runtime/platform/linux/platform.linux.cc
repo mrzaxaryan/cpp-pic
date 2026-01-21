@@ -3,15 +3,6 @@
  *
  * Implements platform-specific functions common across all Linux architectures
  * (x86_64, i386, aarch64, armv7a).
- *
- * Currently implements:
- *   - ExitProcess() - Cross-platform process termination
- *
- * Architecture-specific syscall implementations are in separate files:
- *   - platform.linux.x86_64.cc
- *   - platform.linux.i386.cc
- *   - platform.linux.aarch64.cc
- *   - platform.linux.armv7a.cc
  */
 
 #if defined(PLATFORM_LINUX)

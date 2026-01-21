@@ -14,16 +14,6 @@
  *
  * Writes a string of narrow (8-bit) characters to standard output.
  * On Linux, this is a direct pass-through to the write() syscall.
- *
- * @param output       - Pointer to character buffer to write
- * @param outputLength - Number of characters (bytes) to write
- * @return Number of characters written, 0 on error
- *
- * IMPLEMENTATION:
- *   Calls write(STDOUT_FILENO, output, outputLength) via Syscall::Write().
- *
- * ERROR HANDLING:
- *   Linux syscalls return negative errno on error. We convert this to 0.
  */
 UINT32 Console::Write(const CHAR *output, USIZE outputLength)
 {
@@ -43,14 +33,6 @@ UINT32 Console::Write(const CHAR *output, USIZE outputLength)
  * Writes a string of wide (16-bit) characters to standard output.
  * Since Linux terminals expect UTF-8, we convert UTF-16 to UTF-8
  * using String::WideToUtf8 before writing.
- *
- * @param text       - Pointer to wide character buffer to write
- * @param wcharCount - Number of wide characters (not bytes) to write
- * @return Number of wide characters processed, 0 on error
- *
- * CHUNKED PROCESSING:
- *   Processes input in chunks of 256 WCHARs to limit stack usage.
- *   Each chunk is null-terminated and converted to UTF-8 separately.
  */
 UINT32 Console::Write(const WCHAR *text, USIZE wcharCount)
 {

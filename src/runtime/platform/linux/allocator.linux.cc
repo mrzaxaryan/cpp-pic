@@ -35,9 +35,6 @@ static inline USIZE __align_up(USIZE x, USIZE a)
 /**
  * Allocator::AllocateMemory - Allocate memory pages
  *
- * @param len - Number of bytes to allocate
- * @return Pointer to allocated memory, or NULL on failure
- *
  * Allocates (header + len) rounded up to page size via mmap.
  */
 PVOID Allocator::AllocateMemory(USIZE len)
@@ -64,10 +61,7 @@ PVOID Allocator::AllocateMemory(USIZE len)
 
 /**
  * Allocator::ReleaseMemory - Free allocated memory
- *
- * @param ptr      - Pointer returned by AllocateMemory (or NULL)
- * @param sizeHint - Size hint for debug validation (can be 0)
- *
+ * 
  * Retrieves size from header and calls munmap.
  */
 VOID Allocator::ReleaseMemory(PVOID ptr, USIZE sizeHint)

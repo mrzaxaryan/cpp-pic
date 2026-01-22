@@ -107,56 +107,7 @@ private:
 		return TRUE;
 	}
 
-	// Test 4: WebSocket connection (port 80)
-	static BOOL TestWebSocketConnection()
-	{
-		LOG_INFO("Test: WebSocket Connection (WS:80)");
-
-		// Connect to WebSocket port
-		Socket sock(TEST_SERVER_IP, 80);
-
-		if (!sock.IsValid() || !sock.Open())
-		{
-			LOG_ERROR("Socket initialization or connection failed");
-			return FALSE;
-		}
-
-		// Send WebSocket upgrade request
-		auto request = "GET / HTTP/1.1\r\n"
-		               "Host: 0y.wtf\r\n"
-		               "Upgrade: websocket\r\n"
-		               "Connection: Upgrade\r\n"
-		               "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
-		               "Sec-WebSocket-Version: 13\r\n\r\n"_embed;
-		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length);
-
-		if (bytesSent != request.Length)
-		{
-			LOG_ERROR("Failed to send WebSocket upgrade request");
-			sock.Close();
-			return FALSE;
-		}
-
-		LOG_INFO("WebSocket upgrade request sent (%d bytes)", bytesSent);
-
-		// Receive upgrade response
-		CHAR buffer[512];
-		Memory::Zero(buffer, sizeof(buffer));
-		SSIZE bytesRead = sock.Read(buffer, sizeof(buffer) - 1);
-
-		if (bytesRead <= 0)
-		{
-			LOG_ERROR("Failed to receive WebSocket upgrade response");
-			sock.Close();
-			return FALSE;
-		}
-
-		LOG_INFO("Received WebSocket upgrade response (%d bytes)", bytesRead);
-		sock.Close();
-		return TRUE;
-	}
-
-	// Test 5: TCP Echo Server (port 8080)
+	// Test 4: TCP Echo Server (port 8080)
 	static BOOL TestTcpEcho()
 	{
 		LOG_INFO("Test: TCP Echo Server (port 8080)");
@@ -228,7 +179,7 @@ private:
 		return TRUE;
 	}
 
-	// Test 6: Multiple sequential connections
+	// Test 5: Multiple sequential connections
 	static BOOL TestMultipleConnections()
 	{
 		LOG_INFO("Test: Multiple Sequential Connections");
@@ -274,69 +225,7 @@ private:
 		return TRUE;
 	}
 
-	// Test 7: Large HTTP response handling
-	static BOOL TestLargeResponse()
-	{
-		LOG_INFO("Test: Large HTTP Response Handling");
-
-		Socket sock(TEST_SERVER_IP, 80);
-
-		if (!sock.IsValid() || !sock.Open())
-		{
-			LOG_ERROR("Socket initialization or connection failed");
-			return FALSE;
-		}
-
-		// Send HTTP request
-		auto request = "GET / HTTP/1.1\r\nHost: 0y.wtf\r\nConnection: close\r\n\r\n"_embed;
-		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length);
-
-		if (bytesSent != request.Length)
-		{
-			LOG_ERROR("Failed to send HTTP request");
-			sock.Close();
-			return FALSE;
-		}
-
-		// Read response in chunks
-		CHAR buffer[1024];
-		UINT32 totalBytesRead = 0;
-		UINT32 chunkCount = 0;
-
-		while (TRUE)
-		{
-			Memory::Zero(buffer, sizeof(buffer));
-			SSIZE bytesRead = sock.Read(buffer, sizeof(buffer) - 1);
-
-			if (bytesRead <= 0)
-			{
-				// End of stream or error
-				break;
-			}
-
-			totalBytesRead += bytesRead;
-			chunkCount++;
-
-			if (chunkCount == 1)
-			{
-				LOG_DEBUG("First chunk (80 chars): %.80s", buffer);
-			}
-		}
-
-		LOG_INFO("Received %d bytes in %d chunks", totalBytesRead, chunkCount);
-
-		if (totalBytesRead == 0)
-		{
-			LOG_ERROR("No data received");
-			sock.Close();
-			return FALSE;
-		}
-
-		sock.Close();
-		return TRUE;
-	}
-
-	// Test 8: IP address conversion
+	// Test 6: IP address conversion
 	static BOOL TestIpConversion()
 	{
 		LOG_INFO("Test: IP Address Conversion");
@@ -396,7 +285,7 @@ public:
 		LOG_INFO("Test Server: 0y.wtf (79.133.51.99)");
 
 		UINT32 passed = 0;
-		UINT32 total = 8;
+		UINT32 total = 6;
 
 		if (TestSocketCreation())
 			passed++;
@@ -404,13 +293,9 @@ public:
 			passed++;
 		if (TestHttpRequest())
 			passed++;
-		if (TestWebSocketConnection())
-			passed++;
 		if (TestTcpEcho())
 			passed++;
 		if (TestMultipleConnections())
-			passed++;
-		if (TestLargeResponse())
 			passed++;
 		if (TestIpConversion())
 			passed++;

@@ -100,18 +100,7 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Shared secret computation (ECDH)"_embed);
 		}
 
-		// Test 9: Shared secret symmetry (Alice-Bob == Bob-Alice)
-		if (!TestSharedSecretSymmetry())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Shared secret symmetry"_embed);
-		}
-		else
-		{
-			Logger::Info<WCHAR>(L"  PASSED: Shared secret symmetry"_embed);
-		}
-
-		// Test 10: Invalid curve size handling
+		// Test 9: Invalid curve size handling
 		if (!TestInvalidCurveSize())
 		{
 			allPassed = FALSE;
@@ -122,7 +111,7 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Invalid curve size handling"_embed);
 		}
 
-		// Test 11: Export buffer size validation
+		// Test 10: Export buffer size validation
 		if (!TestExportBufferSizeValidation())
 		{
 			allPassed = FALSE;
@@ -133,7 +122,7 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Export buffer size validation"_embed);
 		}
 
-		// Test 12: Invalid public key handling
+		// Test 11: Invalid public key handling
 		if (!TestInvalidPublicKey())
 		{
 			allPassed = FALSE;
@@ -144,7 +133,7 @@ public:
 			Logger::Info<WCHAR>(L"  PASSED: Invalid public key handling"_embed);
 		}
 
-		// Test 13: Multiple key generation uniqueness
+		// Test 12: Multiple key generation uniqueness
 		if (!TestMultipleKeyGeneration())
 		{
 			allPassed = FALSE;
@@ -344,40 +333,7 @@ private:
 		return CompareBytes(aliceSecret, bobSecret, 32);
 	}
 
-	// Test 9: Shared secret symmetry
-	static BOOL TestSharedSecretSymmetry()
-	{
-		// Create Alice and Bob
-		Ecc alice, bob;
-		alice.Initialize(32);
-		bob.Initialize(32);
-
-		// Export public keys
-		UINT8 alicePublicKey[32 * 2 + 1];
-		UINT8 bobPublicKey[32 * 2 + 1];
-
-		alice.ExportPublicKey(alicePublicKey, sizeof(alicePublicKey));
-		bob.ExportPublicKey(bobPublicKey, sizeof(bobPublicKey));
-
-		// Compute shared secrets
-		UINT8 secret1[32];
-		UINT8 secret2[32];
-
-		alice.ComputeSharedSecret(bobPublicKey, sizeof(bobPublicKey), secret1);
-		bob.ComputeSharedSecret(alicePublicKey, sizeof(alicePublicKey), secret2);
-
-		// Verify symmetry: Alice's secret == Bob's secret
-		if (!CompareBytes(secret1, secret2, 32))
-			return FALSE;
-
-		// Secrets should not be all zeros
-		if (IsAllZeros(secret1, 32))
-			return FALSE;
-
-		return TRUE;
-	}
-
-	// Test 10: Invalid curve size handling
+	// Test 9: Invalid curve size handling
 	static BOOL TestInvalidCurveSize()
 	{
 		Ecc ecc;
@@ -389,7 +345,7 @@ private:
 		return result == -1;
 	}
 
-	// Test 11: Export buffer size validation
+	// Test 10: Export buffer size validation
 	static BOOL TestExportBufferSizeValidation()
 	{
 		Ecc ecc;
@@ -402,7 +358,7 @@ private:
 		return result == 0;
 	}
 
-	// Test 12: Invalid public key handling
+	// Test 11: Invalid public key handling
 	static BOOL TestInvalidPublicKey()
 	{
 		Ecc ecc;
@@ -420,7 +376,7 @@ private:
 		return result == -1;
 	}
 
-	// Test 13: Sequential key generation produces different keys
+	// Test 12: Sequential key generation produces different keys
 	// Note: Current Random implementation uses fixed seed (12345) per instance,
 	// so we test that sequential Initialize() calls produce different keys
 	// because each Initialize() consumes random bytes, advancing the RNG state

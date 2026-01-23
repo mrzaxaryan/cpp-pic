@@ -7,21 +7,20 @@
 
 // =============================================================================
 // Socket Tests - AFD Socket Implementation Validation
-// Server: one.one.one.on (1.1.1.1)
+// Server: 0y.wtf (79.133.51.99)
 // =============================================================================
 
 class SocketTests
 {
 private:
-	// Test server IP address: 1.1.1.1
-	static constexpr UINT32 TEST_SERVER_IP = 0x01010101; // Network byte order
+	// Test server IP address: 79.133.51.99 (0y.wtf)
+	static constexpr UINT32 TEST_SERVER_IP = 0x4F853363; // Network byte order
 
 	// Test 1: Socket creation
 	static BOOL TestSocketCreation()
 	{
 		LOG_INFO("Test: Socket Creation");
 
-		// Create socket for connection to test server
 		Socket sock(TEST_SERVER_IP, 80);
 
 		if (!sock.IsValid())
@@ -40,7 +39,6 @@ private:
 	{
 		LOG_INFO("Test: Socket Connection (HTTP:80)");
 
-		// Create socket and connect to test server port 80
 		Socket sock(TEST_SERVER_IP, 80);
 
 		if (!sock.IsValid())
@@ -66,7 +64,6 @@ private:
 	{
 		LOG_INFO("Test: HTTP GET Request (port 80)");
 
-		// Connect to HTTP port
 		Socket sock(TEST_SERVER_IP, 80);
 
 		if (!sock.IsValid() || !sock.Open())
@@ -159,7 +156,7 @@ private:
 		LOG_INFO("Test: IP Address Conversion");
 
 		// Test ConvertIP function with test server address
-		auto ipStr = "1.1.1.1"_embed;
+		auto ipStr = "79.133.51.99"_embed;
 		UINT32 convertedIp = ConvertIP((PCCHAR)ipStr);
 
 		if (convertedIp == INVALID_IPV4)
@@ -210,7 +207,7 @@ public:
 	static BOOL RunAll()
 	{
 		LOG_INFO("=== Starting Socket Tests ===");
-		LOG_INFO("Test Server: 1.1.1.1 (Cloudflare)");
+		LOG_INFO("Test Server: 0y.wtf (79.133.51.99)");
 
 		UINT32 passed = 0;
 		UINT32 total = 5;

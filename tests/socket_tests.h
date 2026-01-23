@@ -14,7 +14,7 @@ class SocketTests
 {
 private:
 	// Test server IP address: 79.133.51.99 (0y.wtf)
-	static constexpr UINT32 TEST_SERVER_IP = 0x4F853363; // Network byte order
+	static constexpr UINT32 TEST_SERVER_IP = 0x6333854F;
 
 	// Test 1: Socket creation
 	static BOOL TestSocketCreation()

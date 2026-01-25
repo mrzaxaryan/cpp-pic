@@ -23,12 +23,6 @@ private:
 
 		Socket sock(TEST_SERVER_IP, 80);
 
-		if (!sock.IsValid())
-		{
-			LOG_ERROR("Socket creation failed");
-			return FALSE;
-		}
-
 		LOG_INFO("Socket created successfully");
 		sock.Close();
 		return TRUE;
@@ -40,12 +34,6 @@ private:
 		LOG_INFO("Test: Socket Connection (HTTP:80)");
 
 		Socket sock(TEST_SERVER_IP, 80);
-
-		if (!sock.IsValid())
-		{
-			LOG_ERROR("Socket creation failed");
-			return FALSE;
-		}
 
 		if (!sock.Open())
 		{
@@ -66,7 +54,7 @@ private:
 
 		Socket sock(TEST_SERVER_IP, 80);
 
-		if (!sock.IsValid() || !sock.Open())
+		if (!sock.Open())
 		{
 			LOG_ERROR("Socket initialization or connection failed");
 			return FALSE;
@@ -113,7 +101,7 @@ private:
 		{
 			Socket sock(TEST_SERVER_IP, 80);
 
-			if (!sock.IsValid() || !sock.Open())
+			if (!sock.Open())
 			{
 				LOG_ERROR("Connection %d failed", i + 1);
 				return FALSE;

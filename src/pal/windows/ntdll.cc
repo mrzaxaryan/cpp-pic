@@ -2,58 +2,85 @@
 
 #define ResolveNtdllExportAddress(functionName) ResolveExportAddressFromPebModule(Djb2::HashCompileTime(L"ntdll.dll"), Djb2::HashCompileTime(functionName))
 
-// =============================================================================
-// Memory Management
-// =============================================================================
+NTSTATUS NTDLL::NtCreateEvent(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState)
+{
+    return ((NTSTATUS(STDCALL *)(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState))ResolveNtdllExportAddress("NtCreateEvent"))(EventHandle, DesiredAccess, ObjectAttributes, EventType, InitialState);
+}
+NTSTATUS NTDLL::NtDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength)
+{
+    return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength))ResolveNtdllExportAddress("NtDeviceIoControlFile"))(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+}
+
+NTSTATUS NTDLL::NtWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout)
+{
+    return ((NTSTATUS(STDCALL *)(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout))ResolveNtdllExportAddress("NtWaitForSingleObject"))(Object, Alertable, Timeout);
+}
+
+INT64 NTDLL::NtClose(PVOID Handle)
+{
+    return ((INT64(STDCALL *)(PVOID Handle))ResolveNtdllExportAddress("NtClose"))(Handle);
+}
+
+NTSTATUS NTDLL::NtCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength)
+{
+    return ((NTSTATUS(STDCALL *)(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength))ResolveNtdllExportAddress("NtCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+}
 
 PVOID NTDLL::RtlAllocateHeap(PVOID HeapHandle, INT32 Flags, USIZE Size)
 {
-	return ((PVOID(STDCALL *)(PVOID, INT32, USIZE))ResolveNtdllExportAddress("RtlAllocateHeap"))(HeapHandle, Flags, Size);
+    return ((PVOID(STDCALL *)(PVOID HeapHandle, INT32 Flags, USIZE Size))ResolveNtdllExportAddress("RtlAllocateHeap"))(HeapHandle, Flags, Size);
 }
 
 BOOL NTDLL::RtlFreeHeap(PVOID HeapHandle, INT32 Flags, PVOID Pointer)
 {
-	return ((BOOL(STDCALL *)(PVOID, INT32, PVOID))ResolveNtdllExportAddress("RtlFreeHeap"))(HeapHandle, Flags, Pointer);
+    return ((BOOL(STDCALL *)(PVOID HeapHandle, INT32 Flags, PVOID Pointer))ResolveNtdllExportAddress("RtlFreeHeap"))(HeapHandle, Flags, Pointer);
 }
-
-// =============================================================================
-// Process Management
-// =============================================================================
 
 NTSTATUS NTDLL::ZwTerminateProcess(PVOID ProcessHandle, NTSTATUS ExitStatus)
 {
-	return ((NTSTATUS(STDCALL *)(PVOID, NTSTATUS))ResolveNtdllExportAddress("ZwTerminateProcess"))(ProcessHandle, ExitStatus);
+    return ((NTSTATUS(STDCALL *)(PVOID ProcessHandle, NTSTATUS ExitStatus))ResolveNtdllExportAddress("ZwTerminateProcess"))(ProcessHandle, ExitStatus);
 }
-
-// =============================================================================
-// File/Device I/O
-// =============================================================================
-
-NTSTATUS NTDLL::NtCreateFile(PVOID *FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength)
+NTSTATUS NTDLL::NtQueryInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass)
 {
-	return ((NTSTATUS(STDCALL *)(PVOID *, UINT32, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK, PLARGE_INTEGER, UINT32, UINT32, UINT32, UINT32, PVOID, UINT32))ResolveNtdllExportAddress("NtCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+    return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass))ResolveNtdllExportAddress("NtQueryInformationFile"))(FileHandle, IoStatusBlock, FileInformation, Length, FileInformationClass);
 }
-
-NTSTATUS NTDLL::NtDeviceIoControlFile(PVOID FileHandle, PVOID Event, PVOID ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength)
+NTSTATUS NTDLL::NtReadFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key)
 {
-	return ((NTSTATUS(STDCALL *)(PVOID, PVOID, PVOID, PVOID, PIO_STATUS_BLOCK, UINT32, PVOID, UINT32, PVOID, UINT32))ResolveNtdllExportAddress("NtDeviceIoControlFile"))(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+    return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key))ResolveNtdllExportAddress("NtReadFile"))(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, Buffer, Length, ByteOffset, Key);
+}   
+NTSTATUS NTDLL::NtWriteFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key)
+{
+    return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key))ResolveNtdllExportAddress("NtWriteFile"))(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, Buffer, Length, ByteOffset, Key);
 }
-
-NTSTATUS NTDLL::NtClose(PVOID Handle)
+NTSTATUS NTDLL::NtSetInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass)
 {
-	return ((NTSTATUS(STDCALL *)(PVOID))ResolveNtdllExportAddress("NtClose"))(Handle);
+    return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass))ResolveNtdllExportAddress("NtSetInformationFile"))(FileHandle, IoStatusBlock, FileInformation, Length, FileInformationClass);
 }
-
-// =============================================================================
-// Synchronization
-// =============================================================================
-
-NTSTATUS NTDLL::NtCreateEvent(PVOID *EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, BOOL InitialState)
+BOOL NTDLL::ZwDeleteFile(POBJECT_ATTRIBUTES FileName)
 {
-	return ((NTSTATUS(STDCALL *)(PVOID *, UINT32, POBJECT_ATTRIBUTES, EVENT_TYPE, BOOL))ResolveNtdllExportAddress("NtCreateEvent"))(EventHandle, DesiredAccess, ObjectAttributes, EventType, InitialState);
+    return ((BOOL(STDCALL *)(POBJECT_ATTRIBUTES FileName))ResolveNtdllExportAddress("NtDeleteFile"))(FileName);
 }
-
-NTSTATUS NTDLL::NtWaitForSingleObject(PVOID Handle, BOOL Alertable, PLARGE_INTEGER Timeout)
+NTSTATUS NTDLL::NtQueryAttributesFile(POBJECT_ATTRIBUTES ObjectAttributes, PFILE_BASIC_INFORMATION FileInformation)
 {
-	return ((NTSTATUS(STDCALL *)(PVOID, BOOL, PLARGE_INTEGER))ResolveNtdllExportAddress("NtWaitForSingleObject"))(Handle, Alertable, Timeout);
+    return ((NTSTATUS(STDCALL *)(POBJECT_ATTRIBUTES ObjectAttributes, PFILE_BASIC_INFORMATION FileInformation))ResolveNtdllExportAddress("NtQueryAttributesFile"))(ObjectAttributes, FileInformation);
+}
+NTSTATUS NTDLL::NtOpenFile(PPVOID FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, UINT32 ShareAccess, UINT32 OpenOptions)
+{
+    return ((NTSTATUS(STDCALL *)(PPVOID FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, UINT32 ShareAccess, UINT32 OpenOptions))ResolveNtdllExportAddress("NtOpenFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+}
+NTSTATUS NTDLL::RtlDosPathNameToNtPathName_U(const WCHAR* DosName, UNICODE_STRING* NtName, WCHAR** FilePart, PRTL_RELATIVE_NAME_U RelativeName)
+{
+    return ((NTSTATUS(STDCALL *)(const WCHAR* DosName, UNICODE_STRING* NtName, WCHAR** FilePart, PRTL_RELATIVE_NAME_U RelativeName))ResolveNtdllExportAddress("RtlDosPathNameToNtPathName_U"))(DosName, NtName, FilePart, RelativeName);
+}
+NTSTATUS NTDLL::RtlFreeUnicodeString(PUNICODE_STRING UnicodeString)
+{
+    return ((NTSTATUS(STDCALL *)(PUNICODE_STRING UnicodeString))ResolveNtdllExportAddress("RtlFreeUnicodeString"))(UnicodeString);
+}
+NTSTATUS NTDLL::NtQueryVolumeInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FsInformation, UINT32 Length, UINT32 FsInformationClass)
+{
+    return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FsInformation, UINT32 Length, UINT32 FsInformationClass))ResolveNtdllExportAddress("NtQueryVolumeInformationFile"))(FileHandle, IoStatusBlock, FsInformation, Length, FsInformationClass);
+}
+NTSTATUS NTDLL::NtQueryInformationProcess(PVOID ProcessHandle, UINT32 ProcessInformationClass, PVOID ProcessInformation, UINT32 ProcessInformationLength, PUINT32 ReturnLength)
+{
+    return ((NTSTATUS(STDCALL *)(PVOID ProcessHandle, UINT32 ProcessInformationClass, PVOID ProcessInformation, UINT32 ProcessInformationLength, PUINT32 ReturnLength))ResolveNtdllExportAddress("NtQueryInformationProcess"))(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength);
 }

@@ -2,7 +2,7 @@
  * start.cc - CPP-PIC Runtime Entry Point
  */
 
-#include "runtime.h"
+#include "ral.h"
 #include "tests.h"
 
 ENTRYPOINT INT32 _start(VOID)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "runtime.h"
+#include "ral.h"
 #include "sha2.h"
 
 class ShaTests

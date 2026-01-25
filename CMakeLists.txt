@@ -84,15 +84,17 @@ endif()
 set(INCLUDE_PATHS
     ${CMAKE_SOURCE_DIR}/
     ${CMAKE_SOURCE_DIR}/include/
-    ${CMAKE_SOURCE_DIR}/include/runtime/
-    ${CMAKE_SOURCE_DIR}/include/runtime/crypt/
-    ${CMAKE_SOURCE_DIR}/include/runtime/crypt/random/
-    ${CMAKE_SOURCE_DIR}/include/runtime/date_time/
-    ${CMAKE_SOURCE_DIR}/include/runtime/platform/
-    ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
-    ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
-    ${CMAKE_SOURCE_DIR}/include/runtime/network/
-    ${CMAKE_SOURCE_DIR}/include/runtime/network/tls/
+    # BAL - Base Abstraction Layer (platform-independent)
+    ${CMAKE_SOURCE_DIR}/include/bal/
+    ${CMAKE_SOURCE_DIR}/include/bal/primitives/
+    # PAL - Platform Abstraction Layer (OS/hardware)
+    ${CMAKE_SOURCE_DIR}/include/pal/
+    ${CMAKE_SOURCE_DIR}/include/pal/windows/
+    # RAL - Runtime Abstraction Layer (application features)
+    ${CMAKE_SOURCE_DIR}/include/ral/
+    ${CMAKE_SOURCE_DIR}/include/ral/crypt/
+    ${CMAKE_SOURCE_DIR}/include/ral/network/
+    ${CMAKE_SOURCE_DIR}/include/ral/network/tls/
     ${CMAKE_SOURCE_DIR}/tests/
 )
 

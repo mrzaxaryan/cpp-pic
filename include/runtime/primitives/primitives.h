@@ -36,6 +36,10 @@ typedef unsigned short UINT16, *PUINT16;
 typedef signed int INT32, *PINT32;
 typedef unsigned int UINT32, *PUINT32, **PPUINT32;
 
+typedef signed long long NATIVE_INT64, *PNATIVE_INT64;
+typedef unsigned long long NATIVE_UINT64, *PNATIVE_UINT64;
+
+
 typedef char CHAR, *PCHAR, **PPCHAR;
 typedef unsigned char UCHAR, *PUCHAR;
 typedef const CHAR *PCCHAR;

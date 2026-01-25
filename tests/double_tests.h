@@ -131,7 +131,7 @@ private:
 			return FALSE;
 
 		// Construction from embedded double
-		DOUBLE b = 1.0;
+		DOUBLE b = 1.0_embed;
 		// IEEE-754: 1.0 = 0x3FF0000000000000
 		if (b.Bits().High() != 0x3FF00000 || b.Bits().Low() != 0x00000000)
 			return FALSE;
@@ -188,31 +188,31 @@ private:
 	static BOOL TestDoubleToInt()
 	{
 		// 1.0 -> 1
-		DOUBLE one = 1.0;
+		DOUBLE one = 1.0_embed;
 		INT32 int_one = (INT32)one;
 		if (int_one != 1)
 			return FALSE;
 
 		// 1.9 -> 1 (truncation)
-		DOUBLE one_nine = 1.9;
+		DOUBLE one_nine = 1.9_embed;
 		INT32 int_one_nine = (INT32)one_nine;
 		if (int_one_nine != 1)
 			return FALSE;
 
 		// 100.5 -> 100
-		DOUBLE hundred = 100.5;
+		DOUBLE hundred = 100.5_embed;
 		INT32 int_hundred = (INT32)hundred;
 		if (int_hundred != 100)
 			return FALSE;
 
 		// -1.0 -> -1
-		DOUBLE neg_one = -1.0;
+		DOUBLE neg_one = -1.0_embed;
 		INT32 int_neg_one = (INT32)neg_one;
 		if (int_neg_one != -1)
 			return FALSE;
 
 		// 0.5 -> 0
-		DOUBLE half = 0.5;
+		DOUBLE half = 0.5_embed;
 		INT32 int_half = (INT32)half;
 		if (int_half != 0)
 			return FALSE;
@@ -223,8 +223,8 @@ private:
 	static BOOL TestArithmetic()
 	{
 		// Addition
-		DOUBLE a = 2.0;
-		DOUBLE b = 3.0;
+		DOUBLE a = 2.0_embed;
+		DOUBLE b = 3.0_embed;
 		DOUBLE c = a + b;
 		double native_c = (double)c;
 		if (native_c != (double)5.0_embed)
@@ -243,14 +243,14 @@ private:
 			return FALSE;
 
 		// Division
-		DOUBLE six = 6.0;
+		DOUBLE six = 6.0_embed;
 		DOUBLE f = six / a;
 		double native_f = (double)f;
 		if (native_f != (double)3.0_embed)
 			return FALSE;
 
 		// Compound assignment +=
-		DOUBLE g = 10.0;
+		DOUBLE g = 10.0_embed;
 		g += a;
 		if ((double)g != (double)12.0_embed)
 			return FALSE;
@@ -275,9 +275,9 @@ private:
 
 	static BOOL TestComparisons()
 	{
-		DOUBLE a = 1.0;
-		DOUBLE b = 2.0;
-		DOUBLE c = 1.0;
+		DOUBLE a = 1.0_embed;
+		DOUBLE b = 2.0_embed;
+		DOUBLE c = 1.0_embed;
 
 		// Equality
 		if (!(a == c))
@@ -329,21 +329,21 @@ private:
 	static BOOL TestNegation()
 	{
 		// Negate positive
-		DOUBLE pos = 5.0;
+		DOUBLE pos = 5.0_embed;
 		DOUBLE neg = -pos;
 		double native_neg = (double)neg;
 		if (native_neg != (double)-5.0_embed)
 			return FALSE;
 
 		// Negate negative
-		DOUBLE neg2 = -3.0;
+		DOUBLE neg2 = -3.0_embed;
 		DOUBLE pos2 = -neg2;
 		double native_pos2 = (double)pos2;
 		if (native_pos2 != (double)3.0_embed)
 			return FALSE;
 
 		// Double negation
-		DOUBLE val = 7.0;
+		DOUBLE val = 7.0_embed;
 		DOUBLE dbl_neg = -(-val);
 		if ((double)dbl_neg != (double)7.0_embed)
 			return FALSE;
@@ -354,26 +354,26 @@ private:
 	static BOOL TestEmbeddedLiterals()
 	{
 		// Test _embed suffix for double literals
-		DOUBLE a = 1.5;
+		DOUBLE a = 1.5_embed;
 		if ((double)a != (double)1.5_embed)
 			return FALSE;
 
-		DOUBLE b = 3.14159;
+		DOUBLE b = 3.14159_embed;
 		double native_b = (double)b;
 		// Allow small tolerance for floating point
 		if (native_b < (double)3.14158_embed || native_b > (double)3.14160_embed)
 			return FALSE;
 
-		DOUBLE c = 0.5;
+		DOUBLE c = 0.5_embed;
 		if ((double)c != (double)0.5_embed)
 			return FALSE;
 
-		DOUBLE d = 100.0;
+		DOUBLE d = 100.0_embed;
 		if ((double)d != (double)100.0_embed)
 			return FALSE;
 
 		// Negative embedded
-		DOUBLE e = -2.5;
+		DOUBLE e = -2.5_embed;
 		if ((double)e != (double)-2.5_embed)
 			return FALSE;
 
@@ -383,12 +383,12 @@ private:
 	static BOOL TestEdgeCases()
 	{
 		// Zero
-		DOUBLE zero = 0.0;
+		DOUBLE zero = 0.0_embed;
 		if ((double)zero != (double)0.0_embed)
 			return FALSE;
 
 		// Adding zero
-		DOUBLE val = 5.0;
+		DOUBLE val = 5.0_embed;
 		DOUBLE result = val + zero;
 		if ((double)result != (double)5.0_embed)
 			return FALSE;
@@ -399,14 +399,14 @@ private:
 			return FALSE;
 
 		// Multiplying by one
-		DOUBLE one = 1.0;
+		DOUBLE one = 1.0_embed;
 		result = val * one;
 		if ((double)result != (double)5.0_embed)
 			return FALSE;
 
 		// Small values
-		DOUBLE small = 0.001;
-		DOUBLE thousand = 1000.0;
+		DOUBLE small = 0.001_embed;
+		DOUBLE thousand = 1000.0_embed;
 		result = small * thousand;
 		double native_result = (double)result;
 		// Should be approximately 1.0
@@ -420,7 +420,7 @@ private:
 	{
 		// Test that DOUBLE arrays can be properly initialized and formatted
 		// This ensures the varargs casting works correctly with Logger
-		DOUBLE testArray[] = { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.1 };
+		DOUBLE testArray[] = { 1.1_embed, 2.2_embed, 3.3_embed, 4.4_embed, 5.5_embed, 6.6_embed, 7.7_embed, 8.8_embed, 9.9_embed, 10.1_embed };
 
 		// Verify array initialization by checking that values are non-zero
 		// We can't do exact comparisons without generating .rdata, so just verify they're initialized

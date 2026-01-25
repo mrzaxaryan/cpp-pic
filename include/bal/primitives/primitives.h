@@ -15,7 +15,7 @@
 
 #define NO_RETURN extern "C" __attribute__((noreturn))
 
-#define IS_DIGIT(c) ((c) >= '0' And(c) <= '9')
+#define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))

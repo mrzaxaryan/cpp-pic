@@ -43,6 +43,7 @@ private:
 public:
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
+    TLSClient() : host(nullptr), ip(0), port(0), stateIndex(0), channelBytesRead(0) {}
     TLSClient(PCCHAR host, UINT32 ip, UINT16 port);
     BOOL Open();
     BOOL Close();

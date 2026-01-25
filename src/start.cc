@@ -65,6 +65,11 @@ ENTRYPOINT INT32 _start(VOID)
 	// Run TLS tests (requires network connectivity)
 	if(!TlsTests::RunAll())
 		allPassed = FALSE;
+	Logger::Info<WCHAR>(L""_embed);
+
+	// Run DNS tests (requires network connectivity)
+	if(!DnsTests::RunAll())
+		allPassed = FALSE;
 
 	// Final summary
 	Logger::Info<WCHAR>(L"=== Test Suite Complete ==="_embed);

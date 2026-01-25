@@ -31,6 +31,9 @@ private:
 	NTSTATUS WaitForOperation(PVOID SockEvent, PIO_STATUS_BLOCK pIOSB, PLARGE_INTEGER pTimeout);
 
 public:
+	// Default constructor: Creates an uninitialized socket
+	Socket() : m_socket(NULL), m_ip(0), m_port(0) {}
+
 	// Constructor: Creates a new AFD socket handle
 	// Parameters:
 	//   ip - Target IP address (network byte order)

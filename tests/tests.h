@@ -18,6 +18,7 @@
  *   ArrayStorageTests      - Compile-time array storage tests
  *   ShaTests               - SHA-2 hash function tests (SHA-224/256/384/512 and HMAC)
  *   EccTests               - Elliptic Curve Cryptography tests (ECDH key exchange)
+ *   DnsTests               - DNS resolution tests (DoT, DoH JSON, DoH binary)
  *
  * USAGE:
  *   #include "tests.h"
@@ -30,6 +31,7 @@
  *   TlsTests::RunAll();
  *   ShaTests::RunAll();
  *   EccTests::RunAll();
+ *   DnsTests::RunAll();
  *   // ... etc
  */
 
@@ -48,3 +50,4 @@
 #include "array_storage_tests.h"
 #include "sha_tests.h"
 #include "ecc_tests.h"
+#include "dns_tests.h"

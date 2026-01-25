@@ -7,25 +7,15 @@
     "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.formatting": "clangFormat",
     "files.associations": {
+        "*.h": "cpp",
         "console.h": "c",
-        "string.h": "c",
-        "environment.h": "c",
         "peb.h": "c",
         "pe.h": "c",
-        "math.h": "c",
         "primitives.h": "c",
-        "socket.h": "cpp",
-        "secure_socket.h": "cpp",
-        "tls.h": "cpp",
-        "network.h": "cpp",
-        "random.h": "cpp",
-        "ecc.h": "cpp",
-        "chacha20encoder.h": "cpp",
-        "tlsbuffer.h": "cpp",
-        "tlscipher.h": "cpp",
-        "tlshash.h": "cpp",
-        "tlshmac.h": "cpp",
-        "tlshkdf.h": "cpp",
-        "tlsbufferreader.h": "cpp"
-    },
+        "afd.h": "c",
+        "kernel32.h": "c",
+        "ntdll.h": "c",
+        "windows_types.h": "c",
+        "allocator.h": "c"
+    }
 }

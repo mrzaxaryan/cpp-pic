@@ -5,32 +5,28 @@
         "windowsIncludePath": [
             "${workspaceFolder}",
             "${workspaceFolder}/include",
-            "${workspaceFolder}/include/runtime",
-            "${workspaceFolder}/include/runtime/primitives",
-            "${workspaceFolder}/include/runtime/platform",
-            "${workspaceFolder}/include/runtime/platform/windows",
-            "${workspaceFolder}/include/runtime/crypt",
-            "${workspaceFolder}/include/runtime/crypt/random",
-            "${workspaceFolder}/include/runtime/date_time",
-            "${workspaceFolder}/include/runtime/network",
-            "${workspaceFolder}/include/runtime/network/tls",
+            "${workspaceFolder}/include/bal",
+            "${workspaceFolder}/include/bal/primitives",
+            "${workspaceFolder}/include/pal",
+            "${workspaceFolder}/include/pal/windows",
+            "${workspaceFolder}/include/ral",
+            "${workspaceFolder}/include/ral/crypt",
+            "${workspaceFolder}/include/ral/network",
+            "${workspaceFolder}/include/ral/network/tls",
             "${workspaceFolder}/tests"
         ],
         "windowsSourcePath": [
             "${workspaceFolder}/src",
-            "${workspaceFolder}/src/runtime",
-            "${workspaceFolder}/src/runtime/console",
-            "${workspaceFolder}/src/runtime/console/windows",
-            "${workspaceFolder}/src/runtime/platform",
-            "${workspaceFolder}/src/runtime/platform/windows",
-            "${workspaceFolder}/src/runtime/crypt",
-            "${workspaceFolder}/src/runtime/crypt/random",
-            "${workspaceFolder}/src/runtime/crypt/random/windows",
-            "${workspaceFolder}/src/runtime/date_time",
-            "${workspaceFolder}/src/runtime/date_time/windows",
-            "${workspaceFolder}/src/runtime/network",
-            "${workspaceFolder}/src/runtime/network/tls"
-        ],
+            "${workspaceFolder}/src/bal",
+            "${workspaceFolder}/src/pal",
+            "${workspaceFolder}/src/pal/windows",
+            "${workspaceFolder}/src/ral",
+            "${workspaceFolder}/src/ral/crypt",
+            "${workspaceFolder}/src/ral/crypt/random",
+            "${workspaceFolder}/src/ral/crypt/random/windows",
+            "${workspaceFolder}/src/ral/network",
+            "${workspaceFolder}/src/ral/network/tls"
+        ]
     },
     "configurations": [
         {
@@ -82,18 +78,22 @@
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
             "intelliSenseMode": "windows-clang-arm",
             "cStandard": "c17",
-            "cppStandard": "c++17",
+            "cppStandard": "c++23",
             "defines": [
                 "ARCHITECTURE_ARMV7A",
                 "PLATFORM_WINDOWS",
                 "PLATFORM_WINDOWS_ARMV7A"
             ],
             "includePath": [
-                "${workspaceFolder}/src",
-                "${workspaceFolder}/src/**",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/include/**"
-            ]
+                "${windowsIncludePath}",
+                "${windowsSourcePath}"
+            ],
+            "browse": {
+                "path": [
+                    "${windowsIncludePath}",
+                    "${windowsSourcePath}"
+                ]
+            }
         },
         {
             "name": "aarch64-pc-windows-gnu",

@@ -167,8 +167,13 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
     UINT8 earlysecret[MAX_HASH_LEN], salt[MAX_HASH_LEN];
     UINT8 localKeyBuffer[MAX_KEY_SIZE], remoteKeyBuffer[MAX_KEY_SIZE];
     UINT8 localIvBuffer[MAX_IV_SIZE], remoteIvBuffer[MAX_IV_SIZE];
-    auto server_key = ecc == ECC_NONE ? "s ap traffic"_embed : "s hs traffic"_embed;
-    auto client_key = ecc == ECC_NONE ? "c ap traffic"_embed : "c hs traffic"_embed;
+    // Declare _embed strings separately to avoid type deduction issues with ternary
+    auto server_key_app = "s ap traffic"_embed;
+    auto server_key_hs = "s hs traffic"_embed;
+    auto client_key_app = "c ap traffic"_embed;
+    auto client_key_hs = "c hs traffic"_embed;
+    const CHAR *server_key = ecc == ECC_NONE ? (const CHAR *)server_key_app : (const CHAR *)server_key_hs;
+    const CHAR *client_key = ecc == ECC_NONE ? (const CHAR *)client_key_app : (const CHAR *)client_key_hs;
     TlsHash hash2;
     hash2.GetHash((PCHAR)hash, hashLen);
     Memory::Zero(earlysecret, sizeof(earlysecret));
@@ -209,12 +214,12 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
         premaster_key.Clear();
     }
 
-    TlsHKDF::ExpandLabel(this->data13.handshakeSecret, hashLen, this->data13.pseudoRandomKey, hashLen, client_key, String::Length((PCCHAR)client_key), hash, hashLen);
+    TlsHKDF::ExpandLabel(this->data13.handshakeSecret, hashLen, this->data13.pseudoRandomKey, hashLen, client_key, 12, hash, hashLen);
 
     TlsHKDF::ExpandLabel(localKeyBuffer, keyLen, this->data13.handshakeSecret, hashLen, "key"_embed, 3, NULL, 0);
     TlsHKDF::ExpandLabel(localIvBuffer, this->chacha20Context.GetIvLength(), this->data13.handshakeSecret, hashLen, "iv"_embed, 2, NULL, 0);
 
-    TlsHKDF::ExpandLabel(this->data13.mainSecret, hashLen, this->data13.pseudoRandomKey, hashLen, server_key, String::Length((PCCHAR)server_key), hash, hashLen);
+    TlsHKDF::ExpandLabel(this->data13.mainSecret, hashLen, this->data13.pseudoRandomKey, hashLen, server_key, 12, hash, hashLen);
 
     TlsHKDF::ExpandLabel(remoteKeyBuffer, keyLen, this->data13.mainSecret, hashLen, "key"_embed, 3, NULL, 0);
     TlsHKDF::ExpandLabel(remoteIvBuffer, this->chacha20Context.GetIvLength(), this->data13.mainSecret, hashLen, "iv"_embed, 2, NULL, 0);
@@ -279,7 +284,8 @@ VOID TlsCipher::Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize,
     aad[1] = sendbuf->GetBuffer()[1];
     aad[2] = sendbuf->GetBuffer()[2];
     *((UINT16 *)(aad + 3)) = UINT16SwapByteOrder(ChaCha20Encoder::ComputeSize(packetSize, 0)); //-header_size
-    *((UINT64 *)(aad + 5)) = UINT64SwapByteOrder(this->clientSeqNum++);
+    UINT64 clientSeq = UINT64SwapByteOrder(this->clientSeqNum++);
+    Memory::Copy(aad + 5, &clientSeq, sizeof(UINT64));
 
     this->chacha20Context.Encode(sendbuf, packet, packetSize, aad, sizeof(aad));
 }
@@ -297,7 +303,8 @@ BOOL TlsCipher::Decode(TlsBufferReader *inout, INT32 version)
     aad[1] = UINT16SwapByteOrder(version) >> 8;
     aad[2] = UINT16SwapByteOrder(version) & 0xff;
     *((UINT16 *)(aad + 3)) = UINT16SwapByteOrder(inout->GetSize()); //-header_size
-    *((UINT64 *)(aad + 5)) = UINT64SwapByteOrder(this->serverSeqNum++);
+    UINT64 serverSeq = UINT64SwapByteOrder(this->serverSeqNum++);
+    Memory::Copy(aad + 5, &serverSeq, sizeof(UINT64));
 
     BOOL ret = this->chacha20Context.Decode(inout, &this->decodeBuffer, aad, sizeof(aad));
     if (!ret)

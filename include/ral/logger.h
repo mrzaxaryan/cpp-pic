@@ -18,7 +18,7 @@
 #pragma once
 
 #include "console.h"
-#include "DateTime.h"
+#include "date_time.h"
 
 // Convenience macros that automatically embed wide strings
 #define LOG_INFO(format, ...) Logger::Info<WCHAR>(L##format##_embed, ##__VA_ARGS__)

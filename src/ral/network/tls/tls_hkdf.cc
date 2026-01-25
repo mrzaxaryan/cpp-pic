@@ -1,9 +1,9 @@
-#include "TlsHKDF.h"
+#include "tls_hkdf.h"
 #include "logger.h"
 #include "memory.h"
 #include "network.h"
-#include "TlsHMAC.h"
-#include "tlsBuffer.h"
+#include "tls_hmac.h"
+#include "tls_buffer.h"
 
 // TlsHKDF class implementation
 INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR dataLen, PUCHAR hkdflabel, UINT16 length)

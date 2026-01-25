@@ -1,9 +1,9 @@
-#include "TlsCipher.h"
+#include "tls_cipher.h"
 #include "logger.h"
 #include "memory.h"
 #include "random.h"
-#include "TlsHMAC.h"
-#include "TlsHKDF.h"
+#include "tls_hmac.h"
+#include "tls_hkdf.h"
 #include "network.h"
 
 TlsCipher::TlsCipher()

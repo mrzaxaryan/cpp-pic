@@ -2,10 +2,10 @@
 
 #include "primitives.h"
 #include "socket.h"
-#include "TlsBufferReader.h"
-#include "tlsBuffer.h"
-#include "TlsCipher.h"
-#include "TlsHMAC.h"
+#include "tls_buffer_reader.h"
+#include "tls_buffer.h"
+#include "tls_cipher.h"
+#include "tls_hmac.h"
 
 // TLS state
 typedef struct _tlsstate

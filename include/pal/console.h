@@ -29,7 +29,13 @@
 
 #include "string_formatter.h"  // Printf-style formatting engine
 #include "string.h"            // String utilities (length, copy, etc.)
-#include "pal.h"          // PerformRelocation
+
+// Forward declare PerformRelocation (defined in pal.h)
+#if defined(PLATFORM_WINDOWS_I386)
+PVOID PerformRelocation(PVOID p);
+#else
+#define PerformRelocation(p) (p)
+#endif
 
 /**
  * Console - Static class providing console I/O operations

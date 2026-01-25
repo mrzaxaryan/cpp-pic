@@ -1,8 +1,8 @@
 #include "primitives.h"
-#include "tlsBuffer.h"
+#include "tls_buffer.h"
 #include "ecc.h"
-#include "TlsHash.h"
-#include "Chacha20Encoder.h"
+#include "tls_hash.h"
+#include "chacha20_encoder.h"
 #pragma once
 
 #define ECC_COUNT 2

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "primitives.h"
-#include "pal.h"
+#include "bal.h"  // primitives, TCHAR
 
 // Fixed-size string template
 template <TCHAR TChar, USIZE N>

@@ -3,6 +3,8 @@
 #include "primitives.h"
 #include "string.h"
 #include "memory.h"
+#include "socket.h"
+#include "tls.h"
 
 class HttpClient
 {
@@ -32,7 +34,7 @@ public:
     static BOOL ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure);
 };
 
-HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
+inline HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 {
     // Attempt to parse the URL to extract the host name, path, port, and security setting
     {
@@ -50,7 +52,7 @@ HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
         }
     }
 }
-HttpClient::HttpClient(PCCHAR url)
+inline HttpClient::HttpClient(PCCHAR url)
 {
     // Attempt to parse the URL to extract the host name, path, port, and security setting
     if (!ParseUrl(url, hostName, path, &port, &isSecure))
@@ -77,11 +79,11 @@ HttpClient::HttpClient(PCCHAR url)
     }
 }
 
-HttpClient::~HttpClient()
+inline HttpClient::~HttpClient()
 {
 }
 
-BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure)
+inline BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure)
 {
     CHAR portBuffer[6];
 

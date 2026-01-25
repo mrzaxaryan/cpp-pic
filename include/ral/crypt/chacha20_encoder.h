@@ -1,7 +1,7 @@
 #include "primitives.h"
 #include "chacha20.h"
-#include "tlsBuffer.h"
-#include "TlsBufferReader.h"
+#include "tls_buffer.h"
+#include "tls_buffer_reader.h"
 
 #pragma once
 

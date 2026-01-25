@@ -10,12 +10,12 @@ class TlsTests
 {
 private:
 	static constexpr UINT32 TEST_SERVER_IP = 0x6333854F;
-	static constexpr UINT16 TLS_PORT = 443;
+	static constexpr UINT16 TLS_PORT = 8443;
 
 	// Test 1: TLS handshake and connection
 	static BOOL TestTlsHandshake()
 	{
-		LOG_INFO("Test: TLS Handshake (port 443)");
+		LOG_INFO("Test: TLS Handshake (port 8443)");
 
 		TLSClient tlsClient("0y.wtf"_embed, TEST_SERVER_IP, TLS_PORT);
 

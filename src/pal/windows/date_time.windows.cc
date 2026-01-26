@@ -126,7 +126,6 @@ DateTime DateTime::Now()
     }
 
     dt.Year = year;
-
     dt.Month = month + 1;      // 1..12
     dt.Day = (UINT32)days + 1; // 1..31
 

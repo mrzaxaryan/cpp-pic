@@ -121,6 +121,6 @@ public:
     static BOOL Exists(PCWCHAR path);
 
     // New Directory Methods
-    static BOOL CreateDir(PCWCHAR path);
-    static BOOL DeleteDir(PCWCHAR path);
+    static BOOL CreateDirectroy(PCWCHAR path);
+    static BOOL DeleteDirectory(PCWCHAR path);
 };

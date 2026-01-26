@@ -220,9 +220,9 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
         ntFlags,
         NULL,
         0);
-    
+
     NTDLL::RtlFreeUnicodeString(&ntPathU);
-    
+
     if (!NT_SUCCESS(status) || hFile == INVALID_HANDLE_VALUE)
         return File();
 
@@ -240,17 +240,16 @@ BOOL FileSystem::Delete(PCWCHAR path)
 
     if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &ntName, NULL, NULL))
         return FALSE;
-    
+
     InitializeObjectAttributes(&attr, &ntName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     status = NTDLL::NtCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
                                  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
 
-    
     if (status == 0)
         status = NTDLL::NtClose(hFile);
-        
+
     NTDLL::RtlFreeUnicodeString(&ntName);
     return status == 0;
 }
@@ -264,7 +263,6 @@ BOOL FileSystem::Exists(PCWCHAR path)
 
     if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, NULL, NULL))
         return FALSE;
-    
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, NULL, NULL);
     NTSTATUS status = NTDLL::NtQueryAttributesFile(&objAttr, &fileBasicInfo);
@@ -281,7 +279,7 @@ BOOL FileSystem::Exists(PCWCHAR path)
 }
 
 // --- FileSystem Directory Management ---
-BOOL FileSystem::CreateDir(PCWCHAR path)
+BOOL FileSystem::CreateDirectroy(PCWCHAR path)
 {
     // Returns non-zero on success
     PVOID hDir;
@@ -311,7 +309,7 @@ BOOL FileSystem::CreateDir(PCWCHAR path)
 }
 
 // Delete a directory at the specified path
-BOOL FileSystem::DeleteDir(PCWCHAR path)
+BOOL FileSystem::DeleteDirectory(PCWCHAR path)
 {
     PVOID hDir;
     FILE_DISPOSITION_INFORMATION disp = {TRUE};
@@ -534,7 +532,7 @@ DirectoryIterator::~DirectoryIterator()
     {
         if (!isBitMaskMode)
         {
-           Kernel32::FindClose(handle);
+            Kernel32::FindClose(handle);
         }
         // If it's a bitmask, we do nothing. No memory was allocated!
         handle = (PVOID)-1;

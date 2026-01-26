@@ -37,16 +37,16 @@
  */
 enum class LogLevels : UINT8
 {
-	None = 0,    // No logging
+	None = 0,	 // No logging
 	Default = 1, // Info, Error, Warning
-	Debug = 2    // All messages
+	Debug = 2	 // All messages
 };
 
 enum class LogOutputs : UINT8
 {
 	Console = 0x1, // Output to console
-	File    = 0x2,  // Output to file (not implemented)
-	Both    = 0x3  // Output to both console and file
+	File = 0x2,	   // Output to file (not implemented)
+	Both = 0x3	   // Output to both console and file
 };
 
 // Global log level - modify this to control logging at compile-time
@@ -67,7 +67,7 @@ private:
 	template <TCHAR TChar>
 	static BOOL ConsoleCallback(PVOID context, TChar ch)
 	{
-		(VOID)context;
+		(VOID) context;
 		return Console::Write(&ch, 1);
 	}
 
@@ -119,7 +119,7 @@ private:
 		// File output (plain text, no colors)
 		if constexpr ((static_cast<UINT8>(LogOutput) & static_cast<UINT8>(LogOutputs::File)) != 0)
 		{
-			File logFile = FileSystem::Open(L"output.log.txt"_embed, FS_WRITE | FS_CREATE | FS_APPEND);
+			File logFile = FileSystem::Open(L"output.log.txt"_embed, FileSystem::FS_WRITE | FileSystem::FS_CREATE | FileSystem::FS_APPEND);
 			if (logFile.IsValid())
 			{
 				logFile.MoveOffset(0, OffsetOrigin::End);
@@ -199,7 +199,7 @@ VOID Logger::Info(const TChar *format, ...)
 	}
 	else
 	{
-		(VOID)format; // Suppress unused parameter warning
+		(VOID) format; // Suppress unused parameter warning
 	}
 }
 
@@ -221,7 +221,7 @@ VOID Logger::Error(const TChar *format, ...)
 	}
 	else
 	{
-		(VOID)format; // Suppress unused parameter warning
+		(VOID) format; // Suppress unused parameter warning
 	}
 }
 
@@ -243,7 +243,7 @@ VOID Logger::Warning(const TChar *format, ...)
 	}
 	else
 	{
-		(VOID)format; // Suppress unused parameter warning
+		(VOID) format; // Suppress unused parameter warning
 	}
 }
 
@@ -265,6 +265,6 @@ VOID Logger::Debug(const TChar *format, ...)
 	}
 	else
 	{
-		(VOID)format; // Suppress unused parameter warning
+		(VOID) format; // Suppress unused parameter warning
 	}
 }

@@ -426,3 +426,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 !.github/workflows/
+output.log.txt

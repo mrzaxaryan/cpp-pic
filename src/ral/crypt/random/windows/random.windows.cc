@@ -14,8 +14,14 @@ INT32 Random::Get()
 // Constructor to initialize the random number generator
 Random::Random()
 {
-    // Initialize the random seed using the current time
     auto dateTime = DateTime::Now();
-    // Combine seconds, microseconds, and milliseconds to create a seed
-    this->seed = dateTime.Second << 8 | dateTime.Microseconds << 16 | dateTime.Milliseconds << 32;
+
+    // Make a 64-bit value combining all time components
+    UINT64 t = 0;
+    t |= (UINT64)dateTime.Milliseconds << 32; // cast first!
+    t |= (UINT64)dateTime.Microseconds << 12; // shift enough to avoid overlap
+    t |= (UINT64)dateTime.Second;             // seconds in lowest bits
+
+    // Mix down to 32-bit seed
+    this->seed = (UINT32)(t ^ (t >> 32));
 }

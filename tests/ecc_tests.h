@@ -158,7 +158,7 @@ public:
 
 private:
 	// Helper function to compare byte arrays
-	static BOOL CompareBytes(const UINT8* a, const UINT8* b, UINT32 length)
+	static BOOL CompareBytes(const UINT8 *a, const UINT8 *b, UINT32 length)
 	{
 		for (UINT32 i = 0; i < length; i++)
 		{
@@ -169,7 +169,7 @@ private:
 	}
 
 	// Helper function to check if all bytes are zero
-	static BOOL IsAllZeros(const UINT8* data, UINT32 length)
+	static BOOL IsAllZeros(const UINT8 *data, UINT32 length)
 	{
 		for (UINT32 i = 0; i < length; i++)
 		{
@@ -402,6 +402,8 @@ private:
 		// Verify keys are valid (not all zeros)
 		BOOL key1Valid = pubKey1[0] == 0x04 && !IsAllZeros(pubKey1 + 1, 64);
 		BOOL key2Valid = pubKey2[0] == 0x04 && !IsAllZeros(pubKey2 + 1, 64);
+
+		LOG_INFO("Key 1 valid: %d, Key 2 valid: %d, Keys differ: %d", key1Valid, key2Valid, key1DiffersFrom2);
 
 		return key1DiffersFrom2 && key1Valid && key2Valid;
 	}

@@ -3,33 +3,25 @@
 #include "primitives.h"
 #include "int64.h"
 
-#define FS_READ 0x0001
-#define FS_WRITE 0x0002
-#define FS_APPEND 0x0004
-#define FS_CREATE 0x0008
-#define FS_TRUNCATE 0x0010
-#define FS_BINARY 0x0020
-
-
 // Offset origin for file seeking
 enum class OffsetOrigin : INT32
 {
-    Start = 0,      // Beginning of the file
-    Current = 1,    // Current file pointer position
-    End = 2         // End of the file
+    Start = 0,   // Beginning of the file
+    Current = 1, // Current file pointer position
+    End = 2      // End of the file
 };
 
 // Directory entry structure
 struct DirectoryEntry
 {
-    WCHAR name[256]; // File or directory name
-    USIZE size;      // Size in bytes
-    UINT32 type;     // Store DriveType (2=Removable, 3=Fixed, etc.)
-    BOOL isDirectory;// Set if the entry is a directory
-    BOOL isDrive;    // Set if the entry represents a root (e.g., C:\)
-    BOOL isHidden;   // Flag for hidden files
-    BOOL isSystem;   // Flag for system files
-    BOOL isReadOnly; // Flag for read-only files
+    WCHAR name[256];  // File or directory name
+    USIZE size;       // Size in bytes
+    UINT32 type;      // Store DriveType (2=Removable, 3=Fixed, etc.)
+    BOOL isDirectory; // Set if the entry is a directory
+    BOOL isDrive;     // Set if the entry represents a root (e.g., C:\)
+    BOOL isHidden;    // Flag for hidden files
+    BOOL isSystem;    // Flag for system files
+    BOOL isReadOnly;  // Flag for read-only files
 
     UINT64 creationTime; // Filetime format
 };
@@ -81,11 +73,11 @@ public:
 class DirectoryIterator
 {
 private:
-    PVOID handle;                   // Handle to the directory or drive bitmask
-    DirectoryEntry currentEntry;    // Current directory entry
-    BOOL first;                     // Flag for first call to Next()
+    PVOID handle;                // Handle to the directory or drive bitmask
+    DirectoryEntry currentEntry; // Current directory entry
+    BOOL first;                  // Flag for first call to Next()
 #ifdef PLATFORM_WINDOWS
-    BOOL isBitMaskMode;             // Flag for bitmask mode on Windows
+    BOOL isBitMaskMode; // Flag for bitmask mode on Windows
 #endif
 
 #ifdef PLATFORM_LINUX
@@ -116,6 +108,13 @@ public:
 class FileSystem
 {
 public:
+    static constexpr INT32 FS_READ = 0x0001;
+    static constexpr INT32 FS_WRITE = 0x0002;
+    static constexpr INT32 FS_APPEND = 0x0004;
+    static constexpr INT32 FS_CREATE = 0x0008;
+    static constexpr INT32 FS_TRUNCATE = 0x0010;
+    static constexpr INT32 FS_BINARY = 0x0020;
+
     // File operations
     static File Open(PCWCHAR path, INT32 flags = 0);
     static BOOL Delete(PCWCHAR path);

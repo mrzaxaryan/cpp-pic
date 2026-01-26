@@ -7,14 +7,14 @@
 
 // =============================================================================
 // Socket Tests - AFD Socket Implementation Validation
-// Server: 0y.wtf (79.133.51.99)
+// Server: one.one.one.one (1.1.1.1) - Cloudflare Public DNS
 // =============================================================================
 
 class SocketTests
 {
 private:
-	// Test server IP address: 79.133.51.99 (0y.wtf)
-	static constexpr UINT32 TEST_SERVER_IP = 0x6333854F;
+	// Test server IP address: 1.1.1.1 (one.one.one.one)
+	static constexpr UINT32 TEST_SERVER_IP = 0x01010101;
 
 	// Test 1: Socket creation
 	static BOOL TestSocketCreation()
@@ -42,7 +42,7 @@ private:
 			return FALSE;
 		}
 
-		LOG_INFO("Socket connected successfully to 0y.wtf:80");
+		LOG_INFO("Socket connected successfully to one.one.one.one:80");
 		sock.Close();
 		return TRUE;
 	}
@@ -61,7 +61,7 @@ private:
 		}
 
 		// Send HTTP GET request
-		auto request = "GET / HTTP/1.1\r\nHost: 0y.wtf\r\nConnection: close\r\n\r\n"_embed;
+		auto request = "GET / HTTP/1.1\r\nHost: one.one.one.one\r\nConnection: close\r\n\r\n"_embed;
 		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length);
 
 		if (bytesSent != request.Length)
@@ -144,7 +144,7 @@ private:
 		LOG_INFO("Test: IP Address Conversion");
 
 		// Test ConvertIP function with test server address
-		auto ipStr = "79.133.51.99"_embed;
+		auto ipStr = "1.1.1.1"_embed;
 		UINT32 convertedIp = ConvertIP((PCCHAR)ipStr);
 
 		if (convertedIp == INVALID_IPV4)
@@ -195,7 +195,7 @@ public:
 	static BOOL RunAll()
 	{
 		LOG_INFO("=== Starting Socket Tests ===");
-		LOG_INFO("Test Server: 0y.wtf (79.133.51.99)");
+		LOG_INFO("Test Server: one.one.one.one (1.1.1.1)");
 
 		UINT32 passed = 0;
 		UINT32 total = 5;

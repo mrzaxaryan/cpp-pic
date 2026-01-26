@@ -20,7 +20,7 @@ INT32 Random::GetSeedFromTime()
 INT32 Random::Get()
 {
     // Check if the seed is zero, if so, set it to a default value
-    this->seed = (this->seed * 214013L + GetSeedFromTime()) & 0x7fffffff;
+    this->seed = (this->seed * 214013L + 2531011L) & 0x7fffffff;
     // Generate a new random number using a linear congruential generator formula
     return (INT32)(this->seed % Random::MAX);
 }

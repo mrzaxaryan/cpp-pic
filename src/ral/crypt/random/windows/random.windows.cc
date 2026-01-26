@@ -19,8 +19,8 @@ INT32 Random::GetSeedFromTime()
 // Function to get a random number in the range of 0 to RANDOM_MAX
 INT32 Random::Get()
 {
-    // Check if the seed is zero, if so, set it to a default value
-    this->seed = (this->seed * 214013L + 2531011L) & 0x7fffffff;
+    UINT32 dummmyVar = 0;
+    this->seed = (this->seed * 214013L + 2531011L + (INT32)(SSIZE)(PVOID)&dummmyVar) & 0x7fffffff;
     // Generate a new random number using a linear congruential generator formula
     return (INT32)(this->seed % Random::MAX);
 }

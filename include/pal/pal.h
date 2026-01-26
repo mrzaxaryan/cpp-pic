@@ -34,7 +34,10 @@ typedef struct _ENVIRONMENT_DATA
 #define GetEnvironmentData() ((PENVIRONMENT_DATA)(GetCurrentPEB()->SubSystemData))
 
 NOINLINE VOID InitializeRuntime(PENVIRONMENT_DATA envData);
+
+#if defined(PLATFORM_WINDOWS_I386)
 PVOID PerformRelocation(PVOID p);
+#endif
 
 // Entry point macro
 #define ENTRYPOINT extern "C" __attribute__((noreturn))

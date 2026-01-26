@@ -138,6 +138,9 @@ public:
 	// Retrieves the number of milliseconds that have elapsed since the system was started.
 	// Minimum supported client	Windows Vista [desktop apps | UWP apps]
 	static UINT64 GetTickCount64();
+
+	// sleep
+	static VOID Sleep(UINT32 milliseconds);
 };
 
 #endif // PLATFORM_WINDOWS

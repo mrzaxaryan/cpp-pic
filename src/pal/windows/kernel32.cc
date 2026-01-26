@@ -55,3 +55,8 @@ UINT64 Kernel32::GetTickCount64()
 {
     return ((UINT64(STDCALL *)())ResolveKernel32ExportAddress("GetTickCount64"))();
 }
+
+VOID Kernel32::Sleep(UINT32 milliseconds)
+{
+    ((VOID(STDCALL *)(UINT32 milliseconds))ResolveKernel32ExportAddress("Sleep"))(milliseconds);
+}

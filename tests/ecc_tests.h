@@ -2,6 +2,7 @@
 
 #include "ral.h"
 #include "ecc.h"
+#include "kernel32.h"
 
 class EccTests
 {
@@ -384,6 +385,8 @@ private:
 
 		UINT8 pubKey1[32 * 2 + 1];
 		ecc1.ExportPublicKey(pubKey1, sizeof(pubKey1));
+
+		Kernel32::Sleep(1000);
 
 		// Generate second key - should be different because Initialize()
 		// uses random bytes which advances the RNG state

@@ -181,10 +181,8 @@ UINT64 Ecc::VliSub(UINT64 *pResult, UINT64 *pLeft, UINT64 *pRight)
     for (i = 0; i < this->numEccDigits; ++i)
     {
         UINT64 l_diff = pLeft[i] - pRight[i] - l_borrow;
-        if (l_diff != pLeft[i])
-        {
-            l_borrow = (l_diff > pLeft[i]);
-        }
+        l_borrow = (pLeft[i] < l_diff + l_borrow);
+
         pResult[i] = l_diff;
     }
     return l_borrow;

@@ -377,9 +377,6 @@ private:
 	}
 
 	// Test 12: Sequential key generation produces different keys
-	// Note: Current Random implementation uses fixed seed (12345) per instance,
-	// so we test that sequential Initialize() calls produce different keys
-	// because each Initialize() consumes random bytes, advancing the RNG state
 	static BOOL TestMultipleKeyGeneration()
 	{
 		Ecc ecc1;
@@ -397,7 +394,7 @@ private:
 		ecc2.ExportPublicKey(pubKey2, sizeof(pubKey2));
 
 		// Keys should be different (each Initialize() call uses RNG)
-		BOOL key1DiffersFrom2 = !CompareBytes(pubKey1, pubKey2, 32 * 2);
+		BOOL key1DiffersFrom2 = !CompareBytes(pubKey1, pubKey2, sizeof(pubKey1));
 
 		// Verify keys are valid (not all zeros)
 		BOOL key1Valid = pubKey1[0] == 0x04 && !IsAllZeros(pubKey1 + 1, 64);

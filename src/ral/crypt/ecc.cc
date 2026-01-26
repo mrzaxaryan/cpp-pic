@@ -223,6 +223,7 @@ UINT128_ Ecc::Add128_128(UINT128_ a, UINT128_ b)
     result.low = a.low + b.low;
     result.high = a.high + b.high + (result.low < a.low);
 
+    
     return result;
 }
 

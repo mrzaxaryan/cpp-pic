@@ -1,0 +1,100 @@
+/**
+ * linker.script - ELF Linker Script for Position-Independent Code (Linux)
+ *
+ * This linker script is CRITICAL for generating position-independent ELF binaries.
+ * It ensures all code and data are merged into a single loadable segment,
+ * eliminating the need for relocations at runtime.
+ *
+ * PURPOSE:
+ *   - Merge .rodata (read-only data) into .text (code) section
+ *   - Merge .bss (uninitialized data) into .text section
+ *   - Create a single PT_LOAD segment with R+X permissions
+ *   - Ensure _start is placed at the beginning of .text
+ *
+ * WHY THIS MATTERS FOR PIC:
+ *   Standard ELF binaries have separate segments for code (.text) and data (.rodata).
+ *   This requires the loader to fix up references between segments (relocations).
+ *   By merging everything into .text, we create a self-contained blob that can
+ *   execute at any memory address without modification.
+ *
+ * SECTION ORDERING:
+ *   1. .text$start - Entry point (_start) forced to beginning
+ *   2. .text*      - All other code sections
+ *   3. .rodata*    - Read-only data (string literals, constants)
+ *   4. .bss*       - Uninitialized data (zero-initialized at runtime)
+ *
+ * USAGE:
+ *   clang++ -Wl,-T,linker.script,-e,_start ...
+ *
+ * FLAGS:
+ *   PT_LOAD FLAGS(5) = PF_R (1) + PF_X (4) = Read + Execute
+ *   Note: No PF_W (2) because we don't need writable code segment
+ *         (stack and heap are allocated separately via mmap)
+ */
+
+PHDRS {
+    /* Single program header for the entire PIC blob */
+    /* FLAGS(5) = PF_R | PF_X = Read + Execute permissions */
+    text PT_LOAD FLAGS(5);
+}
+
+SECTIONS {
+    /**
+     * .text section - Contains ALL code and data for position independence
+     *
+     * The `: text` suffix assigns this section to the 'text' program header
+     * defined above, ensuring it gets the correct permissions.
+     */
+    .text :
+    {
+        /*
+         * KEEP(*(.text$start)) - Force entry point to section start
+         *
+         * The $ suffix is a Microsoft convention also supported by LLD.
+         * Sections are sorted alphabetically, so .text$start comes before
+         * .text$z or plain .text, ensuring _start is at offset 0.
+         *
+         * KEEP() prevents the linker from discarding this section even
+         * if it appears unused (important with --gc-sections).
+         */
+        KEEP(*(.text$start))
+
+        /*
+         * *(.text*) - All code sections
+         *
+         * The wildcard captures:
+         *   .text        - Main code section
+         *   .text.*      - Function sections from -ffunction-sections
+         *   .text$*      - Microsoft-style ordered sections
+         */
+        *(.text*)
+
+        /*
+         * *(.rodata*) - Read-only data merged into code
+         *
+         * This is the KEY to position independence!
+         * Normally .rodata is in a separate segment, requiring relocations.
+         * By merging it here, string literals and constants are embedded
+         * directly in the executable code segment.
+         *
+         * Captures:
+         *   .rodata      - Main read-only data
+         *   .rodata.*    - Per-variable sections from -fdata-sections
+         *   .rodata.str* - String literal pools
+         */
+        *(.rodata*)
+
+        /*
+         * *(.bss*) - Uninitialized data
+         *
+         * BSS normally contains zero-initialized globals and statics.
+         * In our PIC runtime, we minimize global state, but this ensures
+         * any that exist are included in the blob.
+         *
+         * Note: BSS doesn't increase file size (it's just a size field),
+         * but the loader must zero this memory at runtime.
+         */
+        *(.bss*)
+
+    } : text
+}

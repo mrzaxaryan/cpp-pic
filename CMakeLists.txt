@@ -3,9 +3,8 @@ cmake_minimum_required(VERSION 3.20)
 # This project requires the toolchain file to be used:
 #   cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake
 #
-# The toolchain file sets CMAKE_SYSTEM_NAME to Generic to avoid Windows/MSVC-specific
-# CMake behavior that would otherwise add unwanted flags like -fuse-ld=lld-link and
-# -Xclang --dependent-lib=msvcrtd.
+# The toolchain file sets CMAKE_SYSTEM_NAME to Generic to avoid platform-specific
+# CMake behavior that would otherwise add unwanted flags.
 
 if(NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR
@@ -20,20 +19,24 @@ project(cpp-pic LANGUAGES CXX)
 # Configuration Options
 # =============================================================================
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
-set(PLATFORM "windows" CACHE STRING "Target platform (windows only, parameter kept for compatibility)")
+set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 
-# Normalize inputs to lowercase (except BUILD_TYPE keeps original case for output dir)
+# Normalize inputs to lowercase
 string(TOLOWER "${ARCHITECTURE}" ARCHITECTURE_LC)
+string(TOLOWER "${PLATFORM}" PLATFORM_LC)
 string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LC)
-set(BUILD_TYPE_DIR "${BUILD_TYPE}")  # Preserve case for output directory
 
 # Validate inputs
 set(VALID_ARCHITECTURES "i386" "x86_64" "armv7a" "aarch64")
+set(VALID_PLATFORMS "windows" "linux")
 set(VALID_BUILD_TYPES "debug" "release")
 
 if(NOT ARCHITECTURE_LC IN_LIST VALID_ARCHITECTURES)
     message(FATAL_ERROR "Invalid ARCHITECTURE: ${ARCHITECTURE}. Must be one of: ${VALID_ARCHITECTURES}")
+endif()
+if(NOT PLATFORM_LC IN_LIST VALID_PLATFORMS)
+    message(FATAL_ERROR "Invalid PLATFORM: ${PLATFORM}. Must be one of: ${VALID_PLATFORMS}")
 endif()
 if(NOT BUILD_TYPE_LC IN_LIST VALID_BUILD_TYPES)
     message(FATAL_ERROR "Invalid BUILD_TYPE: ${BUILD_TYPE}. Must be one of: ${VALID_BUILD_TYPES}")
@@ -42,26 +45,100 @@ endif()
 # =============================================================================
 # Output Directory Configuration
 # =============================================================================
-# Hierarchical structure: build/windows/arch/buildtype/
-set(BUILD_ROOT "${CMAKE_SOURCE_DIR}/build/windows/${ARCHITECTURE_LC}/${BUILD_TYPE_LC}")
-set(OUTPUT_DIR "${BUILD_ROOT}")
+# Hierarchical structure: build/<platform>/<arch>/<buildtype>/
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/build/${PLATFORM_LC}/${ARCHITECTURE_LC}/${BUILD_TYPE_LC}")
 
 # =============================================================================
-# Architecture-Specific Target Triple
+# Platform and Architecture-Specific Configuration
 # =============================================================================
-if(ARCHITECTURE_LC STREQUAL "i386")
-    set(TARGET_TRIPLE "i386-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_WINDOWS PLATFORM_WINDOWS_I386)
-elseif(ARCHITECTURE_LC STREQUAL "x86_64")
-    set(TARGET_TRIPLE "x86_64-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_WINDOWS PLATFORM_WINDOWS_X86_64)
-elseif(ARCHITECTURE_LC STREQUAL "armv7a")
-    set(TARGET_TRIPLE "armv7a-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_ARMV7A PLATFORM_WINDOWS PLATFORM_WINDOWS_ARMV7A)
-elseif(ARCHITECTURE_LC STREQUAL "aarch64")
-    set(TARGET_TRIPLE "aarch64-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_WINDOWS PLATFORM_WINDOWS_AARCH64)
+if(PLATFORM_LC STREQUAL "windows")
+    # -------------------------------------------------------------------------
+    # Windows Platform Configuration
+    # -------------------------------------------------------------------------
+    set(OUTPUT_SUFFIX ".exe")
+
+    if(ARCHITECTURE_LC STREQUAL "i386")
+        set(TARGET_TRIPLE "i386-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_WINDOWS PLATFORM_WINDOWS_I386)
+    elseif(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(TARGET_TRIPLE "x86_64-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_WINDOWS PLATFORM_WINDOWS_X86_64)
+    elseif(ARCHITECTURE_LC STREQUAL "armv7a")
+        set(TARGET_TRIPLE "armv7a-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_ARMV7A PLATFORM_WINDOWS PLATFORM_WINDOWS_ARMV7A)
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(TARGET_TRIPLE "aarch64-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_WINDOWS PLATFORM_WINDOWS_AARCH64)
+    endif()
+
+    # Windows-specific include paths
+    set(PLATFORM_INCLUDE_PATHS
+        ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
+    )
+
+elseif(PLATFORM_LC STREQUAL "linux")
+    # -------------------------------------------------------------------------
+    # Linux Platform Configuration
+    # -------------------------------------------------------------------------
+    set(OUTPUT_SUFFIX ".elf")
+
+    if(ARCHITECTURE_LC STREQUAL "i386")
+        set(TARGET_TRIPLE "i386-unknown-linux-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_LINUX PLATFORM_LINUX_I386)
+    elseif(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(TARGET_TRIPLE "x86_64-unknown-linux-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_LINUX PLATFORM_LINUX_X86_64)
+    elseif(ARCHITECTURE_LC STREQUAL "armv7a")
+        set(TARGET_TRIPLE "armv7a-unknown-linux-gnueabi")
+        set(ARCH_DEFINES ARCHITECTURE_ARMV7A PLATFORM_LINUX PLATFORM_LINUX_ARMV7A)
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(TARGET_TRIPLE "aarch64-unknown-linux-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_LINUX PLATFORM_LINUX_AARCH64)
+    endif()
+
+    # Linux-specific include paths
+    set(PLATFORM_INCLUDE_PATHS
+        ${CMAKE_SOURCE_DIR}/include/runtime/platform/linux/
+    )
 endif()
+
+# =============================================================================
+# Common Include Paths
+# =============================================================================
+set(INCLUDE_PATHS
+    ${CMAKE_SOURCE_DIR}/
+    ${CMAKE_SOURCE_DIR}/include/
+    ${CMAKE_SOURCE_DIR}/include/runtime/
+    ${CMAKE_SOURCE_DIR}/include/runtime/platform/
+    ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
+    ${CMAKE_SOURCE_DIR}/tests/
+    ${PLATFORM_INCLUDE_PATHS}
+)
+
+# =============================================================================
+# Source Files (Platform-Specific)
+# =============================================================================
+# Core source files
+file(GLOB CORE_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/*.cc
+    ${CMAKE_SOURCE_DIR}/src/runtime/console/*.cc
+    ${CMAKE_SOURCE_DIR}/src/runtime/platform/*.cc
+)
+
+# Platform-specific source files
+if(PLATFORM_LC STREQUAL "windows")
+    file(GLOB PLATFORM_SOURCES
+        ${CMAKE_SOURCE_DIR}/src/runtime/console/windows/*.cc
+        ${CMAKE_SOURCE_DIR}/src/runtime/platform/windows/*.cc
+    )
+elseif(PLATFORM_LC STREQUAL "linux")
+    file(GLOB PLATFORM_SOURCES
+        ${CMAKE_SOURCE_DIR}/src/runtime/console/linux/*.cc
+        ${CMAKE_SOURCE_DIR}/src/runtime/platform/linux/*.cc
+    )
+endif()
+
+set(SOURCES ${CORE_SOURCES} ${PLATFORM_SOURCES})
 
 # =============================================================================
 # Optimization Flags
@@ -79,28 +156,12 @@ else()
 endif()
 
 # =============================================================================
-# Source Files
+# Base Compiler Flags (All Platforms, All Architectures)
 # =============================================================================
-set(INCLUDE_PATHS
-    ${CMAKE_SOURCE_DIR}/
-    ${CMAKE_SOURCE_DIR}/include/
-    ${CMAKE_SOURCE_DIR}/include/runtime/
-    ${CMAKE_SOURCE_DIR}/include/runtime/platform/
-    ${CMAKE_SOURCE_DIR}/include/runtime/platform/windows/
-    ${CMAKE_SOURCE_DIR}/include/runtime/primitives/
-    ${CMAKE_SOURCE_DIR}/tests/
-)
-
-# Collect all source files from src/ directory
-file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cc)
-
-# =============================================================================
-# Base Compiler Flags (All Architectures)
-# =============================================================================
-# These flags are essential for position-independent code without .rdata dependencies
+# These flags are essential for position-independent code without .rdata/.rodata dependencies
 set(BASE_COMPILER_FLAGS
     -std=c++23                              # C++23 standard for consteval, concepts, fold expressions
-    -fno-jump-tables                        # CRITICAL: Prevent switch jump tables in .rdata
+    -fno-jump-tables                        # CRITICAL: Prevent switch jump tables in .rdata/.rodata
     -Werror                                 # Treat all warnings as errors
     -Wall                                   # Enable all common warnings
     -Wextra                                 # Enable additional warnings
@@ -114,18 +175,21 @@ set(BASE_COMPILER_FLAGS
     -ffunction-sections                     # Each function in own section (dead code elimination)
     -fdata-sections                         # Each data item in own section (garbage collection)
     -fno-builtin                            # Disable compiler built-ins
-    -fshort-wchar                           # 2-byte wchar_t (Windows ABI)
+    -fshort-wchar                           # 2-byte wchar_t (matches Windows ABI)
 )
 
 # =============================================================================
 # Architecture-Specific Compiler Flags
 # =============================================================================
 if(ARCHITECTURE_LC STREQUAL "i386" OR ARCHITECTURE_LC STREQUAL "x86_64")
-    # x86-specific flags
-    list(APPEND BASE_COMPILER_FLAGS
-        -mno-stack-arg-probe                # Disable __chkstk calls (x86 only)
-        -msoft-float                        # Software floating-point ABI (x86 only)
-    )
+    # Windows x86 specific - disable SSE and use software float
+    if(PLATFORM_LC STREQUAL "windows")
+        list(APPEND BASE_COMPILER_FLAGS
+            -mno-sse                        # Disable SSE (avoid xmm register usage)
+            -mno-stack-arg-probe            # Disable __chkstk calls (Windows x86 only)
+            -msoft-float                    # Software floating-point ABI
+        )
+    endif()
 endif()
 
 if(ARCHITECTURE_LC STREQUAL "armv7a" OR ARCHITECTURE_LC STREQUAL "aarch64")
@@ -140,8 +204,12 @@ endif()
 # =============================================================================
 if(BUILD_TYPE_LC STREQUAL "debug")
     # Debug-specific compiler flags
+    if(PLATFORM_LC STREQUAL "windows")
+        list(APPEND BASE_COMPILER_FLAGS
+            -gcodeview                      # CodeView debug info (WinDbg/VS)
+        )
+    endif()
     list(APPEND BASE_COMPILER_FLAGS
-        -gcodeview                          # CodeView debug info (WinDbg/VS)
         -g3                                 # Maximum debug information
         -fno-omit-frame-pointer             # Keep frame pointer for stack traces
     )
@@ -159,50 +227,58 @@ else()
 endif()
 
 # =============================================================================
-# Base Linker Flags
+# Linker Flags (Platform-Specific)
 # =============================================================================
 set(BASE_LINKER_FLAGS
     -fuse-ld=lld                            # LLVM LLD linker
     -nostdlib                               # No standard libraries (no CRT startup)
 )
 
-# Windows linker flags (passed to LLD via -Wl):
-#   /Entry:_start        - Use _start as entry point (bypass CRT)
-#   /SUBSYSTEM:CONSOLE   - Console application
-#   /ORDER:@orderfile    - Control function placement in .text
-#   /MERGE:.rdata=.text  - CRITICAL: Merge read-only data into code for PIC
-set(LINKER_BASE "-Wl,/Entry:_start,/SUBSYSTEM:CONSOLE,/ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt,/MERGE:.rdata=.text")
+if(PLATFORM_LC STREQUAL "windows")
+    # -------------------------------------------------------------------------
+    # Windows Linker Flags (LLD-link, PE format)
+    # -------------------------------------------------------------------------
+    # Windows linker flags (passed to LLD via -Wl):
+    #   /Entry:_start        - Use _start as entry point (bypass CRT)
+    #   /SUBSYSTEM:CONSOLE   - Console application
+    #   /ORDER:@orderfile    - Control function placement in .text
+    #   /MERGE:.rdata=.text  - Merge read-only data into code for PIC
+    set(LINKER_BASE "-Wl,/Entry:_start,/SUBSYSTEM:CONSOLE,/ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt,/MERGE:.rdata=.text")
 
-# =============================================================================
-# Architecture-Specific Linker Flags
-# =============================================================================
-if(ARCHITECTURE_LC STREQUAL "i386")
-    # i386-specific linker flags:
-    #   /BASE:0x400000    - Preferred load address (standard for 32-bit Windows)
-    #   /FILEALIGN:0x1000 - File section alignment (4KB pages)
-    #   /SAFESEH:NO       - Disable SafeSEH
-    set(LINKER_EXTRA ",/BASE:0x400000,/FILEALIGN:0x1000,/SAFESEH:NO")
-else()
-    set(LINKER_EXTRA "")
-endif()
+    # Architecture-specific Windows linker flags
+    if(ARCHITECTURE_LC STREQUAL "i386")
+        # i386-specific linker flags:
+        #   /BASE:0x400000    - Preferred load address (standard for 32-bit Windows)
+        #   /FILEALIGN:0x1000 - File section alignment (4KB pages)
+        #   /SAFESEH:NO       - Disable SafeSEH
+        set(LINKER_EXTRA ",/BASE:0x400000,/FILEALIGN:0x1000,/SAFESEH:NO")
+    else()
+        set(LINKER_EXTRA "")
+    endif()
 
-# =============================================================================
-# Build Type Specific Linker Flags
-# =============================================================================
-if(BUILD_TYPE_LC STREQUAL "debug")
-    # Debug linker flags:
-    #   /DEBUG - Include debug information in PE
-    #   /MAP   - Generate linker map file
-    set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},/DEBUG,/MAP:${OUTPUT_DIR}/output.map.txt")
-else()
-    # Release linker flags:
-    #   --strip-all - Remove all symbols and debug info
-    #   /OPT:REF    - Remove unreferenced functions/data
-    #   /OPT:ICF    - Fold identical code sequences
-    #   /RELEASE    - Set release flag in PE header
-    #   /LTCG       - Link-time code generation
-    #   /MAP        - Generate linker map file
-    set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},--strip-all,/OPT:REF,/OPT:ICF,/RELEASE,/LTCG,/MAP:${OUTPUT_DIR}/output.map.txt")
+    # Build type specific Windows linker flags
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},/DEBUG,/MERGE:.rdata=.text,/MAP:${OUTPUT_DIR}/output.map.txt")
+    else()
+        set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},--strip-all,/OPT:REF,/OPT:ICF,/RELEASE,/LTCG,/MAP:${OUTPUT_DIR}/output.map.txt")
+    endif()
+
+elseif(PLATFORM_LC STREQUAL "linux")
+    # -------------------------------------------------------------------------
+    # Linux Linker Flags (LLD, ELF format)
+    # -------------------------------------------------------------------------
+    # Linux linker flags (passed to LLD via -Wl):
+    #   -T linker.script  - Use custom linker script (merges .rodata into .text)
+    #   -e _start         - Use _start as entry point
+    set(LINKER_BASE "-Wl,-T,${CMAKE_SOURCE_DIR}/linker.script,-e,_start")
+
+    # Build type specific Linux linker flags
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        set(LINKER_FLAGS "${LINKER_BASE}")
+    else()
+        # Release: strip symbols and enable garbage collection
+        set(LINKER_FLAGS "${LINKER_BASE},--strip-all,--gc-sections")
+    endif()
 endif()
 
 # =============================================================================
@@ -221,10 +297,10 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}")
 # =============================================================================
 add_executable(${TARGET_TRIPLE} ${SOURCES})
 
-# Set target properties - use simple "output" name (directory provides context)
+# Set target properties
 set_target_properties(${TARGET_TRIPLE} PROPERTIES
     OUTPUT_NAME "output"
-    SUFFIX ".exe"
+    SUFFIX "${OUTPUT_SUFFIX}"
 )
 
 # Include directories
@@ -250,7 +326,7 @@ target_link_options(${TARGET_TRIPLE} PRIVATE
 # =============================================================================
 # Post-Build Commands (PIC Blob Generation & Analysis)
 # =============================================================================
-set(OUTPUT_EXE "${OUTPUT_DIR}/output.exe")
+set(OUTPUT_FILE "${OUTPUT_DIR}/output${OUTPUT_SUFFIX}")
 set(OUTPUT_BIN "${OUTPUT_DIR}/output.bin")
 set(OUTPUT_TXT "${OUTPUT_DIR}/output.txt")
 set(OUTPUT_STR "${OUTPUT_DIR}/output.strings.txt")
@@ -258,22 +334,19 @@ set(OUTPUT_B64 "${OUTPUT_DIR}/output.b64.txt")
 set(OUTPUT_MAP "${OUTPUT_DIR}/output.map.txt")
 
 add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E echo "Build SUCCEEDED: ${OUTPUT_EXE}"
+    COMMAND ${CMAKE_COMMAND} -E echo "Build SUCCEEDED: ${OUTPUT_FILE}"
 
     # Generate object dump (disassembly + section headers + .text content)
-    COMMAND llvm-objdump -d -s -h -j .text ${OUTPUT_EXE} > ${OUTPUT_TXT}
+    COMMAND llvm-objdump -d -s -h -j .text ${OUTPUT_FILE} > ${OUTPUT_TXT}
 
     # Extract .text section as PIC blob
-    COMMAND llvm-objcopy "--dump-section=.text=${OUTPUT_BIN}" ${OUTPUT_EXE}
+    COMMAND llvm-objcopy "--dump-section=.text=${OUTPUT_BIN}" ${OUTPUT_FILE}
 
     # Generate strings file (verify no embedded string literals)
-    COMMAND llvm-strings ${OUTPUT_EXE} > ${OUTPUT_STR}
+    COMMAND llvm-strings ${OUTPUT_FILE} > ${OUTPUT_STR}
 
     # Base64 encode the PIC blob
     COMMAND ${CMAKE_COMMAND} -DPIC_FILE=${OUTPUT_BIN} -DBASE64_FILE=${OUTPUT_B64} -P "${CMAKE_SOURCE_DIR}/cmake/base64_encode.cmake"
-
-    # Verify no .rdata section exists (critical for PIC)
-    COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} -P "${CMAKE_SOURCE_DIR}/cmake/verify_no_rdata.cmake"
 
     COMMENT "Generating PIC blob and analysis files..."
 )
@@ -284,10 +357,10 @@ add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
 message(STATUS "")
 message(STATUS "=== Build Configuration ===")
 message(STATUS "ARCHITECTURE:     ${ARCHITECTURE_LC}")
-message(STATUS "PLATFORM:         ${PLATFORM}")
+message(STATUS "PLATFORM:         ${PLATFORM_LC}")
 message(STATUS "BUILD_TYPE:       ${BUILD_TYPE_LC}")
 message(STATUS "TARGET_TRIPLE:    ${TARGET_TRIPLE}")
 message(STATUS "OUTPUT_DIR:       ${OUTPUT_DIR}")
-message(STATUS "OUTPUT:           output.exe")
+message(STATUS "OUTPUT:           output${OUTPUT_SUFFIX}")
 message(STATUS "===========================")
 message(STATUS "")

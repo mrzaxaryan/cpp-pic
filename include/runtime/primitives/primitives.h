@@ -46,12 +46,26 @@ typedef wchar_t WCHAR, *PWCHAR, **PPWCHAR;
 typedef const WCHAR *PCWCHAR;
 
 typedef bool BOOL, *PBOOL, **PPBOOL;
+
+/*
+ * USIZE/SSIZE - Platform-specific pointer-sized types
+ */
+#if defined(PLATFORM_WINDOWS)
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
 typedef unsigned long long USIZE, *PUSIZE;
 typedef signed long long SSIZE, *PSSIZE;
 #else
 typedef unsigned int USIZE, *PUSIZE;
 typedef signed int SSIZE, *PSSIZE;
+#endif
+#elif defined(PLATFORM_LINUX)
+#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
+typedef unsigned long USIZE, *PUSIZE;
+typedef signed long SSIZE, *PSSIZE;
+#else
+typedef unsigned int USIZE, *PUSIZE;
+typedef signed int SSIZE, *PSSIZE;
+#endif
 #endif
 
 typedef __builtin_va_list VA_LIST;

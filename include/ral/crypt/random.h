@@ -8,9 +8,10 @@ class Random
 private:
     // Internal state for the random number generator
     UINT32 seed;
+    INT32 GetSeedFromTime();
 
 public:
-    VOID *operator new(USIZE) = delete; // Disable dynamic allocation
+    VOID *operator new(USIZE) = delete;    // Disable dynamic allocation
     VOID operator delete(VOID *) = delete; // Disable dynamic deallocation
     // The maximum value for the random number generator
     static constexpr INT32 MAX = 32767;
@@ -30,7 +31,6 @@ public:
     INT32 GetArray(USIZE size, PUINT8 buffer);
 };
 
-
 template <typename TChar>
 TChar Random::GetChar()
 {
@@ -39,9 +39,10 @@ TChar Random::GetChar()
     INT32 val = Random::Get();
     // Map [0, 32767] to [0, 25] using: (val * 26) / 32768
     // This is approximately val * 26 / 32768 = val * 26 >> 15
-    INT32 charOffset = ((val & 0x7FFF) * 26) >> 15;  // Result is 0-25
+    INT32 charOffset = ((val & 0x7FFF) * 26) >> 15; // Result is 0-25
     // Clamp to ensure we're in range (safety check)
-    if (charOffset > 25) charOffset = 25;
+    if (charOffset > 25)
+        charOffset = 25;
     TChar c = (TChar)('a' + charOffset);
     return c;
 }

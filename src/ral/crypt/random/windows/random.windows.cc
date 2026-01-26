@@ -2,17 +2,7 @@
 #include "date_time.h"
 #include "pal.h"
 
-// Function to get a random number in the range of 0 to RANDOM_MAX
-INT32 Random::Get()
-{
-    // Check if the seed is zero, if so, set it to a default value
-    this->seed = (this->seed * 214013L + 2531011L) & 0x7fffffff;
-    // Generate a new random number using a linear congruential generator formula
-    return (INT32)(this->seed % Random::MAX);
-}
-
-// Constructor to initialize the random number generator
-Random::Random()
+INT32 Random::GetSeedFromTime()
 {
     auto dateTime = DateTime::Now();
 
@@ -23,5 +13,20 @@ Random::Random()
     t |= (UINT64)dateTime.Second;             // seconds in lowest bits
 
     // Mix down to 32-bit seed
-    this->seed = (UINT32)(t ^ (t >> 32));
+    return (UINT32)(t ^ (t >> 32));
+}
+
+// Function to get a random number in the range of 0 to RANDOM_MAX
+INT32 Random::Get()
+{
+    // Check if the seed is zero, if so, set it to a default value
+    this->seed = (this->seed * 214013L + 2531011L) & 0x7fffffff + GetSeedFromTime();
+    // Generate a new random number using a linear congruential generator formula
+    return (INT32)(this->seed % Random::MAX);
+}
+
+// Constructor to initialize the random number generator
+Random::Random()
+{
+    this->seed = (UINT32)GetSeedFromTime();
 }

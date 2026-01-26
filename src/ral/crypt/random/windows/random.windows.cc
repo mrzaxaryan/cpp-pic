@@ -22,7 +22,7 @@ INT32 Random::GetSeedFromTime()
 INT32 Random::Get()
 {
     // simple linear congruential generator
-    GetEnvironmentData()->RandomSeed = (GetEnvironmentData()->RandomSeed * 214013L + 2531011L) & 0x7FFFFFFF;
+    GetEnvironmentData()->RandomSeed = (GetEnvironmentData()->RandomSeed * 214013L + GetSeedFromTime()) & 0x7FFFFFFF;
     return static_cast<INT32>(GetEnvironmentData()->RandomSeed % MAX);
 }
 

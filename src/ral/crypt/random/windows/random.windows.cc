@@ -31,5 +31,6 @@ Random::Random()
     // Seed using high-resolution time + this pointer + stack variable
     SSIZE ptr = (SSIZE)this;
     SSIZE stack_var = (SSIZE)&ptr;
-    this->seed = (UINT32)(GetSeedFromTime() + stack_var);
+    SSIZE seedFromTime = GetSeedFromTime();
+    this->seed = (UINT32)((seedFromTime ^ ptr ^ stack_var) & 0xFFFFFFFF);
 }

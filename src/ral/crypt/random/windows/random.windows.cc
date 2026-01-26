@@ -20,7 +20,7 @@ INT32 Random::GetSeedFromTime()
 INT32 Random::Get()
 {
     UINT32 dummmyVar = 0;
-    this->seed = (this->seed * 214013L + 2531011L + (INT32)(SSIZE)(PVOID)&dummmyVar) & 0x7fffffff;
+    this->seed = (this->seed * 214013L + 2531011L + (INT32)(SSIZE)(PVOID)&dummmyVar) & 0xffffffff;
     // Generate a new random number using a linear congruential generator formula
     return (INT32)(this->seed % Random::MAX);
 }
@@ -32,5 +32,5 @@ Random::Random()
     SSIZE ptr = (SSIZE)this;
     SSIZE stack_var = (SSIZE)&ptr;
     SSIZE seedFromTime = GetSeedFromTime();
-    this->seed = (UINT32)((seedFromTime ^ ptr ^ stack_var) & 0xFFFFFFFF);
+    this->seed = (UINT32)((seedFromTime ^ ptr ^ stack_var ^ (SSIZE)&seedFromTime) & 0xFFFFFFFF);
 }

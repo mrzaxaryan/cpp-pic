@@ -495,8 +495,6 @@ The codebase follows a **three-layer architecture** for clean separation of conc
 
 ```
 cpp-pic/
-├── cmake/                          # Build system
-│   └── base64_encode.cmake        # Base64 encoding for PIC blobs
 ├── include/
 │   ├── bal/                       # Base Abstraction Layer (platform-independent)
 │   │   ├── primitives/            # EMBEDDED_STRING, UINT64, INT64, DOUBLE

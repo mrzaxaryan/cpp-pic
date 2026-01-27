@@ -51,9 +51,6 @@ cpp-pic/
 │           │   └── output.map.txt # Linker map
 │           └── release/
 │
-├── cmake/                          # Build system modules
-│   └── base64_encode.cmake        # Base64 encoding script
-│
 ├── scripts/                        # Automation scripts
 │   ├── README.md                  # Scripts documentation
 │   └── loader.ps1                 # PIC blob loader (Windows)
@@ -130,10 +127,6 @@ cpp-pic/
 **Console (`console/windows/`):**
 - `console.windows.cc` - Windows console implementation (WriteConsoleW)
 
-### Build System (`cmake/`)
-
-- `base64_encode.cmake` - Base64 encoding for PIC blobs
-
 ### Scripts (`scripts/`)
 
 - `loader.ps1` - Load and execute PIC blobs in memory (Windows)
@@ -184,7 +177,6 @@ build/
 | **Header files** | 20 | `include/runtime/` |
 | **Test headers** | 8 | `tests/` |
 | **Source files** | 10 | `src/runtime/` (Windows only) |
-| **CMake scripts** | 3 | `cmake/` |
 | **Automation scripts** | 1 | `scripts/` |
 | **Documentation** | 4 | `docs/`, `scripts/`, `tests/` |
 | **VSCode configs** | 4 | `.vscode/` |

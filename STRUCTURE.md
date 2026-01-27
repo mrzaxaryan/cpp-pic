@@ -52,8 +52,7 @@ cpp-pic/
 │           └── release/
 │
 ├── cmake/                          # Build system modules
-│   ├── base64_encode.cmake        # Base64 encoding script
-│   └── verify_no_rdata.cmake      # .rdata validation script
+│   └── base64_encode.cmake        # Base64 encoding script
 │
 ├── scripts/                        # Automation scripts
 │   ├── README.md                  # Scripts documentation
@@ -134,7 +133,6 @@ cpp-pic/
 ### Build System (`cmake/`)
 
 - `base64_encode.cmake` - Base64 encoding for PIC blobs
-- `verify_no_rdata.cmake` - Post-build .rdata section validation
 
 ### Scripts (`scripts/`)
 

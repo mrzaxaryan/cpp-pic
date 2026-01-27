@@ -18,7 +18,7 @@ public:
     // Constructor
     Random();
 
-    // Generate a random string of specified length
+        // Generate a random string of specified length
     template <typename TChar>
     UINT32 GetString(TChar *pString, UINT32 length);
     // Generate a random character

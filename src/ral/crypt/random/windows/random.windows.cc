@@ -16,7 +16,6 @@ INT32 Random::GetSeedFromTime()
 // Function to get a random number in the range of 0 to RANDOM_MAX
 INT32 Random::Get()
 {
-
     // simple linear congruential generator
     GetEnvironmentData()->RandomSeed = (GetEnvironmentData()->RandomSeed * 214013L + GetSeedFromTime()) & 0x7FFFFFFF;
     Logger::Debug<WCHAR>(L"[Random] Generated value: %u"_embed, static_cast<UINT32>((GetEnvironmentData()->RandomSeed >> 16) & 0x7FFF));

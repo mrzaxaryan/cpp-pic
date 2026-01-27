@@ -9,7 +9,7 @@ INT32 Random::GetSeedFromTime()
     auto dateTime = DateTime::Now();
 
     // Mix down to 32-bit seed
-    return (UINT32)(dateTime.Millisecond + dateTime.Second);
+    return (UINT32)(dateTime.Milliseconds + dateTime.Seconds);
 }
 
 // Function to get a random number in the range of 0 to RANDOM_MAX

@@ -125,20 +125,20 @@ DateTime DateTime::Now()
         month++;
     }
 
-    dt.Year = year;
-    dt.Month = month + 1;      // 1..12
-    dt.Day = (UINT32)days + 1; // 1..31
+    dt.Years = year;
+    dt.Monthes = month + 1;     // 1..12
+    dt.Days = (UINT32)days + 1; // 1..31
 
     // time-of-day
     UINT64 total_secs = dayTicks / TICKS_PER_SEC;
-    dt.Hour = (UINT32)(total_secs / UINT64(3600u));
-    dt.Minute = (UINT32)((total_secs / UINT64(60u)) % UINT64(60u));
-    dt.Second = (UINT32)(total_secs % UINT64(60u));
+    dt.Hours = (UINT32)(total_secs / UINT64(3600u));
+    dt.Minutes = (UINT32)((total_secs / UINT64(60u)) % UINT64(60u));
+    dt.Seconds = (UINT32)(total_secs % UINT64(60u));
 
     // sub-second from remaining 100ns ticks
-    UINT64 sub100ns = dayTicks % TICKS_PER_SEC;                // 0..9,999,999 (100ns units)
-    dt.Millisecond = sub100ns / UINT64(10000u);                // 1 ms = 10,000 * 100ns
-    dt.Microsecond = (sub100ns / UINT64(10u)) % UINT64(1000u); // 1 us = 10 * 100ns
-    dt.Nanosecond = (sub100ns % UINT64(10u)) * UINT64(100u);   // remainder * 100ns -> ns
+    UINT64 sub100ns = dayTicks % TICKS_PER_SEC;                 // 0..9,999,999 (100ns units)
+    dt.Milliseconds = sub100ns / UINT64(10000u);                // 1 ms = 10,000 * 100ns
+    dt.Microseconds = (sub100ns / UINT64(10u)) % UINT64(1000u); // 1 us = 10 * 100ns
+    dt.Nanoseconds = (sub100ns % UINT64(10u)) * UINT64(100u);   // remainder * 100ns -> ns
     return dt;
 }

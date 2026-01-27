@@ -52,15 +52,15 @@ private:
 
 public:
     // Date and time components
-    UINT64 Year = 0;
-    UINT32 Month = 0;
-    UINT32 Day = 0;
-    UINT32 Hour = 0;
-    UINT32 Minute = 0;
-    UINT32 Second = 0;
-    UINT64 Millisecond = 0;
-    UINT64 Microsecond = 0;
-    UINT64 Nanosecond = 0;
+    UINT64 Years = 0;
+    UINT32 Monthes = 0;
+    UINT32 Days = 0;
+    UINT32 Hours = 0;
+    UINT32 Minutes = 0;
+    UINT32 Seconds = 0;
+    UINT64 Milliseconds = 0;
+    UINT64 Microseconds = 0;
+    UINT64 Nanoseconds = 0;
     // Disable dynamic allocation and deallocation
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
@@ -71,11 +71,11 @@ public:
     {
         TimeOnlyString<TChar> out{};
 
-        Put2<TChar>(&out[0], (UINT32)Hour);
+        Put2<TChar>(&out[0], (UINT32)Hours);
         out[2] = (TChar)':';
-        Put2<TChar>(&out[3], (UINT32)Minute);
+        Put2<TChar>(&out[3], (UINT32)Minutes);
         out[5] = (TChar)':';
-        Put2<TChar>(&out[6], (UINT32)Second);
+        Put2<TChar>(&out[6], (UINT32)Seconds);
 
         out[8] = (TChar)0;
         return out;
@@ -87,11 +87,11 @@ public:
     {
         DateOnlyString<TChar> out{};
 
-        Put4<TChar>(&out[0], (UINT32)Year);
+        Put4<TChar>(&out[0], (UINT32)Years);
         out[4] = (TChar)'-';
-        Put2<TChar>(&out[5], (UINT32)Month);
+        Put2<TChar>(&out[5], (UINT32)Monthes);
         out[7] = (TChar)'-';
-        Put2<TChar>(&out[8], (UINT32)Day);
+        Put2<TChar>(&out[8], (UINT32)Days);
 
         out[10] = (TChar)0;
         return out;
@@ -104,19 +104,19 @@ public:
         DateTimeString<TChar> out{};
 
         // Date
-        Put4<TChar>(&out[0], (UINT32)Year);
+        Put4<TChar>(&out[0], (UINT32)Years);
         out[4] = (TChar)'-';
-        Put2<TChar>(&out[5], (UINT32)Month);
+        Put2<TChar>(&out[5], (UINT32)Monthes);
         out[7] = (TChar)'-';
-        Put2<TChar>(&out[8], (UINT32)Day);
+        Put2<TChar>(&out[8], (UINT32)Days);
         out[10] = (TChar)' ';
 
         // Time
-        Put2<TChar>(&out[11], (UINT32)Hour);
+        Put2<TChar>(&out[11], (UINT32)Hours);
         out[13] = (TChar)':';
-        Put2<TChar>(&out[14], (UINT32)Minute);
+        Put2<TChar>(&out[14], (UINT32)Minutes);
         out[16] = (TChar)':';
-        Put2<TChar>(&out[17], (UINT32)Second);
+        Put2<TChar>(&out[17], (UINT32)Seconds);
 
         out[19] = (TChar)0;
         return out;

@@ -13,6 +13,7 @@ private:
 public:
     VOID *operator new(USIZE) = delete;    // Disable dynamic allocation
     VOID operator delete(VOID *) = delete; // Disable dynamic deallocation
+
     // The maximum value for the random number generator
     static constexpr INT32 MAX = 32767;
     // Constructor

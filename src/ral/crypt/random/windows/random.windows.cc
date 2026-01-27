@@ -25,6 +25,9 @@ INT32 Random::Get()
 // Constructor to initialize the random number generator
 Random::Random()
 {
-    GetEnvironmentData()->RandomSeed = GetSeedFromTime();
-    Logger::Info<WCHAR>(L"[Random] Initialized with seed: %u"_embed, GetEnvironmentData()->RandomSeed);
+    if (GetEnvironmentData()->RandomSeed == 0)
+    {
+        GetEnvironmentData()->RandomSeed = GetSeedFromTime();
+        Logger::Info<WCHAR>(L"[Random] Initialized with seed: %u"_embed, GetEnvironmentData()->RandomSeed);
+    }
 }

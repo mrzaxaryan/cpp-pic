@@ -7,7 +7,7 @@
 
 ENTRYPOINT INT32 _start(VOID)
 {
-	ENVIRONMENT_DATA envData;
+	ENVIRONMENT_DATA envData{};
 	InitializeRuntime(&envData);
 
 	BOOL allPassed = TRUE;
@@ -39,7 +39,7 @@ ENTRYPOINT INT32 _start(VOID)
 	if (!DoubleTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
-	if(!ArrayStorageTests::RunAll())
+	if (!ArrayStorageTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 	if (!StringFormatterTests::RunAll())
@@ -59,16 +59,16 @@ ENTRYPOINT INT32 _start(VOID)
 	Logger::Info<WCHAR>(L""_embed);
 
 	// Run socket tests (requires network connectivity)
-	if(!SocketTests::RunAll())
+	if (!SocketTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 	// Run TLS tests (requires network connectivity)
-	if(!TlsTests::RunAll())
+	if (!TlsTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 
 	// Run DNS tests (requires network connectivity)
-	if(!DnsTests::RunAll())
+	if (!DnsTests::RunAll())
 		allPassed = FALSE;
 
 	// Final summary

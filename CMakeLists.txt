@@ -25,14 +25,11 @@ else()
 endif()
 
 # Force compilers to be found without testing
-set(CMAKE_C_COMPILER_FORCED TRUE)
-set(CMAKE_CXX_COMPILER_FORCED TRUE)
-set(CMAKE_C_COMPILER_WORKS TRUE)
-set(CMAKE_CXX_COMPILER_WORKS TRUE)
-
-# Disable standard library linking
-set(CMAKE_CXX_STANDARD_LIBRARIES "")
-set(CMAKE_C_STANDARD_LIBRARIES "")
+foreach(lang C CXX)
+    set(CMAKE_${lang}_COMPILER_FORCED TRUE)
+    set(CMAKE_${lang}_COMPILER_WORKS TRUE)
+    set(CMAKE_${lang}_STANDARD_LIBRARIES "")
+endforeach()
 
 # Use GNU-style LLD linker
 set(CMAKE_LINKER lld)
@@ -246,12 +243,10 @@ endif()
 # Create Output Directory
 # =============================================================================
 file(MAKE_DIRECTORY "${OUTPUT_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}")
-set(CMAKE_PDB_OUTPUT_DIRECTORY "${OUTPUT_DIR}")
-set(CMAKE_PDB_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}")
-set(CMAKE_PDB_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}")
+foreach(config "" _DEBUG _RELEASE)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY${config} "${OUTPUT_DIR}")
+    set(CMAKE_PDB_OUTPUT_DIRECTORY${config} "${OUTPUT_DIR}")
+endforeach()
 
 # =============================================================================
 # Create Executable Target
@@ -296,124 +291,69 @@ set(OUTPUT_MAP "${OUTPUT_DIR}/output.map.txt")
 
 # Generate inline verification script for .rdata checking
 set(VERIFY_RDATA_SCRIPT "${CMAKE_BINARY_DIR}/verify_no_rdata.cmake")
-file(WRITE "${VERIFY_RDATA_SCRIPT}" "
+file(WRITE "${VERIFY_RDATA_SCRIPT}" [[
 # Verify no .rdata section exists in the binary
-# This verification ensures position-independence by confirming that no read-only
-# data section (.rdata) was generated. The presence of .rdata would break PIC
-# because it contains absolute addresses that cannot be relocated.
-
 if(NOT DEFINED MAP_FILE)
-    message(FATAL_ERROR \"MAP_FILE must be defined\")
+    message(FATAL_ERROR "MAP_FILE must be defined")
 endif()
 
 # Map file may not exist for debug builds
-if(NOT EXISTS \"\${MAP_FILE}\")
-    message(STATUS \"Map file not found (expected for debug builds): \${MAP_FILE}\")
-    message(STATUS \"Skipping .rdata verification\")
+if(NOT EXISTS "${MAP_FILE}")
+    message(STATUS "Map file not found (expected for debug): ${MAP_FILE}")
     return()
 endif()
 
-# Read the map file
-file(READ \"\${MAP_FILE}\" MAP_CONTENT)
+file(READ "${MAP_FILE}" MAP_CONTENT)
 
-# Check for .rdata section (Windows PE format)
-# We check for ANY .rdata section - both input and output sections
-# Even if .rdata is merged into .text, its presence indicates problematic code generation
-string(REGEX MATCH \"[ \\t]+[0-9a-fA-F]+:[0-9a-fA-F]+[ \\t]+[0-9a-fA-F]+H[ \\t]+\\\\.rdata[ \\t]\" RDATA_INPUT \"\${MAP_CONTENT}\")
+# Check for .rdata/.rodata sections (both input and output)
+string(REGEX MATCH "[ \t]+[0-9a-fA-F]+:[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+H[ \t]+\\.rdata[ \t]" RDATA_IN "${MAP_CONTENT}")
+string(REGEX MATCH "[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9]+[ \t]+\\.rdata[ \t]" RDATA_OUT "${MAP_CONTENT}")
+string(REGEX MATCH "[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9]+[ \t]+\\.rodata[^.]" RODATA_OUT "${MAP_CONTENT}")
 
-# Also check for output sections (format without segment:offset)
-string(REGEX MATCH \"[ \\t]+[0-9a-fA-F]+[ \\t]+[0-9a-fA-F]+[ \\t]+[0-9a-fA-F]+[ \\t]+[0-9]+[ \\t]+\\\\.rdata[ \\t]\" RDATA_OUTPUT \"\${MAP_CONTENT}\")
-
-if(RDATA_INPUT)
+if(RDATA_IN OR RDATA_OUT OR RODATA_OUT)
     message(FATAL_ERROR
-        \"CRITICAL: .rdata input section detected in map file!\\n\"
-        \"Even though merged into .text, this indicates problematic code generation.\\n\"
-        \"The presence of ANY .rdata breaks position-independence. Check for:\\n\"
-        \"  - Static const variables with runtime initialization\\n\"
-        \"  - Jump tables from switch statements (use -fno-jump-tables)\\n\"
-        \"  - Floating-point constants not using EMBEDDED_DOUBLE\\n\"
-        \"  - String literals not using EMBEDDED_STRING\\n\"
-        \"  - RTTI or exception tables (use -fno-rtti -fno-exceptions)\\n\"
-        \"Map file: \${MAP_FILE}\\n\"
-        \"Matched line: \${RDATA_INPUT}\"
+        "CRITICAL: Read-only data section detected!\n"
+        "This breaks position-independence. Check for:\n"
+        "  - Static const variables with runtime initialization\n"
+        "  - Jump tables from switch statements (use -fno-jump-tables)\n"
+        "  - Floating-point constants not using EMBEDDED_DOUBLE\n"
+        "  - String literals not using EMBEDDED_STRING\n"
+        "  - RTTI or exception tables (use -fno-rtti -fno-exceptions)\n"
+        "Map file: ${MAP_FILE}"
     )
 endif()
 
-if(RDATA_OUTPUT)
-    message(FATAL_ERROR
-        \"CRITICAL: .rdata OUTPUT section detected in binary!\\n\"
-        \"This breaks position-independence. Check for:\\n\"
-        \"  - Static const variables with runtime initialization\\n\"
-        \"  - Jump tables from switch statements (use -fno-jump-tables)\\n\"
-        \"  - RTTI or exception tables (use -fno-rtti -fno-exceptions)\\n\"
-        \"Map file: \${MAP_FILE}\"
-    )
-endif()
-
-# For ELF, check for .rodata as a top-level output section
-string(REGEX MATCH \"[ \\t]+[0-9a-fA-F]+[ \\t]+[0-9a-fA-F]+[ \\t]+[0-9a-fA-F]+[ \\t]+[0-9]+[ \\t]+\\\\.rodata[^.]\" RODATA_OUTPUT \"\${MAP_CONTENT}\")
-
-if(RODATA_OUTPUT)
-    message(FATAL_ERROR
-        \"CRITICAL: .rodata OUTPUT section detected in binary!\\n\"
-        \"This breaks position-independence. Check for:\\n\"
-        \"  - String literals (use EMBEDDED_STRING)\\n\"
-        \"  - Static const variables\\n\"
-        \"  - Jump tables from switch statements (use -fno-jump-tables)\\n\"
-        \"Map file: \${MAP_FILE}\"
-    )
-endif()
-
-message(STATUS \"Verification PASSED: No .rdata/.rodata output sections found\")
-")
+message(STATUS "Verification PASSED: No .rdata/.rodata sections found")
+]])
 
 # Generate inline Base64 encoding script
 set(BASE64_ENCODE_SCRIPT "${CMAKE_BINARY_DIR}/base64_encode.cmake")
-file(WRITE "${BASE64_ENCODE_SCRIPT}" "
+file(WRITE "${BASE64_ENCODE_SCRIPT}" [[
 # Base64 encode script - cross-platform
-
 if(NOT DEFINED PIC_FILE OR NOT DEFINED BASE64_FILE)
-    message(FATAL_ERROR \"PIC_FILE and BASE64_FILE must be defined\")
+    message(FATAL_ERROR "PIC_FILE and BASE64_FILE required")
 endif()
-
-if(NOT EXISTS \"\${PIC_FILE}\")
-    message(FATAL_ERROR \"Input file does not exist: \${PIC_FILE}\")
+if(NOT EXISTS "${PIC_FILE}")
+    message(FATAL_ERROR "Input file not found: ${PIC_FILE}")
 endif()
 
 if(WIN32)
-    # Use certutil on Windows
-    execute_process(
-        COMMAND certutil -encodehex -f \"\${PIC_FILE}\" \"\${BASE64_FILE}\" 0x40000001
-        RESULT_VARIABLE RESULT
-    )
+    execute_process(COMMAND certutil -encodehex -f "${PIC_FILE}" "${BASE64_FILE}" 0x40000001 RESULT_VARIABLE RES)
 else()
-    # Use base64 on Unix-like systems
-    # Try GNU base64 (with -w flag) first, fall back to BSD base64
-    execute_process(
-        COMMAND base64 -w 0 \"\${PIC_FILE}\"
-        OUTPUT_FILE \"\${BASE64_FILE}\"
-        ERROR_QUIET
-        RESULT_VARIABLE RESULT
-    )
-    if(NOT RESULT EQUAL 0)
-        # Fallback to BSD base64 (macOS) - output to variable then write
-        execute_process(
-            COMMAND base64 \"\${PIC_FILE}\"
-            OUTPUT_VARIABLE BASE64_CONTENT
-            RESULT_VARIABLE RESULT
-        )
-        # Remove newlines from BSD base64 output
-        string(REPLACE \"\\n\" \"\" BASE64_CONTENT \"\${BASE64_CONTENT}\")
-        file(WRITE \"\${BASE64_FILE}\" \"\${BASE64_CONTENT}\")
+    # Try GNU base64 first, fallback to BSD
+    execute_process(COMMAND base64 -w 0 "${PIC_FILE}" OUTPUT_FILE "${BASE64_FILE}" ERROR_QUIET RESULT_VARIABLE RES)
+    if(NOT RES EQUAL 0)
+        execute_process(COMMAND base64 "${PIC_FILE}" OUTPUT_VARIABLE B64 RESULT_VARIABLE RES)
+        string(REPLACE "\n" "" B64 "${B64}")
+        file(WRITE "${BASE64_FILE}" "${B64}")
     endif()
-    # Add trailing newline
-    file(APPEND \"\${BASE64_FILE}\" \"\\n\")
+    file(APPEND "${BASE64_FILE}" "\n")
 endif()
 
-if(NOT RESULT EQUAL 0)
-    message(WARNING \"Base64 encoding may have failed with result: \${RESULT}\")
+if(NOT RES EQUAL 0)
+    message(WARNING "Base64 encoding may have failed: ${RES}")
 endif()
-")
+]])
 
 add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Build SUCCEEDED: ${OUTPUT_EXE}"
@@ -434,6 +374,7 @@ add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} -P "${VERIFY_RDATA_SCRIPT}"
 
     COMMENT "Generating PIC blob and analysis files..."
+    VERBATIM
 )
 
 # =============================================================================

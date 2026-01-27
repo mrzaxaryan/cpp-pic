@@ -52,7 +52,6 @@ cpp-pic/
 │           └── release/
 │
 ├── cmake/                          # Build system modules
-│   ├── toolchain-clang.cmake      # Clang/LLVM toolchain
 │   ├── base64_encode.cmake        # Base64 encoding script
 │   └── verify_no_rdata.cmake      # .rdata validation script
 │
@@ -134,7 +133,6 @@ cpp-pic/
 
 ### Build System (`cmake/`)
 
-- `toolchain-clang.cmake` - Clang/LLVM cross-compilation toolchain
 - `base64_encode.cmake` - Base64 encoding for PIC blobs
 - `verify_no_rdata.cmake` - Post-build .rdata section validation
 

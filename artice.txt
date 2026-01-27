@@ -215,7 +215,6 @@ Open in VSCode and get:
 
 ```bash
 cmake -B build -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake \
   -DARCHITECTURE=x86_64 -DPLATFORM=windows
 cmake --build build
 ```

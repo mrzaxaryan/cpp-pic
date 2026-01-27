@@ -181,7 +181,6 @@ Located in [include/tests/](../include/tests/):
 # Build specific configuration
 cmake -B "build/windows/x86_64/debug/cmake" `
       -G Ninja `
-      "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake" `
       "-DARCHITECTURE=x86_64" `
       "-DPLATFORM=windows" `
       "-DBUILD_TYPE=debug"

@@ -83,8 +83,8 @@ ninja --version
 ### Build
 
 ```bash
-# Configure (required: specify toolchain file)
-cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake
+# Configure
+cmake -B build -G Ninja
 
 # Build
 cmake --build build
@@ -105,14 +105,13 @@ cmake --build build
 
 **Windows x64 Release (default):**
 ```bash
-cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake
+cmake -B build -G Ninja
 cmake --build build
 ```
 
 **Windows i386 Debug:**
 ```bash
 cmake -B build/windows/i386/debug/cmake -G Ninja \
-    -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake \
     -DARCHITECTURE=i386 \
     -DBUILD_TYPE=debug
 cmake --build build/windows/i386/debug/cmake
@@ -121,7 +120,6 @@ cmake --build build/windows/i386/debug/cmake
 **Windows ARM64 Release:**
 ```bash
 cmake -B build/windows/aarch64/release/cmake -G Ninja \
-    -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake \
     -DARCHITECTURE=aarch64 \
     -DBUILD_TYPE=release
 cmake --build build/windows/aarch64/release/cmake
@@ -498,7 +496,6 @@ The codebase follows a **three-layer architecture** for clean separation of conc
 ```
 cpp-pic/
 ├── cmake/                          # Build system
-│   ├── toolchain-clang.cmake      # Clang cross-compilation toolchain
 │   ├── base64_encode.cmake        # Base64 encoding for PIC blobs
 │   └── verify_no_rdata.cmake      # Post-build .rdata validation
 ├── include/

@@ -1,18 +1,43 @@
 cmake_minimum_required(VERSION 3.20)
 
-# This project requires the toolchain file to be used:
-#   cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake
-#
-# The toolchain file sets CMAKE_SYSTEM_NAME to Generic to avoid Windows/MSVC-specific
+# =============================================================================
+# Toolchain Configuration (Clang for bare-metal/PIC compilation)
+# =============================================================================
+# CMAKE_SYSTEM_NAME is set to Generic to avoid Windows/MSVC-specific
 # CMake behavior that would otherwise add unwanted flags like -fuse-ld=lld-link and
 # -Xclang --dependent-lib=msvcrtd.
 
-if(NOT CMAKE_TOOLCHAIN_FILE)
-    message(FATAL_ERROR
-        "This project requires a toolchain file. Please configure with:\n"
-        "  cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake\n"
-    )
+# Use Generic system to prevent Windows-specific linker configuration
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR x86_64)
+
+# Use environment variables if set, otherwise default to clang/clang++
+if(DEFINED ENV{CC})
+    set(CMAKE_C_COMPILER $ENV{CC})
+else()
+    set(CMAKE_C_COMPILER clang)
 endif()
+
+if(DEFINED ENV{CXX})
+    set(CMAKE_CXX_COMPILER $ENV{CXX})
+else()
+    set(CMAKE_CXX_COMPILER clang++)
+endif()
+
+# Force compilers to be found without testing
+set(CMAKE_C_COMPILER_FORCED TRUE)
+set(CMAKE_CXX_COMPILER_FORCED TRUE)
+set(CMAKE_C_COMPILER_WORKS TRUE)
+set(CMAKE_CXX_COMPILER_WORKS TRUE)
+
+# Disable standard library linking
+set(CMAKE_CXX_STANDARD_LIBRARIES "")
+set(CMAKE_C_STANDARD_LIBRARIES "")
+
+# Use GNU-style LLD linker
+set(CMAKE_LINKER lld)
+set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
+set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
 
 project(cpp-pic LANGUAGES CXX)
 

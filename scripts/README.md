@@ -38,7 +38,6 @@ Loads and executes PIC blob in memory (Windows).
 ```powershell
 # 1. Build Windows x64 debug
 cmake -B build/windows/x86_64/debug/cmake -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake \
   -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=debug
 cmake --build build/windows/x86_64/debug/cmake
 
@@ -55,7 +54,6 @@ cmake --build build/windows/x86_64/debug/cmake
 # Build all architectures
 foreach ($arch in @('i386', 'x86_64', 'armv7a', 'aarch64')) {
     cmake -B "build/windows/$arch/release/cmake" -G Ninja `
-      -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-clang.cmake `
       -DARCHITECTURE=$arch -DPLATFORM=windows -DBUILD_TYPE=release
     cmake --build "build/windows/$arch/release/cmake"
 }

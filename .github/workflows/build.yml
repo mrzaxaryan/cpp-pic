@@ -143,6 +143,14 @@ jobs:
             exit /b %EXIT_CODE%
           )
 
+      - name: Upload test logs
+        if: matrix.can-test && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.arch }}-${{ matrix.platform }}
+          path: output.log.txt
+          if-no-files-found: warn
+
       - name: Skip test
         if: ${{ !matrix.can-test }}
         shell: pwsh

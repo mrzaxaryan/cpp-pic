@@ -9,17 +9,20 @@
  * Uses inline assembly to compute pure relative offsets with no absolute addresses.
  *
  * DESIGN:
- *   - Unified implementation for all architectures (i386, x86_64, aarch64)
+ *   - Unified implementation for all architectures (i386, x86_64, armv7a, aarch64)
  *   - Pure PC/RIP-relative addressing computed at runtime
  *   - No link-time absolute addresses
  *   - Works identically in PIC blob and normal EXE modes
+ *   - Architecture detection via CMake-defined macros (ARCHITECTURE_*)
  *
  * ADVANTAGES:
  *   - Compile-time offset calculation by assembler
+ *   - No runtime architecture detection overhead
  *
  * DISASSEMBLY EXAMPLES:
  *   i386:   call/pop %eax + leal offset(%eax), %eax
  *   x86_64: leaq offset(%rip), %rax
+ *   armv7a: adr r0, offset
  *   aarch64: adr x0, offset
  *
  * USAGE:
@@ -35,18 +38,23 @@ public:
     /**
      * Get() - Returns position-independent function pointer
      *
-     * Uses inline assembly to compute PC/RIP-relative addresses:
+     * Uses inline assembly to compute PC/RIP-relative addresses.
+     * Architecture is selected at compile-time via CMake-defined macros.
      *
-     * i386 (32-bit):
+     * i386 (ARCHITECTURE_I386):
      *   - call 1f / pop %eax        - Get current EIP
      *   - leal offset(%eax), %eax   - Add PC-relative offset
      *   Example: leal 0x2757(%eax), %eax
      *
-     * x86_64 (64-bit):
+     * x86_64 (ARCHITECTURE_X86_64):
      *   - leaq offset(%rip), %rax   - Direct RIP-relative addressing
      *   Example: leaq 0x1234(%rip), %rax
      *
-     * aarch64 (ARM 64-bit):
+     * armv7a (ARCHITECTURE_ARMV7A):
+     *   - adr r0, target            - PC-relative address (±1KB range)
+     *   Example: adr r0, #0x1234
+     *
+     * aarch64 (ARCHITECTURE_AARCH64):
      *   - adr x0, target            - PC-relative address (±1MB range)
      *   Example: adr x0, #0x1234
      *
@@ -59,7 +67,7 @@ public:
     {
         FuncPtr result;
 
-#if defined(__i386__) || defined(_M_IX86)
+#if defined(ARCHITECTURE_I386)
         // i386: Use call/pop to get EIP, then compute PC-relative offset
         __asm__ volatile (
             "call 1f\n"                         // Push return address onto stack
@@ -71,7 +79,7 @@ public:
             : "i"(Func)                         // Input: target (compile-time constant)
             : "eax"                             // Clobber: eax register
         );
-#elif defined(__x86_64__) || defined(_M_X64)
+#elif defined(ARCHITECTURE_X86_64)
         // x86_64: Use native RIP-relative addressing
         __asm__ volatile (
             "leaq %c1(%%rip), %%rax\n"          // Load PC-relative address
@@ -80,8 +88,15 @@ public:
             : "i"(Func)                         // Input: target (compile-time constant)
             : "rax"                             // Clobber: rax register
         );
-#elif defined(__aarch64__) || defined(_M_ARM64)
+#elif defined(ARCHITECTURE_AARCH64)
         // aarch64: Use ADR instruction for PC-relative addressing
+        __asm__ volatile (
+            "adr %0, %1\n"                      // Load PC-relative address
+            : "=r"(result)                      // Output: result variable
+            : "i"(Func)                         // Input: target (compile-time constant)
+        );
+#elif defined(ARCHITECTURE_ARMV7A)
+        // armv7a: Use ADR instruction for PC-relative addressing
         __asm__ volatile (
             "adr %0, %1\n"                      // Load PC-relative address
             : "=r"(result)                      // Output: result variable

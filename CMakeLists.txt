@@ -42,20 +42,24 @@ project(cpp-pic LANGUAGES CXX)
 # Configuration Options
 # =============================================================================
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
-set(PLATFORM "windows" CACHE STRING "Target platform (windows only, parameter kept for compatibility)")
+set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux, uefi (extensible for future platforms)")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 
-# Normalize inputs to lowercase (except BUILD_TYPE keeps original case for output dir)
+# Normalize inputs to lowercase
 string(TOLOWER "${ARCHITECTURE}" ARCHITECTURE_LC)
+string(TOLOWER "${PLATFORM}" PLATFORM_LC)
 string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LC)
-set(BUILD_TYPE_DIR "${BUILD_TYPE}")  # Preserve case for output directory
 
 # Validate inputs
 set(VALID_ARCHITECTURES "i386" "x86_64" "armv7a" "aarch64")
+set(VALID_PLATFORMS "windows" "linux" "uefi")
 set(VALID_BUILD_TYPES "debug" "release")
 
 if(NOT ARCHITECTURE_LC IN_LIST VALID_ARCHITECTURES)
     message(FATAL_ERROR "Invalid ARCHITECTURE: ${ARCHITECTURE}. Must be one of: ${VALID_ARCHITECTURES}")
+endif()
+if(NOT PLATFORM_LC IN_LIST VALID_PLATFORMS)
+    message(FATAL_ERROR "Invalid PLATFORM: ${PLATFORM}. Must be one of: ${VALID_PLATFORMS}")
 endif()
 if(NOT BUILD_TYPE_LC IN_LIST VALID_BUILD_TYPES)
     message(FATAL_ERROR "Invalid BUILD_TYPE: ${BUILD_TYPE}. Must be one of: ${VALID_BUILD_TYPES}")
@@ -64,8 +68,10 @@ endif()
 # =============================================================================
 # Output Directory Configuration
 # =============================================================================
-# Hierarchical structure: build/windows/arch/buildtype/
-set(BUILD_ROOT "${CMAKE_SOURCE_DIR}/build/windows/${ARCHITECTURE_LC}/${BUILD_TYPE_LC}")
+# Hierarchical structure: build/buildtype/platform/arch/
+# This structure groups by build type first, making it easier to manage
+# different platforms and architectures for the same build configuration
+set(BUILD_ROOT "${CMAKE_SOURCE_DIR}/build/${BUILD_TYPE_LC}/${PLATFORM_LC}/${ARCHITECTURE_LC}")
 set(OUTPUT_DIR "${BUILD_ROOT}")
 
 # =============================================================================
@@ -382,9 +388,9 @@ add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
 # =============================================================================
 message(STATUS "")
 message(STATUS "=== Build Configuration ===")
-message(STATUS "ARCHITECTURE:     ${ARCHITECTURE_LC}")
-message(STATUS "PLATFORM:         ${PLATFORM}")
 message(STATUS "BUILD_TYPE:       ${BUILD_TYPE_LC}")
+message(STATUS "PLATFORM:         ${PLATFORM_LC}")
+message(STATUS "ARCHITECTURE:     ${ARCHITECTURE_LC}")
 message(STATUS "TARGET_TRIPLE:    ${TARGET_TRIPLE}")
 message(STATUS "OUTPUT_DIR:       ${OUTPUT_DIR}")
 message(STATUS "OUTPUT:           output.exe")

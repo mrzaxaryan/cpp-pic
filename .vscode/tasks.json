@@ -15,56 +15,56 @@
     {
       "label": "i386-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/windows/i386/debug/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/i386/debug/cmake }",
+      "command": "cmake -B build/debug/windows/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/windows/i386/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "i386-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/windows/i386/release/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/i386/release/cmake }",
+      "command": "cmake -B build/release/windows/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/windows/i386/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "x86_64-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/windows/x86_64/debug/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/x86_64/debug/cmake }",
+      "command": "cmake -B build/debug/windows/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/windows/x86_64/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "x86_64-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/windows/x86_64/release/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/x86_64/release/cmake }",
+      "command": "cmake -B build/release/windows/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/windows/x86_64/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "armv7a-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/windows/armv7a/debug/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/armv7a/debug/cmake }",
+      "command": "cmake -B build/debug/windows/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/windows/armv7a/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "armv7a-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/windows/armv7a/release/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/armv7a/release/cmake }",
+      "command": "cmake -B build/release/windows/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/windows/armv7a/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "aarch64-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/windows/aarch64/debug/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/windows/aarch64/debug/cmake }",
+      "command": "cmake -B build/debug/windows/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/windows/aarch64/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },
     {
       "label": "aarch64-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/windows/aarch64/release/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/windows/aarch64/release/cmake }",
+      "command": "cmake -B build/release/windows/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/windows/aarch64/cmake }",
       "problemMatcher": ["$gcc"],
       "group": "build"
     },

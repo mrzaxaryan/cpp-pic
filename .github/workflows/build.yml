@@ -64,12 +64,12 @@ jobs:
           $arch = "${{ matrix.arch }}"
           $platform = "${{ matrix.platform }}"
           Write-Host "=== BUILD: arch=$arch platform=$platform type=release ==="
-          cmake -B "build/$platform/$arch/release/cmake" `
+          cmake -B "build/release/$platform/$arch/cmake" `
                 -G Ninja `
                 "-DARCHITECTURE=$arch" `
                 "-DPLATFORM=$platform" `
                 "-DBUILD_TYPE=release"
-          cmake --build "build/$platform/$arch/release/cmake"
+          cmake --build "build/release/$platform/$arch/cmake"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

@@ -12,7 +12,7 @@
                 "Bypass",
                 "-File",
                 "${workspaceFolder}/scripts/loader.ps1",
-                "${workspaceFolder}/build/windows/i386/release/output.bin"
+                "${workspaceFolder}/build/release/windows/i386/output.bin"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -37,7 +37,7 @@
                 "Bypass",
                 "-File",
                 "${workspaceFolder}/scripts/loader.ps1",
-                "${workspaceFolder}/build/windows/x86_64/release/output.bin"
+                "${workspaceFolder}/build/release/windows/x86_64/output.bin"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -62,7 +62,7 @@
                 "Bypass",
                 "-File",
                 "${workspaceFolder}/scripts/loader.ps1",
-                "${workspaceFolder}/build/windows/aarch64/release/output.bin"
+                "${workspaceFolder}/build/release/windows/aarch64/output.bin"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -72,7 +72,7 @@
             "name": "i386-pc-windows-gnu-debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/windows/i386/debug/output.exe",
+            "program": "${workspaceFolder}/build/debug/windows/i386/output.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "preLaunchTask": "i386-pc-windows-gnu-debug"
@@ -81,7 +81,7 @@
             "name": "x86_64-pc-windows-gnu-debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/windows/x86_64/debug/output.exe",
+            "program": "${workspaceFolder}/build/debug/windows/x86_64/output.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "preLaunchTask": "x86_64-pc-windows-gnu-debug"
@@ -90,7 +90,7 @@
             "name": "armv7a-pc-windows-gnu-debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/windows/armv7a/debug/output.exe",
+            "program": "${workspaceFolder}/build/debug/windows/armv7a/output.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "preLaunchTask": "armv7a-pc-windows-gnu-debug"
@@ -99,7 +99,7 @@
             "name": "aarch64-pc-windows-gnu-debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/windows/aarch64/debug/output.exe",
+            "program": "${workspaceFolder}/build/debug/windows/aarch64/output.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "preLaunchTask": "aarch64-pc-windows-gnu-debug"

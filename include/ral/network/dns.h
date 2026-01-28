@@ -22,23 +22,23 @@ typedef enum
 class DNS
 {
 private:
-    // Function to resolve a hostname using HTTP POST
-    static IPAddress ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype);
+    // Function to resolve a hostname using HTTP POST (defaults to IPv6/AAAA)
+    static IPAddress ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
     // Callback function for formatting DNS queries
     static BOOL FormatterCallback(PVOID context, CHAR ch);
 
 public:
     // Function to resolve a hostname to an IP address (tries IPv6 first, then IPv4)
     static IPAddress Resolve(PCCHAR host);
-    // Function to resolve a hostname to an IP address using DNS over TLS
-    static IPAddress ResolveOverTls(PCCHAR host, RequestType dnstype);
-    // Function to resolve a hostname to an IP address using DNS over HTTPS
-    static IPAddress ResolveOverHttp(PCCHAR host, RequestType dnstype);
+    // Function to resolve a hostname to an IP address using DNS over TLS (defaults to IPv6/AAAA)
+    static IPAddress ResolveOverTls(PCCHAR host, RequestType dnstype = AAAA);
+    // Function to resolve a hostname to an IP address using DNS over HTTPS (defaults to IPv6/AAAA)
+    static IPAddress ResolveOverHttp(PCCHAR host, RequestType dnstype = AAAA);
     // Cloudflare DNS over HTTPS [IP:1.1.1.1|1.0.0.1] [HOST:cloudflare-dns.com] [POST:cloudflare-dns.com/dns-query] [content-type:application/dns-message] [DNS Wireformat https://www.rfc-editor.org/rfc/rfc1035.html]
-    // https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/
-    static IPAddress CloudflareResolve(PCCHAR host, RequestType dnstype);
+    // https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/ (defaults to IPv6/AAAA)
+    static IPAddress CloudflareResolve(PCCHAR host, RequestType dnstype = AAAA);
     // Google DNS over HTTPS [IP:8.8.8.8]  [HOST:dns.google] [POST:dns.google/dns-query] [content-type:application/dns-message] [DNS Wireformat https://www.rfc-editor.org/rfc/rfc1035.html]
-    // https://developers.google.com/speed/public-dns/docs/secure-transports
-    static IPAddress GoogleResolve(PCCHAR host, RequestType dnstype);
+    // https://developers.google.com/speed/public-dns/docs/secure-transports (defaults to IPv6/AAAA)
+    static IPAddress GoogleResolve(PCCHAR host, RequestType dnstype = AAAA);
 };
 

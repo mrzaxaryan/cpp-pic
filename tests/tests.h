@@ -19,6 +19,7 @@
  *   ShaTests               - SHA-2 hash function tests (SHA-224/256/384/512 and HMAC)
  *   EccTests               - Elliptic Curve Cryptography tests (ECDH key exchange)
  *   DnsTests               - DNS resolution tests (DoT, DoH JSON, DoH binary)
+ *   WebSocketTests         - WebSocket client implementation tests (ws:// and wss://)
  *
  * USAGE:
  *   #include "tests.h"
@@ -32,6 +33,7 @@
  *   ShaTests::RunAll();
  *   EccTests::RunAll();
  *   DnsTests::RunAll();
+ *   WebSocketTests::RunAll();
  *   // ... etc
  */
 
@@ -51,3 +53,4 @@
 #include "sha_tests.h"
 #include "ecc_tests.h"
 #include "dns_tests.h"
+#include "websocket_tests.h"

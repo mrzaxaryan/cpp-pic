@@ -279,14 +279,15 @@ UINT32 WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode)
     delete[] header;
     delete[] framebuf;
 
+    // Return the payload length (bufferLength) if write succeeded, 0 on failure
     if (result > 0)
     {
+        return bufferLength;
     }
     else
     {
+        return 0;
     }
-
-    return result; // Result of the write operation, which is the number of bytes written or an error code
 }
 
 // This function receives data from a WebSocket client context

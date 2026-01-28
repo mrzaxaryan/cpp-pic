@@ -92,17 +92,17 @@ public:
 private:
 	static BOOL TestWideCharArrayStorage()
 	{
-		constexpr auto storage = MakeEmbedArray(L"Test");
+		static constexpr const WCHAR testData[] = L"Test";
+		static constexpr auto storage = MakeEmbedArray(testData);
 
 		// Verify size
 		if (storage.Count != 5) // "Test" + null terminator
 			return FALSE;
 
 		// Verify data integrity
-		constexpr WCHAR expected[] = L"Test";
 		for (USIZE i = 0; i < 5; i++)
 		{
-			if (storage[i] != expected[i])
+			if (storage[i] != testData[i])
 				return FALSE;
 		}
 
@@ -111,8 +111,8 @@ private:
 
 	static BOOL TestUInt32ArrayStorage()
 	{
-		constexpr UINT32 testData[] = {1, 2, 3, 4};
-		constexpr auto storage = MakeEmbedArray(testData);
+		static constexpr const UINT32 testData[] = {1, 2, 3, 4};
+		static constexpr auto storage = MakeEmbedArray(testData);
 
 		// Verify size
 		if (storage.Count != 4)
@@ -137,11 +137,11 @@ private:
 
 	static BOOL TestUInt64ArrayStorage()
 	{
-		constexpr UINT64 testData[] = {
+		static constexpr const UINT64 testData[] = {
 			0x123456789ABCDEF0ULL,
 			0xFEDCBA9876543210ULL,
 			0x0011223344556677ULL};
-		constexpr auto storage = MakeEmbedArray(testData);
+		static constexpr auto storage = MakeEmbedArray(testData);
 
 		// Verify size
 		if (storage.Count != 3)
@@ -159,22 +159,23 @@ private:
 
 	static BOOL TestArrayIndexing()
 	{
-		constexpr auto storage = MakeEmbedArray((const UINT32[]){100, 200, 300, 400, 500});
+		static constexpr UINT32 testData[] = {100, 200, 300, 400, 500};
+		auto storage = MakeEmbedArray(testData);
 
 		// Test indexing operator
-		if (storage[0] != 100) return FALSE;
-		if (storage[1] != 200) return FALSE;
-		if (storage[2] != 300) return FALSE;
-		if (storage[3] != 400) return FALSE;
-		if (storage[4] != 500) return FALSE;
+		for (USIZE i = 0; i < 5; i++)
+		{
+			if (storage[i] != testData[i])
+				return FALSE;
+		}
 
 		return TRUE;
 	}
 
 	static BOOL TestPointerConversionAndCopy()
 	{
-		constexpr UINT32 testData[] = {0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC};
-		constexpr auto storage = MakeEmbedArray(testData);
+		static constexpr const UINT32 testData[] = {0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC};
+		static constexpr auto storage = MakeEmbedArray(testData);
 
 		// Test pointer conversion and Memory::Copy
 		UINT32 dest[3];
@@ -191,8 +192,8 @@ private:
 
 	static BOOL TestCompileTimeConstants()
 	{
-		constexpr CHAR testData[] = "CompileTime";
-		constexpr auto storage = MakeEmbedArray(testData);
+		static constexpr const CHAR testData[] = "CompileTime";
+		static constexpr auto storage = MakeEmbedArray(testData);
 
 		// Verify compile-time properties
 		static_assert(storage.Count == 12, "Count should be 12");

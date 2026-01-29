@@ -3,8 +3,6 @@
 #include "peb.h"
 #include "pe.h"
 
-#if defined(PLATFORM_WINDOWS)
-
 PVOID ResolveExportAddressFromPebModule(USIZE moduleNameHash, USIZE functionNameHash)
 {
     // Resolve the module handle
@@ -31,5 +29,3 @@ NOINLINE VOID InitializeRuntime(PENVIRONMENT_DATA envData)
     PPEB peb = GetCurrentPEB();
     peb->SubSystemData = (PVOID)envData;
 }
-
-#endif // PLATFORM_WINDOWS

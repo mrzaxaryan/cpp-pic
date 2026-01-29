@@ -1,5 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
-
 #pragma once
 
 #include "primitives.h"
@@ -136,5 +134,3 @@ public:
 	// Minimum supported client	Windows XP [desktop apps | UWP apps]
 	static BOOL FindClose(PVOID hFindFile);
 };
-
-#endif // PLATFORM_WINDOWS

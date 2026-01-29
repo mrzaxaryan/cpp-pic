@@ -1,5 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
-
 #pragma once
 
 #include "primitives.h"
@@ -172,7 +170,3 @@ typedef struct _IMAGE_DOS_HEADER
 
 // Function to resolve function address by its name
 PVOID GetExportAddress(PVOID hModule, USIZE functionNameHash);
-
-#else
-#error Unsupported platform
-#endif

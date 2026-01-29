@@ -1,5 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
-
 #include "peb.h"
 #include "pal.h"
 #include "djb2.h"
@@ -49,4 +47,3 @@ PVOID GetModuleHandleFromPEB(USIZE moduleNameHash)
 
     return NULL;
 }
-#endif // PLATFORM_WINDOWS

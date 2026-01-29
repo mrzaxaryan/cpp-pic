@@ -1,5 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
-
 #include "primitives.h"
 #include "windows_types.h"
 #include "socket.h"
@@ -496,5 +494,3 @@ Socket::Socket(const IPAddress& ipAddress, UINT16 port) : ip(ipAddress), port(po
     }
     LOG_DEBUG("Socket created successfully: 0x%p\n", m_socket);
 }
-
-#endif // PLATFORM_WINDOWS

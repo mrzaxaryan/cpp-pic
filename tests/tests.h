@@ -17,6 +17,7 @@
  *   TlsTests               - TLS 1.3 implementation tests
  *   ArrayStorageTests      - Compile-time array storage tests
  *   ShaTests               - SHA-2 hash function tests (SHA-224/256/384/512 and HMAC)
+ *   Base64Tests            - Base64 encoding/decoding tests
  *   EccTests               - Elliptic Curve Cryptography tests (ECDH key exchange)
  *   DnsTests               - DNS resolution tests (DoT, DoH JSON, DoH binary)
  *   WebSocketTests         - WebSocket client implementation tests (ws:// and wss://)
@@ -31,6 +32,7 @@
  *   SocketTests::RunAll();
  *   TlsTests::RunAll();
  *   ShaTests::RunAll();
+ *   Base64Tests::RunAll();
  *   EccTests::RunAll();
  *   DnsTests::RunAll();
  *   WebSocketTests::RunAll();
@@ -51,6 +53,7 @@
 #include "tls_tests.h"
 #include "array_storage_tests.h"
 #include "sha_tests.h"
+#include "base64_tests.h"
 #include "ecc_tests.h"
 #include "dns_tests.h"
 #include "websocket_tests.h"

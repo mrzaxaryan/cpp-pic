@@ -15,13 +15,9 @@ ENTRYPOINT INT32 _start(VOID)
 	Logger::Info<WCHAR>(L"=== CPP-PIC Test Suite ==="_embed);
 	Logger::Info<WCHAR>(L""_embed);
 
-	// Run all test suites (ordered from low-level primitives to high-level abstractions)
+	// Run all test suites (Embedded/Primitives -> BAL -> PAL -> RAL)
 
-	// PAL (Platform Abstraction Layer) - Core Primitives
-	if (!MemoryTests::RunAll())
-		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
-
+	// BAL - Embedded Types and Numeric Primitives (bal/types/)
 	if (!Uint64Tests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
@@ -38,7 +34,7 @@ ENTRYPOINT INT32 _start(VOID)
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 
-	// BAL (Basic Abstraction Layer) - Data Structures and Utilities
+	// BAL - Data Structures, String Utilities, and Algorithms (bal/core, bal/string, bal/algorithms)
 	if (!ArrayStorageTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
@@ -51,11 +47,20 @@ ENTRYPOINT INT32 _start(VOID)
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 
-	// BAL - Cryptographic Primitives
+	if (!Base64Tests::RunAll())
+		allPassed = FALSE;
+	Logger::Info<WCHAR>(L""_embed);
+
+	// PAL (Platform Abstraction Layer) - Memory and System (pal/)
+	if (!MemoryTests::RunAll())
+		allPassed = FALSE;
+	Logger::Info<WCHAR>(L""_embed);
+
 	if (!RandomTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 
+	// RAL (Runtime Abstraction Layer) - Cryptography and Network
 	if (!ShaTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
@@ -64,7 +69,6 @@ ENTRYPOINT INT32 _start(VOID)
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);
 
-	// RAL (Runtime Abstraction Layer) - Network and I/O (requires network connectivity)
 	if (!SocketTests::RunAll())
 		allPassed = FALSE;
 	Logger::Info<WCHAR>(L""_embed);

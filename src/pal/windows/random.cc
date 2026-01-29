@@ -18,7 +18,7 @@ UINT64 Random::GetSeedFromTime()
 INT32 Random::Get()
 {
     // simple linear congruential generator
-    seed = (seed * (UINT64)214013 + GetSeedFromTime()) & 0x7FFFFFFF;
+    seed = (seed * (UINT64)214013 + (UINT64)426346) & 0x7FFFFFFF;
     Logger::Debug<WCHAR>(L"[Random] Generated value: %u"_embed, static_cast<UINT32>((seed >> 16) & 0x7FFF));
     return static_cast<INT32>(seed % MAX);
 }

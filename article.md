@@ -8,7 +8,7 @@ As a result, code produced by conventional toolchains cannot be used as standalo
 
 ## Motivation
 A long time ago, in a corner of the darknet, two users debated which programming language was better. One argued that assembly provides almost complete control over execution, while the other claimed that C, as a higher-level language, is a better choice for implementing complex systems, since writing something like a TLS client in assembly is impractical.
-That debate ended with kick out ASM coder from that forum.
+That debate ended with the ASM coder being kicked out from that forum.
 
 With this work, I would like to add my two cents to that debate, even though much time has passed, by arguing that it is possible to leverage modern C++23 without compromising the strict execution guarantees required for shellcode.
 
@@ -46,7 +46,7 @@ With this work, I would like to add my two cents to that debate, even though muc
 
 * **Problem:** C‑generated shellcode relies on loader‑handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
 
-* **Solution:** Preform the relocation manually:
+* **Solution:** Perform the relocation manually:
 
     At runtime, the shellcode can determine its own position in memory and perform the loader's work manually. In this approach, constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` for MSVC and a custom linker script for Clang. During execution, relocation entries are processed explicitly to fix up absolute addresses. 
 
@@ -210,19 +210,8 @@ CPP-PIC is designed around the following goals:
     directly into registers as immediate operands. This eliminates all floating-point constants
     from `.rdata` and avoids implicit compiler-generated helpers.
 
-    ```
-    struct EMBEDDED_DOUBLE 
-    {
-        consteval explicit EMBEDDED_DOUBLE(double v) {
-            bits = __builtin_bit_cast(unsigned long long, v);
-        }
-
-        operator double() const {
-            return __builtin_bit_cast(double, bits);
-        }
-    };
-
-    struct EMBEDDED_DOUBLE 
+    ```cpp
+    struct EMBEDDED_DOUBLE
     {
         consteval explicit EMBEDDED_DOUBLE(double v) {
             bits = __builtin_bit_cast(unsigned long long, v);

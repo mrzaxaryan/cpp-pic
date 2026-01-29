@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ral.h"
-#include "base64.h"
 
 class Base64Tests
 {

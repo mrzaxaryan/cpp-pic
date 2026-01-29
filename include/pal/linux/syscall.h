@@ -11,127 +11,113 @@ namespace Syscall
     // Syscall with 0 arguments
     inline SSIZE syscall0(USIZE number)
     {
-        SSIZE ret;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(number)
-            : "rax", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            :
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // Syscall with 1 argument
     inline SSIZE syscall1(USIZE number, USIZE arg1)
     {
-        SSIZE ret;
+        register USIZE r_rdi __asm__("rdi") = arg1;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rdi\n"
-            "mov %2, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(arg1), "r"(number)
-            : "rax", "rdi", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            : "r"(r_rdi)
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // Syscall with 2 arguments
     inline SSIZE syscall2(USIZE number, USIZE arg1, USIZE arg2)
     {
-        SSIZE ret;
+        register USIZE r_rdi __asm__("rdi") = arg1;
+        register USIZE r_rsi __asm__("rsi") = arg2;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rdi\n"
-            "mov %2, %%rsi\n"
-            "mov %3, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(arg1), "r"(arg2), "r"(number)
-            : "rax", "rdi", "rsi", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            : "r"(r_rdi), "r"(r_rsi)
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // Syscall with 3 arguments
     inline SSIZE syscall3(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
     {
-        SSIZE ret;
+        register USIZE r_rdi __asm__("rdi") = arg1;
+        register USIZE r_rsi __asm__("rsi") = arg2;
+        register USIZE r_rdx __asm__("rdx") = arg3;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rdi\n"
-            "mov %2, %%rsi\n"
-            "mov %3, %%rdx\n"
-            "mov %4, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(arg1), "r"(arg2), "r"(arg3), "r"(number)
-            : "rax", "rdi", "rsi", "rdx", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            : "r"(r_rdi), "r"(r_rsi), "r"(r_rdx)
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // Syscall with 4 arguments
     inline SSIZE syscall4(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
     {
-        SSIZE ret;
+        register USIZE r_rdi __asm__("rdi") = arg1;
+        register USIZE r_rsi __asm__("rsi") = arg2;
+        register USIZE r_rdx __asm__("rdx") = arg3;
+        register USIZE r_r10 __asm__("r10") = arg4;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rdi\n"
-            "mov %2, %%rsi\n"
-            "mov %3, %%rdx\n"
-            "mov %4, %%r10\n"
-            "mov %5, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(arg1), "r"(arg2), "r"(arg3), "r"(arg4), "r"(number)
-            : "rax", "rdi", "rsi", "rdx", "r10", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            : "r"(r_rdi), "r"(r_rsi), "r"(r_rdx), "r"(r_r10)
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // Syscall with 5 arguments
     inline SSIZE syscall5(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
     {
-        SSIZE ret;
+        register USIZE r_rdi __asm__("rdi") = arg1;
+        register USIZE r_rsi __asm__("rsi") = arg2;
+        register USIZE r_rdx __asm__("rdx") = arg3;
+        register USIZE r_r10 __asm__("r10") = arg4;
+        register USIZE r_r8 __asm__("r8") = arg5;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rdi\n"
-            "mov %2, %%rsi\n"
-            "mov %3, %%rdx\n"
-            "mov %4, %%r10\n"
-            "mov %5, %%r8\n"
-            "mov %6, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(arg1), "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(number)
-            : "rax", "rdi", "rsi", "rdx", "r10", "r8", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            : "r"(r_rdi), "r"(r_rsi), "r"(r_rdx), "r"(r_r10), "r"(r_r8)
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // Syscall with 6 arguments
     inline SSIZE syscall6(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
     {
-        SSIZE ret;
+        register USIZE r_rdi __asm__("rdi") = arg1;
+        register USIZE r_rsi __asm__("rsi") = arg2;
+        register USIZE r_rdx __asm__("rdx") = arg3;
+        register USIZE r_r10 __asm__("r10") = arg4;
+        register USIZE r_r8 __asm__("r8") = arg5;
+        register USIZE r_r9 __asm__("r9") = arg6;
+        register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
-            "mov %1, %%rdi\n"
-            "mov %2, %%rsi\n"
-            "mov %3, %%rdx\n"
-            "mov %4, %%r10\n"
-            "mov %5, %%r8\n"
-            "mov %6, %%r9\n"
-            "mov %7, %%rax\n"
             "syscall\n"
-            "mov %%rax, %0\n"
-            : "=r"(ret)
-            : "r"(arg1), "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(arg6), "r"(number)
-            : "rax", "rdi", "rsi", "rdx", "r10", "r8", "r9", "rcx", "r11", "memory"
+            : "+r"(r_rax)
+            : "r"(r_rdi), "r"(r_rsi), "r"(r_rdx), "r"(r_r10), "r"(r_r8), "r"(r_r9)
+            : "rcx", "r11", "memory"
         );
-        return ret;
+        return (SSIZE)r_rax;
     }
 
     // i386 syscall wrappers
@@ -140,76 +126,76 @@ namespace Syscall
     // Syscall with 0 arguments
     inline SSIZE syscall0(USIZE number)
     {
-        SSIZE ret;
+        register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
-            "mov %1, %%eax\n"
             "int $0x80\n"
-            "mov %%eax, %0\n"
-            : "=r"(ret)
-            : "r"(number)
-            : "eax", "memory"
+            : "+r"(r_eax)
+            :
+            : "memory"
         );
-        return ret;
+        return (SSIZE)r_eax;
     }
 
     // Syscall with 1 argument
     inline SSIZE syscall1(USIZE number, USIZE arg1)
     {
-        SSIZE ret;
+        register USIZE r_ebx __asm__("ebx") = arg1;
+        register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
-            "xchg %%ebx, %1\n"  // Save ebx (PIC register), load arg1
             "int $0x80\n"
-            "xchg %%ebx, %1\n"  // Restore ebx
-            : "=a"(ret)
-            : "r"(arg1), "a"(number)
+            : "+r"(r_eax)
+            : "r"(r_ebx)
             : "memory"
         );
-        return ret;
+        return (SSIZE)r_eax;
     }
 
     // Syscall with 2 arguments
     inline SSIZE syscall2(USIZE number, USIZE arg1, USIZE arg2)
     {
-        SSIZE ret;
+        register USIZE r_ebx __asm__("ebx") = arg1;
+        register USIZE r_ecx __asm__("ecx") = arg2;
+        register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
-            "xchg %%ebx, %1\n"  // Save ebx, load arg1
             "int $0x80\n"
-            "xchg %%ebx, %1\n"  // Restore ebx
-            : "=a"(ret)
-            : "r"(arg1), "c"(arg2), "a"(number)
+            : "+r"(r_eax)
+            : "r"(r_ebx), "r"(r_ecx)
             : "memory"
         );
-        return ret;
+        return (SSIZE)r_eax;
     }
 
     // Syscall with 3 arguments
     inline SSIZE syscall3(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
     {
-        SSIZE ret;
+        register USIZE r_ebx __asm__("ebx") = arg1;
+        register USIZE r_ecx __asm__("ecx") = arg2;
+        register USIZE r_edx __asm__("edx") = arg3;
+        register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
-            "xchg %%ebx, %1\n"  // Save ebx, load arg1
             "int $0x80\n"
-            "xchg %%ebx, %1\n"  // Restore ebx
-            : "=a"(ret)
-            : "r"(arg1), "c"(arg2), "d"(arg3), "a"(number)
+            : "+r"(r_eax)
+            : "r"(r_ebx), "r"(r_ecx), "r"(r_edx)
             : "memory"
         );
-        return ret;
+        return (SSIZE)r_eax;
     }
 
     // Syscall with 4 arguments
     inline SSIZE syscall4(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
     {
-        SSIZE ret;
+        register USIZE r_ebx __asm__("ebx") = arg1;
+        register USIZE r_ecx __asm__("ecx") = arg2;
+        register USIZE r_edx __asm__("edx") = arg3;
+        register USIZE r_esi __asm__("esi") = arg4;
+        register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
-            "xchg %%ebx, %1\n"  // Save ebx, load arg1
             "int $0x80\n"
-            "xchg %%ebx, %1\n"  // Restore ebx
-            : "=a"(ret)
-            : "r"(arg1), "c"(arg2), "d"(arg3), "S"(arg4), "a"(number)
+            : "+r"(r_eax)
+            : "r"(r_ebx), "r"(r_ecx), "r"(r_edx), "r"(r_esi)
             : "memory"
         );
-        return ret;
+        return (SSIZE)r_eax;
     }
 
     // Syscall with 5 arguments

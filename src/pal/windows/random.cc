@@ -7,25 +7,25 @@
 
 static inline UINT64 GetHardwareTimestamp()
 {
-#if defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_X86)
+#if defined(PLATFORM_WINDOWS_X86_64) || defined(PLATFORM_WINDOWS_I386)
     // x86/x64: Read the Time Stamp Counter
     unsigned int lo, hi;
     __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
     return ((UINT64)hi << 32) | lo;
 
-#elif defined(ARCHITECTURE_AARCH64)
+#elif defined(PLATFORM_WINDOWS_ARMV7A) || defined(PLATFORM_WINDOWS_AARCH64)
     // ARM64: Read the Virtual Counter Register (CNTVCT_EL0)
     UINT64 virtual_timer_value;
     __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
     return virtual_timer_value;
 
 #else
-    // Fallback for other architectures (less precise)
-    return 0;
+#error "GetHardwareTimestamp not implemented for this architecture"
 #endif
 }
 
 // Function to get a random number in the range of 0 to RANDOM_MAX
+// Not the best one but it works
 INT32 Random::Get()
 {
     // simple linear congruential generator

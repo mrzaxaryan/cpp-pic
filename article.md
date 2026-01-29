@@ -124,14 +124,14 @@ With this work, I would like to add my two cents to that debate, even though muc
 * **Problem:** Using function pointers in C‑generated shellcode introduces relocation dependencies, as function addresses are normally resolved by the loader. In a loaderless execution environment, these relocations are not applied, causing indirect function calls to reference invalid addresses and break execution from arbitrary memory locations.
 
 * **Solution:**
-    Unfortunately, we could not identify a more effective solution than performing manual relocation at runtime. However, alternative ideas or improvements are welcome.
+    The traditional approach is to perform manual relocation at runtime. Problems of that approach were discussed above.
 
 
 * **Problem:** Performing arithmetic with 64-bit integers on a 32-bit system, or with floating-point numbers, can cause issues because the compiler expects certain helper routines to be present.
 * **Solution:** The common way to solve this problem is to implement that helper routines manually.
 
 ## What We Offer
-Within this work, we present fully alternative approaches to solve these problems. We introduce CPP‑PIC, a C++23 runtime library designed to achieve fully position‑independent execution by eliminating dependencies on `.rdata`, the C runtime (CRT), and other loader‑managed components. CPP-PIC provides a fully position-independence for
+Within this work, we present fully alternative approaches to solve these problems. We introduce CPP‑PIC, a C++23 runtime designed to achieve fully position‑independent execution by eliminating dependencies on `.rdata`, the C runtime (CRT), and other loader‑managed components. CPP-PIC provides a fully position-independence for
 shellcode, code injection and embedded system capable of executing correctly from
 arbitrary memory locations.
 
@@ -155,9 +155,9 @@ CPP-PIC is designed around the following goals:
    Support for C++23 language features without requiring runtime initialization.
 
 6. **Multi-architecture support**  
-   Compatibility across x86, x64, and ARM architectures.
+   Compatibility across x86, x64, and ARM architectures. While the current implementation is Windows-oriented, we designed it to make supporting other operating systems as straightforward as possible by replacing Windows‑specific low‑level interfaces with their platform‑appropriate equivalents. A Linux implementation is currently in progress.
    
-7. **Full Optimization support** 
+7. **Full Optimization support**
    Supports all LLVM optimization levels, allowing builds from unoptimized `(-O0)` to maximum optimization or performance size(`-Oz` or `-03`).
 
 
@@ -204,7 +204,8 @@ CPP-PIC is designed around the following goals:
 
     As a result, string data exists only transiently and never appears in static data sections.
 
-* **Solution: Floating-Point Constant Embedding**   
+* **Solution: Floating-Point Constant Embedding** 
+    We solve this issue for double values, and applying the same technique to float values is straightforward and does not introduce any additional complications, so no further attention is required for that case.
     Floating-point values are converted at compile time into IEEE-754 bit patterns and injected
     directly into registers as immediate operands. This eliminates all floating-point constants
     from `.rdata` and avoids implicit compiler-generated helpers.
@@ -268,6 +269,9 @@ CPP-PIC is designed around the following goals:
     }
     ```
     
+* **Solution: Function Pointer Embedding**
+    We introduce EMBED_FUNC macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake‑defined macros, ensuring correct code generation without relocation dependencies.
+
 * **Solution: 64-bit Arithmetic on 32-bit Systems**  
 
     To perform 64-bit arithmetic on 32-bit systems, we manually defined a `uint64` class along with its arithmetic operations. This eliminates the need for compiler‑expected helper routines implementations.
@@ -277,6 +281,18 @@ CPP-PIC is designed around the following goals:
     CPP-PIC achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Rather than relying on CRT startup code, CPP-PIC defines a custom entry point, enabling execution without loader-managed runtime setup.
     Interaction with Windows system functionality is performed through low-level native interfaces. The runtime traverses the Process Environment Block (PEB) to locate loaded modules and parses PE export tables to resolve function addresses using hash-based lookup. By avoiding import tables, string-based API resolution, and `GetProcAddress` calls, CPP-PIC minimizes static analysis visibility and enables execution in constrained or adversarial environments.
 
+I would also like to bring your attention to a challenge we faced during the project improvement phase. Ensuring that the shellcode entry point was placed at the very beginning of the `.text` section proved to be challenging, yet crucial for this architecture. After many hours of profesional googling, we discovered a solution using a linker script, which worked well under GCC. To achieve the same result with Clang, we used the following configuration:
+
+    
+    # Merge .rdata into .text (CRITICAL for PIC)
+    /MERGE:.rdata=.text
+
+    # Custom entry point (no CRT)
+    /Entry:_start
+
+    # Function ordering (i386 only)
+    /ORDER:@orderfile.txt
+    
 ## Windows Implementation
 
 CPP-PIC integrates deeply with Windows internals to provide a fully functional, standalone execution environment while maintaining position independence.

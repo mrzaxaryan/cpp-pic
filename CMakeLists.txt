@@ -42,7 +42,7 @@ project(cpp-pic LANGUAGES CXX)
 # Configuration Options
 # =============================================================================
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
-set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux, uefi (extensible for future platforms)")
+set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 
 # Normalize inputs to lowercase
@@ -52,7 +52,7 @@ string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LC)
 
 # Validate inputs
 set(VALID_ARCHITECTURES "i386" "x86_64" "armv7a" "aarch64")
-set(VALID_PLATFORMS "windows" "linux" "uefi")
+set(VALID_PLATFORMS "windows" "linux")
 set(VALID_BUILD_TYPES "debug" "release")
 
 if(NOT ARCHITECTURE_LC IN_LIST VALID_ARCHITECTURES)
@@ -157,8 +157,6 @@ if(PLATFORM_LC STREQUAL "windows")
     list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/windows/)
 elseif(PLATFORM_LC STREQUAL "linux")
     list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/linux/)
-elseif(PLATFORM_LC STREQUAL "uefi")
-    list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/uefi/)
 endif()
 
 # Collect all source files from src/ directory
@@ -167,13 +165,8 @@ file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cc)
 # Exclude platform-specific files for non-target platforms
 if(PLATFORM_LC STREQUAL "windows")
     list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
-    list(FILTER SOURCES EXCLUDE REGEX ".*/uefi/.*")
 elseif(PLATFORM_LC STREQUAL "linux")
     list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
-    list(FILTER SOURCES EXCLUDE REGEX ".*/uefi/.*")
-elseif(PLATFORM_LC STREQUAL "uefi")
-    list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
-    list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
 endif()
 
 # =============================================================================

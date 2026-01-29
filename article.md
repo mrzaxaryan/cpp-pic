@@ -39,9 +39,27 @@ With this work, I would like to add my two cents to that debate, even though muc
     wchar_t path[] = { L'e', L'x', L'a', L'm', L'p', L'l', L'e', L'.', L'e', L'x', L'e', L'\0' };
     ```
 
-* **Why This Approach Is Not Suitable**
+* **Solution 2:** An alternative approach is to manually assign each character to an array element on the stack, one by one:
 
-    This approach is not universal because it relies on compiler‑specific behavior and assumptions about stack layout. Compiler optimizations may modify or eliminate stack variables, breaking the intended execution. In addition, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. Hand‑embedding large arrays is inefficient and does not guarantee that the data will remain on the stack. For large strings or when compiler optimizations are enabled, the compiler may place the data in other sections instead of stack-if string size is large enough, compiler may place the data in `.rdata` section. This approach also makes the code less readable and harder to maintain. 
+    ```cpp
+    char path[12];
+    path[0] = 'e';
+    path[1] = 'x';
+    path[2] = 'a';
+    path[3] = 'm';
+    path[4] = 'p';
+    path[5] = 'l';
+    path[6] = 'e';
+    path[7] = '.';
+    path[8] = 'e';
+    path[9] = 'x';
+    path[10] = 'e';
+    path[11] = '\0';
+    ```
+
+* **Why These Approaches Are Not Suitable**
+
+    These approaches are not universal because they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns—when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain. 
 
 
 * **Problem:** C‑generated shellcode relies on loader‑handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.

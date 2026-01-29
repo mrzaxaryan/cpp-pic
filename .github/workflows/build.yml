@@ -162,3 +162,157 @@ jobs:
           Write-Host "⚠ Skipping test execution: ${{ matrix.note }}" -ForegroundColor Yellow
           Write-Host ""
           Write-Host "Build completed successfully - execution skipped on this runner." -ForegroundColor Green
+
+  build-linux:
+    name: Build ${{ matrix.arch }}-${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: i386
+            platform: linux
+            can-test: false
+          - arch: x86_64
+            platform: linux
+            can-test: true
+          - arch: armv7a
+            platform: linux
+            can-test: false
+          - arch: aarch64
+            platform: linux
+            can-test: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM and Ninja
+        run: |
+          set -e
+
+          # Install Ninja
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+          ninja --version
+
+          # Install LLVM
+          LLVM_VERSION="${{ env.LLVM_VERSION }}"
+
+          echo "Installing LLVM $LLVM_VERSION..."
+
+          # Download and extract LLVM
+          wget -q "https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
+          tar -xf "clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-22.04.tar.xz"
+
+          # Add to PATH
+          LLVM_DIR="$(pwd)/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-22.04"
+          echo "${LLVM_DIR}/bin" >> $GITHUB_PATH
+
+          # Verify installation
+          "${LLVM_DIR}/bin/clang" --version
+          "${LLVM_DIR}/bin/ld.lld" --version
+
+      - name: Build
+        run: |
+          ARCH="${{ matrix.arch }}"
+          PLATFORM="${{ matrix.platform }}"
+          echo "=== BUILD: arch=$ARCH platform=$PLATFORM type=release ==="
+          cmake -B "build/release/$PLATFORM/$ARCH/cmake" \
+                -G Ninja \
+                "-DARCHITECTURE=$ARCH" \
+                "-DPLATFORM=$PLATFORM" \
+                "-DBUILD_TYPE=release"
+          cmake --build "build/release/$PLATFORM/$ARCH/cmake"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          path: |
+            build/**
+            !build/**/cmake/CMakeFiles/**
+
+  test-linux:
+    name: Test ${{ matrix.arch }}-${{ matrix.platform }}
+    needs: [build-linux]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: i386
+            platform: linux
+            can-test: false
+            note: "Build-only (requires 32-bit multilib to execute)"
+          - arch: x86_64
+            platform: linux
+            can-test: true
+            note: "Runs natively on x64"
+          - arch: armv7a
+            platform: linux
+            can-test: false
+            note: "Build-only (requires ARM runner to execute)"
+          - arch: aarch64
+            platform: linux
+            can-test: false
+            note: "Build-only (requires ARM64 runner to execute)"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          path: artifacts
+
+      - name: Run test
+        if: matrix.can-test
+        run: |
+          set -e
+          echo "=== Testing ${{ matrix.arch }}-${{ matrix.platform }} ==="
+          echo "Note: ${{ matrix.note }}"
+          echo ""
+
+          # Find the executable (should be named 'output' without extension on Linux)
+          TEST_EXE=$(find artifacts -type f -name "output" ! -name "*.txt" ! -name "*.bin" ! -name "*.b64" ! -name "*.map" | head -n 1)
+
+          if [ -z "$TEST_EXE" ]; then
+            echo "ERROR: No executable found in artifacts/"
+            exit 1
+          fi
+
+          # Make it executable
+          chmod +x "$TEST_EXE"
+
+          echo "=== Executing: $TEST_EXE ==="
+          echo ""
+
+          # Run the test
+          "$TEST_EXE"
+          EXIT_CODE=$?
+
+          echo ""
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "TEST PASSED (exit code: $EXIT_CODE)"
+          else
+            echo "TEST FAILED: exit code $EXIT_CODE (expected 0)"
+            exit $EXIT_CODE
+          fi
+
+      - name: Upload test logs
+        if: matrix.can-test && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.arch }}-${{ matrix.platform }}
+          path: output.log.txt
+          if-no-files-found: warn
+
+      - name: Skip test
+        if: ${{ !matrix.can-test }}
+        run: |
+          echo "=== Testing ${{ matrix.arch }}-${{ matrix.platform }} ==="
+          echo ""
+          echo "⚠ Skipping test execution: ${{ matrix.note }}"
+          echo ""
+          echo "Build completed successfully - execution skipped on this runner."

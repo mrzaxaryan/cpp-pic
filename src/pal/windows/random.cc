@@ -7,6 +7,7 @@
 
 INT32 Random::GetSeedFromTime()
 {
+    // Get current date and time
     auto dateTime = DateTime::Now();
 
     // Mix down to 32-bit seed

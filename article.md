@@ -27,14 +27,14 @@ With this work, I would like to add my two cents to that debate, even though muc
 
 * **Solution:** Minimize usage of construction that will cause generation of the data in `.rdata` or `.data`, with moving string literals to stack. To create stack‑based strings, represent the string as a character array stored in a local variable. This solution also obfuscates strings:
 
-    ```
+    ```cpp
     // "example.exe"
     char path[] = {'e', 'x', 'a', 'm', 'p', 'l', 'e', '.', 'e', 'x', 'e', '\0'};
     ```
 
     and in the case of wide character strings, the notation is as follows:
 
-    ```
+    ```cpp
     // L"example.exe"
     wchar_t path[] = { L'e', L'x', L'a', L'm', L'p', L'l', L'e', L'.', L'e', L'x', L'e', L'\0' };
     ```
@@ -50,7 +50,7 @@ With this work, I would like to add my two cents to that debate, even though muc
 
     At runtime, the shellcode can determine its own position in memory and perform the loader's work manually. In this approach, constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` for MSVC and a custom linker script for Clang. During execution, relocation entries are processed explicitly to fix up absolute addresses. 
 
-    ```
+    ```cpp
     PCHAR GetInstructionAddress(VOID)
     {
         return __builtin_return_address(0);
@@ -80,14 +80,14 @@ With this work, I would like to add my two cents to that debate, even though muc
         PCHAR currentAddress = GetInstructionAddress(); // Get the return address of the caller function
         UINT16 functionPrologue = 0x8955; // i386 function prologue: push ebp; mov ebp, esp
             // Scan backward for function prologue
-        PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue)); 
+        PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue));
 
     #endif
     ```
 
-    And then preform relocation like this:
+    And then perform relocation like this:
 
-    ```
+    ```cpp
     CHAR *string = "Hello, World!";
     CHAR *relocatedString = string + (SSIZE)startAddress;
 
@@ -104,14 +104,14 @@ With this work, I would like to add my two cents to that debate, even though muc
 
 * **Solution:** The well-known solution is to represent floating‑point values using their hexadecimal (IEEE‑754) representation and then cast this value to a double at runtime:
 
-    ```   
+    ```cpp
     uint64 f = 0x3426328629; // IEEE‑754 representation
-    double d  = *((double*)&f); 
+    double d  = *((double*)&f);
     ```
 
     Alternative solution is taking string or integer and convert it into double at runtime, which also has its specific problems:
 
-    ```
+    ```cpp
     // two ways: with string or with integer.
     todouble("1.2353");
     todouble(1,232342);
@@ -158,8 +158,39 @@ CPP-PIC is designed around the following goals:
    Compatibility across x86, x64, and ARM architectures on both Windows and Linux. The platform abstraction layer cleanly separates OS-specific code, making it straightforward to add support for additional operating systems by implementing the appropriate low-level interfaces.
    
 7. **Full Optimization support**
-   Supports all LLVM optimization levels, allowing builds from unoptimized `(-O0)` to maximum optimization or performance size(`-Oz` or `-03`).
+   Supports all LLVM optimization levels, allowing builds from unoptimized (`-O0`) to maximum optimization (`-O3`) or size optimization (`-Oz`).
 
+### Three-Layer Architecture
+
+CPP-PIC is built on a clean three-layer abstraction that separates concerns and enables multi-platform support:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  RAL (Runtime Abstraction Layer)                            │
+│  High-level features: Cryptography, Networking, TLS 1.3     │
+├─────────────────────────────────────────────────────────────┤
+│  PAL (Platform Abstraction Layer)                           │
+│  OS-specific: Windows PEB/NTAPI, Linux syscalls             │
+├─────────────────────────────────────────────────────────────┤
+│  BAL (Base Abstraction Layer)                               │
+│  Platform-independent: Types, Memory, Strings, Algorithms   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**BAL (Base Abstraction Layer)** provides platform-independent primitives:
+- Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
+- Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
+- Memory operations, string utilities, and formatting
+- Algorithms (DJB2 hashing, Base64, random number generation)
+
+**PAL (Platform Abstraction Layer)** handles OS and hardware specifics:
+- Windows: PEB walking, PE parsing, NTAPI-based operations
+- Linux: Direct syscall interface without libc
+- Console I/O, file system, networking, memory allocation
+
+**RAL (Runtime Abstraction Layer)** provides high-level application features:
+- Cryptography: SHA-256/384/512, HMAC, ChaCha20-Poly1305, ECC
+- Networking: DNS resolution, HTTP client, WebSocket, TLS 1.3
 
 ### Solutions We Offer
 * **Solution: Compile-Time String Decomposition**
@@ -168,12 +199,12 @@ CPP-PIC is designed around the following goals:
     Using C++23 features such as user-defined literals, variadic templates, and fold expressions,
     strings are decomposed into individual characters at compile - time:
 
-    ```
+    ```cpp
     template <typename TChar, TChar... Chars>
-    class EMBEDDED_STRING 
+    class EMBEDDED_STRING
     {
         TChar data[sizeof...(Chars) + 1];
-        NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING() 
+        NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING()
         {
             USIZE i = 0;
             ((data[i++] = Chars), ...); // Fold expression
@@ -182,8 +213,8 @@ CPP-PIC is designed around the following goals:
     };
     ```
 
-    Usage :
-    ``` 
+    Usage:
+    ```cpp
     auto msg = "Hello, World!"_embed; // Embedded in code, not .rdata
     ```
      
@@ -198,6 +229,37 @@ CPP-PIC is designed around the following goals:
     ```
 
     As a result, string data exists only transiently and never appears in static data sections.
+
+* **Solution: Compile-Time Array Embedding**
+
+    Similar to strings, constant arrays (lookup tables, binary data, magic bytes) are embedded using `EMBEDDED_ARRAY`. Elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
+
+    ```cpp
+    template <typename TChar, USIZE N>
+    class EMBEDDED_ARRAY
+    {
+        alignas(USIZE) USIZE words[WordCount]{};
+
+        consteval EMBEDDED_ARRAY(const TChar (&src)[N]) {
+            for (USIZE i = 0; i < N; ++i) {
+                // Pack each element byte-by-byte into words
+                for (USIZE b = 0; b < sizeof(TChar); ++b)
+                    SetByte(i * sizeof(TChar) + b, (src[i] >> (b * 8)) & 0xFF);
+            }
+        }
+
+        TChar operator[](USIZE index) const {
+            // Unpack element from words at runtime
+        }
+    };
+    ```
+
+    Usage:
+    ```cpp
+    constexpr UINT32 lookup[] = {0x12345678, 0xABCDEF00};
+    auto embedded = MakeEmbedArray(lookup);
+    UINT32 value = embedded[0]; // Unpacked at runtime
+    ```
 
 * **Solution: Floating-Point Constant Embedding** 
     We solve this issue for double values, and applying the same technique to float values is straightforward and does not introduce any additional complications, so no further attention is required for that case.
@@ -218,14 +280,13 @@ CPP-PIC is designed around the following goals:
     };
     ```
 
-    Usage :
-    ```
+    Usage:
+    ```cpp
     auto pi = 3.14159_embed; // IEEE-754 as immediate value
     ```
 
-
     Assembly Output:
-    ```
+    ```asm
     movabsq $0x400921f9f01b866e, %rax ; Pi as 64-bit immediate
     ```
     
@@ -247,9 +308,24 @@ CPP-PIC is designed around the following goals:
 * **Solution: Function Pointer Embedding**
     We introduce EMBED_FUNC macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake‑defined macros, ensuring correct code generation without relocation dependencies. The implementation of that approach is placed in file `embedded_function_pointer.h`.
 
-* **Solution: 64-bit Arithmetic on 32-bit Systems**  
+* **Solution: 64-bit Arithmetic on 32-bit Systems**
 
-    To perform 64-bit arithmetic on 32-bit systems, we manually defined a `uint64` class along with its arithmetic operations. This eliminates the need for compiler‑expected helper routines implementations.
+    To perform 64-bit arithmetic on 32-bit systems, we manually defined a `UINT64` and `INT64` class that stores values as two 32-bit words (high and low). All operations are decomposed into 32-bit arithmetic with manual carry handling:
+
+    - **Multiplication**: Uses 16-bit partial products to avoid overflow, accumulating results with carry propagation across four 16-bit result segments
+    - **Division**: Implements bit-by-bit long division, extracting one quotient bit per iteration from most-significant to least-significant
+    - **Shifts**: Combines shifts across the word boundary with proper carry handling
+
+    ```cpp
+    // 64-bit multiplication using only 32-bit operations
+    // Split into 16-bit parts: (a3,a2,a1,a0) * (b3,b2,b1,b0)
+    UINT32 p0 = a0 * b0;  // bits [0:31]
+    UINT32 p1 = a1 * b0;  // bits [16:47]
+    UINT32 p2 = a0 * b1;  // bits [16:47]
+    // ... accumulate with carry propagation
+    ```
+
+    This eliminates the need for compiler-expected helper routines and guarantees no `.rdata` generation.
 
 * **Solution: Runtime Independence**
 
@@ -268,7 +344,44 @@ For MSVC:
 ```
 
 For Clang, we used custom linker scripts with section ordering directives to achieve the same result.
-    
+
+## Build System
+
+### Critical Compiler Flags
+
+Achieving true position-independence requires specific compiler flags that prevent the compiler from generating `.rdata` dependencies:
+
+```bash
+-fno-jump-tables      # CRITICAL: Prevents switch statement jump tables in .rdata
+-fno-exceptions       # No exception handling tables (.pdata/.xdata)
+-fno-rtti             # No runtime type information (no typeinfo in .rdata)
+-nostdlib             # No standard C/C++ libraries (no CRT linkage)
+-fno-builtin          # Disable compiler built-in functions
+-ffunction-sections   # Each function in own section (enables dead code elimination)
+-fdata-sections       # Each data item in own section (enables garbage collection)
+-fshort-wchar         # 2-byte wchar_t (Windows ABI compatibility)
+```
+
+The `-fno-jump-tables` flag is particularly critical—without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
+
+### Post-Build Verification
+
+The build system automatically verifies that no data sections exist in the final binary:
+
+```cmake
+# Verify no .rdata/.rodata/.data/.bss sections exist
+string(REGEX MATCH "\\.rdata" RDATA_FOUND "${MAP_CONTENT}")
+string(REGEX MATCH "\\.rodata" RODATA_FOUND "${MAP_CONTENT}")
+string(REGEX MATCH "\\.data" DATA_FOUND "${MAP_CONTENT}")
+string(REGEX MATCH "\\.bss" BSS_FOUND "${MAP_CONTENT}")
+
+if(RDATA_FOUND OR RODATA_FOUND OR DATA_FOUND OR BSS_FOUND)
+    message(FATAL_ERROR "Data section detected - breaks position-independence!")
+endif()
+```
+
+This verification runs after every build, ensuring that code changes don't accidentally introduce `.rdata` dependencies.
+
 ## Windows Implementation
 
 CPP-PIC integrates deeply with Windows internals to provide a fully functional, standalone execution environment while maintaining position independence.

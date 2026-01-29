@@ -3,12 +3,13 @@
     "configurations": [
         {
             "name": "i386-pc-windows-gnu (PIC)",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/scripts/loader.py",
             "args": [
-                "${workspaceFolder}/build/release/windows/i386/output.bin",
-                "--arch i386",
+                "--arch",
+                "i386",
+                "${workspaceFolder}/build/release/windows/i386/output.bin"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -16,12 +17,13 @@
         },
         {
             "name": "x86_64-pc-windows-gnu (PIC)",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/scripts/loader.py",
             "args": [
-                "${workspaceFolder}/build/release/windows/x86_64/output.bin",
-                "--arch x86_64"
+                "--arch",
+                "x86_64",
+                "${workspaceFolder}/build/release/windows/x86_64/output.bin"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -29,12 +31,13 @@
         },
         {
             "name": "aarch64-pc-windows-gnu (PIC)",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/scripts/loader.py",
             "args": [
-                "${workspaceFolder}/build/release/windows/aarch64/output.bin",
-                "--arch aarch64"
+                "--arch",
+                "aarch64",
+                "${workspaceFolder}/build/release/windows/aarch64/output.bin"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

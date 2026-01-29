@@ -3,11 +3,11 @@ PHDRS {
 }
 
 SECTIONS {
-    .text :
+    .text : 
     {
-        /* Ensure _start symbol is placed first in the binary */
-        KEEP(*(.text._start))   /* ELF format: clang may emit _start in .text._start */
-        *(.text*)               /* Rest of the .text section */
-        *(.rodata*)             /* Read-only data section (for ELF) */
+        KEEP(*(.text$start)) /* Simple hack to keep main at the start of .text section */
+        *(.text*)           /* Rest of the .text section */
+        *(.rodata*)         /* Read-only data section */
+        *(.bss*)         /* Read-only data section */
     } : text
 }

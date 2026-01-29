@@ -10,13 +10,14 @@ HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
         {
             return;
         }
+        this->ipAddress = IPAddress::FromString(ipAddress);
         if (isSecure)
         {
-            tlsContext = TLSClient(hostName, ConvertIP(ipAddress), port);
+            tlsContext = TLSClient(hostName, this->ipAddress, port);
         }
         else
         {
-            socketContext = Socket(ConvertIP(ipAddress), port);
+            socketContext = Socket(this->ipAddress, port);
         }
     }
 }
@@ -30,10 +31,10 @@ HttpClient::HttpClient(PCCHAR url)
     }
 
     // Buffer to hold the resolved IP address
-    // Attempt to resolve the host name to an IP address
-    ipAddress = DNS::ResolveOverHttp(hostName);
+    // Attempt to resolve the host name to an IP address (tries IPv6 first, falls back to IPv4)
+    ipAddress = DNS::Resolve(hostName);
 
-    if (ipAddress == INVALID_IPV4)
+    if (!ipAddress.IsValid())
     {
         LOG_ERROR("Failed to resolve hostname %s", hostName);
         return;

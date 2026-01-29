@@ -1,6 +1,5 @@
 #pragma once
-#include "primitives.h"
-#include "socket.h"
+#include "pal.h"
 #include "tls.h"
 
 #define OPCODE_CONTINUE 0x0
@@ -29,7 +28,7 @@ private:
     BOOL isSecure;
     CHAR hostName[1024];
     CHAR path[1024];
-    IPv4 ipAddress;
+    IPAddress ipAddress;
     UINT16 port;
 
     TLSClient tlsContext;

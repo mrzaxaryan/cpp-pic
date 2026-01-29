@@ -42,5 +42,7 @@ NO_RETURN VOID ExitProcess(USIZE code);
 #include "console.h"
 #include "date_time.h"
 #include "file_system.h"
+#include "logger.h"
 #include "network.h"
+#include "random.h"
 #include "socket.h"

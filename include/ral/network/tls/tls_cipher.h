@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.h"
+#include "bal.h"
 #include "tls_buffer.h"
 #include "ecc.h"
 #include "tls_hash.h"

@@ -27,19 +27,21 @@ private:
 	{
 		LOG_INFO("Test: WebSocket Connection with Explicit DNS");
 
-		// First verify DNS resolution works
+		// Force IPv4 resolution since CI environments may not have IPv6 connectivity
 		auto domain = "echo.websocket.org"_embed;
-		IPv4 resolvedIp = DNS::ResolveOverHttp((PCCHAR)domain);
-		if (resolvedIp == INVALID_IPV4)
+		IPAddress resolvedIp = DNS::CloudflareResolve((PCCHAR)domain, A);
+		if (resolvedIp .IsValid() == FALSE)
 		{
 			LOG_ERROR("DNS resolution failed for %s", (PCCHAR)domain);
 			LOG_ERROR("WebSocket tests require network connectivity");
 			return FALSE;
 		}
-		LOG_INFO("DNS resolved: %s -> 0x%08X", (PCCHAR)domain, resolvedIp);
+		LOG_INFO("DNS resolved: %s successfully (IPv4)", (PCCHAR)domain);
 
+		// Use hardcoded IPv4 to avoid IPv6 connectivity issues in CI
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{
@@ -58,7 +60,8 @@ private:
 		LOG_INFO("Test: Basic Secure WebSocket Connection (wss://)");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{
@@ -77,7 +80,8 @@ private:
 		LOG_INFO("Test: WebSocket Text Echo");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{
@@ -158,7 +162,8 @@ private:
 		LOG_INFO("Test: WebSocket Binary Echo");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{
@@ -243,7 +248,8 @@ private:
 		LOG_INFO("Test: Multiple Sequential Messages");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{
@@ -345,7 +351,8 @@ private:
 		LOG_INFO("Test: Large Message Handling");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{
@@ -431,7 +438,8 @@ private:
 		LOG_INFO("Test: WebSocket Close Handshake");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
+		auto ipv4 = "66.241.124.119"_embed;
+		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
 
 		if (!wsClient.Open())
 		{

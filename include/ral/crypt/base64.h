@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.h"
+#include "bal.h"
 
 // Class to handle Base64 encoding and decoding
 class Base64

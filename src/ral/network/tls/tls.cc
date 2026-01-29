@@ -607,14 +607,14 @@ INT32 TLSClient::ReadChannel(PCHAR out, INT32 size)
 
 BOOL TLSClient::Open()
 {
-    LOG_DEBUG("Connecting to host: %s, IP: %u, Port: %d for client: %p", host, ip, port, this);
+    LOG_DEBUG("Connecting to host: %s, Port: %d for client: %p", host, port, this);
 
     if (!context.Open())
     {
-        LOG_DEBUG("Failed to connect to host: %s, IP: %u, Port: %d for client: %p", host, ip, port, this);
+        LOG_DEBUG("Failed to connect to host: %s, Port: %d for client: %p", host, port, this);
         return FALSE;
     }
-    LOG_DEBUG("Connected to host: %s, IP: %u, Port: %d for client: %p", host, ip, port, this);
+    LOG_DEBUG("Connected to host: %s, Port: %d for client: %p", host, port, this);
 
     if (!(SendClientHello(host)))
     {
@@ -699,13 +699,11 @@ SSIZE TLSClient::Read(PVOID buffer, UINT32 bufferLength)
 
     return ReadChannel((PCHAR)buffer, bufferLength);
 }
-TLSClient::TLSClient(PCCHAR host, UINT32 ip, UINT16 port)
-    : host(host), ip(ip), port(port), context(ip, port)
+TLSClient::TLSClient(PCCHAR host, const IPAddress& ipAddress, UINT16 port)
+    : host(host), ip(ipAddress), port(port), context(ipAddress, port)
 {
-
     stateIndex = 0;
     channelBytesRead = 0;
-    // Memory::Zero(&crypto, sizeof(tls_cipher));
     Memory::Zero(&recvBuffer, sizeof(TlsBuffer));
     Memory::Zero(&channelBuffer, sizeof(TlsBuffer));
     Memory::Zero(&sendBuffer, sizeof(TlsBuffer));

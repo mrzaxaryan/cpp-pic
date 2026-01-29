@@ -1,5 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
-
 #include "console.h"
 #include "pal.h"
 #include "kernel32.h"
@@ -23,8 +21,3 @@ UINT32 Console::Write(const WCHAR *text, USIZE length)
 
 	return numberOfCharsWritten;
 }
-#else
-
-#error Unsupported platform
-
-#endif

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.h"
+#include "bal.h"
 // ChaCha20 implementation by D. J. Bernstein
 // Public domain.
 

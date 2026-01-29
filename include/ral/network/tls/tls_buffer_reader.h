@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.h"
+#include "bal.h"
 
 // Definitions for buffer reader
 class TlsBufferReader

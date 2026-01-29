@@ -1,7 +1,6 @@
 #pragma once
 
-#include "primitives.h"
-#include "uint64.h"
+#include "bal.h"
 
 /* Convenience typedef */
 

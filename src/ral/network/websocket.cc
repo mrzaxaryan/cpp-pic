@@ -202,13 +202,6 @@ UINT32 WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode)
     UINT32 header_length = 6 + (bufferLength > 125 ? 2 : 0) + (bufferLength > 0xffff ? 6 : 0);
     Random random;
 
-    // #if defined(PLATFORM_WINDOWS)
-    //     // cast buffer to UINT8[4]
-    //     // Generate a random seed based on the system time
-    //     random->SetSeed(0);
-    // // #warning TODO:
-    // #endif
-    // Create a masking key for the WebSocket frame
     UINT8 masking_key[4];
     // Fill the masking key with random bytes
     for (USIZE i = 0; i < sizeof(masking_key); ++i)
@@ -424,30 +417,6 @@ BOOL WebSocketClient::ReceiveFrame(PWebSocketFrame frame)
 
     return web_socket_create_frame(frame, fin, rsv1, rsv2, rsv3, opcode, has_mask, payload, (UINT32)frame_length);
 }
-// static BOOL WebSocket_SendClosing(PWEB_SOCKET_CLIENT_CONTEXT pWebSocketClientContext, UINT16 status, const PCHAR reason)
-// {
-// 	ASSERT_NOT_NULL(pWebSocketClientContext, FALSE);
-// 	ASSERT_NOT_NULL(reason, FALSE);
-
-// 	PMEMORY pMemory = GetMemory();
-// 	PNETWORK pNetwork = GetNetwork();
-// 	PSYSTEM_API pSystemApi = GetSystemApi();
-// 	PSTRING pString = GetString();
-
-// 	PCHAR p = NULL;
-// 	INT32 len = 0;
-// 	CHAR payload[64];
-// 	memzero(payload, sizeof(payload));
-
-// 	status = UINT16SwapByteOrder(status);
-
-// 	p = (PCHAR)&status;
-// 	len = pString->Format(payload,STRING("\\x%02x\\x%02x%s"), p[0], p[1], reason);
-
-// 	return WebSocket_Write(pWebSocketClientContext, OPCODE_CLOSE, payload, len);
-// }
-
-// This function reads data from a WebSocket client context, handling different opcodes and frame types.
 PVOID WebSocketClient::Read(PUSIZE dwBufferLength, PINT8 opcode)
 {
     // Initialize the WebSocket frame structure and buffer for received data
@@ -509,10 +478,8 @@ PVOID WebSocketClient::Read(PUSIZE dwBufferLength, PINT8 opcode)
                 goto end;                          // Exit the loop if the frame is final
             }
         }
-        // If opcode is OPCODE_CLOSE, handle the close frame
         else if (pWebSocketFrame->opcode == OPCODE_CLOSE)
         {
-            // WebSocket_SendClosing(pWebSocketClient, STATUS_NORMAL, "");
             pvBuffer = NULL;
             *dwBufferLength = 0;
             CHAR reason[126];
@@ -543,7 +510,7 @@ end:
 }
 WebSocketClient::WebSocketClient(PCCHAR url, PCCHAR ipAddress)
 {
-    this->ipAddress = ConvertIP(ipAddress);
+    this->ipAddress = IPAddress::FromString(ipAddress);
     isConnected = FALSE;
 
     // Attempt to parse the URL to extract the host name, path, port, and security setting
@@ -571,13 +538,14 @@ WebSocketClient::WebSocketClient(PCCHAR url)
     }
 
     // Buffer to hold the resolved IP address
-    // Attempt to resolve the host name to an IP address
-    ipAddress = DNS::ResolveOverHttp(hostName);
-    if (ipAddress == INVALID_IPV4)
+    // Attempt to resolve the host name to an IP address (tries IPv6 first, falls back to IPv4)
+    ipAddress = DNS::Resolve(hostName);
+    if (!ipAddress.IsValid())
     {
         LOG_ERROR("Failed to resolve hostname %s", hostName);
         return;
     }
+
     if (isSecure)
     {
         tlsContext = TLSClient(hostName, ipAddress, port);

@@ -1,4 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
 #pragma once
 
 #include "primitives.h"
@@ -133,5 +132,3 @@ public:
     static PVOID NtCurrentProcess() { return (PVOID)(USIZE)-1L; }
     static PVOID NtCurrentThread() { return (PVOID)(USIZE)-2L; }
 };
-
-#endif // PLATFORM_WINDOWS

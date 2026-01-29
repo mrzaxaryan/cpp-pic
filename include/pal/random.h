@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.h"
+#include "bal.h"
 
 // Class to handle random number generation
 class Random

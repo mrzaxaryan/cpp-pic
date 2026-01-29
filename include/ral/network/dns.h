@@ -1,6 +1,5 @@
 #pragma once
 
-#include "primitives.h"
 #include "pal.h"
 
 // https://tools.ietf.org/html/rfc1035#section-3.2.2
@@ -23,23 +22,23 @@ typedef enum
 class DNS
 {
 private:
-    // Function to resolve a hostname using HTTP POST
-    static IPv4 ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = A);
+    // Function to resolve a hostname using HTTP POST (defaults to IPv6/AAAA)
+    static IPAddress ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
     // Callback function for formatting DNS queries
     static BOOL FormatterCallback(PVOID context, CHAR ch);
 
 public:
-    // Function to resolve a hostname to an IP address
-    static IPv4 Resolve(PCCHAR host, RequestType dnstype = A);
-    // Function to resolve a hostname to an IP address using DNS over TLS
-    static IPv4 ResolveOverTls(PCCHAR host, RequestType dnstype = A);
-    // Function to resolve a hostname to an IP address using DNS over HTTPS
-    static IPv4 ResolveOverHttp(PCCHAR host, RequestType dnstype = A);
+    // Function to resolve a hostname to an IP address (tries IPv6 first, then IPv4)
+    static IPAddress Resolve(PCCHAR host);
+    // Function to resolve a hostname to an IP address using DNS over TLS (defaults to IPv6/AAAA)
+    static IPAddress ResolveOverTls(PCCHAR host, RequestType dnstype = AAAA);
+    // Function to resolve a hostname to an IP address using DNS over HTTPS (defaults to IPv6/AAAA)
+    static IPAddress ResolveOverHttp(PCCHAR host, RequestType dnstype = AAAA);
     // Cloudflare DNS over HTTPS [IP:1.1.1.1|1.0.0.1] [HOST:cloudflare-dns.com] [POST:cloudflare-dns.com/dns-query] [content-type:application/dns-message] [DNS Wireformat https://www.rfc-editor.org/rfc/rfc1035.html]
-    // https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/
-    static IPv4 CloudflareResolve(PCCHAR host, RequestType dnstype = A);
+    // https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/ (defaults to IPv6/AAAA)
+    static IPAddress CloudflareResolve(PCCHAR host, RequestType dnstype = AAAA);
     // Google DNS over HTTPS [IP:8.8.8.8]  [HOST:dns.google] [POST:dns.google/dns-query] [content-type:application/dns-message] [DNS Wireformat https://www.rfc-editor.org/rfc/rfc1035.html]
-    // https://developers.google.com/speed/public-dns/docs/secure-transports
-    static IPv4 GoogleResolve(PCCHAR host, RequestType dnstype = A);
+    // https://developers.google.com/speed/public-dns/docs/secure-transports (defaults to IPv6/AAAA)
+    static IPAddress GoogleResolve(PCCHAR host, RequestType dnstype = AAAA);
 };
 

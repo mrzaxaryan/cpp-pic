@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "pal.h"  // Includes bal.h, console.h, date_time.h, file_system.h
-#include "string_formatter.h"
+#include "pal.h"  // Includes bal.h (with string_formatter.h), console.h, date_time.h, file_system.h
 
 // Convenience macros that automatically embed wide strings
 #define LOG_INFO(format, ...) Logger::Info<WCHAR>(L##format##_embed, ##__VA_ARGS__)

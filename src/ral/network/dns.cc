@@ -144,8 +144,8 @@ static PUINT8 DNS_readName(PUINT8 data, PUINT8 src, PINT32 size)
     return name;        // Return the name
 }
 
-// This function parses the DNS answer section and extracts the IP address if the type is A (IPv4 address).
-static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPv4 *pIpAddress)
+// This function parses the DNS answer section and extracts the IP address if the type is A (IPv4) or AAAA (IPv6).
+static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPAddress *pIpAddress)
 {
     LOG_DEBUG("DNS_parseAnswer(ptr: 0x%p, buffer: 0x%p, cnt: %d, pIpAddress: 0x%p) called", ptr, buffer, cnt, pIpAddress);
     // Check for NULL pointers
@@ -171,25 +171,22 @@ static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPv4 *pIpAddr
         LOG_DEBUG("%s", tt);
         delete[] tt; // Free the memory allocated for the name
 
-        // CHeck if the type is A (IPv4 address)
+        // Check if the type is A (IPv4 address)
         if (a.type == A)
         {
             LOG_DEBUG("Processing A record with TTL: %d", a.ttl);
-            PCHAR ipAddress = ((PCHAR)(p + sizeof(Answer))); // Format string for the IP address
-            *pIpAddress = *(PUINT32)ipAddress;               // Format the IP address into the provided buffer
+            PUINT32 ipv4Data = (PUINT32)(p + sizeof(Answer)); // Pointer to the IPv4 address
+            *pIpAddress = IPAddress::FromIPv4(*ipv4Data);     // Create IPAddress from IPv4
             return 0;
-            // debug("\t%d\tA\t%s\n", a.ttl, inet_ntoa(_A[_Acnt]));
-            // count++;
         }
-        /*else if (a.type == AAAA)
+        // Check if the type is AAAA (IPv6 address)
+        else if (a.type == AAAA)
         {
-            memcpy(&_AAAA[_AAAAcnt], p + sizeof(Answer), sizeof(in6_addr));
-            char buf6[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, &_AAAA[_AAAAcnt], buf6, sizeof(buf6));
-            _AAAAcnt++;
-            debug("\t%d\tAAAA\t%s\n", a.ttl, buf6);
-
-        }*/
+            LOG_DEBUG("Processing AAAA record with TTL: %d", a.ttl);
+            PUINT8 ipv6Data = p + sizeof(Answer);          // Pointer to the IPv6 address (16 bytes)
+            *pIpAddress = IPAddress::FromIPv6(ipv6Data);   // Create IPAddress from IPv6
+            return 0;
+        }
         else
         {
             // const char* rr = "";
@@ -250,7 +247,7 @@ static INT32 DNS_parseQuery(PUINT8 ptr, INT32 cnt)
 
 // This function resolves a DNS request for a given host and type, and stores the resolved IP address in the provided buffer.
 
-static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPv4 *pIpAddress)
+static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress *pIpAddress)
 {
     LOG_DEBUG("DNS_parse(buffer: 0x%p, len: %d, pIPAddress: 0x%p) called", buffer, len, pIpAddress);
     // Validate the input parameters
@@ -413,7 +410,7 @@ BOOL DNS::FormatterCallback(PVOID context, CHAR ch)
     return tlsClient->Write(&ch, 1);
 }
 // This function resolves a hostname to an IP address
-IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
+IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
 {
     LOG_DEBUG("DNS_resolve(host: %s, dnstype: %d) called", host, dnstype);
 
@@ -422,11 +419,11 @@ IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     // If the host is localhost, set the IP address to
     if (String::Compare(host, localhost))
     {
-        return 0x0100007F;
+        return IPAddress::FromIPv4(0x0100007F);
     }
     // Variables for DNS server address and port
     auto dnsHostName = "one.one.one.one"_embed;
-    INT32 dnsIPAddress = 0x01010101; // 1.1.1.1
+    IPAddress dnsIPAddress = IPAddress::FromIPv4(0x01010101); // 1.1.1.1
     UINT16 dnsPort = 853;
 
     TLSClient TLSClient(dnsHostName, dnsIPAddress, dnsPort); // TLS client context structure
@@ -434,7 +431,7 @@ IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     if (!TLSClient.Open())
     {
         LOG_ERROR("Failed to connect to DNS server");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     UINT8 buffer[0xff];                                                  // Buffer to hold the DNS request
@@ -444,7 +441,7 @@ IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     if (!TLSClient.Write((PCHAR)buffer, bufferSize))
     {
         LOG_ERROR("Failed to send DNS request");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     // Read the DNS response from the TLS server
@@ -453,7 +450,7 @@ IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     if (bytesRead != 2)
     {
         LOG_ERROR("Failed to read DNS response");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     // Swap the byte order of the response header size
@@ -463,16 +460,16 @@ IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     if (bytesRead != bufferSize)
     {
         LOG_ERROR("Failed to read DNS response");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
     // Checking if the DNS response is valid
-    IPv4 ipAddress = 0;
+    IPAddress ipAddress;
     if (!DNS_parse((PUINT8)buffer, bufferSize, &ipAddress))
     {
         TLSClient.Close();
 
         LOG_ERROR("Failed to parse DNS response");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     // LOG_DEBUG("DNS resolved %s to %s", host, ipAddress);
@@ -481,7 +478,7 @@ IPv4 DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     return ipAddress;
 }
 
-IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
+IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
 {
     LOG_DEBUG("DNS_OVER_HTTPS_resolve(host: %s, dnstype: %d) called", host, dnstype);
     // Validate the input parameters
@@ -491,11 +488,11 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     // If the host is localhost, set the IP address to
     if (String::Compare(host, localhost))
     {
-        return 0x0100007F;
+        return IPAddress::FromIPv4(0x0100007F);
     }
     // Variables for DNS server address and port
     auto dnsHostName = "one.one.one.one"_embed;
-    INT32 dnsIPAddress = 0x01010101; // 1.1.1.1
+    IPAddress dnsIPAddress = IPAddress::FromIPv4(0x01010101); // 1.1.1.1
     UINT16 dnsPort = 443;
 
     TLSClient tlsClient(dnsHostName, dnsIPAddress, dnsPort); // TLS client context structure
@@ -503,7 +500,7 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     if (!tlsClient.Open())
     {
         LOG_ERROR("Failed to connect to DNS server");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     auto format = "GET /dns-query?name=%s HTTP/1.1\r\n"_embed
@@ -526,7 +523,7 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
         {
             LOG_ERROR("DNS response too large.");
             delete[] dnsResponseStart;
-            return INVALID_IPV4;
+            return IPAddress::Invalid();
         }
 
         UINT32 bytesRead; // Variable to hold the number of bytes read
@@ -539,7 +536,7 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
         {
             LOG_ERROR("Failed to read DNS response.");
             delete[] dnsResponseStart;
-            return INVALID_IPV4;
+            return IPAddress::Invalid();
         }
 
         totalBytesRead += bytesRead; // Update the total bytes read
@@ -564,7 +561,7 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     {
         delete[] dnsResponseStart;
         LOG_ERROR("Invalid handshake response.");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
     auto contentLengthHeader = "Content-Length: "_embed; // Pointer to hold the content length header
     // Find content length header in the handshake response
@@ -611,7 +608,7 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     }
 
     *ipAddressEnd = '\0';                    // Null-terminate the IP address value
-    IPv4 ipAddress = ConvertIP(dnsResponse); // Convert the IP address value to an IPv4 address
+    IPAddress ipAddress = IPAddress::FromString(dnsResponse); // Convert the IP address value to an IPv4 address
 
     LOG_DEBUG("DNS resolved %s to %s", host, (PCCHAR)dnsResponse);
 
@@ -622,7 +619,7 @@ IPv4 DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     return ipAddress;
 }
 
-IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
+IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
     // Use DNS over HTTPS Post
     // Check for localhost
@@ -630,10 +627,10 @@ IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerNam
     // If the host is localhost, set the IP address to
     if (String::Compare(host, localhost))
     {
-        return 0x0100007F;
+        return IPAddress::FromIPv4(0x0100007F);
     }
     // Variables for DNS server address and port
-    IPv4 dnsIPAddress = DNSServerIp;
+    IPAddress dnsIPAddress = DNSServerIp;
     UINT16 dnsPort = 443;
 
     TLSClient tlsClient(DNSServerName, dnsIPAddress, dnsPort); // TLS client context structure
@@ -641,7 +638,7 @@ IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerNam
     if (!tlsClient.Open())
     {
         LOG_ERROR("Failed to connect to DNS server");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     auto format = "POST /dns-query HTTP/1.1\r\n"_embed
@@ -671,7 +668,7 @@ IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerNam
         {
             LOG_ERROR("DNS response too large.");
             delete[] dnsResponseStart;
-            return INVALID_IPV4;
+            return IPAddress::Invalid();
         }
 
         UINT32 bytesRead; // Variable to hold the number of bytes read
@@ -684,7 +681,7 @@ IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerNam
         {
             LOG_ERROR("Failed to read DNS response.");
             delete[] dnsResponseStart;
-            return INVALID_IPV4;
+            return IPAddress::Invalid();
         }
 
         totalBytesRead += bytesRead; // Update the total bytes read
@@ -707,7 +704,7 @@ IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerNam
     {
         delete[] dnsResponseStart;
         LOG_ERROR("Invalid handshake response.");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
     PCHAR contentLengthHeader = (PCHAR)(PCCHAR) "Content-Length: "_embed; // Pointer to hold the content length header
     // Find content length header in the handshake response
@@ -731,61 +728,93 @@ IPv4 DNS::ResloveOverHttpPost(PCCHAR host, IPv4 DNSServerIp, PCCHAR DNSServerNam
     CHAR binaryResponse[0xff];
     tlsClient.Read(binaryResponse, contentLength); // Move the pointer to the start of the binary response
 
-    IPv4 ipAddress = 0;
+    IPAddress ipAddress;
 
     if (!DNS_parse((PUINT8)binaryResponse, contentLength, &ipAddress))
     {
         tlsClient.Close();
         LOG_ERROR("Failed to parse DNS response");
-        return INVALID_IPV4;
+        return IPAddress::Invalid();
     }
 
     tlsClient.Close();
     return ipAddress;
 }
 
-IPv4 DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
+IPAddress DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
 {
-    IPv4 ip = ResloveOverHttpPost(host, 0x01010101, (PCCHAR) "one.one.one.one"_embed, dnstype);
-    if (ip == INVALID_IPV4)
+    IPAddress ip = ResloveOverHttpPost(host, IPAddress::FromIPv4(0x01010101), (PCCHAR) "one.one.one.one"_embed, dnstype);
+    if (!ip.IsValid())
     {
-        return ResloveOverHttpPost(host, 0x01000001, (PCCHAR) "one.one.one.one"_embed, dnstype);
+        return ResloveOverHttpPost(host, IPAddress::FromIPv4(0x01000001), (PCCHAR) "one.one.one.one"_embed, dnstype);
     }
     return ip;
 }
 
-IPv4 DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
+IPAddress DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
 {
-    IPv4 ip = ResloveOverHttpPost(host, 0x08080808, (PCCHAR) "dns.google"_embed, dnstype);
-    if (ip == INVALID_IPV4)
+    IPAddress ip = ResloveOverHttpPost(host, IPAddress::FromIPv4(0x08080808), (PCCHAR) "dns.google"_embed, dnstype);
+    if (!ip.IsValid())
     {
-        return ResloveOverHttpPost(host, 0x04040808, (PCCHAR) "dns.google"_embed, dnstype);
+        return ResloveOverHttpPost(host, IPAddress::FromIPv4(0x04040808), (PCCHAR) "dns.google"_embed, dnstype);
     }
     return ip;
 }
 
-IPv4 DNS::Resolve(PCCHAR host, RequestType dnstype)
+IPAddress DNS::Resolve(PCCHAR host)
 {
-    LOG_DEBUG("DNS_resolve(host: %s, dnstype: %d) called", host, dnstype);
+    LOG_DEBUG("DNS_resolve(host: %s) called - trying IPv6 first", host);
 
-    IPv4 ipAddress = DNS::CloudflareResolve(host, dnstype);
-    if (ipAddress != INVALID_IPV4)
+    // Try IPv6 (AAAA) first
+    LOG_DEBUG("Attempting IPv6 (AAAA) resolution for %s", host);
+    IPAddress ipAddress = DNS::CloudflareResolve(host, AAAA);
+    if (ipAddress.IsValid())
+    {
+        LOG_DEBUG("IPv6 resolution successful via Cloudflare");
+        return ipAddress;
+    }
+
+    ipAddress = DNS::GoogleResolve(host, AAAA);
+    if (ipAddress.IsValid())
+    {
+        LOG_DEBUG("IPv6 resolution successful via Google");
+        return ipAddress;
+    }
+
+    ipAddress = DNS::ResolveOverHttp(host, AAAA);
+    if (ipAddress.IsValid())
+    {
+        LOG_DEBUG("IPv6 resolution successful via DoH");
+        return ipAddress;
+    }
+
+    ipAddress = DNS::ResolveOverTls(host, AAAA);
+    if (ipAddress.IsValid())
+    {
+        LOG_DEBUG("IPv6 resolution successful via DoT");
+        return ipAddress;
+    }
+
+    // Fall back to IPv4 (A) if IPv6 fails
+    LOG_DEBUG("IPv6 resolution failed, falling back to IPv4 (A) for %s", host);
+    ipAddress = DNS::CloudflareResolve(host, A);
+    if (ipAddress.IsValid())
     {
         return ipAddress;
     }
 
-    ipAddress = DNS::GoogleResolve(host, dnstype);
-    if (ipAddress != INVALID_IPV4)
+    ipAddress = DNS::GoogleResolve(host, A);
+    if (ipAddress.IsValid())
     {
         return ipAddress;
     }
 
-    ipAddress = DNS::ResolveOverHttp(host, dnstype);
-    if (ipAddress != INVALID_IPV4)
+    ipAddress = DNS::ResolveOverHttp(host, A);
+    if (ipAddress.IsValid())
     {
         return ipAddress;
     }
 
-    ipAddress = DNS::ResolveOverTls(host, dnstype);
+    ipAddress = DNS::ResolveOverTls(host, A);
     return ipAddress;
 }

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "primitives.h"
-#include "socket.h"
+#include "pal.h"
 #include "tls_buffer_reader.h"
 #include "tls_buffer.h"
 #include "tls_cipher.h"
@@ -18,7 +17,7 @@ class TLSClient final
 {
 private:
     PCCHAR host;
-    UINT32 ip;
+    IPAddress ip;
     UINT16 port;
     Socket context;
     TlsCipher crypto;
@@ -43,8 +42,8 @@ private:
 public:
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
-    TLSClient() : host(nullptr), ip(0), port(0), stateIndex(0), channelBytesRead(0) {}
-    TLSClient(PCCHAR host, UINT32 ip, UINT16 port);
+    TLSClient() : host(nullptr), ip(), port(0), stateIndex(0), channelBytesRead(0) {}
+    TLSClient(PCCHAR host, const IPAddress& ipAddress, UINT16 port);
     BOOL Open();
     BOOL Close();
     SSIZE Read(PVOID buffer, UINT32 bufferLength);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "primitives.h"
+#include "bal.h"
 #include "sha2.h"
 
 #define MAX_HASH_LEN 64

@@ -1,5 +1,3 @@
-#if defined(PLATFORM_WINDOWS)
-
 #include "pe.h"
 #include "peb.h"
 #include "ntdll.h"
@@ -54,5 +52,3 @@ PVOID GetExportAddress(PVOID hModule, USIZE functionNameHash)
 
     return NULL; // Function was not found
 }
-
-#endif

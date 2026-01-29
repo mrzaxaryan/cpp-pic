@@ -71,7 +71,7 @@ private:
 		return TRUE;
 	}
 
-	// Test 4: WebSocket text message echo (OPCODE_TEXT)
+	// Test 4: WebSocket text message echo (WebSocketOpcode::TEXT)
 	static BOOL TestWebSocketTextEcho()
 	{
 		LOG_INFO("Test: WebSocket Text Echo");
@@ -98,7 +98,7 @@ private:
 
 		// Send text message
 		auto testMessage = "Hello, WebSocket!"_embed;
-		UINT32 bytesSent = wsClient.Write((PCVOID)(PCCHAR)testMessage, testMessage.Length, OPCODE_TEXT);
+		UINT32 bytesSent = wsClient.Write((PCVOID)(PCCHAR)testMessage, testMessage.Length, WebSocketOpcode::TEXT);
 
 		if (bytesSent != testMessage.Length)
 		{
@@ -121,9 +121,9 @@ private:
 			return FALSE;
 		}
 
-		if (opcode != OPCODE_TEXT)
+		if (opcode != WebSocketOpcode::TEXT)
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", OPCODE_TEXT, opcode);
+			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", WebSocketOpcode::TEXT, opcode);
 			delete[] (PCHAR)response;
 			wsClient.Close();
 			return FALSE;
@@ -152,7 +152,7 @@ private:
 		return TRUE;
 	}
 
-	// Test 5: WebSocket binary message echo (OPCODE_BINARY)
+	// Test 5: WebSocket binary message echo (WebSocketOpcode::BINARY)
 	static BOOL TestWebSocketBinaryEcho()
 	{
 		LOG_INFO("Test: WebSocket Binary Echo");
@@ -187,7 +187,7 @@ private:
 		}
 		UINT32 dataLength = sizeof(binaryData);
 
-		UINT32 bytesSent = wsClient.Write((PCVOID)binaryData, dataLength, OPCODE_BINARY);
+		UINT32 bytesSent = wsClient.Write((PCVOID)binaryData, dataLength, WebSocketOpcode::BINARY);
 
 		if (bytesSent != dataLength)
 		{
@@ -210,9 +210,9 @@ private:
 			return FALSE;
 		}
 
-		if (opcode != OPCODE_BINARY)
+		if (opcode != WebSocketOpcode::BINARY)
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", OPCODE_BINARY, opcode);
+			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", WebSocketOpcode::BINARY, opcode);
 			delete[] (PCHAR)response;
 			wsClient.Close();
 			return FALSE;
@@ -266,7 +266,7 @@ private:
 		auto msg3 = "Third message"_embed;
 
 		// Send and receive message 1
-		UINT32 sent1 = wsClient.Write((PCVOID)(PCCHAR)msg1, msg1.Length, OPCODE_TEXT);
+		UINT32 sent1 = wsClient.Write((PCVOID)(PCCHAR)msg1, msg1.Length, WebSocketOpcode::TEXT);
 		if (sent1 != msg1.Length)
 		{
 			LOG_ERROR("Failed to send message 1");
@@ -289,7 +289,7 @@ private:
 		delete[] (PCHAR)resp1;
 
 		// Send and receive message 2
-		UINT32 sent2 = wsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length, OPCODE_TEXT);
+		UINT32 sent2 = wsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length, WebSocketOpcode::TEXT);
 		if (sent2 != msg2.Length)
 		{
 			LOG_ERROR("Failed to send message 2");
@@ -312,7 +312,7 @@ private:
 		delete[] (PCHAR)resp2;
 
 		// Send and receive message 3
-		UINT32 sent3 = wsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length, OPCODE_TEXT);
+		UINT32 sent3 = wsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length, WebSocketOpcode::TEXT);
 		if (sent3 != msg3.Length)
 		{
 			LOG_ERROR("Failed to send message 3");
@@ -380,7 +380,7 @@ private:
 		largeMessage[largeMessageSize] = '\0';
 
 		// Send large message
-		UINT32 bytesSent = wsClient.Write((PCVOID)largeMessage, largeMessageSize, OPCODE_TEXT);
+		UINT32 bytesSent = wsClient.Write((PCVOID)largeMessage, largeMessageSize, WebSocketOpcode::TEXT);
 
 		if (bytesSent != largeMessageSize)
 		{

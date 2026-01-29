@@ -20,12 +20,3 @@ NO_RETURN VOID ExitProcess(USIZE code)
     NTDLL::ZwTerminateProcess(NTDLL::NtCurrentProcess(), (NTSTATUS)(code));
     __builtin_unreachable();
 }
-
-// InitializeRuntime environment data for PIC-style rebasing
-// Must be called from _start with a stack-allocated ENVIRONMENT_DATA struct
-NOINLINE VOID InitializeRuntime(PENVIRONMENT_DATA envData)
-{
-    // Get the PEB and store envData pointer
-    PPEB peb = GetCurrentPEB();
-    peb->SubSystemData = (PVOID)envData;
-}

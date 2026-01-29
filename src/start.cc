@@ -7,9 +7,6 @@
 
 ENTRYPOINT INT32 _start(VOID)
 {
-	ENVIRONMENT_DATA envData{};
-	InitializeRuntime(&envData);
-
 	BOOL allPassed = TRUE;
 
 	Logger::Info<WCHAR>(L"=== CPP-PIC Test Suite ==="_embed);

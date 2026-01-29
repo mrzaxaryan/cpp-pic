@@ -16,17 +16,6 @@
 // Function to get export address from PEB modules
 PVOID ResolveExportAddressFromPebModule(USIZE moduleNameHash, USIZE functionNameHash);
 
-// Environment data structure for PIC-style rebasing (used on Windows i386)
-typedef struct _ENVIRONMENT_DATA
-{
-    INT32 RandomSeed;
-} ENVIRONMENT_DATA, *PENVIRONMENT_DATA;
-
-#define GetEnvironmentData() ((PENVIRONMENT_DATA)(GetCurrentPEB()->SubSystemData))
-
-NOINLINE VOID InitializeRuntime(PENVIRONMENT_DATA envData);
-
-
 // Cross-platform exit process function
 NO_RETURN VOID ExitProcess(USIZE code);
 

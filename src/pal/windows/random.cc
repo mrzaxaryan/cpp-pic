@@ -17,17 +17,17 @@ INT32 Random::GetSeedFromTime()
 INT32 Random::Get()
 {
     // simple linear congruential generator
-    GetEnvironmentData()->RandomSeed = (GetEnvironmentData()->RandomSeed * 214013L + GetSeedFromTime()) & 0x7FFFFFFF;
-    Logger::Debug<WCHAR>(L"[Random] Generated value: %u"_embed, static_cast<UINT32>((GetEnvironmentData()->RandomSeed >> 16) & 0x7FFF));
-    return static_cast<INT32>(GetEnvironmentData()->RandomSeed % MAX);
+    seed = (seed * 214013L + GetSeedFromTime()) & 0x7FFFFFFF;
+    Logger::Debug<WCHAR>(L"[Random] Generated value: %u"_embed, static_cast<UINT32>((seed >> 16) & 0x7FFF));
+    return static_cast<INT32>(seed % MAX);
 }
 
 // Constructor to initialize the random number generator
 Random::Random()
 {
-    if (GetEnvironmentData()->RandomSeed == 0)
+    if (seed == 0)
     {
-        GetEnvironmentData()->RandomSeed = GetSeedFromTime();
-        Logger::Debug<WCHAR>(L"[Random] Initialized with seed: %u"_embed, GetEnvironmentData()->RandomSeed);
+        seed = GetSeedFromTime();
+        Logger::Debug<WCHAR>(L"[Random] Initialized with seed: %u"_embed, seed);
     }
 }

@@ -96,11 +96,11 @@ public:
             : "i"(Func)                         // Input: target (compile-time constant)
         );
 #elif defined(ARCHITECTURE_ARMV7A)
-        // armv7a: Use ADR instruction for PC-relative addressing
+        // armv7a: Use LDR pseudo-instruction for PC-relative addressing
         __asm__ volatile (
-            "adr %0, %1\n"                      // Load PC-relative address
+            "ldr %0, =%1\n"                     // Load address via PC-relative literal pool
             : "=r"(result)                      // Output: result variable
-            : "i"(Func)                         // Input: target (compile-time constant)
+            : "X"(Func)                         // Input: target address
         );
 #else
         // Fallback for other architectures: direct assignment

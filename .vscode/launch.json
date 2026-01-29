@@ -3,16 +3,12 @@
     "configurations": [
         {
             "name": "i386-pc-windows-gnu (PIC)",
-            "type": "cppvsdbg",
+            "type": "python",
             "request": "launch",
-            "program": "C:/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe",
+            "program": "${workspaceFolder}/scripts/loader.py",
             "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/loader.ps1",
-                "${workspaceFolder}/build/release/windows/i386/output.bin"
+                "${workspaceFolder}/build/release/windows/i386/output.bin",
+                "--arch i386",
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -20,24 +16,12 @@
         },
         {
             "name": "x86_64-pc-windows-gnu (PIC)",
-            "type": "cppvsdbg",
+            "type": "python",
             "request": "launch",
-            "program": "cmd.exe",
+            "program": "${workspaceFolder}/scripts/loader.py",
             "args": [
-                "/Q",
-                "/C",
-                "start",
-                "/B",
-                "/MACHINE",
-                "amd64",
-                "/WAIT",
-                "powershell.exe",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/loader.ps1",
-                "${workspaceFolder}/build/release/windows/x86_64/output.bin"
+                "${workspaceFolder}/build/release/windows/x86_64/output.bin",
+                "--arch x86_64"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
@@ -45,24 +29,12 @@
         },
         {
             "name": "aarch64-pc-windows-gnu (PIC)",
-            "type": "cppvsdbg",
+            "type": "python",
             "request": "launch",
-            "program": "cmd.exe",
+            "program": "${workspaceFolder}/scripts/loader.py",
             "args": [
-                "/Q",
-                "/C",
-                "start",
-                "/B",
-                "/MACHINE",
-                "arm64",
-                "/WAIT",
-                "powershell.exe",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}/scripts/loader.ps1",
-                "${workspaceFolder}/build/release/windows/aarch64/output.bin"
+                "${workspaceFolder}/build/release/windows/aarch64/output.bin",
+                "--arch aarch64"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

@@ -1,0 +1,13 @@
+PHDRS {
+    text PT_LOAD FLAGS(5);   /* R + X */
+}
+
+SECTIONS {
+    .text :
+    {
+        /* Ensure _start symbol is placed first in the binary */
+        KEEP(*(.text._start))   /* ELF format: clang may emit _start in .text._start */
+        *(.text*)               /* Rest of the .text section */
+        *(.rodata*)             /* Read-only data section (for ELF) */
+    } : text
+}

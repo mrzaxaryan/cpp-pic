@@ -1,43 +1,7 @@
 {
     "version": 4,
     "enableConfigurationSquiggles": true,
-    "env": {
-        "windowsIncludePath": [
-            "${workspaceFolder}",
-            "${workspaceFolder}/include",
-            "${workspaceFolder}/include/bal",
-            "${workspaceFolder}/include/bal/core",
-            "${workspaceFolder}/include/bal/algorithms",
-            "${workspaceFolder}/include/bal/string",
-            "${workspaceFolder}/include/bal/types",
-            "${workspaceFolder}/include/bal/types/embedded",
-            "${workspaceFolder}/include/bal/types/network",
-            "${workspaceFolder}/include/bal/types/numeric",
-            "${workspaceFolder}/include/pal",
-            "${workspaceFolder}/include/pal/memory",
-            "${workspaceFolder}/include/pal/io",
-            "${workspaceFolder}/include/pal/network",
-            "${workspaceFolder}/include/pal/system",
-            "${workspaceFolder}/include/pal/windows",
-            "${workspaceFolder}/include/ral",
-            "${workspaceFolder}/include/ral/crypt",
-            "${workspaceFolder}/include/ral/network",
-            "${workspaceFolder}/include/ral/network/tls",
-            "${workspaceFolder}/tests"
-        ],
-        "windowsSourcePath": [
-            "${workspaceFolder}/src",
-            "${workspaceFolder}/src/bal",
-            "${workspaceFolder}/src/pal",
-            "${workspaceFolder}/src/pal/windows",
-            "${workspaceFolder}/src/ral",
-            "${workspaceFolder}/src/ral/crypt",
-            "${workspaceFolder}/src/ral/crypt/random",
-            "${workspaceFolder}/src/ral/crypt/random/windows",
-            "${workspaceFolder}/src/ral/network",
-            "${workspaceFolder}/src/ral/network/tls"
-        ]
-    },
+    "env": {},
     "configurations": [
         {
             "name": "i386-pc-windows-gnu",
@@ -51,13 +15,32 @@
                 "PLATFORM_WINDOWS_I386"
             ],
             "includePath": [
-                "${windowsIncludePath}",
-                "${windowsSourcePath}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/windows",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
             ],
             "browse": {
                 "path": [
-                    "${windowsIncludePath}",
-                    "${windowsSourcePath}"
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
                 ]
             }
         },
@@ -73,13 +56,32 @@
                 "PLATFORM_WINDOWS_X86_64"
             ],
             "includePath": [
-                "${windowsIncludePath}",
-                "${windowsSourcePath}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/windows",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
             ],
             "browse": {
                 "path": [
-                    "${windowsIncludePath}",
-                    "${windowsSourcePath}"
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
                 ]
             }
         },
@@ -95,13 +97,32 @@
                 "PLATFORM_WINDOWS_ARMV7A"
             ],
             "includePath": [
-                "${windowsIncludePath}",
-                "${windowsSourcePath}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/windows",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
             ],
             "browse": {
                 "path": [
-                    "${windowsIncludePath}",
-                    "${windowsSourcePath}"
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
                 ]
             }
         },
@@ -117,13 +138,196 @@
                 "PLATFORM_WINDOWS_AARCH64"
             ],
             "includePath": [
-                "${windowsIncludePath}",
-                "${windowsSourcePath}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/windows",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
             ],
             "browse": {
                 "path": [
-                    "${windowsIncludePath}",
-                    "${windowsSourcePath}"
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
+                ]
+            }
+        },
+        {
+            "name": "i386-unknown-linux-gnu",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "defines": [
+                "ARCHITECTURE_I386",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_I386"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/linux",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
+                ]
+            }
+        },
+        {
+            "name": "x86_64-unknown-linux-gnu",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_X86_64"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/linux",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
+                ]
+            }
+        },
+        {
+            "name": "armv7a-unknown-linux-gnueabihf",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "defines": [
+                "ARCHITECTURE_ARMV7A",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_ARMV7A"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/linux",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
+                ]
+            }
+        },
+        {
+            "name": "aarch64-unknown-linux-gnu",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_AARCH64"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/bal",
+                "${workspaceFolder}/include/bal/core",
+                "${workspaceFolder}/include/bal/algorithms",
+                "${workspaceFolder}/include/bal/string",
+                "${workspaceFolder}/include/bal/types",
+                "${workspaceFolder}/include/bal/types/embedded",
+                "${workspaceFolder}/include/bal/types/network",
+                "${workspaceFolder}/include/bal/types/numeric",
+                "${workspaceFolder}/include/pal",
+                "${workspaceFolder}/include/pal/memory",
+                "${workspaceFolder}/include/pal/io",
+                "${workspaceFolder}/include/pal/network",
+                "${workspaceFolder}/include/pal/system",
+                "${workspaceFolder}/include/pal/linux",
+                "${workspaceFolder}/include/ral",
+                "${workspaceFolder}/include/ral/crypt",
+                "${workspaceFolder}/include/ral/network",
+                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include"
                 ]
             }
         }

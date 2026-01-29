@@ -69,13 +69,91 @@
       "group": "build"
     },
     {
-      "label": "Build All",
+      "label": "i386-unknown-linux-gnu-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/linux/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/linux/i386/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "i386-unknown-linux-gnu-release",
+      "type": "shell",
+      "command": "cmake -B build/release/linux/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/linux/i386/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "x86_64-unknown-linux-gnu-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/linux/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/linux/x86_64/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "x86_64-unknown-linux-gnu-release",
+      "type": "shell",
+      "command": "cmake -B build/release/linux/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/linux/x86_64/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "armv7a-unknown-linux-gnueabihf-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/linux/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/linux/armv7a/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "armv7a-unknown-linux-gnueabihf-release",
+      "type": "shell",
+      "command": "cmake -B build/release/linux/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/linux/armv7a/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-unknown-linux-gnu-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/linux/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja; if ($?) { cmake --build build/debug/linux/aarch64/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-unknown-linux-gnu-release",
+      "type": "shell",
+      "command": "cmake -B build/release/linux/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja; if ($?) { cmake --build build/release/linux/aarch64/cmake }",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "Build All Windows",
       "dependsOrder": "parallel",
       "dependsOn": [
         "i386-pc-windows-gnu-release",
         "x86_64-pc-windows-gnu-release",
         "armv7a-pc-windows-gnu-release",
         "aarch64-pc-windows-gnu-release"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build All Linux",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "i386-unknown-linux-gnu-release",
+        "x86_64-unknown-linux-gnu-release",
+        "armv7a-unknown-linux-gnueabihf-release",
+        "aarch64-unknown-linux-gnu-release"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build All",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "Build All Windows",
+        "Build All Linux"
       ],
       "group": {
         "kind": "build",

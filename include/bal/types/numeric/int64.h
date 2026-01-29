@@ -58,6 +58,15 @@ public:
     {
     }
 
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64))
+    // On Linux 64-bit, SSIZE is 'signed long' which is distinct from 'signed long long'
+    constexpr INT64(signed long val) noexcept
+        : low((UINT32)(val & 0xFFFFFFFF)),
+          high((INT32)((val >> 32) & 0xFFFFFFFF))
+    {
+    }
+#endif
+
     // Get low 32 bits
     constexpr UINT32 Low() const noexcept { return low; }
 

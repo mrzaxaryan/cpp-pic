@@ -1,9 +1,5 @@
 #include "random.h"
-#include "date_time.h"
 #include "pal.h"
-#include "kernel32.h"
-#include "peb.h"
-#include "logger.h"
 
 static inline UINT64 GetHardwareTimestamp()
 {

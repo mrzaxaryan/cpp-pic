@@ -123,6 +123,22 @@ public:
     {
     }
 
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64))
+    // On Linux 64-bit, USIZE is 'unsigned long' which is distinct from 'unsigned long long'
+    constexpr UINT64(unsigned long val) noexcept
+        : low((UINT32)(val & 0xFFFFFFFF)),
+          high((UINT32)((val >> 32) & 0xFFFFFFFF))
+    {
+    }
+
+    // Also support signed long for implicit conversions
+    constexpr UINT64(signed long val) noexcept
+        : low((UINT32)(val & 0xFFFFFFFF)),
+          high((UINT32)((val >> 32) & 0xFFFFFFFF))
+    {
+    }
+#endif
+
     // Get low 32 bits
     constexpr UINT32 Low() const noexcept { return low; }
 

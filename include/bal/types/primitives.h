@@ -29,12 +29,26 @@ typedef const WCHAR *PCWCHAR;
 
 typedef bool BOOL, *PBOOL, **PPBOOL;
 
-#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
-typedef unsigned long long USIZE, *PUSIZE;
-typedef signed long long SSIZE, *PSSIZE;
+#if defined(PLATFORM_WINDOWS)
+    // Windows: Use long long for 64-bit, int for 32-bit
+    #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
+    typedef unsigned long long USIZE, *PUSIZE;
+    typedef signed long long SSIZE, *PSSIZE;
+    #else
+    typedef unsigned int USIZE, *PUSIZE;
+    typedef signed int SSIZE, *PSSIZE;
+    #endif
+#elif defined(PLATFORM_LINUX)
+    // Linux: size_t is unsigned long on all architectures
+    #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
+    typedef unsigned long USIZE, *PUSIZE;
+    typedef signed long SSIZE, *PSSIZE;
+    #else
+    typedef unsigned int USIZE, *PUSIZE;
+    typedef signed int SSIZE, *PSSIZE;
+    #endif
 #else
-typedef unsigned int USIZE, *PUSIZE;
-typedef signed int SSIZE, *PSSIZE;
+#error "Unsupported platform for USIZE and SSIZE definitions"
 #endif
 
 typedef __builtin_va_list VA_LIST;
@@ -50,5 +64,9 @@ typedef __builtin_va_list VA_LIST;
 #define STDCALL
 #elif defined(PLATFORM_WINDOWS_AARCH64)
 #define STDCALL
+#elif defined(PLATFORM_LINUX)
+#define STDCALL  // Linux uses System V ABI, no special calling convention needed
+#else
+#define STDCALL  // Default: no special calling convention
 #endif
 

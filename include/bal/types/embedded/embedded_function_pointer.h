@@ -67,7 +67,7 @@ public:
     {
         FuncPtr result;
 
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_WINDOWS_I386)
         // i386: Use call/pop to get EIP, then compute PC-relative offset
         __asm__ volatile (
             "call 1f\n"                         // Push return address onto stack
@@ -79,23 +79,7 @@ public:
             : "i"(Func)                         // Input: target (compile-time constant)
             : "eax"                             // Clobber: eax register
         );
-#elif defined(ARCHITECTURE_X86_64)
-        // x86_64: Use native RIP-relative addressing
-        __asm__ volatile (
-            "leaq %c1(%%rip), %%rax\n"          // Load PC-relative address
-            "movq %%rax, %0\n"                  // Store result
-            : "=m"(result)                      // Output: result variable
-            : "i"(Func)                         // Input: target (compile-time constant)
-            : "rax"                             // Clobber: rax register
-        );
-#elif defined(ARCHITECTURE_AARCH64)
-        // aarch64: Use ADR instruction for PC-relative addressing
-        __asm__ volatile (
-            "adr %0, %1\n"                      // Load PC-relative address
-            : "=r"(result)                      // Output: result variable
-            : "i"(Func)                         // Input: target (compile-time constant)
-        );
-#elif defined(ARCHITECTURE_ARMV7A)
+#elif defined(PLATFORM_WINDOWS_ARMV7A)
         // armv7a: Use LDR pseudo-instruction for PC-relative addressing
         __asm__ volatile (
             "ldr %0, =%1\n"                     // Load address via PC-relative literal pool

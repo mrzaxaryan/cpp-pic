@@ -51,3 +51,4 @@ typedef __builtin_va_list VA_LIST;
 #elif defined(PLATFORM_WINDOWS_AARCH64)
 #define STDCALL
 #endif
+

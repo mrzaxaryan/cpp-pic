@@ -7,13 +7,13 @@
 
 static inline UINT64 GetHardwareTimestamp()
 {
-#if defined(PLATFORM_WINDOWS_X86_64) || defined(PLATFORM_WINDOWS_I386)
+#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_I386)
     // x86/x64: Read the Time Stamp Counter
     unsigned int lo, hi;
     __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
     return ((UINT64)hi << 32) | lo;
 
-#elif defined(PLATFORM_WINDOWS_ARMV7A) || defined(PLATFORM_WINDOWS_AARCH64)
+#elif defined(ARCHITECTURE_ARMV7A) || defined(ARCHITECTURE_AARCH64)
     // ARM64: Read the Virtual Counter Register (CNTVCT_EL0)
     UINT64 virtual_timer_value;
     __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));

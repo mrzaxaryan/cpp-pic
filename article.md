@@ -290,7 +290,7 @@ I would also like to bring your attention to a challenge we faced during the pro
     # Custom entry point (no CRT)
     /Entry:_start
 
-    # Function ordering (i386 only)
+    # Funrepresentations MSVC
     /ORDER:@orderfile.txt
     
 ## Windows Implementation

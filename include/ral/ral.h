@@ -12,23 +12,23 @@
 // =============================================================================
 // Cryptography
 // =============================================================================
-#include "sha2.h"
-#include "ecc.h"
-#include "chacha20.h"
-#include "chacha20_encoder.h"
+#include "crypt/sha2.h"
+#include "crypt/ecc.h"
+#include "crypt/chacha20.h"
+#include "crypt/chacha20_encoder.h"
 
 // =============================================================================
 // Networking
 // =============================================================================
-#include "dns.h"
-#include "http.h"
-#include "websocket.h"
+#include "network/dns.h"
+#include "network/http.h"
+#include "network/websocket.h"
 
 // TLS
-#include "tls.h"
-#include "tls_buffer.h"
-#include "tls_buffer_reader.h"
-#include "tls_cipher.h"
-#include "tls_hash.h"
-#include "tls_hkdf.h"
-#include "tls_hmac.h"
+#include "network/tls/tls.h"
+#include "network/tls/tls_buffer.h"
+#include "network/tls/tls_buffer_reader.h"
+#include "network/tls/tls_cipher.h"
+#include "network/tls/tls_hash.h"
+#include "network/tls/tls_hkdf.h"
+#include "network/tls/tls_hmac.h"

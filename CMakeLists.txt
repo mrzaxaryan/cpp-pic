@@ -347,11 +347,13 @@ elseif(PLATFORM_LC STREQUAL "linux")
 
 elseif(PLATFORM_LC STREQUAL "macos")
     # macOS linker flags (Mach-O format):
-    #   -preload                - Create preload format (kernel-style, no libSystem.dylib required)
-    #   -e __start              - Use __start as entry point (macOS adds _ prefix to C symbols, so _start becomes __start)
-    #   -no_uuid                - Don't add UUID (macOS uses single dash)
-    #   Note: macOS ld64 doesn't support GNU-style linker scripts (-T flag)
-    set(LINKER_BASE "-Wl,-preload,-e,__start,-no_uuid")
+    #   -dylib                  - Create dynamic library (avoids executable checks)
+    #   -flat_namespace         - Use flat namespace (no two-level namespace)
+    #   -undefined,suppress     - Suppress undefined symbol errors (no libSystem needed)
+    #   -e __start              - Use __start as entry point (macOS adds _ prefix to C symbols)
+    #   -no_uuid                - Don't add UUID
+    #   Note: macOS doesn't support true static executables, so we create a dylib that can be loaded as PIC
+    set(LINKER_BASE "-Wl,-dylib,-flat_namespace,-undefined,suppress,-e,__start,-no_uuid")
 
     # =============================================================================
     # Build Type Specific Linker Flags (macOS)

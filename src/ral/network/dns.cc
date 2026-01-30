@@ -575,30 +575,50 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     // Move the pointer to the start of the content length value
     totalBytesRead += contentLengthHeaderSize;
     dnsResponse += totalBytesRead;                 // Move the pointer to the start of the content length value
-    while (isdigit(*dnsResponse + totalBytesRead)) // Find the end of the content length value
+
+    // Find the end of the content length digits
+    USIZE digitIdx = 0;
+    while (isdigit(dnsResponse[digitIdx]))
     {
-        totalBytesRead++;
+        digitIdx++;
     }
 
-    dnsResponse[totalBytesRead] = '\0';                             // Null-terminate the content length value
+    dnsResponse[digitIdx] = '\0';                             // Null-terminate the content length value
     INT64 contentLength = INT64::Parse(dnsResponse); // Convert the content length value to an integer
     LOG_DEBUG("Content length: %d", contentLength);
 
     // Read the DNS response from the TLS server
     tlsClient.Read(dnsResponse, (UINT32)contentLength);
+    dnsResponse[contentLength] = '\0'; // Null-terminate the JSON response
 
     LOG_DEBUG("DNS response header read successfully, \n%s", dnsResponse);
 
-    PCHAR ipAddressStartPattern = (PCHAR)(PCCHAR) "\"data\":\""_embed; // Pointer to hold the data header
+    // Search for "data" field - handle both "data":"value" and "data": "value" (with space)
+    PCHAR dataField = (PCHAR)(PCCHAR) "\"data\":"_embed;
+    USIZE dataFieldSize = String::Length(dataField);
+    USIZE searchIdx = 0;
+    USIZE maxSearch = (USIZE)contentLength - dataFieldSize;
 
-    USIZE ipAddressStartPatternSize = String::Length(ipAddressStartPattern); // Get the length of the data header
-    while (Memory::Compare(dnsResponse, ipAddressStartPattern, ipAddressStartPatternSize) != 0)
+    while (searchIdx < maxSearch && Memory::Compare(dnsResponse + searchIdx, dataField, dataFieldSize) != 0)
+    {
+        searchIdx++;
+    }
+
+    if (searchIdx >= maxSearch)
+    {
+        LOG_ERROR("Could not find 'data' field in DNS JSON response");
+        tlsClient.Close();
+        delete[] dnsResponseStart;
+        return IPAddress::Invalid();
+    }
+
+    // Move past "data": and skip any whitespace or opening quote
+    dnsResponse += searchIdx + dataFieldSize;
+    while (*dnsResponse == ' ' || *dnsResponse == '"')
     {
         dnsResponse++;
     }
 
-    // Move the pointer to the start of the data value
-    dnsResponse += ipAddressStartPatternSize;
     PCHAR ipAddressEnd = dnsResponse;
 
     while (*ipAddressEnd && *ipAddressEnd != '"') // Find the end of the IP address value

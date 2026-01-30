@@ -267,12 +267,20 @@ endif()
 # =============================================================================
 # Base Linker Flags
 # =============================================================================
-# Note: macOS executables require libSystem.dylib to be linked for proper
-# executable format, even though the code doesn't use libc. We keep -nostdlib
-# for compiler to avoid including libc headers, but allow linker to link libSystem
-# on macOS for executable format compatibility.
+# Note: macOS executables require libSystem.dylib when building natively,
+# but cross-compilation from Windows/Linux requires -nostdlib.
 if(PLATFORM_LC STREQUAL "macos")
-    set(BASE_LINKER_FLAGS "")  # Allow libSystem.dylib linking for macOS executables
+    # Check if we're building natively on macOS or cross-compiling
+    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+        # Native macOS build: link with libSystem.dylib
+        set(BASE_LINKER_FLAGS
+            -nodefaultlibs      # Skip default libraries (libc++, libc, etc.)
+            -lSystem            # Explicitly link libSystem.dylib (required for macOS executables)
+        )
+    else()
+        # Cross-compiling for macOS from Windows/Linux: use -nostdlib
+        set(BASE_LINKER_FLAGS -nostdlib)
+    endif()
 else()
     set(BASE_LINKER_FLAGS -nostdlib)  # No standard libraries for Windows/Linux
 endif()

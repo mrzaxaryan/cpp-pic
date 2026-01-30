@@ -16,9 +16,115 @@ With this work, we would like to add our two cents to that debate by arguing tha
 
 When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how NOSTDLIB-RUNTIME provides a robust solution.
 
-### Problem 1: String Literals in .rdata
+### Problem 1: Constant Arrays in .rdata
 
-When writing shellcode in C, only the `.text` section is available after compilation. As a result, global constants and string literals cannot be used, since they are placed in `.rdata` or `.data` sections.
+Similar to strings, constant arrays-such as lookup tables, binary blobs, are placed into `.rdata` by the compiler, making them inaccessible in a loaderless execution environment.
+
+#### Traditional Approach
+
+The same stack-based techniques used for strings can be applied to arrays by manually initializing each element at runtime.
+
+#### Why Traditional Approaches Fail
+
+The same limitations apply: compiler optimizations can consolidate the data into `.rdata`, the resulting code becomes verbose and error-prone, and the approach doesn't scale to large arrays.
+
+#### NOSTDLIB-RUNTIME Solution: Compile-Time Array Embedding
+
+Array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
+
+```cpp
+template <typename TChar, USIZE N>
+class EMBEDDED_ARRAY
+{
+    alignas(USIZE) USIZE words[WordCount]{};
+
+    consteval EMBEDDED_ARRAY(const TChar (&src)[N]) {
+        for (USIZE i = 0; i < N; ++i) {
+            // Pack each element byte-by-byte into words
+            for (USIZE b = 0; b < sizeof(TChar); ++b)
+                SetByte(i * sizeof(TChar) + b, (src[i] >> (b * 8)) & 0xFF);
+        }
+    }
+
+    TChar operator[](USIZE index) const {
+        // Unpack element from words at runtime
+    }
+};
+```
+
+Usage:
+```cpp
+constexpr UINT32 lookup[] = {0x12345678, 0xABCDEF00};
+auto embedded = MakeEmbedArray(lookup);
+UINT32 value = embedded[0]; // Unpacked at runtime
+```
+
+### Problem 2: Relocation Dependencies
+
+C-generated shellcode relies on loader-handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
+
+#### Traditional Approach
+
+**Option 1:** Use a custom shellcode loader.
+
+**Option 2:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with MSVC or a custom linker script with Clang. During execution, relocation entries are processed explicitly to fix up absolute addresses:
+
+```cpp
+PCHAR GetInstructionAddress(VOID)
+{
+    return __builtin_return_address(0);
+}
+
+PCHAR ReversePatternSearch(PCHAR rip, const CHAR *pattern, UINT32 len)
+{
+    PCHAR p = rip;
+    while (1)
+    {
+        UINT32 i = 0;
+        for (; i < len; i++)
+        {
+            if (p[i] != pattern[i])
+                break;
+        }
+        if (i == len)
+            return p; // found match
+        p--;    // move backward
+    }
+}
+
+ENTRYPOINT INT32 _start(VOID)
+{
+#if defined(PLATFORM_WINDOWS_I386)
+
+    PCHAR currentAddress = GetInstructionAddress(); // Get the return address of the caller function
+    UINT16 functionPrologue = 0x8955; // i386 function prologue: push ebp; mov ebp, esp
+        // Scan backward for function prologue
+    PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue));
+
+#endif
+```
+
+Then, perform relocation like this:
+
+```cpp
+CHAR *string = "Hello, World!";
+CHAR *relocatedString = string + (SSIZE)startAddress;
+
+WCHAR *wideString = L"Hello, World!";
+WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
+```
+
+#### Why Traditional Approaches Fail
+
+This method introduces additional code and complexity, depends on unstable compiler behavior, and can easily break under optimization. As a result, it is unreliable and does not scale well for real-world shellcode.
+
+#### NOSTDLIB-RUNTIME Solution: No Relocations Needed
+
+By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, NOSTDLIB-RUNTIME produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
+
+A major source of relocation issues in C-generated shellcode is string literals. Compilers place string literals into the `.rdata` section, and references to them rely on loader-applied relocations. In a loaderless execution environment, these relocations are never processed, causing such references to break.
+
+To address this problem, several traditional approaches are commonly used.
 
 #### Traditional Approach
 
@@ -92,111 +198,6 @@ movw $0x6F, 8(%rdi) ; 'o'
 
 As a result, string data exists only transiently and never appears in static data sections.
 
-### Problem 2: Constant Arrays in .rdata
-
-Similar to strings, constant arrays-such as lookup tables, binary blobs, are placed into `.rdata` by the compiler, making them inaccessible in a loaderless execution environment.
-
-#### Traditional Approach
-
-The same stack-based techniques used for strings can be applied to arrays by manually initializing each element at runtime.
-
-#### Why Traditional Approaches Fail
-
-The same limitations apply: compiler optimizations can consolidate the data into `.rdata`, the resulting code becomes verbose and error-prone, and the approach doesn't scale to large arrays.
-
-#### NOSTDLIB-RUNTIME Solution: Compile-Time Array Embedding
-
-Array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
-
-```cpp
-template <typename TChar, USIZE N>
-class EMBEDDED_ARRAY
-{
-    alignas(USIZE) USIZE words[WordCount]{};
-
-    consteval EMBEDDED_ARRAY(const TChar (&src)[N]) {
-        for (USIZE i = 0; i < N; ++i) {
-            // Pack each element byte-by-byte into words
-            for (USIZE b = 0; b < sizeof(TChar); ++b)
-                SetByte(i * sizeof(TChar) + b, (src[i] >> (b * 8)) & 0xFF);
-        }
-    }
-
-    TChar operator[](USIZE index) const {
-        // Unpack element from words at runtime
-    }
-};
-```
-
-Usage:
-```cpp
-constexpr UINT32 lookup[] = {0x12345678, 0xABCDEF00};
-auto embedded = MakeEmbedArray(lookup);
-UINT32 value = embedded[0]; // Unpacked at runtime
-```
-
-### Problem 3: Relocation Dependencies
-
-C-generated shellcode relies on loader-handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
-
-#### Traditional Approach
-
-**Option 1:** Use a custom shellcode loader.
-
-**Option 2:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with link.exe or a custom [linker script](linker_script.txt) for lld/ld. During execution, relocation entries are processed explicitly to fix up absolute addresses:
-```cpp
-PCHAR GetInstructionAddress(VOID)
-{
-    return __builtin_return_address(0);
-}
-
-PCHAR ReversePatternSearch(PCHAR rip, const CHAR *pattern, UINT32 len)
-{
-    PCHAR p = rip;
-    while (1)
-    {
-        UINT32 i = 0;
-        for (; i < len; i++)
-        {
-            if (p[i] != pattern[i])
-                break;
-        }
-        if (i == len)
-            return p; // found match
-        p--;    // move backward
-    }
-}
-
-ENTRYPOINT INT32 _start(VOID)
-{
-#if defined(PLATFORM_WINDOWS_I386)
-
-    PCHAR currentAddress = GetInstructionAddress(); // Get the return address of the caller function
-    UINT16 functionPrologue = 0x8955; // i386 function prologue: push ebp; mov ebp, esp
-        // Scan backward for function prologue
-    PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue));
-
-#endif
-```
-
-Then, perform relocation like this:
-
-```cpp
-CHAR *string = "Hello, World!";
-CHAR *relocatedString = string + (SSIZE)startAddress;
-
-WCHAR *wideString = L"Hello, World!";
-WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
-```
-
-#### Why Traditional Approaches Fail
-
-This method introduces additional code and complexity, depends on unstable compiler behavior, and can easily break under optimization. As a result, it is unreliable and does not scale well for real-world shellcode.
-
-#### NOSTDLIB-RUNTIME Solution: No Relocations Needed
-
-By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, NOSTDLIB-RUNTIME produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
-
 ### Problem 4: Floating-Point Constants
 
 Using floating-point arithmetic in C-generated shellcode introduces additional issues, as floating-point constants are typically emitted into read-only data sections such as `.rdata`. In a loaderless execution environment, these sections are not available, causing generated code to reference invalid memory.
@@ -265,7 +266,7 @@ The same issues remain: increased complexity, fragility, and sensitivity to comp
 
 #### NOSTDLIB-RUNTIME Solution: Function Pointer Embedding
 
-We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](include/bal/types/embedded/embedded_function_pointer.h).
+We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located in `embedded_function_pointer.h`.
 
 ### Problem 6: 64-bit Arithmetic on 32-bit Systems
 

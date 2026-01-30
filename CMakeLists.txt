@@ -347,14 +347,14 @@ elseif(PLATFORM_LC STREQUAL "linux")
 
 elseif(PLATFORM_LC STREQUAL "macos")
     # macOS linker flags (Mach-O format):
-    #   -dylib                  - Create dynamic library (avoids executable checks)
+    #   -bundle                 - Create bundle (loadable module, no libSystem required)
     #   -flat_namespace         - Use flat namespace (no two-level namespace)
     #   -undefined,suppress     - Suppress undefined symbol errors (no libSystem needed)
     #   -e __start              - Use __start as entry point (macOS adds _ prefix to C symbols)
     #   -order_file             - Control function placement to put __start first
     #   -no_uuid                - Don't add UUID
-    #   Note: macOS doesn't support true static executables, so we create a dylib that can be loaded as PIC
-    set(LINKER_BASE "-Wl,-dylib,-flat_namespace,-undefined,suppress,-e,__start,-order_file,${CMAKE_SOURCE_DIR}/orderfile_macos.txt,-no_uuid")
+    #   Note: macOS doesn't support true static executables, so we create a bundle that can be loaded as PIC
+    set(LINKER_BASE "-Wl,-bundle,-flat_namespace,-undefined,suppress,-e,__start,-order_file,${CMAKE_SOURCE_DIR}/orderfile_macos.txt,-no_uuid")
 
     # =============================================================================
     # Build Type Specific Linker Flags (macOS)

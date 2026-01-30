@@ -245,3 +245,96 @@ jobs:
           path: |
             build/**
             !build/**/cmake/**
+
+  build-and-test-macos:
+    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            platform: macos
+            runner: macos-13
+            note: "Runs natively on Intel x64"
+          - arch: aarch64
+            platform: macos
+            runner: macos-14
+            note: "Runs natively on Apple Silicon ARM64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM and Ninja
+        run: |
+          set -e
+          # Install Ninja
+          brew install ninja
+          ninja --version
+
+          # Install LLVM
+          brew install llvm@$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1)
+
+          # Add LLVM to PATH
+          LLVM_PREFIX=$(brew --prefix llvm@$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1))
+          echo "$LLVM_PREFIX/bin" >> $GITHUB_PATH
+
+          # Verify installation
+          "$LLVM_PREFIX/bin/clang" --version
+
+      - name: Build
+        run: |
+          ARCH="${{ matrix.arch }}"
+          PLATFORM="${{ matrix.platform }}"
+          echo "=== BUILD: arch=$ARCH platform=$PLATFORM type=release ==="
+          cmake -B "build/release/$PLATFORM/$ARCH/cmake" \
+                -G Ninja \
+                "-DARCHITECTURE=$ARCH" \
+                "-DPLATFORM=$PLATFORM" \
+                "-DBUILD_TYPE=release"
+          cmake --build "build/release/$PLATFORM/$ARCH/cmake"
+
+      - name: Run test
+        run: |
+          set -euo pipefail
+          echo "=== Testing ${{ matrix.arch }}-${{ matrix.platform }} ==="
+          echo "Note: ${{ matrix.note }}"
+          echo ""
+
+          # Find the executable (*.bin on macOS, or fallback to any executable)
+          TEST_EXE=$(find build -type f \( -name "*.bin" -o -name "*.macho" -o -perm +111 \) | head -n 1)
+
+          if [ -z "$TEST_EXE" ]; then
+            echo "ERROR: No executable found in build/"
+            exit 1
+          fi
+
+          # Make it executable
+          chmod +x "$TEST_EXE"
+
+          echo "=== Executing: $TEST_EXE ==="
+          echo ""
+
+          # Run the test
+          set +e
+          "$TEST_EXE"
+          EXIT_CODE=$?
+          set -e
+
+          echo ""
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "TEST PASSED (exit code: $EXIT_CODE)"
+          else
+            echo "TEST FAILED: exit code $EXIT_CODE (expected 0)"
+            exit $EXIT_CODE
+          fi
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**

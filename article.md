@@ -16,7 +16,7 @@ With this work, we would like to add our two cents to that debate by arguing tha
 
 When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how NOSTDLIB-RUNTIME provides a robust solution.
 
-### Problem 1: String literals in .rdata and other relocation Dependencies
+### Problem 1: .rdata‑Resident Constant and other relocation Dependencies
 
 C-generated shellcode relies on loader-handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
 
@@ -105,6 +105,8 @@ WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
 ```
 **Note**: In this example the solution is shown for string literals but same aproach works in other cases (f.e. function pointers).
 
+Similar to strings, constant arrays-such as lookup tables, binary blobs, are placed into `.rdata` by the compiler, making them inaccessible in a loaderless execution environment. And traditional approaches are the same to apply.
+
 #### Why Traditional Approaches Fail
 
 These approaches are not universal, as they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns; when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain.
@@ -144,23 +146,7 @@ movw $0x6C, 6(%rdi) ; 'l'
 movw $0x6F, 8(%rdi) ; 'o'
 ```
 As a result, string data exists only transiently in registers or on the stack and never appears in static data sections, fully eliminating loader dependencies and relocation requirements.
-
-
-### Problem 2: Constant Arrays in .rdata
-
-Similar to strings, constant arrays-such as lookup tables, binary blobs, are placed into `.rdata` by the compiler, making them inaccessible in a loaderless execution environment.
-
-#### Traditional Approach
-
-The same stack-based techniques used for strings can be applied to arrays by manually initializing each element at runtime.
-
-#### Why Traditional Approaches Fail
-
-The same limitations apply: compiler optimizations can consolidate the data into `.rdata`, the resulting code becomes verbose and error-prone, and the approach doesn't scale to large arrays.
-
-#### NOSTDLIB-RUNTIME Solution: Compile-Time Array Embedding
-
-Array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
+In case of working with constant arrays, array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
 
 ```cpp
 template <typename TChar, USIZE N>

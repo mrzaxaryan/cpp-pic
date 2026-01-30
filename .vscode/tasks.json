@@ -178,6 +178,42 @@
       "group": "build"
     },
     {
+      "label": "x86_64-apple-macos-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/macos/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=macos -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/macos/x86_64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "x86_64-apple-macos-release",
+      "type": "shell",
+      "command": "cmake -B build/release/macos/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=macos -DBUILD_TYPE=release -G Ninja && cmake --build build/release/macos/x86_64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-apple-macos-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/macos/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=macos -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/macos/aarch64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-apple-macos-release",
+      "type": "shell",
+      "command": "cmake -B build/release/macos/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=macos -DBUILD_TYPE=release -G Ninja && cmake --build build/release/macos/aarch64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
       "label": "Build All Windows",
       "dependsOrder": "parallel",
       "dependsOn": [
@@ -202,11 +238,22 @@
       "problemMatcher": []
     },
     {
+      "label": "Build All macOS",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "x86_64-apple-macos-release",
+        "aarch64-apple-macos-release"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
       "label": "Build All",
       "dependsOrder": "parallel",
       "dependsOn": [
         "Build All Windows",
-        "Build All Linux"
+        "Build All Linux",
+        "Build All macOS"
       ],
       "group": {
         "kind": "build",

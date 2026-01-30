@@ -42,7 +42,7 @@ project(cpp-pic LANGUAGES CXX)
 # Configuration Options
 # =============================================================================
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
-set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux")
+set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux, macos")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 
 # Normalize inputs to lowercase
@@ -52,7 +52,7 @@ string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LC)
 
 # Validate inputs
 set(VALID_ARCHITECTURES "i386" "x86_64" "armv7a" "aarch64")
-set(VALID_PLATFORMS "windows" "linux")
+set(VALID_PLATFORMS "windows" "linux" "macos")
 set(VALID_BUILD_TYPES "debug" "release")
 
 if(NOT ARCHITECTURE_LC IN_LIST VALID_ARCHITECTURES)
@@ -104,6 +104,14 @@ elseif(PLATFORM_LC STREQUAL "linux")
     elseif(ARCHITECTURE_LC STREQUAL "aarch64")
         set(TARGET_TRIPLE "aarch64-unknown-linux-gnu")
         set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_LINUX PLATFORM_LINUX_AARCH64)
+    endif()
+elseif(PLATFORM_LC STREQUAL "macos")
+    if(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(TARGET_TRIPLE "x86_64-apple-macos")
+        set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_MACOS PLATFORM_MACOS_X86_64)
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(TARGET_TRIPLE "aarch64-apple-macos")
+        set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_MACOS PLATFORM_MACOS_AARCH64)
     endif()
 endif()
 
@@ -157,6 +165,8 @@ if(PLATFORM_LC STREQUAL "windows")
     list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/windows/)
 elseif(PLATFORM_LC STREQUAL "linux")
     list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/linux/)
+elseif(PLATFORM_LC STREQUAL "macos")
+    list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/macos/)
 endif()
 
 # Collect all source files from src/ directory
@@ -165,8 +175,13 @@ file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cc)
 # Exclude platform-specific files for non-target platforms
 if(PLATFORM_LC STREQUAL "windows")
     list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/macos/.*")
 elseif(PLATFORM_LC STREQUAL "linux")
     list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/macos/.*")
+elseif(PLATFORM_LC STREQUAL "macos")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
 endif()
 
 # =============================================================================
@@ -186,6 +201,7 @@ set(BASE_COMPILER_FLAGS
     -fno-exceptions                         # Disable C++ exceptions (no .pdata/.xdata)
     -fno-rtti                               # Disable RTTI (no typeinfo in .rdata)
     -fno-stack-check                        # Disable stack limit checking
+    -fno-stack-protector                    # Disable stack canaries (no __stack_chk_guard/__stack_chk_fail)
     -ffunction-sections                     # Each function in own section (dead code elimination)
     -fdata-sections                         # Each data item in own section (garbage collection)
     -fno-builtin                            # Disable compiler built-ins
@@ -314,6 +330,30 @@ elseif(PLATFORM_LC STREQUAL "linux")
     endif()
 
     set(OUTPUT_EXTENSION ".elf")
+
+elseif(PLATFORM_LC STREQUAL "macos")
+    # macOS linker flags (Mach-O format):
+    #   -e __start              - Use __start as entry point (macOS adds _ prefix to C symbols, so _start becomes __start)
+    #   -no_uuid                - Don't add UUID (macOS uses single dash)
+    #   Note: macOS ld64 doesn't support GNU-style linker scripts (-T flag)
+    set(LINKER_BASE "-Wl,-e,__start,-no_uuid")
+
+    # =============================================================================
+    # Build Type Specific Linker Flags (macOS)
+    # =============================================================================
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        # Debug linker flags:
+        #   -map - Generate linker map file
+        set(LINKER_FLAGS "${LINKER_BASE},-map,${OUTPUT_DIR}/output.map.txt")
+    else()
+        # Release linker flags:
+        #   -S              - Strip debug symbols
+        #   -dead_strip     - Remove unused sections (macOS equivalent of --gc-sections)
+        #   -map            - Generate linker map file
+        set(LINKER_FLAGS "${LINKER_BASE},-S,-dead_strip,-map,${OUTPUT_DIR}/output.map.txt")
+    endif()
+
+    set(OUTPUT_EXTENSION ".macho")
 
 endif()
 
@@ -452,14 +492,25 @@ if(NOT RES EQUAL 0)
 endif()
 ]])
 
+# Platform-specific section names
+if(PLATFORM_LC STREQUAL "macos")
+    # Mach-O uses __text section
+    set(TEXT_SECTION "__text")
+    set(TEXT_SECTION_FULL "__TEXT,__text")  # Full segment,section format for objcopy
+else()
+    # ELF (Windows/Linux) uses .text section
+    set(TEXT_SECTION ".text")
+    set(TEXT_SECTION_FULL ".text")
+endif()
+
 add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Build SUCCEEDED: ${OUTPUT_EXE}"
 
-    # Generate object dump (disassembly + section headers + .text content)
-    COMMAND llvm-objdump -d -s -h -j .text ${OUTPUT_EXE} > ${OUTPUT_TXT}
+    # Generate object dump (disassembly + section headers + text content)
+    COMMAND llvm-objdump -d -s -h -j ${TEXT_SECTION} ${OUTPUT_EXE} > ${OUTPUT_TXT}
 
-    # Extract .text section as PIC blob
-    COMMAND llvm-objcopy "--dump-section=.text=${OUTPUT_BIN}" ${OUTPUT_EXE}
+    # Extract text section as PIC blob
+    COMMAND llvm-objcopy "--dump-section=${TEXT_SECTION_FULL}=${OUTPUT_BIN}" ${OUTPUT_EXE}
 
     # Generate strings file (verify no embedded string literals)
     COMMAND llvm-strings ${OUTPUT_EXE} > ${OUTPUT_STR}

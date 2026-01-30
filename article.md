@@ -177,7 +177,7 @@ UINT32 value = embedded[0]; // Unpacked at runtime
 
 ### Problem 4: Floating-Point Constants
 
-Using floating-point arithmetic in C-generated shellcode introduces additional issues, as floating-point constants are typically emitted into read-only data sections such as `.rdata`. In a loaderless execution environment, these sections are not available, causing generated code to reference invalid memory.
+Using floating-point arithmetic in C-generated shellcode introduces additional issues, as floating-point constants are typically emitted into read-only data sections such as `.rdata`. In a loaderless execution environment, these sections are not available, causing generated code to reference invalid memory. Despite the problem is very similar to the one discused above but aproches and specific aspets make huge difference.
 
 #### Traditional Approach
 

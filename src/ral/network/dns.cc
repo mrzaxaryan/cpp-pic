@@ -414,9 +414,9 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     LOG_DEBUG("DNS_resolve(host: %s, dnstype: %d) called", host, dnstype);
 
     // Check for localhost
-    PCCHAR localhost = (PCCHAR) "localhost"_embed;
+    auto localhost = "localhost"_embed;
     // If the host is localhost, set the IP address to
-    if (String::Compare(host, localhost))
+    if (String::Compare(host, (PCCHAR)localhost))
     {
         return IPAddress::FromIPv4(0x0100007F);
     }
@@ -483,9 +483,9 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     // Validate the input parameters
 
     // Check for localhost
-    PCCHAR localhost = (PCCHAR) "localhost"_embed;
+    auto localhost = "localhost"_embed;
     // If the host is localhost, set the IP address to
-    if (String::Compare(host, localhost))
+    if (String::Compare(host, (PCCHAR)localhost))
     {
         return IPAddress::FromIPv4(0x0100007F);
     }
@@ -622,9 +622,9 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PC
 {
     // Use DNS over HTTPS Post
     // Check for localhost
-    PCCHAR localhost = (PCCHAR) "localhost"_embed;
+    auto localhost = "localhost"_embed;
     // If the host is localhost, set the IP address to
-    if (String::Compare(host, localhost))
+    if (String::Compare(host, (PCCHAR)localhost))
     {
         return IPAddress::FromIPv4(0x0100007F);
     }

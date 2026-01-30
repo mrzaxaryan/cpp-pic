@@ -4,7 +4,6 @@
 #include "uint64.h"
 #include "int64.h"
 #include "double.h"
-#include "embedded_double.h"
 #include "embedded_string.h"
 
 // Class to handle string operations

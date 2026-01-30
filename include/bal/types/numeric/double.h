@@ -8,12 +8,16 @@ class INT64;
 /**
  * DOUBLE - Position-independent double precision floating-point class
  *
- * Prevents compiler from using native double type that could generate
- * .rdata section references. Stores IEEE-754 double as UINT64 bit pattern
- * and performs all operations through bit manipulation.
+ * Handles all runtime floating-point operations without .rdata section references.
+ * Stores IEEE-754 double as UINT64 bit pattern and performs operations through
+ * bit manipulation and controlled SSE instructions.
  *
- * CRITICAL: This class works with EMBEDDED_DOUBLE. EMBEDDED_DOUBLE constructs
- * the bit pattern at compile-time, and this class handles runtime operations.
+ * Design: Works with EMBEDDED_DOUBLE for a clean separation of concerns:
+ *   - EMBEDDED_DOUBLE: Compile-time literal embedding (consteval, no operations)
+ *   - DOUBLE: All runtime operations (arithmetic, comparisons, conversions)
+ *
+ * This refactored design eliminates ~80 lines of duplicate code between the two
+ * classes while maintaining full position-independence guarantees.
  */
 class DOUBLE
 {
@@ -48,6 +52,57 @@ public:
         unsigned long long ull = __builtin_bit_cast(unsigned long long, val);
         bits = UINT64(ull);
     }
+
+    /**
+     * Compile-time embedding constructor from embedded words
+     *
+     * This helper struct performs compile-time bit pattern embedding to avoid .rdata.
+     * The consteval constructor decomposes double literals into integer words at compile time.
+     */
+    struct EmbeddedHelper
+    {
+        // Architecture-dependent word size (4 bytes on i386, 8 bytes on x64)
+        static constexpr USIZE WordBytes = sizeof(USIZE);
+        static constexpr USIZE WordCount = (8 + WordBytes - 1) / WordBytes;
+
+        alignas(8) USIZE words[WordCount]{};
+
+        consteval explicit EmbeddedHelper(double v)
+        {
+            unsigned long long u = __builtin_bit_cast(unsigned long long, v);
+
+            // Pack 64-bit pattern into native words at compile time
+            for (USIZE byte = 0; byte < sizeof(unsigned long long); ++byte)
+            {
+                USIZE wordIndex = byte / WordBytes;
+                USIZE shift = (byte % WordBytes) * 8u;
+
+                words[wordIndex] |=
+                    (USIZE)((u >> (byte * 8u)) & 0xFFu) << shift;
+            }
+        }
+
+        constexpr unsigned long long Bits() const noexcept
+        {
+            unsigned long long u = 0;
+
+            for (USIZE byte = 0; byte < sizeof(unsigned long long); ++byte)
+            {
+                USIZE wordIndex = byte / WordBytes;
+                USIZE shift = (byte % WordBytes) * 8u;
+
+                unsigned long long b =
+                    (unsigned long long)((words[wordIndex] >> shift) & (USIZE)0xFFu);
+
+                u |= b << (byte * 8u);
+            }
+
+            return u;
+        }
+    };
+
+    // Constructor from embedded helper (for compile-time literals)
+    consteval DOUBLE(EmbeddedHelper helper) noexcept : bits(UINT64(helper.Bits())) {}
 
     // Constructor from integer
     constexpr DOUBLE(INT32 val) noexcept
@@ -419,6 +474,37 @@ public:
         return *this - d_val;
     }
 };
+
+// ============================================================================
+// USER-DEFINED LITERAL OPERATORS
+// ============================================================================
+
+/**
+ * Literal suffix for compile-time floating-point embedding
+ *
+ * Returns DOUBLE with compile-time embedded bit pattern (no .rdata references).
+ * The EmbeddedHelper construction happens at compile time, then converts to DOUBLE.
+ *
+ * Usage:
+ *   auto pi = 3.14159_embed;   // DOUBLE with compile-time embedded bits
+ *   auto ratio = 42.0_embed;   // DOUBLE with compile-time embedded bits
+ *   DOUBLE x = -5.0_embed;     // DOUBLE, then DOUBLE::operator-()
+ */
+consteval DOUBLE operator""_embed(long double v)
+{
+    return DOUBLE(DOUBLE::EmbeddedHelper(static_cast<double>(v)));
+}
+
+/**
+ * Literal suffix for integer-to-double embedding
+ *
+ * Usage:
+ *   auto value = 42_embed;  // Stored as 42.0 (DOUBLE with embedded bits)
+ */
+consteval DOUBLE operator""_embed(unsigned long long value)
+{
+    return DOUBLE(DOUBLE::EmbeddedHelper(static_cast<double>(value)));
+}
 
 // Pointer types
 typedef DOUBLE *PDOUBLE;

@@ -20,8 +20,7 @@
 #include "types/numeric/int64.h"
 #include "types/numeric/double.h"
 
-// Embedded types
-#include "types/embedded/embedded_double.h"
+// Embedded types (EMBEDDED_DOUBLE is now in double.h)
 #include "types/embedded/embedded_string.h"
 #include "types/embedded/embedded_function_pointer.h"
 #include "types/embedded/embedded_array.h"

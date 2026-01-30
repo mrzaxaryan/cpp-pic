@@ -2,7 +2,6 @@
 
 #include "primitives.h"
 #include "string.h"
-#include "embedded_double.h"
 
 class StringFormatter
 {
@@ -32,7 +31,6 @@ private:
         Argument(INT64 v) : type(Type::INT64), i64(v) {}
         Argument(UINT64 v) : type(Type::UINT64), u64(v) {}
         Argument(DOUBLE v) : type(Type::DOUBLE), dbl(v) {}
-        Argument(EMBEDDED_DOUBLE v) : type(Type::DOUBLE), dbl(DOUBLE(v)) {}
 
         // String and pointer constructors
         Argument(const CHAR* v) : type(Type::CSTR), cstr(v) {}

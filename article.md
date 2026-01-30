@@ -16,7 +16,6 @@ With this work, we would like to add our two cents to that debate by arguing tha
 
 When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how NOSTDLIB-RUNTIME provides a robust solution.
 
-
 ### Problem 1: Relocation Dependencies
 
 C-generated shellcode relies on loader-handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
@@ -24,7 +23,6 @@ C-generated shellcode relies on loader-handled relocations that are not applied 
 #### Traditional Approach
 
 **Option 1:** Use a custom shellcode loader.
-
 **Option 2:** Minimize usage of constructs that cause generation of data in `.rdata` or `.data` sections by moving string literals onto the stack. Stack-based strings can be created by representing the string as a character array stored in a local variable. This solution also obfuscates strings:
 
 
@@ -111,6 +109,38 @@ These approaches are not universal, as they rely on compiler-specific behavior a
 #### NOSTDLIB-RUNTIME Solution: No Relocations Needed
 
 By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, NOSTDLIB-RUNTIME produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
+To achieve this, NOSTDLIB-RUNTIME replaces conventional string literals with compile-time–decomposed representations. Leveraging C++23 features—such as user-defined literals, variadic templates, and fold expressions—string contents are expanded into individual character operations entirely at compile time:
+
+
+
+```cpp
+template <typename TChar, TChar... Chars>
+class EMBEDDED_STRING
+{
+    TChar data[sizeof...(Chars) + 1];
+    NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING()
+    {
+        USIZE i = 0;
+        ((data[i++] = Chars), ...); // Fold expression
+        data[i] = 0;
+    }
+};
+```
+
+Usage:
+```cpp
+auto msg = "Hello, World!"_embed; // Embedded in code, not .rdata
+```
+
+Assembly Output:
+```asm
+movw $0x48, (%rdi)  ; 'H'
+movw $0x65, 2(%rdi) ; 'e'
+movw $0x6C, 4(%rdi) ; 'l'
+movw $0x6C, 6(%rdi) ; 'l'
+movw $0x6F, 8(%rdi) ; 'o'
+```
+As a result, string data exists only transiently in registers or on the stack and never appears in static data sections, fully eliminating loader dependencies and relocation requirements.
 
 
 ### Problem 2: Constant Arrays in .rdata

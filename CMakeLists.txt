@@ -267,9 +267,15 @@ endif()
 # =============================================================================
 # Base Linker Flags
 # =============================================================================
-set(BASE_LINKER_FLAGS
-    -nostdlib                               # No standard libraries (no CRT startup)
-)
+# Note: macOS executables require libSystem.dylib to be linked for proper
+# executable format, even though the code doesn't use libc. We keep -nostdlib
+# for compiler to avoid including libc headers, but allow linker to link libSystem
+# on macOS for executable format compatibility.
+if(PLATFORM_LC STREQUAL "macos")
+    set(BASE_LINKER_FLAGS "")  # Allow libSystem.dylib linking for macOS executables
+else()
+    set(BASE_LINKER_FLAGS -nostdlib)  # No standard libraries for Windows/Linux
+endif()
 
 # Add LLD linker flag for Windows/Linux only (macOS uses default linker)
 if(PLATFORM_LC STREQUAL "windows" OR PLATFORM_LC STREQUAL "linux")
@@ -347,14 +353,12 @@ elseif(PLATFORM_LC STREQUAL "linux")
 
 elseif(PLATFORM_LC STREQUAL "macos")
     # macOS linker flags (Mach-O format):
-    #   -bundle                 - Create bundle (loadable module, no libSystem required)
-    #   -flat_namespace         - Use flat namespace (no two-level namespace)
-    #   -undefined,suppress     - Suppress undefined symbol errors (no libSystem needed)
     #   -e __start              - Use __start as entry point (macOS adds _ prefix to C symbols)
     #   -order_file             - Control function placement to put __start first
     #   -no_uuid                - Don't add UUID
-    #   Note: macOS doesn't support true static executables, so we create a bundle that can be loaded as PIC
-    set(LINKER_BASE "-Wl,-bundle,-flat_namespace,-undefined,suppress,-e,__start,-order_file,${CMAKE_SOURCE_DIR}/orderfile_macos.txt,-no_uuid")
+    #   Note: We link with libSystem.dylib (not using -nostdlib for linker) to create
+    #   a proper executable format, but the code itself uses direct syscalls and is PIC.
+    set(LINKER_BASE "-Wl,-e,__start,-order_file,${CMAKE_SOURCE_DIR}/orderfile_macos.txt,-no_uuid")
 
     # =============================================================================
     # Build Type Specific Linker Flags (macOS)

@@ -112,6 +112,16 @@ jobs:
             exit $exitCode
           }
 
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/CMakeFiles/**
+
   build-and-test-linux:
     name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
     runs-on: ubuntu-22.04
@@ -252,3 +262,13 @@ jobs:
             echo "TEST FAILED: exit code $EXIT_CODE (expected 0)"
             exit $EXIT_CODE
           fi
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/CMakeFiles/**

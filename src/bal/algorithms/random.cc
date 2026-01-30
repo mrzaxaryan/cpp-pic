@@ -15,15 +15,21 @@ static inline UINT64 GetHardwareTimestamp()
     return virtual_timer_value;
 
 #elif defined(ARCHITECTURE_ARMV7A)
-    // ARMv7-A (32-bit): Read physical counter like ARM64
-    // CNTPCT (Physical Counter) - similar to ARM64's cntpct_el0
-    unsigned int lo, hi;
-    __asm__ __volatile__("mrrc p15, 0, %0, %1, c14" : "=r"(lo), "=r"(hi));
-    return ((UINT64)hi << 32) | lo;
+    // ARMv7-A (32-bit): User-space timestamp using software counters
+    // Hardware counters require kernel/QEMU config to enable user access
+    static UINT64 counter = 0;
+    unsigned int sp, lr;
 
-    // Alternative: Virtual counter (CNTVCT) - like ARM64's cntvct_el0
-    // __asm__ __volatile__("mrrc p15, 1, %0, %1, c14" : "=r"(lo), "=r"(hi));
-    // return ((UINT64)hi << 32) | lo;
+    // Read stack pointer and link register for entropy
+    __asm__ __volatile__(
+        "mov %0, sp\n\t"
+        "mov %1, lr"
+        : "=r"(sp), "=r"(lr)
+    );
+
+    // Combine: incrementing counter + stack pointer + return address
+    counter++;
+    return counter ^ ((UINT64)sp << 32) ^ ((UINT64)lr << 16);
 
 #else
 #error "GetHardwareTimestamp not implemented for this architecture"

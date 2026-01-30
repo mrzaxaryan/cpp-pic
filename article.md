@@ -103,6 +103,7 @@ CHAR *relocatedString = string + (SSIZE)startAddress;
 WCHAR *wideString = L"Hello, World!";
 WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
 ```
+Note: In this example the solution is shown for string literals but same aproach works in other cases (f.e. function pointers)
 
 #### Why Traditional Approaches Fail
 

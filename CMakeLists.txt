@@ -285,7 +285,7 @@ if(PLATFORM_LC STREQUAL "windows")
     #   /SUBSYSTEM:CONSOLE   - Console application
     #   /ORDER:@orderfile    - Control function placement in .text
     #   /MERGE:.rdata=.text  - CRITICAL: Merge read-only data into code for PIC
-    set(LINKER_BASE "-Wl,/Entry:_start,/SUBSYSTEM:CONSOLE,/ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt,/MERGE:.rdata=.text")
+    set(LINKER_BASE "-Wl,/Entry:_start,/SUBSYSTEM:CONSOLE,/ORDER:@${CMAKE_SOURCE_DIR}/orderfile_windows.txt,/MERGE:.rdata=.text")
 
     # =============================================================================
     # Architecture-Specific Linker Flags (Windows)

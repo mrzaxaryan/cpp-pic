@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  LLVM_VERSION: "21.1.6"
+  LLVM_VERSION: "20.1.6"
 
 jobs:
   build-windows:
@@ -186,31 +186,34 @@ jobs:
       - name: Install LLVM and Ninja
         run: |
           set -e
+          # Extract major version for apt (e.g., "20" from "20.1.6")
+          LLVM_VER=$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1)
 
-          # Install Ninja
+          # Install dependencies and Ninja
           sudo apt-get update
-          sudo apt-get install -y ninja-build wget lsb-release software-properties-common gnupg
+          sudo apt-get install -y ninja-build wget lsb-release ca-certificates gnupg cmake
           ninja --version
 
-          # Install LLVM from official apt repository
-          LLVM_VERSION="${{ env.LLVM_VERSION }}"
-          LLVM_MAJOR=$(echo $LLVM_VERSION | cut -d. -f1)
-
-          echo "Installing LLVM $LLVM_MAJOR (closest to $LLVM_VERSION)..."
-
-          # Add LLVM apt repository (using modern method instead of deprecated apt-key)
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          sudo add-apt-repository -y "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${LLVM_MAJOR} main"
+          # Add LLVM apt repository (from Toolchain.md)
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
 
-          # Install LLVM, Clang, and LLD
-          sudo apt-get install -y clang-${LLVM_MAJOR} lld-${LLVM_MAJOR} llvm-${LLVM_MAJOR}
+          # Install LLVM, Clang, LLD, and tools
+          sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
 
-          # Create symbolic links
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_MAJOR} 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_MAJOR} 100
-          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_MAJOR} 100
-          sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_MAJOR} 100
+          # Create symbolic links for all required tools
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100
+
+          # Verify installation
+          clang --version
 
       - name: Build
         run: |

@@ -14,15 +14,15 @@ With this work, we would like to add our two cents to that debate by arguing tha
 
 ## Common Problems and Solutions
 
-When writing shellcode in C/C++, developers face several fundamental challenges. Below, we examine each problem, the traditional approaches used to address it, why those approaches fall short, and how NOSTDLIB-RUNTIME provides a robust solution.
+When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how NOSTDLIB-RUNTIME provides a robust solution.
 
 ### Problem 1: String Literals in .rdata
 
-When writing shellcode in C, only the `.text` section is available after compilation, so global constants and string literals cannot be used because they are placed in `.rdata` or `.data`.
+When writing shellcode in C, only the `.text` section is available after compilation. As a result, global constants and string literals cannot be used, since they are placed in `.rdata` or `.data` sections.
 
 #### Traditional Approach
 
-Minimize usage of constructs that cause generation of data in `.rdata` or `.data` by moving string literals to the stack. To create stack-based strings, represent the string as a character array stored in a local variable. This solution also obfuscates strings:
+Minimize usage of constructs that cause generation of data in `.rdata` or `.data` sections by moving string literals onto the stack. Stack-based strings can be created by representing the string as a character array stored in a local variable. This solution also obfuscates strings:
 
 ```cpp
 // "example.exe"
@@ -56,7 +56,7 @@ path[11] = '\0';
 
 #### Why Traditional Approaches Fail
 
-These approaches are not universal because they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns—when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain.
+These approaches are not universal, as they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns; when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain.
 
 #### NOSTDLIB-RUNTIME Solution: Compile-Time String Decomposition
 
@@ -94,19 +94,19 @@ As a result, string data exists only transiently and never appears in static dat
 
 ### Problem 2: Constant Arrays in .rdata
 
-Similar to strings, constant arrays such as lookup tables, binary data, and magic bytes are placed in `.rdata` by the compiler, making them inaccessible in a loaderless execution environment.
+Similar to strings, constant arrays-such as lookup tables, binary blobs, are placed into `.rdata` by the compiler, making them inaccessible in a loaderless execution environment.
 
 #### Traditional Approach
 
-The same stack-based techniques used for strings are applied to arrays—manually initializing each element at runtime.
+The same stack-based techniques used for strings can be applied to arrays by manually initializing each element at runtime.
 
 #### Why Traditional Approaches Fail
 
-The same limitations apply: compiler optimizations can consolidate these into `.rdata`, the code becomes verbose and error-prone, and it doesn't scale for large arrays.
+The same limitations apply: compiler optimizations can consolidate the data into `.rdata`, the resulting code becomes verbose and error-prone, and the approach doesn't scale to large arrays.
 
 #### NOSTDLIB-RUNTIME Solution: Compile-Time Array Embedding
 
-Elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
+Array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
 
 ```cpp
 template <typename TChar, USIZE N>
@@ -143,8 +143,7 @@ C-generated shellcode relies on loader-handled relocations that are not applied 
 
 **Option 1:** Use a custom shellcode loader.
 
-**Option 2:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` for MSVC and a custom linker script for Clang. During execution, relocation entries are processed explicitly to fix up absolute addresses:
-
+**Option 2:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with link.exe or a custom [linker script](linker_script.txt) for lld/ld. During execution, relocation entries are processed explicitly to fix up absolute addresses:
 ```cpp
 PCHAR GetInstructionAddress(VOID)
 {
@@ -192,11 +191,11 @@ WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
 
 #### Why Traditional Approaches Fail
 
-This method adds extra code and complexity, depends on unstable compiler behavior, and can easily break under optimization. As a result, it is unreliable and does not scale well for real-world shellcode.
+This method introduces additional code and complexity, depends on unstable compiler behavior, and can easily break under optimization. As a result, it is unreliable and does not scale well for real-world shellcode.
 
 #### NOSTDLIB-RUNTIME Solution: No Relocations Needed
 
-By eliminating all `.rdata` dependencies through compile-time embedding (strings, arrays, floating-point constants) and using pure relative addressing for function pointers, NOSTDLIB-RUNTIME produces code that requires no relocations whatsoever. The binary is inherently position-independent without any runtime fixups.
+By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, NOSTDLIB-RUNTIME produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
 
 ### Problem 4: Floating-Point Constants
 
@@ -262,7 +261,7 @@ Perform manual relocation at runtime, as discussed above.
 
 #### Why Traditional Approaches Fail
 
-The same issues apply: complexity, fragility, and optimizer sensitivity.
+The same issues remain: increased complexity, fragility, and sensitivity to compiler optimizations.
 
 #### NOSTDLIB-RUNTIME Solution: Function Pointer Embedding
 
@@ -301,7 +300,7 @@ This eliminates the need for compiler-expected helper routines and guarantees no
 
 ### Problem 7: CRT and Runtime Dependencies
 
-Standard C/C++ programs depend on the C runtime (CRT) for initialization, memory management, and various helper functions. Shellcode cannot rely on these being available.
+Standard C/C++ programs depend on the C runtime (CRT) for initialization, memory management, and various helper functions. Shellcode cannot assume the presence of these.
 
 #### Traditional Approach
 
@@ -309,11 +308,11 @@ Manually implement required CRT functions and avoid using features that depend o
 
 #### Why Traditional Approaches Fail
 
-This is tedious, incomplete, and doesn't address the fundamental issue of static API imports being visible to analysis tools.
+This is tedious, incomplete, and doesn't address the fundamental issue of static API imports remaining visible to analysis tools.
 
 #### NOSTDLIB-RUNTIME Solution: Runtime Independence
 
-NOSTDLIB-RUNTIME achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Rather than relying on CRT startup code, NOSTDLIB-RUNTIME defines a custom entry point, enabling execution without loader-managed runtime setup.
+NOSTDLIB-RUNTIME achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Instead of relying on CRT startup code, NOSTDLIB-RUNTIME defines a custom entry point, enabling execution without loader-managed runtime setup.
 
 Interaction with Windows system functionality is performed through low-level native interfaces. The runtime traverses the Process Environment Block (PEB) to locate loaded modules and parses PE export tables to resolve function addresses using hash-based lookup. By avoiding import tables, string-based API resolution, and `GetProcAddress` calls, NOSTDLIB-RUNTIME minimizes static analysis visibility and enables execution in constrained or adversarial environments.
 
@@ -437,7 +436,7 @@ The `-fno-jump-tables` flag is particularly critical—without it, `switch` stat
 
 ### Post-Build Verification
 
-The build system automatically verifies that no data sections exist in the final binary:
+The build system automatically verifies that the final binary contains no separate data sections:
 
 ```cmake
 # Verify no .rdata/.rodata/.data/.bss sections exist
@@ -481,7 +480,7 @@ All functionality is implemented using low-level native interfaces to avoid exte
 
 ## Practical Use Cases
 
-NOSTDLIB-RUNTIME is designed to support execution environments where traditional runtime assumptions do not hold. Its architecture makes it particularly suitable for the following domains:
+NOSTDLIB‑RUNTIME is designed for execution environments where traditional runtime assumptions do not apply. Its architecture makes it particularly suitable for the following domains:
 - Shellcode and loaderless code execution
 - Security research and malware analysis
 - Embedded and low-level system programming

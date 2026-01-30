@@ -206,49 +206,6 @@ inline INT32 String::ParseString<INT32>(const CHAR *str)
     return num * sign; // Return the final integer value, adjusting for sign
 }
 
-template <>
-inline DOUBLE String::ParseString<DOUBLE>(const CHAR *s)
-{
-    // Initialize result variables
-    DOUBLE sign = 1.0_embed;
-    DOUBLE result = 0.0_embed;
-    DOUBLE frac = 0.0_embed;
-    DOUBLE base = 1.0_embed;
-    DOUBLE tenDouble = 10.0_embed;
-
-    // sign
-    if (*s == '-')
-    {
-        sign = DOUBLE(-1.0_embed);
-        s++;
-    }
-    else if (*s == '+')
-    {
-        s++;
-    }
-
-    // integer part
-    while (*s >= '0' && *s <= '9')
-    {
-        result = result * tenDouble + DOUBLE(INT32(*s - '0'));
-        s++;
-    }
-
-    // fractional part
-    if (*s == '.')
-    {
-        s++; // skip the decimal point
-        while (*s >= '0' && *s <= '9')
-        {
-            frac = frac * tenDouble + DOUBLE(INT32(*s - '0'));
-            base = base * tenDouble;
-            s++;
-        }
-    }
-
-    return sign * (result + frac / base);
-}
-
 template <TCHAR TChar>
 BOOL String::IsSpace(TChar c)
 {

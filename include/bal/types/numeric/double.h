@@ -57,6 +57,53 @@ private:
     friend consteval DOUBLE operator""_embed(unsigned long long value);
 
 public:
+    /**
+     * Parse a string to DOUBLE
+     * @param s String to parse (supports sign, integer, and fractional parts)
+     * @return Parsed DOUBLE value
+     */
+    static DOUBLE Parse(const char *s) noexcept
+    {
+        // Initialize result variables
+        DOUBLE sign = 1.0;
+        DOUBLE result = 0.0;
+        DOUBLE frac = 0.0;
+        DOUBLE base = 1.0;
+        DOUBLE tenDouble = 10.0;
+        DOUBLE minusOne = -1.0;
+        // sign
+        if (*s == '-')
+        {
+            sign = minusOne;
+            s++;
+        }
+        else if (*s == '+')
+        {
+            s++;
+        }
+
+        // integer part
+        while (*s >= '0' && *s <= '9')
+        {
+            result = result * tenDouble + DOUBLE(INT32(*s - '0'));
+            s++;
+        }
+
+        // fractional part
+        if (*s == '.')
+        {
+            s++; // skip the decimal point
+            while (*s >= '0' && *s <= '9')
+            {
+                frac = frac * tenDouble + DOUBLE(INT32(*s - '0'));
+                base = base * tenDouble;
+                s++;
+            }
+        }
+
+        return sign * (result + frac / base);
+    }
+
     constexpr DOUBLE(INT32 val) noexcept
     {
         if (val == 0)

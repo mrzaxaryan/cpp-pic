@@ -38,13 +38,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v4
-        with:
-          path: C:\Program Files\LLVM
-          key: llvm-${{ env.LLVM_VERSION }}-windows-${{ matrix.runner }}
-
       - name: Install LLVM and Ninja
         shell: pwsh
         run: |
@@ -54,18 +47,14 @@ jobs:
           choco install ninja -y
           ninja --version
 
-          # Install LLVM (skip if cached)
-          if ("${{ steps.cache-llvm.outputs.cache-hit }}" -ne "true") {
-            $ver = "${{ env.LLVM_VERSION }}"
-            $exe = "LLVM-$ver-win64.exe"
-            $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          # Install LLVM
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
 
-            Write-Host "Downloading LLVM $ver..."
-            Invoke-WebRequest -Uri $url -OutFile $exe
-            Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
-          } else {
-            Write-Host "Using cached LLVM installation"
-          }
+          Write-Host "Downloading LLVM $ver..."
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
 
           "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
@@ -149,17 +138,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/lib/llvm-*
-            /usr/bin/clang*
-            /usr/bin/lld*
-            /usr/bin/llvm-*
-          key: llvm-${{ env.LLVM_VERSION }}-ubuntu-22.04
-
       - name: Install LLVM and Ninja
         run: |
           set -e
@@ -171,19 +149,14 @@ jobs:
           sudo apt-get install -y ninja-build wget lsb-release ca-certificates gnupg cmake
           ninja --version
 
-          # Install LLVM only if not cached
-          if [ "${{ steps.cache-llvm.outputs.cache-hit }}" != "true" ]; then
-            # Add LLVM apt repository
-            sudo mkdir -p /etc/apt/keyrings
-            wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
-            echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
-            sudo apt-get update
+          # Add LLVM apt repository
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
 
-            # Install LLVM, Clang, LLD, and tools
-            sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
-          else
-            echo "Using cached LLVM installation"
-          fi
+          # Install LLVM, Clang, LLD, and tools
+          sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
 
           # Create symbolic links for all required tools
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100

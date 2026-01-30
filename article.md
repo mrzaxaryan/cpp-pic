@@ -143,8 +143,7 @@ C-generated shellcode relies on loader-handled relocations that are not applied 
 
 **Option 1:** Use a custom shellcode loader.
 
-**Option 2:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with MSVC or a custom linker script with Clang. During execution, relocation entries are processed explicitly to fix up absolute addresses:
-
+**Option 2:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with link.exe or a custom [linker script](linker_script.txt) for lld/ld. During execution, relocation entries are processed explicitly to fix up absolute addresses:
 ```cpp
 PCHAR GetInstructionAddress(VOID)
 {

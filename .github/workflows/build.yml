@@ -315,13 +315,13 @@ jobs:
       - name: Run test
         if: matrix.can-test
         run: |
-          set -e
+          set -euo pipefail
           echo "=== Testing ${{ matrix.arch }}-${{ matrix.platform }} ==="
           echo "Note: ${{ matrix.note }}"
           echo ""
 
-          # Find the executable (output.elf on Linux)
-          TEST_EXE=$(find artifacts -type f -name "output.elf" | head -n 1)
+          # Find the executable (*.elf on Linux)
+          TEST_EXE=$(find artifacts -type f -name "*.elf" | head -n 1)
 
           if [ -z "$TEST_EXE" ]; then
             echo "ERROR: No executable found in artifacts/"
@@ -334,13 +334,15 @@ jobs:
           echo "=== Executing: $TEST_EXE ==="
           echo ""
 
-          # Run the test (use QEMU for non-native architectures)
+          # Run the test with output capture (use stdbuf for unbuffered QEMU output)
+          set +e
           if [ -n "${{ matrix.qemu }}" ]; then
-            ${{ matrix.qemu }} "$TEST_EXE"
+            stdbuf -oL -eL ${{ matrix.qemu }} "$TEST_EXE" 2>&1 | tee output.log.txt
           else
-            "$TEST_EXE"
+            "$TEST_EXE" 2>&1 | tee output.log.txt
           fi
-          EXIT_CODE=$?
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
 
           echo ""
           if [ $EXIT_CODE -eq 0 ]; then

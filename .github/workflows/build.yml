@@ -129,18 +129,19 @@ jobs:
           Write-Host "Note: ${{ matrix.note }}"
           Write-Host ""
 
-          # Find output.bin in artifacts
-          $binFile = Get-ChildItem -Path artifacts -Recurse -Filter "output.bin" | Select-Object -First 1
+          # Find the executable (*.exe on Windows)
+          $exeFile = Get-ChildItem -Path artifacts -Recurse -Filter "*.exe" | Select-Object -First 1
 
-          if (-not $binFile) {
-            Write-Host "ERROR: No output.bin found in artifacts/"
+          if (-not $exeFile) {
+            Write-Host "ERROR: No .exe found in artifacts/"
             exit 1
           }
 
-          Write-Host "=== Executing via loader.py: $($binFile.FullName) ==="
+          Write-Host "=== Executing: $($exeFile.FullName) ==="
           Write-Host ""
 
-          python scripts/loader.py --arch $arch $binFile.FullName
+          # Run and capture output
+          & $exeFile.FullName 2>&1 | Tee-Object -FilePath output.log.txt
           $exitCode = $LASTEXITCODE
 
           Write-Host ""

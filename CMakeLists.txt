@@ -31,10 +31,6 @@ foreach(lang C CXX)
     set(CMAKE_${lang}_STANDARD_LIBRARIES "")
 endforeach()
 
-# Use GNU-style LLD linker
-set(CMAKE_LINKER lld)
-set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
-set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
 
 project(cpp-pic LANGUAGES CXX)
 
@@ -113,6 +109,20 @@ elseif(PLATFORM_LC STREQUAL "macos")
         set(TARGET_TRIPLE "aarch64-apple-macos")
         set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_MACOS PLATFORM_MACOS_AARCH64)
     endif()
+endif()
+
+# =============================================================================
+# Platform-Specific Linker Configuration
+# =============================================================================
+# Windows and Linux use LLD linker, macOS uses default linker
+if(PLATFORM_LC STREQUAL "windows" OR PLATFORM_LC STREQUAL "linux")
+    set(CMAKE_LINKER lld)
+    set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
+    set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
+elseif(PLATFORM_LC STREQUAL "macos")
+    # macOS: Use default linker (no -fuse-ld flag needed)
+    set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <LINK_FLAGS> <OBJECTS> -o <TARGET>")
+    set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_C_COMPILER> <LINK_FLAGS> <OBJECTS> -o <TARGET>")
 endif()
 
 # =============================================================================
@@ -258,9 +268,13 @@ endif()
 # Base Linker Flags
 # =============================================================================
 set(BASE_LINKER_FLAGS
-    -fuse-ld=lld                            # LLVM LLD linker
     -nostdlib                               # No standard libraries (no CRT startup)
 )
+
+# Add LLD linker flag for Windows/Linux only (macOS uses default linker)
+if(PLATFORM_LC STREQUAL "windows" OR PLATFORM_LC STREQUAL "linux")
+    list(APPEND BASE_LINKER_FLAGS -fuse-ld=lld)  # LLVM LLD linker
+endif()
 
 # =============================================================================
 # Platform-Specific Linker Flags

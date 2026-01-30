@@ -255,7 +255,7 @@ jobs:
         include:
           - arch: x86_64
             platform: macos
-            runner: macos-13
+            runner: macos-15-intel
             note: "Runs natively on Intel x64"
           - arch: aarch64
             platform: macos

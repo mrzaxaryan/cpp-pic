@@ -235,7 +235,7 @@ if(ARCHITECTURE_LC STREQUAL "armv7a" OR ARCHITECTURE_LC STREQUAL "aarch64")
     # Disable stack probing on Windows ARM to prevent __chkstk calls
     if(PLATFORM_LC STREQUAL "windows")
         list(APPEND BASE_COMPILER_FLAGS
-            -mno-stack-probe                # Disable __chkstk calls (ARM on Windows)
+            -mstack-probe-size=0            # Disable __chkstk calls (set probe size to 0)
         )
     endif()
 endif()

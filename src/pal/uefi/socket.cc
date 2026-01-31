@@ -259,9 +259,9 @@ BOOL Socket::Open()
 
 		ConfigData.TypeOfService = 0;
 		ConfigData.TimeToLive = 64;
-		ConfigData.AccessPoint.UseDefaultAddress = TRUE;
 		ConfigData.AccessPoint.StationPort = 0; // Ephemeral port
 		ConfigData.AccessPoint.ActiveFlag = TRUE;
+		ConfigData.ControlOption = NULL;
 
 		// Set remote IPv4 address
 		UINT32 ipv4Addr = ip.ToIPv4();
@@ -271,12 +271,34 @@ BOOL Socket::Open()
 		ConfigData.AccessPoint.RemoteAddress.Addr[3] = (UINT8)((ipv4Addr >> 24) & 0xFF);
 		ConfigData.AccessPoint.RemotePort = port;
 
-		ConfigData.ControlOption = NULL;
-
-		// Configure the TCP4 protocol
+		// Try UseDefaultAddress first (works on real hardware with DHCP)
+		ConfigData.AccessPoint.UseDefaultAddress = TRUE;
 		Status = sockCtx->Tcp4->Configure(sockCtx->Tcp4, &ConfigData);
+
 		if (EFI_ERROR(Status))
-			return FALSE;
+		{
+			// Fallback to static IP for QEMU user-mode networking
+			// QEMU uses: Guest=10.0.2.15, Gateway=10.0.2.2, DNS=10.0.2.3
+			ConfigData.AccessPoint.UseDefaultAddress = FALSE;
+			ConfigData.AccessPoint.StationAddress.Addr[0] = 10;
+			ConfigData.AccessPoint.StationAddress.Addr[1] = 0;
+			ConfigData.AccessPoint.StationAddress.Addr[2] = 2;
+			ConfigData.AccessPoint.StationAddress.Addr[3] = 15;
+			ConfigData.AccessPoint.SubnetMask.Addr[0] = 255;
+			ConfigData.AccessPoint.SubnetMask.Addr[1] = 255;
+			ConfigData.AccessPoint.SubnetMask.Addr[2] = 255;
+			ConfigData.AccessPoint.SubnetMask.Addr[3] = 0;
+
+			Status = sockCtx->Tcp4->Configure(sockCtx->Tcp4, &ConfigData);
+			if (EFI_ERROR(Status))
+				return FALSE;
+
+			// Add default route via QEMU gateway for external network access
+			EFI_IPv4_ADDRESS DefaultSubnet = {{0, 0, 0, 0}};
+			EFI_IPv4_ADDRESS DefaultMask = {{0, 0, 0, 0}};
+			EFI_IPv4_ADDRESS Gateway = {{10, 0, 2, 2}};
+			sockCtx->Tcp4->Routes(sockCtx->Tcp4, FALSE, &DefaultSubnet, &DefaultMask, &Gateway);
+		}
 
 		sockCtx->IsConfigured = TRUE;
 

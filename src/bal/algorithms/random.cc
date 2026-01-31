@@ -19,17 +19,14 @@ static inline UINT64 GetHardwareTimestamp()
     // Hardware counters require kernel/QEMU config to enable user access
     static UINT64 counter = 0;
 
-    // Get entropy from stack address and return address
-    // Use local variable address for stack pointer value (more portable than inline asm)
-    volatile unsigned int stack_var;
-    unsigned int sp = (unsigned int)&stack_var;
+    // Get entropy from stack address (safe and portable)
+    volatile unsigned int stack_var = 0;
+    UINT64 sp_entropy = (UINT64)(USIZE)&stack_var;
 
-    // Use builtin to get return address (more portable than reading lr register)
-    unsigned int lr = (unsigned int)__builtin_return_address(0);
-
-    // Combine: incrementing counter + stack pointer + return address
+    // Simple mixing using counter and stack position
+    // This provides sufficient entropy for random number generation
     counter++;
-    return counter ^ ((UINT64)sp << 32) ^ ((UINT64)lr << 16);
+    return (counter * 6364136223846793005ULL) ^ (sp_entropy * 1103515245ULL);
 
 #else
 #error "GetHardwareTimestamp not implemented for this architecture"

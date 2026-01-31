@@ -247,6 +247,50 @@ extern "C"
         udiv64_internal(numerator, denominator, &quotient, &remainder);
         return remainder;
     }
+
+    // x86: 64-bit signed division - returns quotient
+    X86_RUNTIME_FUNC long long __divdi3(long long numerator, long long denominator)
+    {
+        if (denominator == 0)
+            return 0;
+
+        // Handle signs
+        int sign_num = numerator < 0 ? -1 : 1;
+        int sign_den = denominator < 0 ? -1 : 1;
+        int sign_quot = sign_num * sign_den;
+
+        // Work with absolute values
+        unsigned long long abs_num = (unsigned long long)(numerator < 0 ? -numerator : numerator);
+        unsigned long long abs_den = (unsigned long long)(denominator < 0 ? -denominator : denominator);
+
+        // Perform unsigned division
+        unsigned long long quotient, remainder;
+        udiv64_internal(abs_num, abs_den, &quotient, &remainder);
+
+        // Apply sign to quotient
+        return sign_quot < 0 ? -(long long)quotient : (long long)quotient;
+    }
+
+    // x86: 64-bit signed modulo - returns remainder
+    X86_RUNTIME_FUNC long long __moddi3(long long numerator, long long denominator)
+    {
+        if (denominator == 0)
+            return numerator;
+
+        // Handle signs
+        int sign_num = numerator < 0 ? -1 : 1;
+
+        // Work with absolute values
+        unsigned long long abs_num = (unsigned long long)(numerator < 0 ? -numerator : numerator);
+        unsigned long long abs_den = (unsigned long long)(denominator < 0 ? -denominator : denominator);
+
+        // Perform unsigned division
+        unsigned long long quotient, remainder;
+        udiv64_internal(abs_num, abs_den, &quotient, &remainder);
+
+        // Apply sign to remainder (remainder takes sign of numerator)
+        return sign_num < 0 ? -(long long)remainder : (long long)remainder;
+    }
 }
 
 #endif // ARCHITECTURE_I386

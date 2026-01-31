@@ -1,0 +1,124 @@
+/**
+ * efi_types.h - Core UEFI Type Definitions
+ *
+ * Defines fundamental UEFI types and calling conventions.
+ * Compatible with UEFI 2.x specification.
+ */
+
+#pragma once
+
+#include "primitives.h"
+
+// =============================================================================
+// UEFI Calling Convention
+// =============================================================================
+
+#if defined(ARCHITECTURE_X86_64)
+// x86_64 UEFI uses Microsoft x64 ABI
+#define EFIAPI __attribute__((ms_abi))
+#elif defined(ARCHITECTURE_AARCH64)
+// AArch64 UEFI uses standard AAPCS64
+#define EFIAPI
+#endif
+
+// =============================================================================
+// Fundamental UEFI Types
+// =============================================================================
+
+typedef USIZE EFI_STATUS;
+typedef PVOID EFI_HANDLE;
+typedef PVOID EFI_EVENT;
+typedef UINT64 EFI_PHYSICAL_ADDRESS;
+typedef UINT64 EFI_VIRTUAL_ADDRESS;
+typedef USIZE EFI_TPL;
+
+// CHAR16 maps to WCHAR (both 2-byte with -fshort-wchar)
+typedef WCHAR CHAR16;
+
+// =============================================================================
+// GUID Structure
+// =============================================================================
+
+typedef struct {
+	UINT32 Data1;
+	UINT16 Data2;
+	UINT16 Data3;
+	UINT8 Data4[8];
+} EFI_GUID;
+
+// =============================================================================
+// Memory Types
+// =============================================================================
+
+typedef enum {
+	EfiReservedMemoryType,
+	EfiLoaderCode,
+	EfiLoaderData,
+	EfiBootServicesCode,
+	EfiBootServicesData,
+	EfiRuntimeServicesCode,
+	EfiRuntimeServicesData,
+	EfiConventionalMemory,
+	EfiUnusableMemory,
+	EfiACPIReclaimMemory,
+	EfiACPIMemoryNVS,
+	EfiMemoryMappedIO,
+	EfiMemoryMappedIOPortSpace,
+	EfiPalCode,
+	EfiPersistentMemory,
+	EfiMaxMemoryType
+} EFI_MEMORY_TYPE;
+
+typedef enum {
+	AllocateAnyPages,
+	AllocateMaxAddress,
+	AllocateAddress,
+	MaxAllocateType
+} EFI_ALLOCATE_TYPE;
+
+// =============================================================================
+// Status Codes
+// =============================================================================
+
+#define EFI_SUCCESS 0ULL
+
+// Error codes (high bit set)
+#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
+#define EFI_ERROR_MASK (1ULL << 63)
+#else
+#define EFI_ERROR_MASK (1UL << 31)
+#endif
+
+#define EFI_ERROR(code) (EFI_ERROR_MASK | (code))
+
+#define EFI_LOAD_ERROR EFI_ERROR(1)
+#define EFI_INVALID_PARAMETER EFI_ERROR(2)
+#define EFI_UNSUPPORTED EFI_ERROR(3)
+#define EFI_BAD_BUFFER_SIZE EFI_ERROR(4)
+#define EFI_BUFFER_TOO_SMALL EFI_ERROR(5)
+#define EFI_NOT_READY EFI_ERROR(6)
+#define EFI_DEVICE_ERROR EFI_ERROR(7)
+#define EFI_WRITE_PROTECTED EFI_ERROR(8)
+#define EFI_OUT_OF_RESOURCES EFI_ERROR(9)
+#define EFI_NOT_FOUND EFI_ERROR(14)
+#define EFI_TIMEOUT EFI_ERROR(18)
+#define EFI_ABORTED EFI_ERROR(21)
+
+// Warning codes (high bit clear, but non-zero)
+#define EFI_WARN_UNKNOWN_GLYPH 1
+#define EFI_WARN_DELETE_FAILURE 2
+
+// =============================================================================
+// Helper Macros
+// =============================================================================
+
+#define EFI_ERROR_CHECK(status) (((SSIZE)(status)) < 0)
+
+// Table header structure (common to all UEFI tables)
+typedef struct {
+	UINT64 Signature;
+	UINT32 Revision;
+	UINT32 HeaderSize;
+	UINT32 CRC32;
+	UINT32 Reserved;
+} EFI_TABLE_HEADER;

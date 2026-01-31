@@ -53,7 +53,7 @@ string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LC)
 
 # Validate inputs
 set(VALID_ARCHITECTURES "i386" "x86_64" "armv7a" "aarch64")
-set(VALID_PLATFORMS "windows" "linux")
+set(VALID_PLATFORMS "windows" "linux" "uefi")
 set(VALID_BUILD_TYPES "debug" "release")
 
 if(NOT ARCHITECTURE_LC IN_LIST VALID_ARCHITECTURES)
@@ -64,6 +64,13 @@ if(NOT PLATFORM_LC IN_LIST VALID_PLATFORMS)
 endif()
 if(NOT BUILD_TYPE_LC IN_LIST VALID_BUILD_TYPES)
     message(FATAL_ERROR "Invalid BUILD_TYPE: ${BUILD_TYPE}. Must be one of: ${VALID_BUILD_TYPES}")
+endif()
+
+# UEFI is only supported on x86_64 and aarch64
+if(PLATFORM_LC STREQUAL "uefi")
+    if(NOT (ARCHITECTURE_LC STREQUAL "x86_64" OR ARCHITECTURE_LC STREQUAL "aarch64"))
+        message(FATAL_ERROR "UEFI platform only supports x86_64 and aarch64 architectures")
+    endif()
 endif()
 
 # =============================================================================
@@ -105,6 +112,16 @@ elseif(PLATFORM_LC STREQUAL "linux")
     elseif(ARCHITECTURE_LC STREQUAL "aarch64")
         set(TARGET_TRIPLE "aarch64-unknown-linux-gnu")
         set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_LINUX PLATFORM_LINUX_AARCH64)
+    endif()
+elseif(PLATFORM_LC STREQUAL "uefi")
+    # UEFI uses Windows-GNU target triple for PE/COFF format
+    # This avoids MSVC-specific CRT symbols like _fltused
+    if(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(TARGET_TRIPLE "x86_64-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_UEFI PLATFORM_UEFI_X86_64)
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(TARGET_TRIPLE "aarch64-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_UEFI PLATFORM_UEFI_AARCH64)
     endif()
 endif()
 
@@ -174,6 +191,8 @@ if(PLATFORM_LC STREQUAL "windows")
     list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/windows/)
 elseif(PLATFORM_LC STREQUAL "linux")
     list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/linux/)
+elseif(PLATFORM_LC STREQUAL "uefi")
+    list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/uefi/)
 endif()
 
 # Collect all source files from src/ directory
@@ -189,8 +208,15 @@ file(GLOB_RECURSE HEADERS
 # Exclude platform-specific files for non-target platforms
 if(PLATFORM_LC STREQUAL "windows")
     list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/uefi/.*")
 elseif(PLATFORM_LC STREQUAL "linux")
     list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/uefi/.*")
+elseif(PLATFORM_LC STREQUAL "uefi")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
+    # UEFI uses start_uefi.cc instead of start.cc
+    list(FILTER SOURCES EXCLUDE REGEX ".*/start\\.cc$")
 endif()
 
 # =============================================================================
@@ -236,6 +262,18 @@ if(ARCHITECTURE_LC STREQUAL "armv7a" OR ARCHITECTURE_LC STREQUAL "aarch64")
     if(PLATFORM_LC STREQUAL "windows")
         list(APPEND BASE_COMPILER_FLAGS
             -mstack-probe-size=0            # Disable __chkstk calls (set probe size to 0)
+        )
+    endif()
+endif()
+
+# =============================================================================
+# UEFI-Specific Compiler Flags
+# =============================================================================
+if(PLATFORM_LC STREQUAL "uefi")
+    if(ARCHITECTURE_LC STREQUAL "x86_64")
+        # x86_64 UEFI requires no red zone (interrupt handlers may use stack)
+        list(APPEND BASE_COMPILER_FLAGS
+            -mno-red-zone                   # Required for UEFI interrupt safety
         )
     endif()
 endif()
@@ -345,6 +383,22 @@ elseif(PLATFORM_LC STREQUAL "linux")
 
     set(OUTPUT_EXTENSION ".elf")
 
+elseif(PLATFORM_LC STREQUAL "uefi")
+    # UEFI linker flags (PE/COFF format):
+    #   /Entry:efi_main          - UEFI entry point
+    #   /SUBSYSTEM:EFI_APPLICATION - UEFI application subsystem (10)
+    #   /NODEFAULTLIB            - No default libraries
+    # Note: We do NOT merge .rdata into .text for UEFI as the loader expects standard sections
+    set(LINKER_BASE "-Wl,/Entry:efi_main,/SUBSYSTEM:EFI_APPLICATION,/NODEFAULTLIB")
+
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        set(LINKER_FLAGS "${LINKER_BASE},/DEBUG,/MAP:${OUTPUT_DIR}/output.map.txt")
+    else()
+        set(LINKER_FLAGS "${LINKER_BASE},/OPT:REF,/OPT:ICF,/MAP:${OUTPUT_DIR}/output.map.txt")
+    endif()
+
+    set(OUTPUT_EXTENSION ".efi")
+
 endif()
 
 # =============================================================================
@@ -403,6 +457,12 @@ file(WRITE "${VERIFY_RDATA_SCRIPT}" [[
 # Verify no .rdata/.rodata/.data/.bss sections exist in the binary
 if(NOT DEFINED MAP_FILE)
     message(FATAL_ERROR "MAP_FILE must be defined")
+endif()
+
+# Skip verification for UEFI - standard PE sections are required
+if(DEFINED SKIP_RDATA_CHECK AND SKIP_RDATA_CHECK)
+    message(STATUS "Skipping .rdata verification for UEFI (standard PE sections required)")
+    return()
 endif()
 
 # Map file may not exist for debug builds
@@ -482,6 +542,13 @@ if(NOT RES EQUAL 0)
 endif()
 ]])
 
+# Set UEFI skip flag for rdata verification
+if(PLATFORM_LC STREQUAL "uefi")
+    set(SKIP_RDATA_CHECK_FLAG "-DSKIP_RDATA_CHECK=TRUE")
+else()
+    set(SKIP_RDATA_CHECK_FLAG "")
+endif()
+
 add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Build SUCCEEDED: ${OUTPUT_EXE}"
 
@@ -497,12 +564,29 @@ add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     # Base64 encode the PIC blob
     COMMAND ${CMAKE_COMMAND} -DPIC_FILE=${OUTPUT_BIN} -DBASE64_FILE=${OUTPUT_B64} -P "${BASE64_ENCODE_SCRIPT}"
 
-    # Verify no .rdata section exists (critical for PIC)
-    COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} -P "${VERIFY_RDATA_SCRIPT}"
+    # Verify no .rdata section exists (critical for PIC, skipped for UEFI)
+    COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} ${SKIP_RDATA_CHECK_FLAG} -P "${VERIFY_RDATA_SCRIPT}"
 
     COMMENT "Generating PIC blob and analysis files..."
     VERBATIM
 )
+
+# UEFI-specific: Create EFI boot directory structure for QEMU testing
+if(PLATFORM_LC STREQUAL "uefi")
+    set(EFI_BOOT_DIR "${OUTPUT_DIR}/EFI/BOOT")
+    if(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(EFI_BOOT_FILE "BOOTX64.EFI")
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(EFI_BOOT_FILE "BOOTAA64.EFI")
+    endif()
+
+    add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EFI_BOOT_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${OUTPUT_EXE}" "${EFI_BOOT_DIR}/${EFI_BOOT_FILE}"
+        COMMENT "Creating UEFI boot structure..."
+        VERBATIM
+    )
+endif()
 
 # =============================================================================
 # Configuration Summary

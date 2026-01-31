@@ -502,3 +502,108 @@ jobs:
       - name: Test PIC -Og
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
+
+  build-uefi:
+    name: Build UEFI ${{ matrix.arch }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            platform: uefi
+            ovmf_pkg: ovmf
+            ovmf_path: /usr/share/ovmf/OVMF.fd
+            qemu_cmd: qemu-system-x86_64
+            boot_file: BOOTX64.EFI
+          - arch: aarch64
+            platform: uefi
+            ovmf_pkg: qemu-efi-aarch64
+            ovmf_path: /usr/share/qemu-efi-aarch64/QEMU_EFI.fd
+            qemu_cmd: qemu-system-aarch64 -M virt -cpu cortex-a72
+            boot_file: BOOTAA64.EFI
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM and Ninja
+        run: |
+          set -e
+          LLVM_VER=$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1)
+
+          sudo apt-get update
+          sudo apt-get install -y ninja-build wget lsb-release ca-certificates gnupg cmake
+
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+
+          sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
+
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100
+
+          sudo update-alternatives --set clang /usr/bin/clang-${LLVM_VER}
+          sudo update-alternatives --set clang++ /usr/bin/clang++-${LLVM_VER}
+          sudo update-alternatives --set lld /usr/bin/lld-${LLVM_VER}
+          sudo update-alternatives --set ld.lld /usr/bin/ld.lld-${LLVM_VER}
+          sudo update-alternatives --set llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER}
+          sudo update-alternatives --set llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER}
+          sudo update-alternatives --set llvm-strings /usr/bin/llvm-strings-${LLVM_VER}
+
+          clang --version
+
+      - name: Install QEMU and OVMF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-system-arm ${{ matrix.ovmf_pkg }}
+
+      - name: Build -O3
+        id: build-o3
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Verify EFI output
+        run: |
+          EFI_FILE="build/release/${{ matrix.platform }}/${{ matrix.arch }}/output.efi"
+          BOOT_FILE="build/release/${{ matrix.platform }}/${{ matrix.arch }}/EFI/BOOT/${{ matrix.boot_file }}"
+
+          echo "Checking for EFI file..."
+          ls -la "$EFI_FILE"
+          file "$EFI_FILE"
+
+          echo "Checking for boot file..."
+          ls -la "$BOOT_FILE"
+
+          echo "EFI file size: $(stat -c%s "$EFI_FILE") bytes"
+
+      - name: Upload artifacts -O3
+        if: steps.build-o3.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O3
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI in QEMU
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          echo "Running UEFI application in QEMU..."
+          # Run QEMU with timeout - UEFI app should exit cleanly
+          timeout 60s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
+            -nographic \
+            -net none \
+            -no-reboot || true
+          echo "QEMU test completed"

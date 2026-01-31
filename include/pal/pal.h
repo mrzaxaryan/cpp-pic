@@ -10,6 +10,17 @@
 #include "bal.h"
 
 // =============================================================================
+// Platform-Specific Headers
+// =============================================================================
+
+#if defined(PLATFORM_UEFI)
+// UEFI platform - include EFI types and system table
+#include "efi_types.h"
+#include "efi_system_table.h"
+#include "efi_context.h"
+#endif
+
+// =============================================================================
 // Platform Core
 // =============================================================================
 

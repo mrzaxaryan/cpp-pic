@@ -160,6 +160,42 @@
       "group": "build"
     },
     {
+      "label": "x86_64-uefi-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/uefi/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/uefi/x86_64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "x86_64-uefi-release",
+      "type": "shell",
+      "command": "cmake -B build/release/uefi/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/uefi/x86_64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-uefi-debug",
+      "type": "shell",
+      "command": "cmake -B build/debug/uefi/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/uefi/aarch64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "aarch64-uefi-release",
+      "type": "shell",
+      "command": "cmake -B build/release/uefi/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=uefi -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/uefi/aarch64/cmake",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
       "label": "Build All Windows",
       "dependsOrder": "parallel",
       "dependsOn": [
@@ -183,11 +219,38 @@
       "problemMatcher": []
     },
     {
+      "label": "Build All UEFI",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "x86_64-uefi-release",
+        "aarch64-uefi-release"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run UEFI x86_64 (QEMU)",
+      "type": "shell",
+      "command": "qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -drive format=raw,file=fat:rw:build/release/uefi/x86_64 -nographic -net none",
+      "dependsOn": "x86_64-uefi-release",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Run UEFI aarch64 (QEMU)",
+      "type": "shell",
+      "command": "qemu-system-aarch64 -M virt -cpu cortex-a72 -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -drive format=raw,file=fat:rw:build/release/uefi/aarch64 -nographic -net none",
+      "dependsOn": "aarch64-uefi-release",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
       "label": "Build All",
       "dependsOrder": "parallel",
       "dependsOn": [
         "Build All Windows",
-        "Build All Linux"
+        "Build All Linux",
+        "Build All UEFI"
       ],
       "group": {
         "kind": "build",

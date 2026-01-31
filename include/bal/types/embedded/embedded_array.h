@@ -90,7 +90,7 @@ public:
 
             for (USIZE b = 0; b < sizeof(TChar); ++b)
             {
-                const UINT8 data = (UINT8)((v >> (int)(b * 8u)) & (U)0xFFu);
+                const UINT8 data = (UINT8)((v >> (INT32)(b * 8u)) & (U)0xFFu);
                 SetByte(i * sizeof(TChar) + b, data);
             }
         }
@@ -106,7 +106,7 @@ public:
         for (USIZE b = 0; b < sizeof(TChar); ++b)
         {
             U byte_val = static_cast<U>(GetByte(base + b));
-            U shifted = byte_val << (int)(b * 8u);
+            U shifted = byte_val << (INT32)(b * 8u);
             v |= shifted;
         }
 

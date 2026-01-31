@@ -195,8 +195,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = ""_embed;
-		Base64::Encode(static_cast<const char*>(input), 0, output);
-		return String::Compare<CHAR>(output, static_cast<const char*>(""_embed));
+		Base64::Encode(static_cast<PCCHAR>(input), 0, output);
+		return String::Compare<CHAR>(output, static_cast<PCCHAR>(""_embed));
 	}
 
 	// Test: Encode single character "f"
@@ -205,8 +205,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = "f"_embed;
-		Base64::Encode(static_cast<const char*>(input), 1, output);
-		return String::Compare<CHAR>(output, static_cast<const char*>("Zg=="_embed));
+		Base64::Encode(static_cast<PCCHAR>(input), 1, output);
+		return String::Compare<CHAR>(output, static_cast<PCCHAR>("Zg=="_embed));
 	}
 
 	// Test: Encode two characters "fo"
@@ -215,8 +215,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = "fo"_embed;
-		Base64::Encode(static_cast<const char*>(input), 2, output);
-		return String::Compare<CHAR>(output, static_cast<const char*>("Zm8="_embed));
+		Base64::Encode(static_cast<PCCHAR>(input), 2, output);
+		return String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm8="_embed));
 	}
 
 	// Test: Encode three characters "foo"
@@ -225,8 +225,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = "foo"_embed;
-		Base64::Encode(static_cast<const char*>(input), 3, output);
-		return String::Compare<CHAR>(output, static_cast<const char*>("Zm9v"_embed));
+		Base64::Encode(static_cast<PCCHAR>(input), 3, output);
+		return String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm9v"_embed));
 	}
 
 	// Test: Encode standard text "Hello, World!"
@@ -235,8 +235,8 @@ private:
 	{
 		CHAR output[30];
 		auto input = "Hello, World!"_embed;
-		Base64::Encode(static_cast<const char*>(input), 13, output);
-		return String::Compare<CHAR>(output, static_cast<const char*>("SGVsbG8sIFdvcmxkIQ=="_embed));
+		Base64::Encode(static_cast<PCCHAR>(input), 13, output);
+		return String::Compare<CHAR>(output, static_cast<PCCHAR>("SGVsbG8sIFdvcmxkIQ=="_embed));
 	}
 
 	// Test: Encode binary data
@@ -247,7 +247,7 @@ private:
 		CHAR output[20];
 		auto input = MakeEmbedArray((const UINT8[]){0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
 		Base64::Encode(reinterpret_cast<const char*>(static_cast<const VOID*>(input)), 6, output);
-		return String::Compare<CHAR>(output, static_cast<const char*>("AAECAwQF"_embed));
+		return String::Compare<CHAR>(output, static_cast<PCCHAR>("AAECAwQF"_embed));
 	}
 
 	// Test: Encode strings of various lengths to test all padding cases
@@ -262,33 +262,33 @@ private:
 		CHAR output[20];
 
 		auto input1 = "f"_embed;
-		Base64::Encode(static_cast<const char*>(input1), 1, output);
-		if (!String::Compare<CHAR>(output, static_cast<const char*>("Zg=="_embed)))
+		Base64::Encode(static_cast<PCCHAR>(input1), 1, output);
+		if (!String::Compare<CHAR>(output, static_cast<PCCHAR>("Zg=="_embed)))
 			return FALSE;
 
 		auto input2 = "fo"_embed;
-		Base64::Encode(static_cast<const char*>(input2), 2, output);
-		if (!String::Compare<CHAR>(output, static_cast<const char*>("Zm8="_embed)))
+		Base64::Encode(static_cast<PCCHAR>(input2), 2, output);
+		if (!String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm8="_embed)))
 			return FALSE;
 
 		auto input3 = "foo"_embed;
-		Base64::Encode(static_cast<const char*>(input3), 3, output);
-		if (!String::Compare<CHAR>(output, static_cast<const char*>("Zm9v"_embed)))
+		Base64::Encode(static_cast<PCCHAR>(input3), 3, output);
+		if (!String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm9v"_embed)))
 			return FALSE;
 
 		auto input4 = "foob"_embed;
-		Base64::Encode(static_cast<const char*>(input4), 4, output);
-		if (!String::Compare<CHAR>(output, static_cast<const char*>("Zm9vYg=="_embed)))
+		Base64::Encode(static_cast<PCCHAR>(input4), 4, output);
+		if (!String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm9vYg=="_embed)))
 			return FALSE;
 
 		auto input5 = "fooba"_embed;
-		Base64::Encode(static_cast<const char*>(input5), 5, output);
-		if (!String::Compare<CHAR>(output, static_cast<const char*>("Zm9vYmE="_embed)))
+		Base64::Encode(static_cast<PCCHAR>(input5), 5, output);
+		if (!String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm9vYmE="_embed)))
 			return FALSE;
 
 		auto input6 = "foobar"_embed;
-		Base64::Encode(static_cast<const char*>(input6), 6, output);
-		if (!String::Compare<CHAR>(output, static_cast<const char*>("Zm9vYmFy"_embed)))
+		Base64::Encode(static_cast<PCCHAR>(input6), 6, output);
+		if (!String::Compare<CHAR>(output, static_cast<PCCHAR>("Zm9vYmFy"_embed)))
 			return FALSE;
 
 		return TRUE;
@@ -300,7 +300,7 @@ private:
 	{
 		CHAR output[10];
 		auto input = ""_embed;
-		Base64::Decode(static_cast<const char*>(input), 0, output);
+		Base64::Decode(static_cast<PCCHAR>(input), 0, output);
 		return TRUE;  // Empty decode should succeed
 	}
 
@@ -309,8 +309,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = "Zg=="_embed;
-		Base64::Decode(static_cast<const char*>(input), 4, output);
-		return Memory::Compare(output, static_cast<const char*>("f"_embed), 1) == 0;
+		Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		return Memory::Compare(output, static_cast<PCCHAR>("f"_embed), 1) == 0;
 	}
 
 	// Test: Decode "Zm8=" to "fo"
@@ -318,8 +318,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = "Zm8="_embed;
-		Base64::Decode(static_cast<const char*>(input), 4, output);
-		return Memory::Compare(output, static_cast<const char*>("fo"_embed), 2) == 0;
+		Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		return Memory::Compare(output, static_cast<PCCHAR>("fo"_embed), 2) == 0;
 	}
 
 	// Test: Decode "Zm9v" to "foo"
@@ -327,8 +327,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = "Zm9v"_embed;
-		Base64::Decode(static_cast<const char*>(input), 4, output);
-		return Memory::Compare(output, static_cast<const char*>("foo"_embed), 3) == 0;
+		Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		return Memory::Compare(output, static_cast<PCCHAR>("foo"_embed), 3) == 0;
 	}
 
 	// Test: Decode "SGVsbG8sIFdvcmxkIQ==" to "Hello, World!"
@@ -336,8 +336,8 @@ private:
 	{
 		CHAR output[30];
 		auto input = "SGVsbG8sIFdvcmxkIQ=="_embed;
-		Base64::Decode(static_cast<const char*>(input), 20, output);
-		return Memory::Compare(output, static_cast<const char*>("Hello, World!"_embed), 13) == 0;
+		Base64::Decode(static_cast<PCCHAR>(input), 20, output);
+		return Memory::Compare(output, static_cast<PCCHAR>("Hello, World!"_embed), 13) == 0;
 	}
 
 	// Test: Decode "AAECAwQF" to binary data {0x00, 0x01, 0x02, 0x03, 0x04, 0x05}
@@ -345,7 +345,7 @@ private:
 	{
 		CHAR output[20];
 		auto input = "AAECAwQF"_embed;
-		Base64::Decode(static_cast<const char*>(input), 8, output);
+		Base64::Decode(static_cast<PCCHAR>(input), 8, output);
 
 		auto expected = MakeEmbedArray((const UINT8[]){0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
 
@@ -361,23 +361,23 @@ private:
 		// Test various strings
 		auto test1 = "The quick brown fox jumps over the lazy dog"_embed;
 		UINT32 len1 = 44;
-		Base64::Encode(static_cast<const char*>(test1), len1, encoded);
+		Base64::Encode(static_cast<PCCHAR>(test1), len1, encoded);
 		Base64::Decode(encoded, Base64::GetEncodeOutSize(len1) - 1, decoded);
-		if (Memory::Compare(decoded, static_cast<const char*>(test1), len1) != 0)
+		if (Memory::Compare(decoded, static_cast<PCCHAR>(test1), len1) != 0)
 			return FALSE;
 
 		auto test2 = "1234567890"_embed;
 		UINT32 len2 = 10;
-		Base64::Encode(static_cast<const char*>(test2), len2, encoded);
+		Base64::Encode(static_cast<PCCHAR>(test2), len2, encoded);
 		Base64::Decode(encoded, Base64::GetEncodeOutSize(len2) - 1, decoded);
-		if (Memory::Compare(decoded, static_cast<const char*>(test2), len2) != 0)
+		if (Memory::Compare(decoded, static_cast<PCCHAR>(test2), len2) != 0)
 			return FALSE;
 
 		auto test3 = "!@#$%^&*()_+-=[]{}|;:,.<>?"_embed;
 		UINT32 len3 = 26;
-		Base64::Encode(static_cast<const char*>(test3), len3, encoded);
+		Base64::Encode(static_cast<PCCHAR>(test3), len3, encoded);
 		Base64::Decode(encoded, Base64::GetEncodeOutSize(len3) - 1, decoded);
-		if (Memory::Compare(decoded, static_cast<const char*>(test3), len3) != 0)
+		if (Memory::Compare(decoded, static_cast<PCCHAR>(test3), len3) != 0)
 			return FALSE;
 
 		return TRUE;

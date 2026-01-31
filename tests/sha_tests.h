@@ -152,7 +152,7 @@ private:
 		});
 
 		auto message = ""_embed;
-		SHA256::Hash(reinterpret_cast<const UINT8*>(static_cast<const char*>(message)), 0, digest);
+		SHA256::Hash(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(message)), 0, digest);
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA256_DIGEST_SIZE);
 	}
 
@@ -169,7 +169,7 @@ private:
 		});
 
 		auto message = "abc"_embed;
-		SHA256::Hash(reinterpret_cast<const UINT8*>(static_cast<const char*>(message)), 3, digest);
+		SHA256::Hash(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(message)), 3, digest);
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA256_DIGEST_SIZE);
 	}
 
@@ -186,7 +186,7 @@ private:
 		});
 
 		auto message = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"_embed;
-		SHA256::Hash(reinterpret_cast<const UINT8*>(static_cast<const char*>(message)), 56, digest);
+		SHA256::Hash(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(message)), 56, digest);
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA256_DIGEST_SIZE);
 	}
 
@@ -204,8 +204,8 @@ private:
 		SHA256 ctx;
 		auto msg1 = "ab"_embed;
 		auto msg2 = "c"_embed;
-		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<const char*>(msg1)), 2);
-		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<const char*>(msg2)), 1);
+		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(msg1)), 2);
+		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(msg2)), 1);
 		ctx.Final(digest);
 
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA256_DIGEST_SIZE);
@@ -226,7 +226,7 @@ private:
 		});
 
 		auto message = ""_embed;
-		SHA384::Hash(reinterpret_cast<const UINT8*>(static_cast<const char*>(message)), 0, digest);
+		SHA384::Hash(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(message)), 0, digest);
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA384_DIGEST_SIZE);
 	}
 
@@ -245,7 +245,7 @@ private:
 		});
 
 		auto message = "abc"_embed;
-		SHA384::Hash(reinterpret_cast<const UINT8*>(static_cast<const char*>(message)), 3, digest);
+		SHA384::Hash(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(message)), 3, digest);
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA384_DIGEST_SIZE);
 	}
 
@@ -264,7 +264,7 @@ private:
 		});
 
 		auto message = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"_embed;
-		SHA384::Hash(reinterpret_cast<const UINT8*>(static_cast<const char*>(message)), 112, digest);
+		SHA384::Hash(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(message)), 112, digest);
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA384_DIGEST_SIZE);
 	}
 
@@ -284,8 +284,8 @@ private:
 		SHA384 ctx;
 		auto msg1 = "ab"_embed;
 		auto msg2 = "c"_embed;
-		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<const char*>(msg1)), 2);
-		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<const char*>(msg2)), 1);
+		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(msg1)), 2);
+		ctx.Update(reinterpret_cast<const UINT8*>(static_cast<PCCHAR>(msg2)), 1);
 		ctx.Final(digest);
 
 		return CompareDigest(digest, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA384_DIGEST_SIZE);
@@ -308,7 +308,7 @@ private:
 		auto key = "Jefe"_embed;
 		auto message = "what do ya want for nothing?"_embed;
 
-		HMAC_SHA256::Compute(reinterpret_cast<const UCHAR*>(static_cast<const char*>(key)), 4, reinterpret_cast<const UCHAR*>(static_cast<const char*>(message)), 28, mac, SHA256_DIGEST_SIZE);
+		HMAC_SHA256::Compute(reinterpret_cast<const UCHAR*>(static_cast<PCCHAR>(key)), 4, reinterpret_cast<const UCHAR*>(static_cast<PCCHAR>(message)), 28, mac, SHA256_DIGEST_SIZE);
 
 		return CompareDigest(mac, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA256_DIGEST_SIZE);
 	}
@@ -332,7 +332,7 @@ private:
 		auto key = "Jefe"_embed;
 		auto message = "what do ya want for nothing?"_embed;
 
-		HMAC_SHA384::Compute(reinterpret_cast<const UCHAR*>(static_cast<const char*>(key)), 4, reinterpret_cast<const UCHAR*>(static_cast<const char*>(message)), 28, mac, SHA384_DIGEST_SIZE);
+		HMAC_SHA384::Compute(reinterpret_cast<const UCHAR*>(static_cast<PCCHAR>(key)), 4, reinterpret_cast<const UCHAR*>(static_cast<PCCHAR>(message)), 28, mac, SHA384_DIGEST_SIZE);
 
 		return CompareDigest(mac, static_cast<const UINT8*>(static_cast<const VOID*>(expected)), SHA384_DIGEST_SIZE);
 	}

@@ -18,37 +18,55 @@
 
 /**
  * Internal 64-bit unsigned division with quotient and remainder
- * Uses binary long division algorithm
+ * Uses binary long division algorithm with power-of-2 optimization
  */
 static inline void udiv64_internal(UINT64 numerator, UINT64 denominator,
                                    UINT64 *quotient, UINT64 *remainder)
+{
+    if (denominator == 0)
     {
-        if (denominator == 0)
-        {
-            *quotient = 0;
-            *remainder = numerator;
-            return;
-        }
-
-        UINT64 q = 0;
-        UINT64 r = 0;
-
-        for (INT32 i = 63; i >= 0; i--)
-        {
-            r <<= 1;
-            if ((numerator >> i) & 1ULL)
-                r |= 1ULL;
-
-            if (r >= denominator)
-            {
-                r -= denominator;
-                q |= (1ULL << i);
-            }
-        }
-
-        *quotient = q;
-        *remainder = r;
+        *quotient = 0;
+        *remainder = numerator;
+        return;
     }
+
+    // Optimize for power-of-2 divisors
+    if ((denominator & (denominator - 1ULL)) == 0)
+    {
+        // Count trailing zeros to find power
+        INT32 shift = 0;
+        UINT64 temp = denominator;
+        while ((temp & 1ULL) == 0)
+        {
+            temp >>= 1;
+            shift++;
+        }
+
+        *quotient = numerator >> shift;
+        *remainder = numerator & (denominator - 1ULL);
+        return;
+    }
+
+    // Binary long division for general case
+    UINT64 q = 0;
+    UINT64 r = 0;
+
+    for (INT32 i = 63; i >= 0; i--)
+    {
+        r <<= 1;
+        if ((numerator >> i) & 1ULL)
+            r |= 1ULL;
+
+        if (r >= denominator)
+        {
+            r -= denominator;
+            q |= (1ULL << i);
+        }
+    }
+
+    *quotient = q;
+    *remainder = r;
+}
 
 extern "C"
 {

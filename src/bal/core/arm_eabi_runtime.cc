@@ -69,37 +69,53 @@ static inline UINT32 udiv32_internal(UINT32 numerator, UINT32 denominator, UINT3
 
 /**
  * Internal 64-bit unsigned division with quotient and remainder
- * Uses binary long division algorithm
+ * Uses binary long division algorithm with power-of-2 optimization
  */
 static void udiv64_internal(UINT64 numerator, UINT64 denominator,
                             UINT64 *quotient, UINT64 *remainder)
+{
+    if (denominator == 0)
     {
-        if (denominator == 0)
-        {
-            *quotient = 0;
-            *remainder = numerator;
-            return;
-        }
-
-        UINT64 q = 0;
-        UINT64 r = 0;
-
-        for (INT32 i = 63; i >= 0; i--)
-        {
-            r <<= 1;
-            if ((numerator >> i) & 1ULL)
-                r |= 1ULL;
-
-            if (r >= denominator)
-            {
-                r -= denominator;
-                q |= (1ULL << i);
-            }
-        }
-
-        *quotient = q;
-        *remainder = r;
+        *quotient = 0;
+        *remainder = numerator;
+        return;
     }
+
+    // Fast path: power of 2 divisor
+    if ((denominator & (denominator - 1ULL)) == 0)
+    {
+        UINT32 shift = 0;
+        UINT64 temp = denominator;
+        while ((temp & 1ULL) == 0)
+        {
+            temp >>= 1;
+            shift++;
+        }
+        *quotient = numerator >> shift;
+        *remainder = numerator & (denominator - 1ULL);
+        return;
+    }
+
+    // Binary long division for general case
+    UINT64 q = 0;
+    UINT64 r = 0;
+
+    for (INT32 i = 63; i >= 0; i--)
+    {
+        r <<= 1;
+        if ((numerator >> i) & 1ULL)
+            r |= 1ULL;
+
+        if (r >= denominator)
+        {
+            r -= denominator;
+            q |= (1ULL << i);
+        }
+    }
+
+    *quotient = q;
+    *remainder = r;
+}
 
 extern "C"
 {
@@ -187,55 +203,31 @@ extern "C"
     }
 
     // =========================================================================
-    // ARM EABI: 64-bit Division Functions
+    // ARM EABI: 64-bit Division Helper Functions
     // =========================================================================
 
     /**
-     * Return type for 64-bit divmod operations
-     * Per ARM EABI: quotient in r0:r1, remainder in r2:r3
+     * Helper for unsigned 64-bit division with modulo
+     * Called by assembly wrapper below
      */
-    typedef struct {
-        UINT64 quotient;
-        UINT64 remainder;
-    } ARM_64_uldivmod_return;
-
-    typedef struct {
-        INT64 quotient;
-        INT64 remainder;
-    } ARM_64_ldivmod_return;
-
-    /**
-     * __aeabi_uldivmod - Unsigned 64-bit division with modulo
-     * ARM EABI calling convention:
-     *   Input:  numerator in r0:r1, denominator in r2:r3
-     *   Output: quotient in r0:r1, remainder in r2:r3
-     */
-    COMPILER_RUNTIME
-    __attribute__((pcs("aapcs")))
-    ARM_64_uldivmod_return __aeabi_uldivmod(UINT64 numerator, UINT64 denominator)
+    static void uldivmod_helper(UINT64 numerator, UINT64 denominator,
+                                UINT64 *quotient, UINT64 *remainder)
     {
-        ARM_64_uldivmod_return result;
-        udiv64_internal(numerator, denominator, &result.quotient, &result.remainder);
-        return result;
+        udiv64_internal(numerator, denominator, quotient, remainder);
     }
 
     /**
-     * __aeabi_ldivmod - Signed 64-bit division with modulo
-     * ARM EABI calling convention:
-     *   Input:  numerator in r0:r1, denominator in r2:r3
-     *   Output: quotient in r0:r1, remainder in r2:r3
+     * Helper for signed 64-bit division with modulo
+     * Called by assembly wrapper below
      */
-    COMPILER_RUNTIME
-    __attribute__((pcs("aapcs")))
-    ARM_64_ldivmod_return __aeabi_ldivmod(INT64 numerator, INT64 denominator)
+    static void ldivmod_helper(INT64 numerator, INT64 denominator,
+                               INT64 *quotient, INT64 *remainder)
     {
-        ARM_64_ldivmod_return result;
-
         if (denominator == 0)
         {
-            result.quotient = 0;
-            result.remainder = numerator;
-            return result;
+            *quotient = 0;
+            *remainder = numerator;
+            return;
         }
 
         // Determine result signs
@@ -248,14 +240,66 @@ extern "C"
         const UINT64 abs_den = (UINT64)(denominator < 0 ? -denominator : denominator);
 
         // Perform unsigned division
-        UINT64 quotient, remainder;
-        udiv64_internal(abs_num, abs_den, &quotient, &remainder);
+        UINT64 q, r;
+        udiv64_internal(abs_num, abs_den, &q, &r);
 
         // Apply signs (remainder takes sign of numerator)
-        result.quotient = sign_quot < 0 ? -(INT64)quotient : (INT64)quotient;
-        result.remainder = sign_num < 0 ? -(INT64)remainder : (INT64)remainder;
+        *quotient = sign_quot < 0 ? -(INT64)q : (INT64)q;
+        *remainder = sign_num < 0 ? -(INT64)r : (INT64)r;
+    }
 
-        return result;
+    // =========================================================================
+    // ARM EABI: 64-bit Division Functions
+    // =========================================================================
+
+    /**
+     * __aeabi_uldivmod - Unsigned 64-bit division with modulo
+     * ARM EABI calling convention:
+     *   Input:  numerator in r0:r1, denominator in r2:r3
+     *   Output: quotient in r0:r1, remainder in r2:r3
+     *
+     * Uses naked function with inline assembly to ensure proper register usage.
+     */
+    COMPILER_RUNTIME
+    __attribute__((naked))
+    void __aeabi_uldivmod(void)
+    {
+        __asm__ volatile(
+            "push   {r4, lr}\n\t"
+            "sub    sp, sp, #16\n\t"        // Allocate stack for quotient and remainder
+            "mov    r4, sp\n\t"             // r4 = &quotient
+            "add    r12, sp, #8\n\t"        // r12 = &remainder
+            "push   {r4, r12}\n\t"          // Push as args 3 and 4
+            "bl     uldivmod_helper\n\t"    // Call helper(r0:r1, r2:r3, &quot, &rem)
+            "add    sp, sp, #8\n\t"         // Pop args
+            "pop    {r0-r3}\n\t"            // Load quot->r0:r1, rem->r2:r3
+            "pop    {r4, pc}\n\t"           // Restore and return
+        );
+    }
+
+    /**
+     * __aeabi_ldivmod - Signed 64-bit division with modulo
+     * ARM EABI calling convention:
+     *   Input:  numerator in r0:r1, denominator in r2:r3
+     *   Output: quotient in r0:r1, remainder in r2:r3
+     *
+     * Uses naked function with inline assembly to ensure proper register usage.
+     */
+    COMPILER_RUNTIME
+    __attribute__((naked))
+    void __aeabi_ldivmod(void)
+    {
+        __asm__ volatile(
+            "push   {r4, lr}\n\t"
+            "sub    sp, sp, #16\n\t"        // Allocate stack for quotient and remainder
+            "mov    r4, sp\n\t"             // r4 = &quotient
+            "add    r12, sp, #8\n\t"        // r12 = &remainder
+            "push   {r4, r12}\n\t"          // Push as args 3 and 4
+            "bl     ldivmod_helper\n\t"     // Call helper(r0:r1, r2:r3, &quot, &rem)
+            "add    sp, sp, #8\n\t"         // Pop args
+            "pop    {r0-r3}\n\t"            // Load quot->r0:r1, rem->r2:r3
+            "pop    {r4, pc}\n\t"           // Restore and return
+        );
     }
 
     // =========================================================================

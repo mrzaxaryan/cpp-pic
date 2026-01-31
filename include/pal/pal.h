@@ -25,7 +25,7 @@ NO_RETURN VOID ExitProcess(USIZE code);
 
 // System utilities (must come before logger.h since it uses DateTime)
 #include "system/date_time.h"
-#include "algorithms/random.h"
+#include "system/random.h"
 
 // I/O services
 #include "io/console.h"

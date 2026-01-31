@@ -12,6 +12,10 @@
 #include "efi_tcp6_protocol.h"
 #include "efi_service_binding.h"
 #include "efi_ip4_config2_protocol.h"
+#include "efi_simple_network_protocol.h"
+
+// Track if network has been initialized
+static BOOL g_NetworkInitialized = FALSE;
 
 // =============================================================================
 // Internal Socket Context
@@ -42,6 +46,64 @@ static VOID EFIAPI EmptyNotify(EFI_EVENT Event, PVOID Context)
 {
 	(VOID)Event;
 	(VOID)Context;
+}
+
+// Initialize network interface using SNP
+static BOOL InitializeNetworkInterface(EFI_BOOT_SERVICES *bs, EFI_HANDLE ImageHandle)
+{
+	if (g_NetworkInitialized)
+		return TRUE;
+
+	EFI_GUID SnpGuid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
+
+	// Find all SNP handles
+	USIZE HandleCount = 0;
+	EFI_HANDLE *HandleBuffer = NULL;
+
+	EFI_STATUS Status = bs->LocateHandleBuffer(ByProtocol, &SnpGuid, NULL, &HandleCount, &HandleBuffer);
+	if (EFI_ERROR(Status) || HandleCount == 0)
+		return FALSE;
+
+	// Try to initialize each network interface
+	for (USIZE i = 0; i < HandleCount; i++)
+	{
+		EFI_SIMPLE_NETWORK_PROTOCOL *Snp = NULL;
+		Status = bs->OpenProtocol(
+			HandleBuffer[i],
+			&SnpGuid,
+			(PVOID *)&Snp,
+			ImageHandle,
+			NULL,
+			EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+
+		if (EFI_ERROR(Status) || Snp == NULL)
+			continue;
+
+		// Check current state and initialize if needed
+		if (Snp->Mode != NULL)
+		{
+			if (Snp->Mode->State == EfiSimpleNetworkStopped)
+			{
+				Status = Snp->Start(Snp);
+				if (EFI_ERROR(Status))
+					continue;
+			}
+
+			if (Snp->Mode->State == EfiSimpleNetworkStarted)
+			{
+				Status = Snp->Initialize(Snp, 0, 0);
+				if (EFI_ERROR(Status))
+				{
+					// Try to continue anyway
+				}
+			}
+
+			g_NetworkInitialized = TRUE;
+		}
+	}
+
+	bs->FreePool(HandleBuffer);
+	return g_NetworkInitialized;
 }
 
 // Configure IP4 layer with static QEMU settings
@@ -255,6 +317,9 @@ BOOL Socket::Open()
 	EFI_CONTEXT *ctx = GetEfiContext();
 	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
 	EFI_STATUS Status;
+
+	// Initialize network interface if not already done
+	InitializeNetworkInterface(bs, ctx->ImageHandle);
 
 	if (sockCtx->IsIPv6)
 	{

@@ -25,15 +25,15 @@ private:
     static constexpr int SIGN_SHIFT = 63;
     static constexpr int EXP_SHIFT = 52;
 
-    static constexpr UINT64 GetSignMask() noexcept { return MAKE_UINT64(0x80000000U, 0x00000000U); }
-    static constexpr UINT64 GetExpMask() noexcept { return MAKE_UINT64(0x7FF00000U, 0x00000000U); }
-    static constexpr UINT64 GetMantissaMask() noexcept { return MAKE_UINT64(0x000FFFFFU, 0xFFFFFFFFU); }
+    static constexpr UINT64 GetSignMask() noexcept { return 0x8000000000000000ULL; }
+    static constexpr UINT64 GetExpMask() noexcept { return 0x7FF0000000000000ULL; }
+    static constexpr UINT64 GetMantissaMask() noexcept { return 0x000FFFFFFFFFFFFFULL; }
 
 public:
     constexpr DOUBLE() noexcept : bits(0ULL) {}
     constexpr DOUBLE(const DOUBLE &) noexcept = default;
     constexpr explicit DOUBLE(UINT64 bitPattern) noexcept : bits(bitPattern) {}
-    constexpr DOUBLE(UINT32 high, UINT32 low) noexcept : bits(MAKE_UINT64(high, low)) {}
+    constexpr DOUBLE(UINT32 high, UINT32 low) noexcept : bits((((UINT64)(high)) << 32) | ((UINT64)(low))) {}
 
     constexpr DOUBLE(double val) noexcept
     {
@@ -127,7 +127,7 @@ public:
         mantissa = mantissa & GetMantissaMask();
 
         UINT64 sign = negative ? GetSignMask() : 0ULL;
-        UINT64 exp = MAKE_UINT64((UINT32)exponent << 20, 0);
+        UINT64 exp = (UINT64)exponent << 52;
         bits = sign | exp | mantissa;
     }
 
@@ -136,13 +136,13 @@ public:
     NOINLINE DISABLE_OPTIMIZATION operator INT32() const noexcept
     {
         signed long long val64 = (signed long long)(*this);
-        return (INT32)INT64_LOW(val64);
+        return (INT32)val64;
     }
 
     NOINLINE DISABLE_OPTIMIZATION operator UINT32() const noexcept
     {
         unsigned long long val64 = (unsigned long long)(*this);
-        return UINT64_LOW(val64);
+        return (UINT32)val64;
     }
 
     NOINLINE DISABLE_OPTIMIZATION operator signed long long() const noexcept
@@ -151,20 +151,20 @@ public:
         UINT64 exp_bits = bits & GetExpMask();
         UINT64 mantissa_bits = bits & GetMantissaMask();
 
-        int exponent = (int)UINT64_LOW(exp_bits >> EXP_SHIFT) - 1023;
+        int exponent = (int)(UINT32)(exp_bits >> EXP_SHIFT) - 1023;
 
         if (exponent < 0)
             return 0LL;
 
         if (exponent >= 63)
         {
-            if (UINT64_HIGH(sign_bit) != 0)
-                return MAKE_INT64((INT32)0x80000000, 0);
+            if ((sign_bit >> 32) != 0)
+                return 0x8000000000000000LL; // INT64_MIN
             else
-                return MAKE_INT64((INT32)0x7FFFFFFF, 0xFFFFFFFF);
+                return 0x7FFFFFFFFFFFFFFFLL; // INT64_MAX
         }
 
-        UINT64 mantissa_with_implicit_one = mantissa_bits | MAKE_UINT64(0x00100000U, 0x00000000U);
+        UINT64 mantissa_with_implicit_one = mantissa_bits | 0x0010000000000000ULL;
 
         UINT64 int_value;
         if (exponent <= 52)
@@ -172,8 +172,8 @@ public:
         else
             int_value = mantissa_with_implicit_one << (exponent - 52);
 
-        INT64 result = MAKE_INT64((INT32)UINT64_HIGH(int_value), UINT64_LOW(int_value));
-        if (UINT64_HIGH(sign_bit) != 0)
+        INT64 result = (INT64)int_value;
+        if ((sign_bit >> 32) != 0)
             result = -result;
 
         return result;
@@ -185,18 +185,18 @@ public:
         UINT64 exp_bits = bits & GetExpMask();
         UINT64 mantissa_bits = bits & GetMantissaMask();
 
-        int exponent = (int)UINT64_LOW(exp_bits >> EXP_SHIFT) - 1023;
+        int exponent = (int)(UINT32)(exp_bits >> EXP_SHIFT) - 1023;
 
-        if (UINT64_HIGH(sign_bit) != 0)
+        if ((sign_bit >> 32) != 0)
             return 0ULL;
 
         if (exponent < 0)
             return 0ULL;
 
         if (exponent >= 64)
-            return MAKE_UINT64(0xFFFFFFFF, 0xFFFFFFFF);
+            return 0xFFFFFFFFFFFFFFFFULL; // UINT64_MAX
 
-        UINT64 mantissa_with_implicit_one = mantissa_bits | MAKE_UINT64(0x00100000U, 0x00000000U);
+        UINT64 mantissa_with_implicit_one = mantissa_bits | 0x0010000000000000ULL;
 
         UINT64 int_value;
         if (exponent <= 52)

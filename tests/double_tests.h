@@ -127,17 +127,17 @@ private:
 	{
 		// Default constructor (zero)
 		DOUBLE a;
-		if (UINT64_HIGH(a.Bits()) != 0 || UINT64_LOW(a.Bits()) != 0)
+		if (a.Bits() != 0)
 			return FALSE;
 
 		// Construction from embedded double
 		DOUBLE b = 1.0_embed;
 		// IEEE-754: 1.0 = 0x3FF0000000000000
-		if (UINT64_HIGH(b.Bits()) != 0x3FF00000 || UINT64_LOW(b.Bits()) != 0x00000000)
+		if (b.Bits() != 0x3FF0000000000000ULL)
 			return FALSE;
 
 		// Construction from bit pattern
-		DOUBLE c(MAKE_UINT64(0x40000000, 0x00000000)); // 2.0
+		DOUBLE c(0x4000000000000000ULL); // 2.0
 		double native_c = (double)c;
 		if (native_c != (double)2.0_embed)
 			return FALSE;
@@ -155,7 +155,7 @@ private:
 	{
 		// Zero
 		DOUBLE zero(INT32(0));
-		if (UINT64_HIGH(zero.Bits()) != 0 || UINT64_LOW(zero.Bits()) != 0)
+		if (zero.Bits() != 0)
 			return FALSE;
 
 		// Positive integer
@@ -429,7 +429,7 @@ private:
 			INT64 index = i;
 			DOUBLE val = testArray[(signed long long)index];
 			// Just verify non-zero (all values are > 1.0)
-			if (UINT64_HIGH(val.Bits()) == 0 && UINT64_LOW(val.Bits()) == 0)
+			if (val.Bits() == 0)
 				return FALSE;
 		}
 

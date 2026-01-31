@@ -42,7 +42,7 @@ UINT64 readKSystemTimeU64(volatile const KSYSTEM_TIME *t)
         v.LowPart = t->LowPart;
     } while (v.High1Time != t->High2Time);
 
-    return MAKE_UINT64((UINT32)v.High1Time, v.LowPart);
+    return (((UINT64)(UINT32)v.High1Time) << 32) | ((UINT64)v.LowPart);
 }
 
 // Read KSYSTEM_TIME as INT64
@@ -55,7 +55,7 @@ INT64 readKSystemTimeS64(volatile const KSYSTEM_TIME *t)
         v.LowPart = t->LowPart;
     } while (v.High1Time != t->High2Time);
 
-    return MAKE_INT64(v.High1Time, v.LowPart);
+    return (INT64)(((UINT64)(UINT32)v.High1Time << 32) | (UINT64)v.LowPart);
 }
 
 // Get the current local date and time
@@ -70,9 +70,9 @@ DateTime DateTime::Now()
 
     // 2) TimeZoneBias (signed 100ns). local = utc - bias
     INT64 bias100ns = readKSystemTimeS64(&usd->TimeZoneBias);
-    INT64 utc100ns_s = MAKE_INT64((UINT32)UINT64_HIGH(utc100ns), UINT64_LOW(utc100ns));
+    INT64 utc100ns_s = (INT64)utc100ns;
     INT64 local100ns_s = utc100ns_s - bias100ns;
-    UINT64 local100ns = MAKE_UINT64((UINT32)INT64_HIGH(local100ns_s), INT64_LOW(local100ns_s));
+    UINT64 local100ns = (UINT64)local100ns_s;
 
     // 3) Split into date/time
     const UINT64 TICKS_PER_SEC = (UINT64)10000000u;

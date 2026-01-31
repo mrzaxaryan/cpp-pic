@@ -362,7 +362,7 @@ static void FillEntry(DirectoryEntry &entry, const WIN32_FIND_DATAW &data)
     }
 
     // 2. Size
-    entry.size = MAKE_INT64((INT32)data.nFileSizeHigh, data.nFileSizeLow);
+    entry.size = (INT64)(((UINT64)(UINT32)data.nFileSizeHigh << 32) | (UINT64)data.nFileSizeLow);
 
     // 3. Attributes
     UINT32 attr = data.dwFileAttributes;
@@ -372,8 +372,7 @@ static void FillEntry(DirectoryEntry &entry, const WIN32_FIND_DATAW &data)
     entry.isReadOnly = (attr & 0x01);  // FILE_ATTRIBUTE_READONLY
 
     // 4. Timestamps (Convert 2xUINT32 to UINT64)
-    entry.creationTime = MAKE_UINT64(data.ftCreationTime.dwHighDateTime,
-                                     data.ftCreationTime.dwLowDateTime);
+    entry.creationTime = (((UINT64)data.ftCreationTime.dwHighDateTime) << 32) | ((UINT64)data.ftCreationTime.dwLowDateTime);
 
     // 5. IsDrive
     // Usually false in an iterator unless you are at the "This PC" level.
@@ -435,7 +434,7 @@ DirectoryIterator::DirectoryIterator(PCWCHAR path) : handle((PVOID)-1), first(TR
         // We store it so the first call to Next() returns it.
         // Or we can fill currentEntry now.
         String::Copy(currentEntry.name, findData.cFileName);
-        currentEntry.size = MAKE_INT64((INT32)findData.nFileSizeHigh, findData.nFileSizeLow);
+        currentEntry.size = (INT64)(((UINT64)(UINT32)findData.nFileSizeHigh << 32) | (UINT64)findData.nFileSizeLow);
         currentEntry.isDirectory = (findData.dwFileAttributes & 0x10); // FILE_ATTRIBUTE_DIRECTORY
     }
 }

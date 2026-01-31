@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Cross-platform shellcode loader for Windows
+Cross-platform shellcode loader for Windows and Linux
 Supports: i386, x86_64, aarch64
 
 Usage:
-    python loader.py --arch i386 shellcode.bin
-    python loader.py --arch x86_64 shellcode.bin
-    python loader.py --arch aarch64 shellcode.bin
+    python loader.py -windows --arch i386 shellcode.bin
+    python loader.py -windows --arch x86_64 shellcode.bin
+    python loader.py -linux --arch x86_64 shellcode.bin
+    python loader.py -linux --arch aarch64 shellcode.bin
 """
 
 import argparse
@@ -15,7 +16,10 @@ import os
 import platform
 import struct
 import sys
-from ctypes import wintypes
+
+# Only import wintypes on Windows
+if platform.system().lower() == 'windows':
+    from ctypes import wintypes
 
 # Windows API constants
 MEM_COMMIT = 0x1000
@@ -26,6 +30,13 @@ PAGE_READWRITE = 0x04
 PROCESS_ALL_ACCESS = 0x1F0FFF
 INFINITE = 0xFFFFFFFF
 CREATE_SUSPENDED = 0x00000004
+
+# Linux mmap constants
+PROT_READ = 0x1
+PROT_WRITE = 0x2
+PROT_EXEC = 0x4
+MAP_PRIVATE = 0x02
+MAP_ANONYMOUS = 0x20
 
 # Architecture mappings
 ARCH_INFO = {
@@ -51,36 +62,38 @@ HOST_PROCESSES = {
 }
 
 
-class STARTUPINFO(ctypes.Structure):
-    _fields_ = [
-        ("cb", wintypes.DWORD),
-        ("lpReserved", wintypes.LPWSTR),
-        ("lpDesktop", wintypes.LPWSTR),
-        ("lpTitle", wintypes.LPWSTR),
-        ("dwX", wintypes.DWORD),
-        ("dwY", wintypes.DWORD),
-        ("dwXSize", wintypes.DWORD),
-        ("dwYSize", wintypes.DWORD),
-        ("dwXCountChars", wintypes.DWORD),
-        ("dwYCountChars", wintypes.DWORD),
-        ("dwFillAttribute", wintypes.DWORD),
-        ("dwFlags", wintypes.DWORD),
-        ("wShowWindow", wintypes.WORD),
-        ("cbReserved2", wintypes.WORD),
-        ("lpReserved2", ctypes.POINTER(wintypes.BYTE)),
-        ("hStdInput", wintypes.HANDLE),
-        ("hStdOutput", wintypes.HANDLE),
-        ("hStdError", wintypes.HANDLE),
-    ]
+# Windows-specific structures (only defined on Windows)
+if platform.system().lower() == 'windows':
+    class STARTUPINFO(ctypes.Structure):
+        _fields_ = [
+            ("cb", wintypes.DWORD),
+            ("lpReserved", wintypes.LPWSTR),
+            ("lpDesktop", wintypes.LPWSTR),
+            ("lpTitle", wintypes.LPWSTR),
+            ("dwX", wintypes.DWORD),
+            ("dwY", wintypes.DWORD),
+            ("dwXSize", wintypes.DWORD),
+            ("dwYSize", wintypes.DWORD),
+            ("dwXCountChars", wintypes.DWORD),
+            ("dwYCountChars", wintypes.DWORD),
+            ("dwFillAttribute", wintypes.DWORD),
+            ("dwFlags", wintypes.DWORD),
+            ("wShowWindow", wintypes.WORD),
+            ("cbReserved2", wintypes.WORD),
+            ("lpReserved2", ctypes.POINTER(wintypes.BYTE)),
+            ("hStdInput", wintypes.HANDLE),
+            ("hStdOutput", wintypes.HANDLE),
+            ("hStdError", wintypes.HANDLE),
+        ]
 
 
-class PROCESS_INFORMATION(ctypes.Structure):
-    _fields_ = [
-        ("hProcess", wintypes.HANDLE),
-        ("hThread", wintypes.HANDLE),
-        ("dwProcessId", wintypes.DWORD),
-        ("dwThreadId", wintypes.DWORD),
-    ]
+    class PROCESS_INFORMATION(ctypes.Structure):
+        _fields_ = [
+            ("hProcess", wintypes.HANDLE),
+            ("hThread", wintypes.HANDLE),
+            ("dwProcessId", wintypes.DWORD),
+            ("dwThreadId", wintypes.DWORD),
+        ]
 
 
 def get_python_bitness():
@@ -303,18 +316,94 @@ def execute_injected(kernel32, shellcode, target_arch):
         kernel32.CloseHandle(pi.hProcess)
 
 
+def setup_libc():
+    """Setup libc function prototypes for Linux."""
+    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+
+    # void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+    libc.mmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_long]
+    libc.mmap.restype = ctypes.c_void_p
+
+    # int munmap(void *addr, size_t length)
+    libc.munmap.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    libc.munmap.restype = ctypes.c_int
+
+    # void *memcpy(void *dest, const void *src, size_t n)
+    libc.memcpy.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t]
+    libc.memcpy.restype = ctypes.c_void_p
+
+    return libc
+
+
+def execute_linux(libc, shellcode):
+    """Execute shellcode on Linux using mmap."""
+    shellcode_size = len(shellcode)
+
+    print(f"[*] Allocating {shellcode_size} bytes with mmap...")
+
+    # Allocate RWX memory
+    ptr = libc.mmap(
+        None,
+        shellcode_size,
+        PROT_READ | PROT_WRITE | PROT_EXEC,
+        MAP_PRIVATE | MAP_ANONYMOUS,
+        -1,
+        0
+    )
+
+    if ptr == ctypes.c_void_p(-1).value or ptr is None:
+        errno = ctypes.get_errno()
+        raise OSError(f"mmap failed with errno {errno}")
+
+    print(f"[+] Memory at: 0x{ptr:016x}")
+    print("[*] Copying shellcode...")
+
+    # Copy shellcode to allocated memory
+    shellcode_buffer = ctypes.create_string_buffer(shellcode)
+    libc.memcpy(ptr, shellcode_buffer, shellcode_size)
+
+    print("[*] Executing...")
+    print("=" * 50)
+
+    # Create function pointer and call it
+    shellcode_func = ctypes.CFUNCTYPE(ctypes.c_int)(ptr)
+    exit_code = shellcode_func()
+
+    print("=" * 50)
+
+    # Cleanup
+    libc.munmap(ptr, shellcode_size)
+
+    return exit_code
+
+
 def main():
-    parser = argparse.ArgumentParser(description='Shellcode loader for Windows')
+    parser = argparse.ArgumentParser(description='Shellcode loader for Windows and Linux')
+
+    # OS selection (mutually exclusive)
+    os_group = parser.add_mutually_exclusive_group(required=True)
+    os_group.add_argument('-windows', action='store_true', help='Load Windows shellcode')
+    os_group.add_argument('-linux', action='store_true', help='Load Linux shellcode')
+
     parser.add_argument('--arch', required=True, choices=['i386', 'x86_64', 'aarch64'],
                         help='Target architecture')
     parser.add_argument('shellcode', help='Path to shellcode binary')
 
     args = parser.parse_args()
 
-    print(f"[*] Target: {args.arch}")
+    target_os = 'windows' if args.windows else 'linux'
+    host_os = platform.system().lower()
+
+    print(f"[*] Target OS: {target_os}")
+    print(f"[*] Target arch: {args.arch}")
     print(f"[*] File: {args.shellcode}")
     print(f"[*] Host: {platform.system()} {platform.machine()}")
     print()
+
+    # Verify host OS matches target OS
+    if target_os != host_os:
+        print(f"[-] Error: Cannot run {target_os} shellcode on {host_os}")
+        sys.exit(1)
 
     # Check if we can run this architecture
     can_run, error = can_execute(args.arch)
@@ -330,21 +419,21 @@ def main():
         print(f"[-] Error: {e}")
         sys.exit(1)
 
-    # Must be Windows
-    if platform.system().lower() != 'windows':
-        print(f"[-] This loader only supports Windows")
-        sys.exit(1)
-
-    # Execute
+    # Execute based on target OS
     try:
-        kernel32 = setup_kernel32()
+        if target_os == 'windows':
+            kernel32 = setup_kernel32()
 
-        if needs_injection(args.arch):
-            print(f"[*] Using process injection")
-            exit_code = execute_injected(kernel32, shellcode, args.arch)
-        else:
+            if needs_injection(args.arch):
+                print(f"[*] Using process injection")
+                exit_code = execute_injected(kernel32, shellcode, args.arch)
+            else:
+                print(f"[*] Executing locally")
+                exit_code = execute_local(kernel32, shellcode)
+        else:  # linux
+            libc = setup_libc()
             print(f"[*] Executing locally")
-            exit_code = execute_local(kernel32, shellcode)
+            exit_code = execute_linux(libc, shellcode)
 
         print(f"\n[+] Exit code: {exit_code}")
         sys.exit(exit_code)

@@ -8,20 +8,19 @@
 #include "efi_context.h"
 
 /**
- * ExitProcess - Terminate the UEFI application
+ * ExitProcess - Shutdown the system
  *
- * Uses EFI Boot Services Exit() to cleanly terminate the application.
+ * Uses EFI Runtime Services ResetSystem() to power off the machine.
  *
  * @param code - Exit code (0 = success, non-zero = error)
  */
 NO_RETURN VOID ExitProcess(USIZE code)
 {
 	EFI_CONTEXT *ctx = GetEfiContext();
-	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
+	EFI_RUNTIME_SERVICES *rs = ctx->SystemTable->RuntimeServices;
 
-	// Call Exit boot service
-	// Parameters: ImageHandle, ExitStatus, ExitDataSize, ExitData
-	bs->Exit(ctx->ImageHandle, (EFI_STATUS)code, 0, NULL);
+	// Shutdown the system
+	rs->ResetSystem(EfiResetShutdown, (EFI_STATUS)code, 0, NULL);
 
 	// Should never reach here
 	__builtin_unreachable();

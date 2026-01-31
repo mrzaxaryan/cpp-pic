@@ -2,7 +2,7 @@
 
 #define BASE64_PAD '='                                                // Padding character for Base64
 #define BASE64_ENCODE_OUT_SIZE(s) ((UINT32)((((s) + 2) / 3) * 4 + 1)) // Calculate the output size for Base64 encoding
-#define BASE64_DECODE_OUT_SIZE(s) ((UINT32)(((s) / 4) * 3))           // Calculate the output size for Base64 decoding
+#define BASE64_DECODE_OUT_SIZE(s) ((UINT32)(((s) >> 2) * 3))          // Calculate the output size for Base64 decoding (s/4 = s>>2)
 
 // Macro to get the encoded character for a given 6-bit value
 #define BASE64_ENCODED_CHAR(v) ( \

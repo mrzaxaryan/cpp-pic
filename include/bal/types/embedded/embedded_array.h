@@ -104,7 +104,11 @@ public:
         const USIZE base = index * sizeof(TChar);
 
         for (USIZE b = 0; b < sizeof(TChar); ++b)
-            v |= static_cast<U>(static_cast<unsigned long long>(GetByte(base + b)) << (b * 8u));
+        {
+            U byte_val = static_cast<U>(GetByte(base + b));
+            U shifted = byte_val << (b * 8u);
+            v |= shifted;
+        }
 
         return (TChar)v;
     }

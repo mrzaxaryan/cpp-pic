@@ -245,8 +245,7 @@ private:
 	static BOOL TestEncode_BinaryData()
 	{
 		CHAR output[20];
-		constexpr UINT8 input_data[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
-		auto input = MakeEmbedArray(input_data);
+		auto input = MakeEmbedArray((const UINT8[]){0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
 		Base64::Encode(reinterpret_cast<const char*>(static_cast<const VOID*>(input)), 6, output);
 		return String::Compare<CHAR>(output, static_cast<const char*>("AAECAwQF"_embed));
 	}
@@ -348,8 +347,7 @@ private:
 		auto input = "AAECAwQF"_embed;
 		Base64::Decode(static_cast<const char*>(input), 8, output);
 
-		constexpr UINT8 expected_data[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
-		auto expected = MakeEmbedArray(expected_data);
+		auto expected = MakeEmbedArray((const UINT8[]){0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
 
 		return Memory::Compare(output, static_cast<const VOID*>(expected), 6) == 0;
 	}

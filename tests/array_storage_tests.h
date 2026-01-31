@@ -92,27 +92,25 @@ public:
 private:
 	static BOOL TestWideCharArrayStorage()
 	{
-		constexpr const WCHAR testData[] = L"Test";
-		constexpr auto storage = MakeEmbedArray(testData);
+		// Use string literal directly - no named array
+		auto storage = MakeEmbedArray(L"Test");
 
 		// Verify size
 		if (storage.Count != 5) // "Test" + null terminator
 			return FALSE;
 
-		// Verify data integrity
-		for (USIZE i = 0; i < 5; i++)
-		{
-			if (storage[i] != testData[i])
-				return FALSE;
-		}
+		// Verify data integrity using literals
+		if (storage[0] != L'T' || storage[1] != L'e' || storage[2] != L's' ||
+		    storage[3] != L't' || storage[4] != L'\0')
+			return FALSE;
 
 		return TRUE;
 	}
 
 	static BOOL TestUInt32ArrayStorage()
 	{
-		constexpr const UINT32 testData[] = {1, 2, 3, 4};
-		constexpr auto storage = MakeEmbedArray(testData);
+		// Use compound literal directly - no named array
+		auto storage = MakeEmbedArray((const UINT32[]){1, 2, 3, 4});
 
 		// Verify size
 		if (storage.Count != 4)
@@ -125,79 +123,71 @@ private:
 			Logger::Info<WCHAR>(L"      %u"_embed, storage[i]);
 		}
 
-		// Verify data integrity
-		for (USIZE i = 0; i < 4; i++)
-		{
-			if (storage[i] != testData[i])
-				return FALSE;
-		}
+		// Verify data integrity using literals
+		if (storage[0] != 1 || storage[1] != 2 || storage[2] != 3 || storage[3] != 4)
+			return FALSE;
 
 		return TRUE;
 	}
 
 	static BOOL TestUInt64ArrayStorage()
 	{
-		constexpr const UINT64 testData[] = {
-			0x123456789ABCDEF0ULL,
-			0xFEDCBA9876543210ULL,
-			0x0011223344556677ULL};
-		constexpr auto storage = MakeEmbedArray(testData);
+		// Use compound literal directly - no named array
+		auto storage = MakeEmbedArray((const UINT64[]){
+			UINT64(0x123456789ABCDEF0ULL),
+			UINT64(0xFEDCBA9876543210ULL),
+			UINT64(0x0011223344556677ULL)});
 
 		// Verify size
 		if (storage.Count != 3)
 			return FALSE;
 
-		// Verify data integrity
-		for (USIZE i = 0; i < 3; i++)
-		{
-			if (storage[i] != testData[i])
-				return FALSE;
-		}
+		// Verify data integrity using literals
+		if (storage[0] != UINT64(0x123456789ABCDEF0ULL) ||
+		    storage[1] != UINT64(0xFEDCBA9876543210ULL) ||
+		    storage[2] != UINT64(0x0011223344556677ULL))
+			return FALSE;
 
 		return TRUE;
 	}
 
 	static BOOL TestArrayIndexing()
 	{
-		constexpr UINT32 testData[] = {100, 200, 300, 400, 500};
-		auto storage = MakeEmbedArray(testData);
+		// Use compound literal directly - no named array
+		auto storage = MakeEmbedArray((const UINT32[]){100, 200, 300, 400, 500});
 
 		// Test indexing operator
-		for (USIZE i = 0; i < 5; i++)
-		{
-			if (storage[i] != testData[i])
-				return FALSE;
-		}
+		if (storage[0] != 100 || storage[1] != 200 || storage[2] != 300 ||
+		    storage[3] != 400 || storage[4] != 500)
+			return FALSE;
 
 		return TRUE;
 	}
 
 	static BOOL TestPointerConversionAndCopy()
 	{
-		constexpr const UINT32 testData[] = {0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC};
-		constexpr auto storage = MakeEmbedArray(testData);
+		// Use compound literal directly - no named array
+		auto storage = MakeEmbedArray((const UINT32[]){0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC});
 
 		// Test pointer conversion and Memory::Copy
 		UINT32 dest[3];
-		Memory::Copy(dest, storage, sizeof(testData));
+		Memory::Copy(dest, storage, 3 * sizeof(UINT32));
 
-		for (USIZE i = 0; i < 3; i++)
-		{
-			if (dest[i] != testData[i])
-				return FALSE;
-		}
+		if (dest[0] != 0xAAAAAAAA || dest[1] != 0xBBBBBBBB || dest[2] != 0xCCCCCCCC)
+			return FALSE;
 
 		return TRUE;
 	}
 
 	static BOOL TestCompileTimeConstants()
 	{
-		 constexpr const CHAR testData[] = "CompileTime";
-		 constexpr auto storage = MakeEmbedArray(testData);
+		// Use string literal directly - no named array, no constexpr on storage
+		auto storage = MakeEmbedArray("CompileTime");
 
-		// Verify compile-time properties
-		static_assert(storage.Count == 12, "Count should be 12");
-		static_assert(storage.SizeBytes == 12, "SizeBytes should be 12");
+		// Verify compile-time properties via type traits
+		using StorageType = decltype(MakeEmbedArray("CompileTime"));
+		static_assert(StorageType::Count == 12, "Count should be 12");
+		static_assert(StorageType::SizeBytes == 12, "SizeBytes should be 12");
 
 		// Verify runtime behavior matches compile-time expectations
 		if (storage.Count != 12)

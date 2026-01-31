@@ -957,11 +957,11 @@ INT32 Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UIN
     return this->IsZero(&l_product) ? -1 : 0;
 }
 
-INT32 Ecc::Initialize(EccCurve curve)
+INT32 Ecc::Initialize(INT32 curve)
 {
     this->eccBytes = curve;
     this->numEccDigits = curve >> 3;
-    if (curve == ECC_SECP128R1)
+    if (curve == secp128r1)
     {
         Memory::Copy(this->curveP, MakeEmbedArray(Curve_P_16), sizeof(Curve_P_16));
         Memory::Copy(this->curveB, MakeEmbedArray(Curve_B_16), sizeof(Curve_B_16));
@@ -969,7 +969,7 @@ INT32 Ecc::Initialize(EccCurve curve)
         Memory::Copy(this->curveG.y, MakeEmbedArray(Curve_G_16.y), sizeof(Curve_G_16.y));
         Memory::Copy(this->curveN, MakeEmbedArray(Curve_N_16), sizeof(Curve_N_16));
     }
-    else if (curve == ECC_SECP192R1)
+    else if (curve == secp192r1)
     {
         Memory::Copy(this->curveP, MakeEmbedArray(Curve_P_24), sizeof(Curve_P_24));
         Memory::Copy(this->curveB, MakeEmbedArray(Curve_B_24), sizeof(Curve_B_24));
@@ -977,7 +977,7 @@ INT32 Ecc::Initialize(EccCurve curve)
         Memory::Copy(this->curveG.y, MakeEmbedArray(Curve_G_24.y), sizeof(Curve_G_24.y));
         Memory::Copy(this->curveN, MakeEmbedArray(Curve_N_24), sizeof(Curve_N_24));
     }
-    else if (curve == ECC_SECP256R1)
+    else if (curve == secp256r1)
     {
         Memory::Copy(this->curveP, MakeEmbedArray(Curve_P_32), sizeof(Curve_P_32));
         Memory::Copy(this->curveB, MakeEmbedArray(Curve_B_32), sizeof(Curve_B_32));
@@ -985,7 +985,7 @@ INT32 Ecc::Initialize(EccCurve curve)
         Memory::Copy(this->curveG.y, MakeEmbedArray(Curve_G_32.y), sizeof(Curve_G_32.y));
         Memory::Copy(this->curveN, MakeEmbedArray(Curve_N_32), sizeof(Curve_N_32));
     }
-    else if (curve == ECC_SECP384R1)
+    else if (curve == secp384r1)
     {
         Memory::Copy(this->curveP, MakeEmbedArray(Curve_P_48), sizeof(Curve_P_48));
         Memory::Copy(this->curveB, MakeEmbedArray(Curve_B_48), sizeof(Curve_B_48));

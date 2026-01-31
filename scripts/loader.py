@@ -59,42 +59,44 @@ def read_elf_entry(path):
 
 def read_pe_entry(path):
     """Read entry point offset relative to .text section start."""
-    with open(path, 'rb') as f:
-        if f.read(2) != b'MZ':
-            return None
-        f.seek(0x3C)
-        pe_off = struct.unpack('<I', f.read(4))[0]
-        f.seek(pe_off)
-        if f.read(4) != b'PE\x00\x00':
-            return None
+    try:
+        with open(path, 'rb') as f:
+            if f.read(2) != b'MZ':
+                return None
+            f.seek(0x3C)
+            pe_off = struct.unpack('<I', f.read(4))[0]
+            f.seek(pe_off)
+            if f.read(4) != b'PE\x00\x00':
+                return None
 
-        # Read COFF header
-        f.seek(pe_off + 4)
-        machine = struct.unpack('<H', f.read(2))[0]
-        num_sections = struct.unpack('<H', f.read(2))[0]
-        f.seek(pe_off + 20)
-        optional_header_size = struct.unpack('<H', f.read(2))[0]
+            # Read COFF header
+            f.seek(pe_off + 6)
+            num_sections = struct.unpack('<H', f.read(2))[0]
+            f.seek(pe_off + 20)
+            optional_header_size = struct.unpack('<H', f.read(2))[0]
 
-        # Read entry point RVA from optional header
-        f.seek(pe_off + 0x28)
-        entry_rva = struct.unpack('<I', f.read(4))[0]
+            # Read entry point RVA from optional header
+            f.seek(pe_off + 0x28)
+            entry_rva = struct.unpack('<I', f.read(4))[0]
 
-        # Find .text section to get its RVA
-        section_table_off = pe_off + 24 + optional_header_size
-        text_rva = None
-        for i in range(num_sections):
-            f.seek(section_table_off + i * 40)
-            name = f.read(8).rstrip(b'\x00').decode('ascii', errors='ignore')
-            if name == '.text':
-                f.seek(section_table_off + i * 40 + 12)  # VirtualAddress offset
-                text_rva = struct.unpack('<I', f.read(4))[0]
-                break
+            # Find .text section to get its RVA
+            section_table_off = pe_off + 24 + optional_header_size
+            text_rva = None
+            for i in range(num_sections):
+                f.seek(section_table_off + i * 40)
+                name = f.read(8).rstrip(b'\x00').decode('ascii', errors='ignore')
+                if name == '.text':
+                    f.seek(section_table_off + i * 40 + 12)  # VirtualAddress offset
+                    text_rva = struct.unpack('<I', f.read(4))[0]
+                    break
 
-        if text_rva is None:
-            return None
+            # If .text not found, assume entry is at start of first section (offset 0)
+            if text_rva is None:
+                return 0
 
-        # Return offset within .text section
-        return entry_rva - text_rva
+            return entry_rva - text_rva
+    except Exception:
+        return None
 
 
 def get_entry_offset(bin_path):
@@ -103,7 +105,7 @@ def get_entry_offset(bin_path):
         path = base + ext
         if os.path.exists(path):
             entry = reader(path)
-            if entry:
+            if entry is not None:
                 return entry, path
     sys.exit(f"[-] Cannot find .elf or .exe to read entry point")
 

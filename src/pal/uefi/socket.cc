@@ -44,8 +44,8 @@ struct UefiSocketContext
 // Empty event notification function (required for CreateEvent)
 static VOID EFIAPI EmptyNotify(EFI_EVENT Event, PVOID Context)
 {
-	(VOID)Event;
-	(VOID)Context;
+	(VOID) Event;
+	(VOID) Context;
 }
 
 // Initialize network interface using SNP
@@ -168,7 +168,7 @@ static BOOL ConfigureStaticIP4(EFI_BOOT_SERVICES *bs, EFI_HANDLE ImageHandle)
 // Wait for a completion token with timeout using polling
 static EFI_STATUS WaitForCompletionToken(EFI_BOOT_SERVICES *bs, EFI_STATUS *TokenStatus, UINT64 TimeoutMs)
 {
-	UINT64 PollIntervalMs = 50;  // Poll every 50ms
+	UINT64 PollIntervalMs = 1; // Poll every 50ms
 	UINT64 ElapsedMs = 0;
 
 	while (ElapsedMs < TimeoutMs)
@@ -176,22 +176,13 @@ static EFI_STATUS WaitForCompletionToken(EFI_BOOT_SERVICES *bs, EFI_STATUS *Toke
 		if (*TokenStatus != EFI_NOT_READY)
 			return EFI_SUCCESS;
 
-		bs->Stall(PollIntervalMs * 1000);  // Stall takes microseconds
+		bs->Stall(PollIntervalMs * 1000); // Stall takes microseconds
 		ElapsedMs += PollIntervalMs;
 	}
 
 	return EFI_TIMEOUT;
 }
 
-// Simple wait using Stall - used for Close where we don't need precise timing
-static EFI_STATUS WaitForEventWithTimeout(EFI_BOOT_SERVICES *bs, EFI_EVENT Event, UINT64 Timeout100ns)
-{
-	(void)Event;
-	UINT64 TimeoutMs = Timeout100ns / 10000;
-	if (TimeoutMs > 0)
-		bs->Stall(TimeoutMs * 1000);
-	return EFI_SUCCESS;
-}
 
 // =============================================================================
 // Socket Constructor - IPv4 and IPv6 Support
@@ -475,11 +466,12 @@ BOOL Socket::Close()
 				EFI_TCP6_CLOSE_TOKEN CloseToken;
 				Memory::Zero(&CloseToken, sizeof(CloseToken));
 				CloseToken.CompletionToken.Event = CloseEvent;
+				CloseToken.CompletionToken.Status = EFI_NOT_READY;
 				CloseToken.AbortOnClose = FALSE;
 
 				Status = sockCtx->Tcp6->Close(sockCtx->Tcp6, &CloseToken);
 				if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
-					WaitForEventWithTimeout(bs, CloseEvent, 5ULL * 10000000ULL);
+					WaitForCompletionToken(bs, &CloseToken.CompletionToken.Status, 500);
 
 				sockCtx->Tcp6->Configure(sockCtx->Tcp6, NULL);
 			}
@@ -488,11 +480,12 @@ BOOL Socket::Close()
 				EFI_TCP4_CLOSE_TOKEN CloseToken;
 				Memory::Zero(&CloseToken, sizeof(CloseToken));
 				CloseToken.CompletionToken.Event = CloseEvent;
+				CloseToken.CompletionToken.Status = EFI_NOT_READY;
 				CloseToken.AbortOnClose = FALSE;
 
 				Status = sockCtx->Tcp4->Close(sockCtx->Tcp4, &CloseToken);
 				if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
-					WaitForEventWithTimeout(bs, CloseEvent, 5ULL * 10000000ULL);
+					WaitForCompletionToken(bs, &CloseToken.CompletionToken.Status, 500);
 
 				sockCtx->Tcp4->Configure(sockCtx->Tcp4, NULL);
 			}
@@ -534,8 +527,8 @@ BOOL Socket::Close()
 
 BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
 {
-	(VOID)SocketAddress;
-	(VOID)ShareType;
+	(VOID) SocketAddress;
+	(VOID) ShareType;
 	return FALSE;
 }
 

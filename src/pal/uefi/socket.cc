@@ -11,6 +11,7 @@
 #include "efi_tcp4_protocol.h"
 #include "efi_tcp6_protocol.h"
 #include "efi_service_binding.h"
+#include "efi_ip4_config2_protocol.h"
 
 // =============================================================================
 // Internal Socket Context
@@ -41,6 +42,68 @@ static VOID EFIAPI EmptyNotify(EFI_EVENT Event, PVOID Context)
 {
 	(VOID)Event;
 	(VOID)Context;
+}
+
+// Configure IP4 layer with static QEMU settings
+static BOOL ConfigureStaticIP4(EFI_BOOT_SERVICES *bs, EFI_HANDLE ImageHandle)
+{
+	EFI_GUID Ip4Config2Guid = EFI_IP4_CONFIG2_PROTOCOL_GUID;
+
+	// Find IP4 Config2 protocol
+	USIZE HandleCount = 0;
+	EFI_HANDLE *HandleBuffer = NULL;
+
+	EFI_STATUS Status = bs->LocateHandleBuffer(ByProtocol, &Ip4Config2Guid, NULL, &HandleCount, &HandleBuffer);
+	if (EFI_ERROR(Status) || HandleCount == 0)
+		return FALSE;
+
+	// Open the protocol on the first handle
+	EFI_IP4_CONFIG2_PROTOCOL *Ip4Config2 = NULL;
+	Status = bs->OpenProtocol(
+		HandleBuffer[0],
+		&Ip4Config2Guid,
+		(PVOID *)&Ip4Config2,
+		ImageHandle,
+		NULL,
+		EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+
+	bs->FreePool(HandleBuffer);
+
+	if (EFI_ERROR(Status) || Ip4Config2 == NULL)
+		return FALSE;
+
+	// Set policy to static
+	EFI_IP4_CONFIG2_POLICY Policy = Ip4Config2PolicyStatic;
+	Status = Ip4Config2->SetData(Ip4Config2, Ip4Config2DataTypePolicy, sizeof(Policy), &Policy);
+	if (EFI_ERROR(Status))
+		return FALSE;
+
+	// Set static IP address (10.0.2.15/255.255.255.0) for QEMU
+	EFI_IP4_CONFIG2_MANUAL_ADDRESS ManualAddr;
+	ManualAddr.Address.Addr[0] = 10;
+	ManualAddr.Address.Addr[1] = 0;
+	ManualAddr.Address.Addr[2] = 2;
+	ManualAddr.Address.Addr[3] = 15;
+	ManualAddr.SubnetMask.Addr[0] = 255;
+	ManualAddr.SubnetMask.Addr[1] = 255;
+	ManualAddr.SubnetMask.Addr[2] = 255;
+	ManualAddr.SubnetMask.Addr[3] = 0;
+
+	Status = Ip4Config2->SetData(Ip4Config2, Ip4Config2DataTypeManualAddress, sizeof(ManualAddr), &ManualAddr);
+	if (EFI_ERROR(Status))
+		return FALSE;
+
+	// Set gateway (10.0.2.2) for QEMU
+	EFI_IPv4_ADDRESS Gateway;
+	Gateway.Addr[0] = 10;
+	Gateway.Addr[1] = 0;
+	Gateway.Addr[2] = 2;
+	Gateway.Addr[3] = 2;
+
+	Status = Ip4Config2->SetData(Ip4Config2, Ip4Config2DataTypeGateway, sizeof(Gateway), &Gateway);
+	// Gateway might fail if not supported, continue anyway
+
+	return TRUE;
 }
 
 // Wait for an event with timeout (in 100ns units)
@@ -277,8 +340,17 @@ BOOL Socket::Open()
 
 		if (EFI_ERROR(Status))
 		{
-			// Fallback to static IP for QEMU user-mode networking
-			// QEMU uses: Guest=10.0.2.15, Gateway=10.0.2.2, DNS=10.0.2.3
+			// Configure IP4 layer with static QEMU settings
+			ConfigureStaticIP4(bs, ctx->ImageHandle);
+
+			// Retry with default address (now uses our static config)
+			Status = sockCtx->Tcp4->Configure(sockCtx->Tcp4, &ConfigData);
+		}
+
+		if (EFI_ERROR(Status))
+		{
+			// Last resort: set address directly in TCP4 config
+			// QEMU uses: Guest=10.0.2.15, Gateway=10.0.2.2
 			ConfigData.AccessPoint.UseDefaultAddress = FALSE;
 			ConfigData.AccessPoint.StationAddress.Addr[0] = 10;
 			ConfigData.AccessPoint.StationAddress.Addr[1] = 0;

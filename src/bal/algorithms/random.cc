@@ -19,21 +19,31 @@ static inline UINT64 GetHardwareTimestamp()
     // Hardware counters require kernel/QEMU config to enable user access
     // Note: Cannot use static variables in PIC mode
 
-    // Get entropy from multiple stack addresses
-    volatile unsigned int stack_var1 = 0;
-    volatile unsigned int stack_var2 = 0;
-    volatile unsigned int stack_var3 = 0;
+    // Get entropy from stack addresses and uninitialized stack content
+    // Uninitialized volatiles contain remnants from previous function calls
+    volatile unsigned int stack_var1;
+    volatile unsigned int stack_var2;
+    volatile unsigned int stack_var3;
+    volatile unsigned int stack_var4;
+
+    // Read both uninitialized values (stack remnants) and addresses
+    unsigned long long val1 = stack_var1;
+    unsigned long long val2 = stack_var2;
+    unsigned long long val3 = stack_var3;
+    unsigned long long val4 = stack_var4;
 
     unsigned long long sp1 = (unsigned long long)(unsigned int)&stack_var1;
     unsigned long long sp2 = (unsigned long long)(unsigned int)&stack_var2;
-    unsigned long long sp3 = (unsigned long long)(unsigned int)&stack_var3;
 
-    // Mix entropy from different stack positions
-    // Each call will have different stack addresses providing unique values
-    unsigned long long result = sp1;
-    result = result * 1103515245ULL + 12345ULL;
-    result ^= sp2 << 8;
-    result += sp3;
+    // Mix all entropy sources: stack addresses + stack content
+    unsigned long long result = sp1 ^ sp2 ^ val1 ^ val2 ^ val3 ^ val4;
+
+    // Apply MurmurHash3 finalizer for avalanche mixing
+    result ^= result >> 33;
+    result *= 0xff51afd7ed558ccdULL;
+    result ^= result >> 33;
+    result *= 0xc4ceb9fe1a85ec53ULL;
+    result ^= result >> 33;
 
     return result;
 

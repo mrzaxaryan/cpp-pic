@@ -21,6 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        arch: [i386, x86_64, aarch64]
         opt_level: [O0, O1, O2, O3, Os, Oz, Og]
         include:
           - arch: i386
@@ -120,6 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        arch: [i386, x86_64, armv7a, aarch64]
         opt_level: [O0, O1, O2, O3, Os, Oz, Og]
         include:
           - arch: i386

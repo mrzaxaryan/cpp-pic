@@ -215,8 +215,6 @@ elseif(PLATFORM_LC STREQUAL "linux")
 elseif(PLATFORM_LC STREQUAL "uefi")
     list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
     list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
-    # UEFI uses start_uefi.cc instead of start.cc
-    list(FILTER SOURCES EXCLUDE REGEX ".*/start\\.cc$")
 endif()
 
 # =============================================================================

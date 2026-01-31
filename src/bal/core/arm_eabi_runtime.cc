@@ -210,6 +210,7 @@ extern "C"
      * Helper for unsigned 64-bit division with modulo
      * Called by assembly wrapper below
      */
+    __attribute__((used))
     static void uldivmod_helper(UINT64 numerator, UINT64 denominator,
                                 UINT64 *quotient, UINT64 *remainder)
     {
@@ -220,6 +221,7 @@ extern "C"
      * Helper for signed 64-bit division with modulo
      * Called by assembly wrapper below
      */
+    __attribute__((used))
     static void ldivmod_helper(INT64 numerator, INT64 denominator,
                                INT64 *quotient, INT64 *remainder)
     {

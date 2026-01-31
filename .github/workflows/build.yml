@@ -66,6 +66,7 @@ jobs:
           $opt_levels = @("O0", "O1", "O2", "O3", "Os", "Oz", "Og")
 
           foreach ($opt in $opt_levels) {
+            Write-Host "::group::Build and Test Optimization Level -$opt"
             Write-Host ""
             Write-Host "=========================================="
             Write-Host "=== BUILD: arch=$arch platform=$platform type=release opt=$opt ==="
@@ -105,6 +106,7 @@ jobs:
               Write-Host "TEST FAILED for $opt - exit code ${exitCode} (expected 0)"
               exit $exitCode
             }
+            Write-Host "::endgroup::"
           }
 
           Write-Host ""
@@ -205,6 +207,7 @@ jobs:
           OPT_LEVELS=("O0" "O1" "O2" "O3" "Os" "Oz" "Og")
 
           for OPT in "${OPT_LEVELS[@]}"; do
+            echo "::group::Build and Test Optimization Level -$OPT"
             echo ""
             echo "=========================================="
             echo "=== BUILD: arch=$ARCH platform=$PLATFORM type=release opt=$OPT ==="
@@ -254,6 +257,7 @@ jobs:
               echo "TEST FAILED for $OPT: exit code $EXIT_CODE (expected 0)"
               exit $EXIT_CODE
             fi
+            echo "::endgroup::"
           done
 
           echo ""

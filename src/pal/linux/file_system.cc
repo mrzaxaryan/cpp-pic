@@ -1,6 +1,5 @@
 #include "file_system.h"
-#include "syscall.h"
-#include "primitives.h"
+#include "system.h"
 #include "string.h"
 
 // Linux syscall numbers for this file
@@ -136,7 +135,7 @@ VOID File::Close()
 {
     if (IsValid())
     {
-        Syscall::syscall1(SYS_CLOSE, (USIZE)fileHandle);
+        System::Call(SYS_CLOSE, (USIZE)fileHandle);
         fileHandle = (PVOID)INVALID_FD;
         fileSize = 0;
     }
@@ -147,7 +146,7 @@ UINT32 File::Read(PVOID buffer, UINT32 size)
     if (!IsValid())
         return 0;
 
-    SSIZE result = Syscall::syscall3(SYS_READ, (USIZE)fileHandle, (USIZE)buffer, size);
+    SSIZE result = System::Call(SYS_READ, (USIZE)fileHandle, (USIZE)buffer, size);
     return (result >= 0) ? (UINT32)result : 0;
 }
 
@@ -156,7 +155,7 @@ UINT32 File::Write(const VOID* buffer, USIZE size)
     if (!IsValid())
         return 0;
 
-    SSIZE result = Syscall::syscall3(SYS_WRITE, (USIZE)fileHandle, (USIZE)buffer, size);
+    SSIZE result = System::Call(SYS_WRITE, (USIZE)fileHandle, (USIZE)buffer, size);
     return (result >= 0) ? (UINT32)result : 0;
 }
 
@@ -166,7 +165,7 @@ USIZE File::GetOffset() const
         return 0;
 
     // lseek with offset 0 and SEEK_CUR returns current position
-    SSIZE result = Syscall::syscall3(SYS_LSEEK, (USIZE)fileHandle, 0, (USIZE)OffsetOrigin::Current);
+    SSIZE result = System::Call(SYS_LSEEK, (USIZE)fileHandle, 0, (USIZE)OffsetOrigin::Current);
     return (result >= 0) ? (USIZE)result : 0;
 }
 
@@ -175,7 +174,7 @@ VOID File::SetOffset(USIZE absoluteOffset)
     if (!IsValid())
         return;
 
-    Syscall::syscall3(SYS_LSEEK, (USIZE)fileHandle, absoluteOffset, (USIZE)OffsetOrigin::Start);
+    System::Call(SYS_LSEEK, (USIZE)fileHandle, absoluteOffset, (USIZE)OffsetOrigin::Start);
 }
 
 VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
@@ -183,7 +182,7 @@ VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
     if (!IsValid())
         return;
 
-    Syscall::syscall3(SYS_LSEEK, (USIZE)fileHandle, (USIZE)relativeAmount, (USIZE)origin);
+    System::Call(SYS_LSEEK, (USIZE)fileHandle, (USIZE)relativeAmount, (USIZE)origin);
 }
 
 // --- FileSystem Implementation ---
@@ -218,11 +217,11 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     // Open the file
     SSIZE fd;
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
-    fd = Syscall::syscall3(SYS_OPEN, (USIZE)utf8Path, openFlags, mode);
+    fd = System::Call(SYS_OPEN, (USIZE)utf8Path, openFlags, mode);
 #else
     // ARM64 uses openat instead of open
     constexpr SSIZE AT_FDCWD = -100;
-    fd = Syscall::syscall4(SYS_OPENAT, AT_FDCWD, (USIZE)utf8Path, openFlags, mode);
+    fd = System::Call(SYS_OPENAT, AT_FDCWD, (USIZE)utf8Path, openFlags, mode);
 #endif
 
     if (fd < 0)
@@ -276,7 +275,7 @@ DirectoryIterator::~DirectoryIterator()
 {
     if (IsValid())
     {
-        Syscall::syscall1(SYS_CLOSE, (USIZE)handle);
+        System::Call(SYS_CLOSE, (USIZE)handle);
         handle = (PVOID)INVALID_FD;
     }
 }

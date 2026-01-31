@@ -1,5 +1,5 @@
 #include "allocator.h"
-#include "syscall.h"
+#include "system.h"
 
 // Linux syscall numbers for memory management
 #if defined(ARCHITECTURE_X86_64)
@@ -44,11 +44,11 @@ PVOID Allocator::AllocateMemory(USIZE size)
 #if defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
     // 32-bit architectures use mmap2 with page-shifted offset
     USIZE offset = 0; // No offset for anonymous mapping
-    SSIZE result = Syscall::syscall6(SYS_MMAP2, (USIZE)addr, size, prot, flags, -1, offset);
+    SSIZE result = System::Call(SYS_MMAP2, (USIZE)addr, size, prot, flags, -1, offset);
 #else
     // 64-bit architectures use mmap
     USIZE offset = 0;
-    SSIZE result = Syscall::syscall6(SYS_MMAP, (USIZE)addr, size, prot, flags, -1, offset);
+    SSIZE result = System::Call(SYS_MMAP, (USIZE)addr, size, prot, flags, -1, offset);
 #endif
 
     // mmap returns -1 on error (well, actually MAP_FAILED which is (void*)-1)
@@ -67,5 +67,5 @@ VOID Allocator::ReleaseMemory(PVOID address, USIZE size)
     size = (size + 4095) & ~4095ULL;
 
     // Use munmap to release memory
-    Syscall::syscall2(SYS_MUNMAP, (USIZE)address, size);
+    System::Call(SYS_MUNMAP, (USIZE)address, size);
 }

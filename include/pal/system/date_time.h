@@ -137,4 +137,7 @@ public:
 
     // Structured time
     static DateTime Now();
+
+    // Get monotonic timestamp in nanoseconds (for entropy/timing)
+    static UINT64 GetMonotonicNanoseconds();
 };

@@ -142,3 +142,15 @@ DateTime DateTime::Now()
     dt.Nanoseconds = (sub100ns % UINT64(10u)) * UINT64(100u);   // remainder * 100ns -> ns
     return dt;
 }
+
+UINT64 DateTime::GetMonotonicNanoseconds()
+{
+    volatile USER_SHARED_DATA *usd = GetUserSharedData();
+
+    // Read InterruptTime (monotonic, unaffected by system clock changes)
+    UINT64 interruptTime100ns = readKSystemTimeU64(&usd->InterruptTime);
+
+    // Convert from 100ns units to nanoseconds
+    UINT64 nanoseconds = interruptTime100ns * UINT64(100u);
+    return nanoseconds;
+}

@@ -1,6 +1,5 @@
 #include "socket.h"
-#include "syscall.h"
-#include "primitives.h"
+#include "system.h"
 #include "memory.h"
 #include "ip_address.h"
 
@@ -53,31 +52,31 @@ constexpr SSIZE INVALID_SOCKET = -1;
 static SSIZE linux_socket(INT32 domain, INT32 type, INT32 protocol)
 {
     USIZE args[3] = {(USIZE)domain, (USIZE)type, (USIZE)protocol};
-    return Syscall::syscall2(SYS_SOCKETCALL, SYS_SOCKET_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SYS_SOCKET_SC, (USIZE)args);
 }
 
 static SSIZE linux_bind(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
     USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
-    return Syscall::syscall2(SYS_SOCKETCALL, SYS_BIND_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SYS_BIND_SC, (USIZE)args);
 }
 
 static SSIZE linux_connect(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
     USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
-    return Syscall::syscall2(SYS_SOCKETCALL, SYS_CONNECT_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SYS_CONNECT_SC, (USIZE)args);
 }
 
 static SSIZE linux_send(SSIZE sockfd, const VOID* buf, USIZE len, INT32 flags)
 {
     USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
-    return Syscall::syscall2(SYS_SOCKETCALL, SYS_SEND_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SYS_SEND_SC, (USIZE)args);
 }
 
 static SSIZE linux_recv(SSIZE sockfd, VOID* buf, USIZE len, INT32 flags)
 {
     USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
-    return Syscall::syscall2(SYS_SOCKETCALL, SYS_RECV_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SYS_RECV_SC, (USIZE)args);
 }
 
 #else
@@ -85,27 +84,27 @@ static SSIZE linux_recv(SSIZE sockfd, VOID* buf, USIZE len, INT32 flags)
 // Direct syscall versions for x86_64 and AArch64
 static SSIZE linux_socket(INT32 domain, INT32 type, INT32 protocol)
 {
-    return Syscall::syscall3(SYS_SOCKET, domain, type, protocol);
+    return System::Call(SYS_SOCKET, domain, type, protocol);
 }
 
 static SSIZE linux_bind(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
-    return Syscall::syscall3(SYS_BIND, sockfd, (USIZE)addr, addrlen);
+    return System::Call(SYS_BIND, sockfd, (USIZE)addr, addrlen);
 }
 
 static SSIZE linux_connect(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
-    return Syscall::syscall3(SYS_CONNECT, sockfd, (USIZE)addr, addrlen);
+    return System::Call(SYS_CONNECT, sockfd, (USIZE)addr, addrlen);
 }
 
 static SSIZE linux_send(SSIZE sockfd, const VOID* buf, USIZE len, INT32 flags)
 {
-    return Syscall::syscall6(SYS_SENDTO, sockfd, (USIZE)buf, len, flags, 0, 0);
+    return System::Call(SYS_SENDTO, sockfd, (USIZE)buf, len, flags, 0, 0);
 }
 
 static SSIZE linux_recv(SSIZE sockfd, VOID* buf, USIZE len, INT32 flags)
 {
-    return Syscall::syscall6(SYS_RECVFROM, sockfd, (USIZE)buf, len, flags, 0, 0);
+    return System::Call(SYS_RECVFROM, sockfd, (USIZE)buf, len, flags, 0, 0);
 }
 
 #endif
@@ -199,7 +198,7 @@ BOOL Socket::Close()
         return FALSE;
 
     SSIZE sockfd = (SSIZE)m_socket;
-    Syscall::syscall1(SYS_CLOSE, sockfd);
+    System::Call(SYS_CLOSE, sockfd);
     m_socket = (PVOID)INVALID_SOCKET;
     return TRUE;
 }

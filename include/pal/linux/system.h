@@ -2,14 +2,15 @@
 
 #include "primitives.h"
 
-// Linux syscall numbers
-namespace Syscall
+// Linux syscall wrappers
+class System
 {
+public:
     // x86_64 syscall wrappers
 #if defined(ARCHITECTURE_X86_64)
 
     // Syscall with 0 arguments
-    inline SSIZE syscall0(USIZE number)
+    static inline SSIZE Call(USIZE number)
     {
         register USIZE r_rax __asm__("rax") = number;
         __asm__ volatile(
@@ -22,7 +23,7 @@ namespace Syscall
     }
 
     // Syscall with 1 argument
-    inline SSIZE syscall1(USIZE number, USIZE arg1)
+    static inline SSIZE Call(USIZE number, USIZE arg1)
     {
         register USIZE r_rdi __asm__("rdi") = arg1;
         register USIZE r_rax __asm__("rax") = number;
@@ -36,7 +37,7 @@ namespace Syscall
     }
 
     // Syscall with 2 arguments
-    inline SSIZE syscall2(USIZE number, USIZE arg1, USIZE arg2)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
     {
         register USIZE r_rdi __asm__("rdi") = arg1;
         register USIZE r_rsi __asm__("rsi") = arg2;
@@ -51,7 +52,7 @@ namespace Syscall
     }
 
     // Syscall with 3 arguments
-    inline SSIZE syscall3(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
     {
         register USIZE r_rdi __asm__("rdi") = arg1;
         register USIZE r_rsi __asm__("rsi") = arg2;
@@ -67,7 +68,7 @@ namespace Syscall
     }
 
     // Syscall with 4 arguments
-    inline SSIZE syscall4(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
     {
         register USIZE r_rdi __asm__("rdi") = arg1;
         register USIZE r_rsi __asm__("rsi") = arg2;
@@ -84,7 +85,7 @@ namespace Syscall
     }
 
     // Syscall with 5 arguments
-    inline SSIZE syscall5(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
     {
         register USIZE r_rdi __asm__("rdi") = arg1;
         register USIZE r_rsi __asm__("rsi") = arg2;
@@ -102,7 +103,7 @@ namespace Syscall
     }
 
     // Syscall with 6 arguments
-    inline SSIZE syscall6(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
     {
         register USIZE r_rdi __asm__("rdi") = arg1;
         register USIZE r_rsi __asm__("rsi") = arg2;
@@ -124,7 +125,7 @@ namespace Syscall
 #elif defined(ARCHITECTURE_I386)
 
     // Syscall with 0 arguments
-    inline SSIZE syscall0(USIZE number)
+    static inline SSIZE Call(USIZE number)
     {
         register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
@@ -137,7 +138,7 @@ namespace Syscall
     }
 
     // Syscall with 1 argument
-    inline SSIZE syscall1(USIZE number, USIZE arg1)
+    static inline SSIZE Call(USIZE number, USIZE arg1)
     {
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_eax __asm__("eax") = number;
@@ -151,7 +152,7 @@ namespace Syscall
     }
 
     // Syscall with 2 arguments
-    inline SSIZE syscall2(USIZE number, USIZE arg1, USIZE arg2)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
     {
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_ecx __asm__("ecx") = arg2;
@@ -166,7 +167,7 @@ namespace Syscall
     }
 
     // Syscall with 3 arguments
-    inline SSIZE syscall3(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
     {
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_ecx __asm__("ecx") = arg2;
@@ -182,7 +183,7 @@ namespace Syscall
     }
 
     // Syscall with 4 arguments
-    inline SSIZE syscall4(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
     {
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_ecx __asm__("ecx") = arg2;
@@ -199,7 +200,7 @@ namespace Syscall
     }
 
     // Syscall with 5 arguments
-    inline SSIZE syscall5(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
     {
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_ecx __asm__("ecx") = arg2;
@@ -217,7 +218,7 @@ namespace Syscall
     }
 
     // Syscall with 6 arguments
-    inline SSIZE syscall6(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
     {
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_ecx __asm__("ecx") = arg2;
@@ -239,7 +240,7 @@ namespace Syscall
 #elif defined(ARCHITECTURE_AARCH64)
 
     // Syscall with 0 arguments
-    inline SSIZE syscall0(USIZE number)
+    static inline SSIZE Call(USIZE number)
     {
         register USIZE x0 __asm__("x0");
         register USIZE x8 __asm__("x8") = number;
@@ -253,7 +254,7 @@ namespace Syscall
     }
 
     // Syscall with 1 argument
-    inline SSIZE syscall1(USIZE number, USIZE arg1)
+    static inline SSIZE Call(USIZE number, USIZE arg1)
     {
         register USIZE x0 __asm__("x0") = arg1;
         register USIZE x8 __asm__("x8") = number;
@@ -267,7 +268,7 @@ namespace Syscall
     }
 
     // Syscall with 2 arguments
-    inline SSIZE syscall2(USIZE number, USIZE arg1, USIZE arg2)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
     {
         register USIZE x0 __asm__("x0") = arg1;
         register USIZE x1 __asm__("x1") = arg2;
@@ -282,7 +283,7 @@ namespace Syscall
     }
 
     // Syscall with 3 arguments
-    inline SSIZE syscall3(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
     {
         register USIZE x0 __asm__("x0") = arg1;
         register USIZE x1 __asm__("x1") = arg2;
@@ -298,7 +299,7 @@ namespace Syscall
     }
 
     // Syscall with 4 arguments
-    inline SSIZE syscall4(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
     {
         register USIZE x0 __asm__("x0") = arg1;
         register USIZE x1 __asm__("x1") = arg2;
@@ -315,7 +316,7 @@ namespace Syscall
     }
 
     // Syscall with 5 arguments
-    inline SSIZE syscall5(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
     {
         register USIZE x0 __asm__("x0") = arg1;
         register USIZE x1 __asm__("x1") = arg2;
@@ -333,7 +334,7 @@ namespace Syscall
     }
 
     // Syscall with 6 arguments
-    inline SSIZE syscall6(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
     {
         register USIZE x0 __asm__("x0") = arg1;
         register USIZE x1 __asm__("x1") = arg2;
@@ -355,7 +356,7 @@ namespace Syscall
 #elif defined(ARCHITECTURE_ARMV7A)
 
     // Syscall with 0 arguments
-    inline SSIZE syscall0(USIZE number)
+    static inline SSIZE Call(USIZE number)
     {
         register USIZE r0 __asm__("r0");
         register USIZE r7 __asm__("r7") = number;
@@ -369,7 +370,7 @@ namespace Syscall
     }
 
     // Syscall with 1 argument
-    inline SSIZE syscall1(USIZE number, USIZE arg1)
+    static inline SSIZE Call(USIZE number, USIZE arg1)
     {
         register USIZE r0 __asm__("r0") = arg1;
         register USIZE r7 __asm__("r7") = number;
@@ -383,7 +384,7 @@ namespace Syscall
     }
 
     // Syscall with 2 arguments
-    inline SSIZE syscall2(USIZE number, USIZE arg1, USIZE arg2)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
     {
         register USIZE r0 __asm__("r0") = arg1;
         register USIZE r1 __asm__("r1") = arg2;
@@ -398,7 +399,7 @@ namespace Syscall
     }
 
     // Syscall with 3 arguments
-    inline SSIZE syscall3(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
     {
         register USIZE r0 __asm__("r0") = arg1;
         register USIZE r1 __asm__("r1") = arg2;
@@ -414,7 +415,7 @@ namespace Syscall
     }
 
     // Syscall with 4 arguments
-    inline SSIZE syscall4(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
     {
         register USIZE r0 __asm__("r0") = arg1;
         register USIZE r1 __asm__("r1") = arg2;
@@ -431,7 +432,7 @@ namespace Syscall
     }
 
     // Syscall with 5 arguments
-    inline SSIZE syscall5(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
     {
         register USIZE r0 __asm__("r0") = arg1;
         register USIZE r1 __asm__("r1") = arg2;
@@ -449,7 +450,7 @@ namespace Syscall
     }
 
     // Syscall with 6 arguments
-    inline SSIZE syscall6(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
+    static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
     {
         register USIZE r0 __asm__("r0") = arg1;
         register USIZE r1 __asm__("r1") = arg2;
@@ -469,4 +470,4 @@ namespace Syscall
 
 #endif
 
-}
+};  // class System

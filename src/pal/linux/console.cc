@@ -1,6 +1,5 @@
 #include "console.h"
-#include "syscall.h"
-#include "primitives.h"
+#include "system.h"
 
 // Linux stdout file descriptor
 #define STDOUT_FILENO 1
@@ -19,7 +18,7 @@ constexpr USIZE SYS_WRITE = 4;
 // Write ANSI/ASCII string to console (straightforward)
 UINT32 Console::Write(const CHAR *text, USIZE length)
 {
-    SSIZE result = Syscall::syscall3(SYS_WRITE, STDOUT_FILENO, (USIZE)text, length);
+    SSIZE result = System::Call(SYS_WRITE, STDOUT_FILENO, (USIZE)text, length);
     return (result >= 0) ? (UINT32)result : 0;
 }
 
@@ -85,7 +84,7 @@ UINT32 Console::Write(const WCHAR *text, USIZE length)
         // Write the converted UTF-8 buffer
         if (utf8Pos > 0)
         {
-            SSIZE written = Syscall::syscall3(SYS_WRITE, STDOUT_FILENO, (USIZE)utf8Buffer, utf8Pos);
+            SSIZE written = System::Call(SYS_WRITE, STDOUT_FILENO, (USIZE)utf8Buffer, utf8Pos);
             if (written > 0)
                 totalWritten += written;
         }

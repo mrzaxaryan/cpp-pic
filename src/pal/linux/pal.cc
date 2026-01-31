@@ -1,5 +1,5 @@
 #include "pal.h"
-#include "syscall.h"
+#include "system.h"
 
 // Linux syscall numbers for this file
 #if defined(ARCHITECTURE_X86_64)
@@ -15,6 +15,6 @@ constexpr USIZE SYS_EXIT = 1;
 // Linux process exit implementation
 NO_RETURN VOID ExitProcess(USIZE code)
 {
-    Syscall::syscall1(SYS_EXIT, code);
+    System::Call(SYS_EXIT, code);
     __builtin_unreachable();
 }

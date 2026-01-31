@@ -291,6 +291,22 @@ extern "C"
         // Apply sign to remainder (remainder takes sign of numerator)
         return sign_num < 0 ? -(long long)remainder : (long long)remainder;
     }
+
+    // x86: 64-bit logical shift right
+    X86_RUNTIME_FUNC unsigned long long __lshrdi3(unsigned long long value, int shift)
+    {
+        if (shift < 0 || shift >= 64)
+            return 0;
+        return value >> shift;
+    }
+
+    // x86: 64-bit arithmetic shift left
+    X86_RUNTIME_FUNC long long __ashldi3(long long value, int shift)
+    {
+        if (shift < 0 || shift >= 64)
+            return 0;
+        return value << shift;
+    }
 }
 
 #endif // ARCHITECTURE_I386

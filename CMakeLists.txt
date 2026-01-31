@@ -44,6 +44,7 @@ project(cpp-pic LANGUAGES CXX)
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
 set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
+set(OPTIMIZATION_LEVEL "" CACHE STRING "Optimization level: O0, O1, O2, O3, Os, Oz, Og (default: Og for debug, O3 for release)")
 
 # Normalize inputs to lowercase
 string(TOLOWER "${ARCHITECTURE}" ARCHITECTURE_LC)
@@ -110,16 +111,32 @@ endif()
 # =============================================================================
 # Optimization Flags
 # =============================================================================
+# Determine optimization level (user-specified or default)
+if(OPTIMIZATION_LEVEL STREQUAL "")
+    # No user-specified optimization level, use defaults
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        set(OPT_LEVEL "Og")
+    else()
+        set(OPT_LEVEL "O3")
+    endif()
+else()
+    # Use user-specified optimization level
+    set(OPT_LEVEL "${OPTIMIZATION_LEVEL}")
+endif()
+
 if(BUILD_TYPE_LC STREQUAL "debug")
     # Debug optimization flags:
     #   -Og              - Optimize for debugging experience (minimal optimizations)
     #   -ferror-limit=200 - Show up to 200 errors before stopping
-    set(OPTIMIZATION_FLAGS "-O0" "-ferror-limit=200")
+    set(OPTIMIZATION_FLAGS "-${OPT_LEVEL}" "-ferror-limit=200")
     list(APPEND ARCH_DEFINES DEBUG)
 else()
-    # Release optimization flag:
+    # Release optimization flags:
     #   -O3 - Maximum optimization (aggressive inlining, vectorization, loop opts)
-    set(OPTIMIZATION_FLAGS "-O0")
+    #   -O2 - Moderate optimization (good balance)
+    #   -Os - Optimize for size
+    #   -Oz - Optimize aggressively for size
+    set(OPTIMIZATION_FLAGS "-${OPT_LEVEL}")
 endif()
 
 
@@ -489,6 +506,7 @@ message(STATUS "=== Build Configuration ===")
 message(STATUS "BUILD_TYPE:       ${BUILD_TYPE_LC}")
 message(STATUS "PLATFORM:         ${PLATFORM_LC}")
 message(STATUS "ARCHITECTURE:     ${ARCHITECTURE_LC}")
+message(STATUS "OPTIMIZATION:     -${OPT_LEVEL}")
 message(STATUS "TARGET_TRIPLE:    ${TARGET_TRIPLE}")
 message(STATUS "OUTPUT_DIR:       ${OUTPUT_DIR}")
 message(STATUS "OUTPUT:           ${OUTPUT_EXE}")

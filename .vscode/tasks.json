@@ -36,7 +36,7 @@
     {
       "label": "i386-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/windows/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/windows/i386/cmake",
+      "command": "cmake -B build/debug/windows/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/windows/i386/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -45,7 +45,7 @@
     {
       "label": "i386-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/windows/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja && cmake --build build/release/windows/i386/cmake",
+      "command": "cmake -B build/release/windows/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=windows -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/windows/i386/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -54,7 +54,7 @@
     {
       "label": "x86_64-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/windows/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/windows/x86_64/cmake",
+      "command": "cmake -B build/debug/windows/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/windows/x86_64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -63,7 +63,7 @@
     {
       "label": "x86_64-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/windows/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja && cmake --build build/release/windows/x86_64/cmake",
+      "command": "cmake -B build/release/windows/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=windows -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/windows/x86_64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -72,7 +72,7 @@
     {
       "label": "armv7a-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/windows/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/windows/armv7a/cmake",
+      "command": "cmake -B build/debug/windows/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/windows/armv7a/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -81,7 +81,7 @@
     {
       "label": "armv7a-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/windows/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja && cmake --build build/release/windows/armv7a/cmake",
+      "command": "cmake -B build/release/windows/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=windows -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/windows/armv7a/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -90,7 +90,7 @@
     {
       "label": "aarch64-pc-windows-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/windows/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/windows/aarch64/cmake",
+      "command": "cmake -B build/debug/windows/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/windows/aarch64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -99,7 +99,7 @@
     {
       "label": "aarch64-pc-windows-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/windows/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=release -G Ninja && cmake --build build/release/windows/aarch64/cmake",
+      "command": "cmake -B build/release/windows/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=windows -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/windows/aarch64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -108,7 +108,7 @@
     {
       "label": "i386-unknown-linux-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/linux/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/linux/i386/cmake",
+      "command": "cmake -B build/debug/linux/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/linux/i386/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -117,7 +117,7 @@
     {
       "label": "i386-unknown-linux-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/linux/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja && cmake --build build/release/linux/i386/cmake",
+      "command": "cmake -B build/release/linux/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=linux -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/linux/i386/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -126,7 +126,7 @@
     {
       "label": "x86_64-unknown-linux-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/linux/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/linux/x86_64/cmake",
+      "command": "cmake -B build/debug/linux/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/linux/x86_64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -135,7 +135,7 @@
     {
       "label": "x86_64-unknown-linux-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/linux/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja && cmake --build build/release/linux/x86_64/cmake",
+      "command": "cmake -B build/release/linux/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=linux -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/linux/x86_64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -144,7 +144,7 @@
     {
       "label": "armv7a-unknown-linux-gnueabihf-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/linux/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/linux/armv7a/cmake",
+      "command": "cmake -B build/debug/linux/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/linux/armv7a/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -153,7 +153,7 @@
     {
       "label": "armv7a-unknown-linux-gnueabihf-release",
       "type": "shell",
-      "command": "cmake -B build/release/linux/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja && cmake --build build/release/linux/armv7a/cmake",
+      "command": "cmake -B build/release/linux/armv7a/cmake -DARCHITECTURE=armv7a -DPLATFORM=linux -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/linux/armv7a/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -162,7 +162,7 @@
     {
       "label": "aarch64-unknown-linux-gnu-debug",
       "type": "shell",
-      "command": "cmake -B build/debug/linux/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=debug -G Ninja && cmake --build build/debug/linux/aarch64/cmake",
+      "command": "cmake -B build/debug/linux/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/linux/aarch64/cmake",
       "problemMatcher": [
         "$gcc"
       ],
@@ -171,7 +171,7 @@
     {
       "label": "aarch64-unknown-linux-gnu-release",
       "type": "shell",
-      "command": "cmake -B build/release/linux/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=release -G Ninja && cmake --build build/release/linux/aarch64/cmake",
+      "command": "cmake -B build/release/linux/aarch64/cmake -DARCHITECTURE=aarch64 -DPLATFORM=linux -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/linux/aarch64/cmake",
       "problemMatcher": [
         "$gcc"
       ],

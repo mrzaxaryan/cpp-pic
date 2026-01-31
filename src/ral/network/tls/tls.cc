@@ -586,7 +586,7 @@ INT32 TLSClient::ReadChannel(PCHAR out, INT32 size)
               this, size, channelBuffer.GetSize() - channelBytesRead, channelBytesRead);
     Memory::Copy(out, channelBuffer.GetBuffer() + channelBytesRead, movesize);
     channelBytesRead += movesize;
-    if (((channelBytesRead > channelBuffer.GetSize() / 4 * 3) && (channelBuffer.GetSize() > 1024 * 1024)) || (channelBytesRead >= channelBuffer.GetSize()))
+    if (((channelBytesRead > (channelBuffer.GetSize() >> 2) * 3) && (channelBuffer.GetSize() > 1024 * 1024)) || (channelBytesRead >= channelBuffer.GetSize()))
     {
         LOG_DEBUG("Clearing recv channel for client: %p, readed size: %d, total size: %d",
                   this, channelBytesRead, channelBuffer.GetSize());

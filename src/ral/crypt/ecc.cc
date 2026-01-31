@@ -61,7 +61,7 @@ INT32 Ecc::VliIsZero(UINT64 *pVli)
 /* Returns nonzero if bit bit of vli is set. */
 UINT64 Ecc::VliTestBit(UINT64 *pVli, UINT32 bit)
 {
-    return (pVli[bit / 64] & ((UINT64)1 << (bit % 64)));
+    return (pVli[bit >> 6] & ((UINT64)1 << (bit & 63)));
 }
 
 /* Counts the number of 64-bit "digits" in vli. */
@@ -934,7 +934,7 @@ INT32 Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UIN
 INT32 Ecc::Initialize(INT32 bytes)
 {
     this->eccBytes = bytes;
-    this->numEccDigits = bytes / 8;
+    this->numEccDigits = bytes >> 3;
     if (bytes == secp128r1)
     {
         Memory::Copy(this->curveP, MakeEmbedArray(Curve_P_16), sizeof(Curve_P_16));

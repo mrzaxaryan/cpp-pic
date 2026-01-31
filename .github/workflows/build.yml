@@ -16,11 +16,12 @@ env:
 
 jobs:
   build-and-test-windows:
-    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}-${{ matrix.opt_level }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
+        opt_level: [O0, O1, O2, O3, Os, Oz, Og]
         include:
           - arch: i386
             platform: windows
@@ -63,12 +64,14 @@ jobs:
         run: |
           $arch = "${{ matrix.arch }}"
           $platform = "${{ matrix.platform }}"
-          Write-Host "=== BUILD: arch=$arch platform=$platform type=release ==="
+          $opt = "${{ matrix.opt_level }}"
+          Write-Host "=== BUILD: arch=$arch platform=$platform type=release opt=$opt ==="
           cmake -B "build/release/$platform/$arch/cmake" `
                 -G Ninja `
                 "-DARCHITECTURE=$arch" `
                 "-DPLATFORM=$platform" `
-                "-DBUILD_TYPE=release"
+                "-DBUILD_TYPE=release" `
+                "-DOPTIMIZATION_LEVEL=$opt"
           cmake --build "build/release/$platform/$arch/cmake"
 
       - name: Run test
@@ -105,18 +108,19 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-${{ matrix.opt_level }}
           retention-days: 1
           path: |
             build/**
             !build/**/cmake/**
 
   build-and-test-linux:
-    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}-${{ matrix.opt_level }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
+        opt_level: [O0, O1, O2, O3, Os, Oz, Og]
         include:
           - arch: i386
             platform: linux
@@ -183,12 +187,14 @@ jobs:
         run: |
           ARCH="${{ matrix.arch }}"
           PLATFORM="${{ matrix.platform }}"
-          echo "=== BUILD: arch=$ARCH platform=$PLATFORM type=release ==="
+          OPT="${{ matrix.opt_level }}"
+          echo "=== BUILD: arch=$ARCH platform=$PLATFORM type=release opt=$OPT ==="
           cmake -B "build/release/$PLATFORM/$ARCH/cmake" \
                 -G Ninja \
                 "-DARCHITECTURE=$ARCH" \
                 "-DPLATFORM=$PLATFORM" \
-                "-DBUILD_TYPE=release"
+                "-DBUILD_TYPE=release" \
+                "-DOPTIMIZATION_LEVEL=$OPT"
           cmake --build "build/release/$PLATFORM/$ARCH/cmake"
 
       - name: Install QEMU
@@ -240,7 +246,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-${{ matrix.opt_level }}
           retention-days: 1
           path: |
             build/**

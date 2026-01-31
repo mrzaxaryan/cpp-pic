@@ -22,9 +22,9 @@ import sys
 import tempfile
 
 ARCH_INFO = {
-    'i386': {'bits': 32, 'family': 'x86'},
-    'x86_64': {'bits': 64, 'family': 'x86'},
-    'aarch64': {'bits': 64, 'family': 'arm'},
+    'i386': {'bits': 32, 'family': 'x86', 'entry': 0x70},
+    'x86_64': {'bits': 64, 'family': 'x86', 'entry': 0x1e0},
+    'aarch64': {'bits': 64, 'family': 'arm', 'entry': 0x78},
 }
 
 
@@ -142,7 +142,7 @@ def build_elf64(shellcode, entry_offset=0):
     return elf_header + program_header + shellcode
 
 
-def run_linux_native(shellcode):
+def run_linux_native(shellcode, entry_offset=0x70):
     """Run shellcode natively using mmap."""
     size = len(shellcode)
 
@@ -150,9 +150,11 @@ def run_linux_native(shellcode):
     mem.write(shellcode)
 
     addr = ctypes.addressof(ctypes.c_char.from_buffer(mem))
+    entry = addr + entry_offset
     print(f"[+] Loaded at: 0x{addr:x}")
+    print(f"[+] Entry at: 0x{entry:x}")
 
-    func = ctypes.CFUNCTYPE(ctypes.c_int)(addr)
+    func = ctypes.CFUNCTYPE(ctypes.c_int)(entry)
 
     print("[*] Executing...")
     sys.stdout.flush()
@@ -187,6 +189,7 @@ def run_linux(shellcode, target_arch):
     """Execute shellcode on Linux."""
     host_family, host_bits = get_host_info()
     target_bits = ARCH_INFO[target_arch]['bits']
+    entry_offset = ARCH_INFO[target_arch]['entry']
 
     if ARCH_INFO[target_arch]['family'] != host_family:
         print(f"[-] Cannot run {target_arch} on {host_family} CPU")
@@ -194,12 +197,11 @@ def run_linux(shellcode, target_arch):
 
     # Same bitness: can run directly via mmap
     if host_bits == target_bits:
-        return run_linux_native(shellcode)
+        return run_linux_native(shellcode, entry_offset)
 
     # Cross-bitness: wrap in ELF and execute (kernel handles it)
-    # Entry offset 0x70 matches cpp-pic linker script
     if host_bits == 64 and target_bits == 32:
-        return run_linux_elf(shellcode, 32, entry_offset=0x70)
+        return run_linux_elf(shellcode, 32, entry_offset)
 
     print(f"[-] Cannot run 64-bit code on 32-bit host")
     return 1

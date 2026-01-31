@@ -75,7 +75,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O0
+      - name: Test EXE -O0
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -O0
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -97,7 +102,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O1
+      - name: Test EXE -O1
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -O1
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -119,7 +129,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O2
+      - name: Test EXE -O2
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -O2
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -141,7 +156,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O3
+      - name: Test EXE -O3
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -O3
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -163,7 +183,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -Os
+      - name: Test EXE -Os
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -Os
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -185,7 +210,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -Oz
+      - name: Test EXE -Oz
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -Oz
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -207,7 +237,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -Og
+      - name: Test EXE -Og
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+
+      - name: Test PIC -Og
         shell: pwsh
         run: |
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
@@ -221,15 +256,19 @@ jobs:
         include:
           - arch: i386
             platform: linux
+            qemu: qemu-i386-static
             note: "Runs via QEMU i386"
           - arch: x86_64
             platform: linux
+            qemu: ""
             note: "Runs natively on x64"
           - arch: armv7a
             platform: linux
+            qemu: qemu-arm-static
             note: "Runs via QEMU ARM"
           - arch: aarch64
             platform: linux
+            qemu: qemu-aarch64-static
             note: "Runs via QEMU ARM64"
     steps:
       - name: Checkout
@@ -277,7 +316,7 @@ jobs:
           clang --version
 
       - name: Install QEMU
-        if: matrix.arch != 'x86_64'
+        if: matrix.qemu != ''
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
@@ -298,7 +337,13 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O0
+      - name: Test ELF -O0
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -O0
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
@@ -318,7 +363,13 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O1
+      - name: Test ELF -O1
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -O1
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
@@ -338,7 +389,13 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O2
+      - name: Test ELF -O2
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -O2
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
@@ -358,7 +415,13 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -O3
+      - name: Test ELF -O3
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -O3
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
@@ -378,7 +441,13 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -Os
+      - name: Test ELF -Os
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -Os
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
@@ -398,7 +467,13 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -Oz
+      - name: Test ELF -Oz
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -Oz
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
@@ -418,6 +493,12 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test -Og
+      - name: Test ELF -Og
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_ELF"; else "$TEST_ELF"; fi
+
+      - name: Test PIC -Og
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)

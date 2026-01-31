@@ -19,6 +19,7 @@
  *   EccTests               - Elliptic Curve Cryptography tests (ECDH key exchange)
  *   DnsTests               - DNS resolution tests (DoT, DoH JSON, DoH binary)
  *   WebSocketTests         - WebSocket client implementation tests (ws:// and wss://)
+ *   FileSystemTests        - File system I/O tests (nested directories, files, read/write operations)
  *
  * USAGE:
  *   #include "tests.h"
@@ -34,6 +35,7 @@
  *   EccTests::RunAll();
  *   DnsTests::RunAll();
  *   WebSocketTests::RunAll();
+ *   FileSystemTests::RunAll();
  *   // ... etc
  */
 
@@ -53,3 +55,4 @@
 #include "ecc_tests.h"
 #include "dns_tests.h"
 #include "websocket_tests.h"
+#include "filesystem_tests.h"

@@ -72,6 +72,11 @@ ENTRYPOINT INT32 _start(VOID)
 
 	if (!WebSocketTests::RunAll())
 		allPassed = FALSE;
+	Logger::Info<WCHAR>(L""_embed);
+
+	// PAL - File System I/O
+	if (!FileSystemTests::RunAll())
+		allPassed = FALSE;
 
 	// Final summary
 	Logger::Info<WCHAR>(L"=== Test Suite Complete ==="_embed);

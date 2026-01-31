@@ -34,72 +34,12 @@
 #include "primitives.h"
 #include "pal.h"
 
-#define SHFR(x, n) (x >> n)
-#define ROTR(x, n) ((x >> n) | (x << (static_cast<unsigned>((sizeof(x) << 3) - n))))
-#define ROTL(x, n) ((x << n) | (x >> (static_cast<unsigned>((sizeof(x) << 3) - n))))
-#define CH(x, y, z) ((x & y) ^ (~x & z))
+#define CH(x, y, z)  ((x & y) ^ (~x & z))
 #define MAJ(x, y, z) ((x & y) ^ (x & z) ^ (y & z))
-
-#define SHA256_F1(x) (ROTR(x, 2) ^ ROTR(x, 13) ^ ROTR(x, 22))
-#define SHA256_F2(x) (ROTR(x, 6) ^ ROTR(x, 11) ^ ROTR(x, 25))
-#define SHA256_F3(x) (ROTR(x, 7) ^ ROTR(x, 18) ^ SHFR(x, 3))
-#define SHA256_F4(x) (ROTR(x, 17) ^ ROTR(x, 19) ^ SHFR(x, 10))
-
-#define SHA512_F1(x) (ROTR(x, 28) ^ ROTR(x, 34) ^ ROTR(x, 39))
-#define SHA512_F2(x) (ROTR(x, 14) ^ ROTR(x, 18) ^ ROTR(x, 41))
-#define SHA512_F3(x) (ROTR(x, 1) ^ ROTR(x, 8) ^ SHFR(x, 7))
-#define SHA512_F4(x) (ROTR(x, 19) ^ ROTR(x, 61) ^ SHFR(x, 6))
-
-#define UNPACK32(x, str)                   \
-    {                                      \
-        *((str) + 3) = (UINT8)((x));       \
-        *((str) + 2) = (UINT8)((x) >> 8);  \
-        *((str) + 1) = (UINT8)((x) >> 16); \
-        *((str) + 0) = (UINT8)((x) >> 24); \
-    }
-
-#define PACK32(str, x)                                                                                                                     \
-    {                                                                                                                                      \
-        *(x) = ((UINT32) * ((str) + 3)) | ((UINT32) * ((str) + 2) << 8) | ((UINT32) * ((str) + 1) << 16) | ((UINT32) * ((str) + 0) << 24); \
-    }
-
-#define UNPACK64(x, str)                   \
-    {                                      \
-        *((str) + 7) = (UINT8)((x));       \
-        *((str) + 6) = (UINT8)((x) >> 8);  \
-        *((str) + 5) = (UINT8)((x) >> 16); \
-        *((str) + 4) = (UINT8)((x) >> 24); \
-        *((str) + 3) = (UINT8)((x) >> 32); \
-        *((str) + 2) = (UINT8)((x) >> 40); \
-        *((str) + 1) = (UINT8)((x) >> 48); \
-        *((str) + 0) = (UINT8)((x) >> 56); \
-    }
-
-#define PACK64(str, x)                                                                                                                                                                                                                                                         \
-    {                                                                                                                                                                                                                                                                          \
-        *(x) = ((UINT64) * ((str) + 7)) | ((UINT64) * ((str) + 6) << 8) | ((UINT64) * ((str) + 5) << 16) | ((UINT64) * ((str) + 4) << 24) | ((UINT64) * ((str) + 3) << 32) | ((UINT64) * ((str) + 2) << 40) | ((UINT64) * ((str) + 1) << 48) | ((UINT64) * ((str) + 0) << 56); \
-    }
-
-/* Macros used for loops unrolling */
-#define SHA256_SCR(i)                                                             \
-    {                                                                             \
-        w[i] = SHA256_F4(w[i - 2]) + w[i - 7] + SHA256_F3(w[i - 15]) + w[i - 16]; \
-    }
-
-#define SHA512_SCR(i)                                                             \
-    {                                                                             \
-        w[i] = SHA512_F4(w[i - 2]) + w[i - 7] + SHA512_F3(w[i - 15]) + w[i - 16]; \
-    }
 
 static constexpr UINT32 sha256_h0[8] =
     {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
      0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
-
-static constexpr UINT64 sha384_h0[8] =
-    {0xcbbb9d5dc1059ed8ULL, 0x629a292a367cd507ULL,
-     0x9159015a3070dd17ULL, 0x152fecd8f70e5939ULL,
-     0x67332667ffc00b31ULL, 0x8eb44a8768581511ULL,
-     0xdb0c2e0d64f98fa7ULL, 0x47b5481dbefa4fa4ULL};
 
 static constexpr UINT32 sha256_k[64] =
     {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
@@ -118,6 +58,12 @@ static constexpr UINT32 sha256_k[64] =
      0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
      0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
+
+static constexpr UINT64 sha384_h0[8] =
+    {0xcbbb9d5dc1059ed8ULL, 0x629a292a367cd507ULL,
+     0x9159015a3070dd17ULL, 0x152fecd8f70e5939ULL,
+     0x67332667ffc00b31ULL, 0x8eb44a8768581511ULL,
+     0xdb0c2e0d64f98fa7ULL, 0x47b5481dbefa4fa4ULL};
 
 static constexpr UINT64 sha512_k[80] =
     {0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL,
@@ -161,30 +107,94 @@ static constexpr UINT64 sha512_k[80] =
      0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL,
      0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL};
 
-/* SHA-256 Class Implementation */
-
-VOID SHA256::Transform(SHA256 *ctx, const UINT8 *message, UINT64 block_nb)
+FORCE_INLINE VOID SHA256Traits::FillH0(Word* out)
 {
-    UINT32 w[64];
-    UINT32 wv[8];
-    UINT32 t1, t2;
+    auto embedded = MakeEmbedArray(sha256_h0);
+    Memory::Copy(out, (PCVOID)embedded, sizeof(sha256_h0));
+}
+
+FORCE_INLINE VOID SHA256Traits::FillK(Word* out)
+{
+    auto embedded = MakeEmbedArray(sha256_k);
+    Memory::Copy(out, (PCVOID)embedded, sizeof(sha256_k));
+}
+
+FORCE_INLINE VOID SHA256Traits::Pack(const UINT8* str, Word* x)
+{
+    *x = ((Word)str[3]) | ((Word)str[2] << 8) | ((Word)str[1] << 16) | ((Word)str[0] << 24);
+}
+
+FORCE_INLINE VOID SHA256Traits::Unpack(Word x, UINT8* str)
+{
+    str[3] = (UINT8)(x);
+    str[2] = (UINT8)(x >> 8);
+    str[1] = (UINT8)(x >> 16);
+    str[0] = (UINT8)(x >> 24);
+}
+
+FORCE_INLINE VOID SHA384Traits::FillH0(Word* out)
+{
+    auto embedded = MakeEmbedArray(sha384_h0);
+    Memory::Copy(out, (PCVOID)embedded, sizeof(sha384_h0));
+}
+
+FORCE_INLINE VOID SHA384Traits::FillK(Word* out)
+{
+    auto embedded = MakeEmbedArray(sha512_k);
+    Memory::Copy(out, (PCVOID)embedded, sizeof(sha512_k));
+}
+
+FORCE_INLINE VOID SHA384Traits::Pack(const UINT8* str, Word* x)
+{
+    *x = ((Word)str[7]) | ((Word)str[6] << 8) | ((Word)str[5] << 16) | ((Word)str[4] << 24) |
+         ((Word)str[3] << 32) | ((Word)str[2] << 40) | ((Word)str[1] << 48) | ((Word)str[0] << 56);
+}
+
+FORCE_INLINE VOID SHA384Traits::Unpack(Word x, UINT8* str)
+{
+    str[7] = (UINT8)(x);
+    str[6] = (UINT8)(x >> 8);
+    str[5] = (UINT8)(x >> 16);
+    str[4] = (UINT8)(x >> 24);
+    str[3] = (UINT8)(x >> 32);
+    str[2] = (UINT8)(x >> 40);
+    str[1] = (UINT8)(x >> 48);
+    str[0] = (UINT8)(x >> 56);
+}
+
+template<typename Traits>
+SHABase<Traits>::SHABase()
+{
+    Traits::FillH0(this->h);
+    this->len = 0;
+    this->tot_len = 0;
+}
+
+template<typename Traits>
+VOID SHABase<Traits>::Transform(SHABase *ctx, const UINT8 *message, UINT64 block_nb)
+{
+    Word w[Traits::ROUND_COUNT];
+    Word wv[8];
+    Word k[Traits::ROUND_COUNT];
+    Word t1, t2;
     const UINT8 *sub_block;
     UINT64 i;
-
     INT32 j;
+
+    Traits::FillK(k);
 
     for (i = 0; i < block_nb; i++)
     {
-        sub_block = message + (i << 6);
+        sub_block = message + (i << Traits::BLOCK_SHIFT);
 
         for (j = 0; j < 16; j++)
         {
-            PACK32(&sub_block[j << 2], &w[j]);
+            Traits::Pack(&sub_block[j << Traits::WORD_SHIFT], &w[j]);
         }
 
-        for (j = 16; j < 64; j++)
+        for (j = 16; j < (INT32)Traits::ROUND_COUNT; j++)
         {
-            SHA256_SCR(j);
+            w[j] = Traits::F4(w[j - 2]) + w[j - 7] + Traits::F3(w[j - 15]) + w[j - 16];
         }
 
         for (j = 0; j < 8; j++)
@@ -192,10 +202,10 @@ VOID SHA256::Transform(SHA256 *ctx, const UINT8 *message, UINT64 block_nb)
             wv[j] = ctx->h[j];
         }
 
-        for (j = 0; j < 64; j++)
+        for (j = 0; j < (INT32)Traits::ROUND_COUNT; j++)
         {
-            t1 = wv[7] + SHA256_F2(wv[4]) + CH(wv[4], wv[5], wv[6]) + ((PUINT32)(PCVOID)(MakeEmbedArray(sha256_k)))[j] + w[j];
-            t2 = SHA256_F1(wv[0]) + MAJ(wv[0], wv[1], wv[2]);
+            t1 = wv[7] + Traits::F2(wv[4]) + CH(wv[4], wv[5], wv[6]) + k[j] + w[j];
+            t2 = Traits::F1(wv[0]) + MAJ(wv[0], wv[1], wv[2]);
             wv[7] = wv[6];
             wv[6] = wv[5];
             wv[5] = wv[4];
@@ -213,53 +223,42 @@ VOID SHA256::Transform(SHA256 *ctx, const UINT8 *message, UINT64 block_nb)
     }
 }
 
-SHA256::SHA256()
-{
-
-    INT32 i;
-    for (i = 0; i < 8; i++)
-    {
-        this->h[i] = ((PUINT32)(PCVOID)MakeEmbedArray(sha256_h0))[i];
-    }
-
-    this->len = 0;
-    this->tot_len = 0;
-}
-
-VOID SHA256::Update(const UINT8 *message, UINT64 len)
+template<typename Traits>
+VOID SHABase<Traits>::Update(const UINT8 *message, UINT64 len)
 {
     UINT64 block_nb;
     UINT64 new_len, rem_len, tmp_len;
     const UINT8 *shifted_message;
 
-    tmp_len = SHA256_BLOCK_SIZE - this->len;
+    tmp_len = Traits::BLOCK_SIZE - this->len;
     rem_len = len < tmp_len ? len : tmp_len;
 
-    Memory::Copy(&(this->block[this->len]), (PCHAR)message, (USIZE)rem_len);
+    Memory::Copy(&(this->block[this->len]), message, (USIZE)rem_len);
 
-    if (this->len + len < SHA256_BLOCK_SIZE)
+    if (this->len + len < Traits::BLOCK_SIZE)
     {
         this->len += len;
         return;
     }
 
     new_len = len - rem_len;
-    block_nb = new_len / SHA256_BLOCK_SIZE;
+    block_nb = new_len / Traits::BLOCK_SIZE;
 
     shifted_message = message + rem_len;
 
-    SHA256::Transform(this, this->block, 1);
-    SHA256::Transform(this, shifted_message, block_nb);
+    SHABase<Traits>::Transform(this, this->block, 1);
+    SHABase<Traits>::Transform(this, shifted_message, block_nb);
 
-    rem_len = new_len % SHA256_BLOCK_SIZE;
+    rem_len = new_len % Traits::BLOCK_SIZE;
 
-    Memory::Copy(this->block, (PCHAR)&shifted_message[block_nb << 6], (USIZE)rem_len);
+    Memory::Copy(this->block, &shifted_message[block_nb << Traits::BLOCK_SHIFT], (USIZE)rem_len);
 
     this->len = rem_len;
-    this->tot_len += (block_nb + 1) << 6;
+    this->tot_len += (block_nb + 1) << Traits::BLOCK_SHIFT;
 }
 
-VOID SHA256::Final(UINT8 *digest)
+template<typename Traits>
+VOID SHABase<Traits>::Final(UINT8 *digest)
 {
     UINT64 block_nb;
     UINT64 pm_len;
@@ -268,189 +267,68 @@ VOID SHA256::Final(UINT8 *digest)
 
     INT32 i;
 
-    block_nb = (1 + ((SHA256_BLOCK_SIZE - 9) < (this->len % SHA256_BLOCK_SIZE)));
+    block_nb = (1 + ((Traits::BLOCK_SIZE - Traits::PADDING_OFFSET) < (this->len % Traits::BLOCK_SIZE)));
 
     tot_len = this->tot_len + this->len;
     this->tot_len = tot_len;
 
     len_b = tot_len << 3;
-    pm_len = block_nb << 6;
+    pm_len = block_nb << Traits::BLOCK_SHIFT;
 
     Memory::Set(this->block + this->len, 0, (USIZE)pm_len - (USIZE)this->len);
     this->block[this->len] = 0x80;
-    UNPACK64(len_b, this->block + pm_len - 8);
 
-    SHA256::Transform(this, this->block, block_nb);
+    // Unpack length as 64-bit big-endian at end of block
+    UINT8* len_ptr = this->block + pm_len - 8;
+    len_ptr[7] = (UINT8)(len_b);
+    len_ptr[6] = (UINT8)(len_b >> 8);
+    len_ptr[5] = (UINT8)(len_b >> 16);
+    len_ptr[4] = (UINT8)(len_b >> 24);
+    len_ptr[3] = (UINT8)(len_b >> 32);
+    len_ptr[2] = (UINT8)(len_b >> 40);
+    len_ptr[1] = (UINT8)(len_b >> 48);
+    len_ptr[0] = (UINT8)(len_b >> 56);
 
-    for (i = 0; i < 8; i++)
+    SHABase<Traits>::Transform(this, this->block, block_nb);
+
+    for (i = 0; i < (INT32)Traits::OUTPUT_WORDS; i++)
     {
-        UNPACK32(this->h[i], &digest[i << 2]);
+        Traits::Unpack(this->h[i], &digest[i << Traits::WORD_SHIFT]);
     }
 }
 
-VOID SHA256::Hash(const UINT8 *message, UINT64 len, UINT8 *digest)
+template<typename Traits>
+VOID SHABase<Traits>::Hash(const UINT8 *message, UINT64 len, UINT8 *digest)
 {
-    SHA256 ctx;
-
+    SHABase<Traits> ctx;
     ctx.Update(message, len);
     ctx.Final(digest);
 }
 
-/* SHA-384 Transform Implementation (shared with SHA-512 algorithm) */
+template class SHABase<SHA256Traits>;
+template class SHABase<SHA384Traits>;
 
-VOID SHA384::Transform(SHA384 *ctx, const UINT8 *message, UINT64 block_nb)
-{
-    UINT64 w[80];
-    UINT64 wv[8];
-    UINT64 t1, t2;
-    const UINT8 *sub_block;
-    UINT64 i;
-    INT32 j;
-
-    for (i = 0; i < block_nb; i++)
-    {
-        sub_block = message + (i << 7);
-
-        for (j = 0; j < 16; j++)
-        {
-            PACK64(&sub_block[j << 3], &w[j]);
-        }
-
-        for (j = 16; j < 80; j++)
-        {
-            SHA512_SCR(j);
-        }
-
-        for (j = 0; j < 8; j++)
-        {
-            wv[j] = ctx->h[j];
-        }
-        for (j = 0; j < 80; j++)
-        {
-            t1 = wv[7] + SHA512_F2(wv[4]) + CH(wv[4], wv[5], wv[6]) + ((PUINT64)(PCVOID)MakeEmbedArray(sha512_k))[j] + w[j];
-            t2 = SHA512_F1(wv[0]) + MAJ(wv[0], wv[1], wv[2]);
-            wv[7] = wv[6];
-            wv[6] = wv[5];
-            wv[5] = wv[4];
-            wv[4] = wv[3] + t1;
-            wv[3] = wv[2];
-            wv[2] = wv[1];
-            wv[1] = wv[0];
-            wv[0] = t1 + t2;
-        }
-
-        for (j = 0; j < 8; j++)
-        {
-            ctx->h[j] += wv[j];
-        }
-    }
-}
-
-/* SHA-384 Class Implementation */
-
-SHA384::SHA384()
-{
-    INT32 i;
-    for (i = 0; i < 8; i++)
-    {
-        this->h[i] = ((PUINT64)(PCVOID)MakeEmbedArray(sha384_h0))[i];
-    }
-
-    this->len = 0;
-    this->tot_len = 0;
-}
-
-VOID SHA384::Update(const UINT8 *message, UINT64 len)
-{
-    UINT64 block_nb;
-    UINT64 new_len, rem_len, tmp_len;
-    const UINT8 *shifted_message;
-
-    tmp_len = SHA384_BLOCK_SIZE - this->len;
-    rem_len = len < tmp_len ? len : tmp_len;
-
-    Memory::Copy(&this->block[this->len], (PCHAR)message, (USIZE)rem_len);
-
-    if (this->len + len < SHA384_BLOCK_SIZE)
-    {
-        this->len += len;
-        return;
-    }
-
-    new_len = len - rem_len;
-    block_nb = new_len / SHA384_BLOCK_SIZE;
-
-    shifted_message = message + rem_len;
-
-    SHA384::Transform(this, this->block, 1);
-    SHA384::Transform(this, shifted_message, block_nb);
-
-    rem_len = new_len % SHA384_BLOCK_SIZE;
-
-    Memory::Copy(this->block, (PCHAR)&shifted_message[block_nb << 7], (USIZE)rem_len);
-
-    this->len = rem_len;
-    this->tot_len += (block_nb + 1) << 7;
-}
-
-VOID SHA384::Final(UINT8 *digest)
-{
-    UINT64 block_nb;
-    UINT64 pm_len;
-    UINT64 len_b;
-    UINT64 tot_len;
-
-    INT32 i;
-
-    block_nb = (1 + ((SHA384_BLOCK_SIZE - 17) < (this->len % SHA384_BLOCK_SIZE)));
-
-    tot_len = this->tot_len + this->len;
-    this->tot_len = tot_len;
-
-    len_b = tot_len << 3;
-    pm_len = block_nb << 7;
-
-    Memory::Set(this->block + this->len, 0, (USIZE)pm_len - (USIZE)this->len);
-    this->block[this->len] = 0x80;
-    UNPACK64(len_b, this->block + pm_len - 8);
-
-    SHA384::Transform(this, this->block, block_nb);
-
-    for (i = 0; i < 6; i++)
-    {
-        UNPACK64(this->h[i], &digest[i << 3]);
-    }
-}
-
-VOID SHA384::Hash(const UINT8 *message, UINT64 len, UINT8 *digest)
-{
-    SHA384 ctx;
-
-    ctx.Update(message, len);
-    ctx.Final(digest);
-}
-
-/* HMAC-SHA256 Class Implementation */
-VOID HMAC_SHA256::Init(const UCHAR *key, UINT32 key_size)
+template<typename SHAType, typename Traits>
+VOID HMACBase<SHAType, Traits>::Init(const UCHAR *key, UINT32 key_size)
 {
     UINT32 fill;
     UINT32 num;
 
     const UCHAR *key_used;
-    UCHAR key_temp[SHA256_DIGEST_SIZE];
+    UCHAR key_temp[Traits::DIGEST_SIZE];
     INT32 i;
 
-    if (key_size == SHA256_BLOCK_SIZE)
+    if (key_size == Traits::BLOCK_SIZE)
     {
         key_used = key;
-        num = SHA256_BLOCK_SIZE;
+        num = Traits::BLOCK_SIZE;
     }
     else
     {
-        if (key_size > SHA256_BLOCK_SIZE)
+        if (key_size > Traits::BLOCK_SIZE)
         {
-            num = SHA256_DIGEST_SIZE;
-            SHA256::Hash(key, key_size, key_temp);
+            num = Traits::DIGEST_SIZE;
+            SHAType::Hash(key, key_size, key_temp);
             key_used = key_temp;
         }
         else
@@ -458,7 +336,7 @@ VOID HMAC_SHA256::Init(const UCHAR *key, UINT32 key_size)
             key_used = key;
             num = key_size;
         }
-        fill = SHA256_BLOCK_SIZE - num;
+        fill = Traits::BLOCK_SIZE - num;
 
         Memory::Set(this->block_ipad + num, 0x36, fill);
         Memory::Set(this->block_opad + num, 0x5c, fill);
@@ -470,120 +348,48 @@ VOID HMAC_SHA256::Init(const UCHAR *key, UINT32 key_size)
         this->block_opad[i] = key_used[i] ^ 0x5c;
     }
 
-    this->ctx_inside.Update(this->block_ipad, SHA256_BLOCK_SIZE);
-    this->ctx_outside.Update(this->block_opad, SHA256_BLOCK_SIZE);
+    this->ctx_inside.Update(this->block_ipad, Traits::BLOCK_SIZE);
+    this->ctx_outside.Update(this->block_opad, Traits::BLOCK_SIZE);
 
-    Memory::Copy(&this->ctx_inside_reinit, &this->ctx_inside, sizeof(SHA256));
-    Memory::Copy(&this->ctx_outside_reinit, &this->ctx_outside, sizeof(SHA256));
+    Memory::Copy(&this->ctx_inside_reinit, &this->ctx_inside, sizeof(SHAType));
+    Memory::Copy(&this->ctx_outside_reinit, &this->ctx_outside, sizeof(SHAType));
 }
 
-VOID HMAC_SHA256::Reinit()
+template<typename SHAType, typename Traits>
+VOID HMACBase<SHAType, Traits>::Reinit()
 {
-    Memory::Copy(&this->ctx_inside, &this->ctx_inside_reinit, sizeof(SHA256));
-    Memory::Copy(&this->ctx_outside, &this->ctx_outside_reinit, sizeof(SHA256));
+    Memory::Copy(&this->ctx_inside, &this->ctx_inside_reinit, sizeof(SHAType));
+    Memory::Copy(&this->ctx_outside, &this->ctx_outside_reinit, sizeof(SHAType));
 }
 
-VOID HMAC_SHA256::Update(const UCHAR *message, UINT32 message_len)
+template<typename SHAType, typename Traits>
+VOID HMACBase<SHAType, Traits>::Update(const UCHAR *message, UINT32 message_len)
 {
     this->ctx_inside.Update(message, message_len);
 }
 
-VOID HMAC_SHA256::Final(PUCHAR mac, UINT32 mac_size)
+template<typename SHAType, typename Traits>
+VOID HMACBase<SHAType, Traits>::Final(PUCHAR mac, UINT32 mac_size)
 {
-    UCHAR digest_inside[SHA256_DIGEST_SIZE];
-    UCHAR mac_temp[SHA256_DIGEST_SIZE];
+    UCHAR digest_inside[Traits::DIGEST_SIZE];
+    UCHAR mac_temp[Traits::DIGEST_SIZE];
 
     this->ctx_inside.Final(digest_inside);
-    this->ctx_outside.Update(digest_inside, SHA256_DIGEST_SIZE);
+    this->ctx_outside.Update(digest_inside, Traits::DIGEST_SIZE);
     this->ctx_outside.Final(mac_temp);
     Memory::Copy(mac, mac_temp, mac_size);
 }
 
-VOID HMAC_SHA256::Compute(const UCHAR *key, UINT32 key_size,
-                          const UCHAR *message, UINT32 message_len,
-                          PUCHAR mac, UINT32 mac_size)
+template<typename SHAType, typename Traits>
+VOID HMACBase<SHAType, Traits>::Compute(const UCHAR *key, UINT32 key_size,
+                                         const UCHAR *message, UINT32 message_len,
+                                         PUCHAR mac, UINT32 mac_size)
 {
-    HMAC_SHA256 ctx;
+    HMACBase<SHAType, Traits> ctx;
     ctx.Init(key, key_size);
     ctx.Update(message, message_len);
     ctx.Final(mac, mac_size);
 }
 
-/* HMAC-SHA384 Class Implementation */
-VOID HMAC_SHA384::Init(const UCHAR *key, UINT32 key_size)
-{
-    UINT32 fill;
-    UINT32 num;
-
-    const UCHAR *key_used;
-    UCHAR key_temp[SHA384_DIGEST_SIZE];
-    INT32 i;
-
-    if (key_size == SHA384_BLOCK_SIZE)
-    {
-        key_used = key;
-        num = SHA384_BLOCK_SIZE;
-    }
-    else
-    {
-        if (key_size > SHA384_BLOCK_SIZE)
-        {
-            num = SHA384_DIGEST_SIZE;
-            SHA384::Hash(key, key_size, key_temp);
-            key_used = key_temp;
-        }
-        else
-        {
-            key_used = key;
-            num = key_size;
-        }
-        fill = SHA384_BLOCK_SIZE - num;
-
-        Memory::Set(this->block_ipad + num, 0x36, fill);
-        Memory::Set(this->block_opad + num, 0x5c, fill);
-    }
-
-    for (i = 0; i < (INT32)num; i++)
-    {
-        this->block_ipad[i] = key_used[i] ^ 0x36;
-        this->block_opad[i] = key_used[i] ^ 0x5c;
-    }
-
-    this->ctx_inside.Update(this->block_ipad, SHA384_BLOCK_SIZE);
-    this->ctx_outside.Update(this->block_opad, SHA384_BLOCK_SIZE);
-
-    Memory::Copy(&this->ctx_inside_reinit, &this->ctx_inside, sizeof(SHA384));
-    Memory::Copy(&this->ctx_outside_reinit, &this->ctx_outside, sizeof(SHA384));
-}
-
-VOID HMAC_SHA384::Reinit()
-{
-    Memory::Copy(&this->ctx_inside, &this->ctx_inside_reinit, sizeof(SHA384));
-    Memory::Copy(&this->ctx_outside, &this->ctx_outside_reinit, sizeof(SHA384));
-}
-
-VOID HMAC_SHA384::Update(const UCHAR *message, UINT32 message_len)
-{
-    this->ctx_inside.Update(message, message_len);
-}
-
-VOID HMAC_SHA384::Final(PUCHAR mac, UINT32 mac_size)
-{
-    UCHAR digest_inside[SHA384_DIGEST_SIZE];
-    UCHAR mac_temp[SHA384_DIGEST_SIZE];
-
-    this->ctx_inside.Final(digest_inside);
-    this->ctx_outside.Update(digest_inside, SHA384_DIGEST_SIZE);
-    this->ctx_outside.Final(mac_temp);
-    Memory::Copy(mac, mac_temp, mac_size);
-}
-
-VOID HMAC_SHA384::Compute(const UCHAR *key, UINT32 key_size,
-                          const UCHAR *message, UINT32 message_len,
-                          PUCHAR mac, UINT32 mac_size)
-{
-    HMAC_SHA384 ctx;
-    ctx.Init(key, key_size);
-    ctx.Update(message, message_len);
-    ctx.Final(mac, mac_size);
-}
+template class HMACBase<SHA256, SHA256Traits>;
+template class HMACBase<SHA384, SHA384Traits>;

@@ -106,7 +106,7 @@ public:
         for (USIZE b = 0; b < sizeof(TChar); ++b)
         {
             U byte_val = static_cast<U>(GetByte(base + b));
-            U shifted = byte_val << (b * 8u);
+            U shifted = byte_val << (int)(b * 8u);
             v |= shifted;
         }
 

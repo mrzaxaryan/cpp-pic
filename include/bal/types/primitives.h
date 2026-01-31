@@ -29,13 +29,8 @@ typedef const WCHAR *PCWCHAR;
 
 typedef bool BOOL, *PBOOL, **PPBOOL;
 
-#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
-typedef unsigned long long USIZE, *PUSIZE;
-typedef signed long long SSIZE, *PSSIZE;
-#else
-typedef unsigned int USIZE, *PUSIZE;
-typedef signed int SSIZE, *PSSIZE;
-#endif
+typedef __SIZE_TYPE__ USIZE, *PUSIZE;
+typedef __INTPTR_TYPE__ SSIZE, *PSSIZE;
 
 typedef __builtin_va_list VA_LIST;
 #define VA_START(ap, v) __builtin_va_start(ap, v)
@@ -50,5 +45,9 @@ typedef __builtin_va_list VA_LIST;
 #define STDCALL
 #elif defined(PLATFORM_WINDOWS_AARCH64)
 #define STDCALL
+#elif defined(PLATFORM_LINUX)
+#define STDCALL  // Linux uses System V ABI, no special calling convention needed
+#else
+#define STDCALL  // Default: no special calling convention
 #endif
 

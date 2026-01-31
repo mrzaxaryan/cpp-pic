@@ -58,11 +58,62 @@ public:
     {
     }
 
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64))
+    // On Linux 64-bit, SSIZE is 'signed long' which is distinct from 'signed long long'
+    constexpr INT64(signed long val) noexcept
+        : low((UINT32)(val & 0xFFFFFFFF)),
+          high((INT32)((val >> 32) & 0xFFFFFFFF))
+    {
+    }
+#endif
+
     // Get low 32 bits
     constexpr UINT32 Low() const noexcept { return low; }
 
     // Get high 32 bits
     constexpr INT32 High() const noexcept { return high; }
+
+    /**
+     * Parse a string to INT64
+     * @param str String to parse (supports optional sign and digits)
+     * @return Parsed INT64 value
+     */
+    static INT64 Parse(const char *str) noexcept
+    {
+        INT64 num = INT64(0, 0);
+        INT32 sign = 1;
+
+        if (str == nullptr)
+        {
+            return INT64(0, 0);
+        }
+
+        // Skip leading whitespace characters
+        while (*str == ' ')
+        {
+            str++;
+        }
+
+        // Check for optional sign character
+        if (*str == '-')
+        {
+            sign = -1;
+            str++;
+        }
+        else if (*str == '+')
+        {
+            str++;
+        }
+
+        // Convert string to integer
+        while (*str >= '0' && *str <= '9')
+        {
+            num = num * INT64(10) + INT64(INT32(*str - '0'));
+            str++;
+        }
+
+        return sign < 0 ? -num : num;
+    }
 
     // Conversion to signed long long
     constexpr operator signed long long() const noexcept

@@ -12,25 +12,28 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  LLVM_VERSION: "21.1.6"
+  LLVM_VERSION: "20.1.6"
 
 jobs:
-  build-windows:
-    name: Build ${{ matrix.arch }}-${{ matrix.platform }}
-    runs-on: windows-2022
+  build-and-test-windows:
+    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: i386
             platform: windows
-            can-test: true
+            runner: windows-2022
+            note: "Runs on x64 via WoW64 (32-bit compatibility)"
           - arch: x86_64
             platform: windows
-            can-test: true
+            runner: windows-2022
+            note: "Runs natively on x64"
           - arch: aarch64
             platform: windows
-            can-test: false
+            runner: windows-11-arm
+            note: "Runs natively on ARM64"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,9 +58,6 @@ jobs:
 
           "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-          clang --version
-          lld-link --version
-
       - name: Build
         shell: pwsh
         run: |
@@ -71,94 +71,177 @@ jobs:
                 "-DBUILD_TYPE=release"
           cmake --build "build/release/$platform/$arch/cmake"
 
+      - name: Run test
+        shell: pwsh
+        run: |
+          $arch = "${{ matrix.arch }}"
+          Write-Host "=== Testing $arch-${{ matrix.platform }} ==="
+          Write-Host "Note: ${{ matrix.note }}"
+          Write-Host ""
+
+          # Find output.bin in build directory
+          $binFile = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+
+          if (-not $binFile) {
+            Write-Host "ERROR: No output.bin found in build/"
+            exit 1
+          }
+
+          Write-Host "=== Executing via loader.py: $($binFile.FullName) ==="
+          Write-Host ""
+
+          python scripts/loader.py --arch $arch $binFile.FullName
+          $exitCode = $LASTEXITCODE
+
+          Write-Host ""
+          if ($exitCode -eq 0) {
+            Write-Host "TEST PASSED (exit code: $exitCode)"
+          } else {
+            Write-Host "TEST FAILED: exit code $exitCode (expected 0)"
+            exit $exitCode
+          }
+
       - name: Upload build artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          retention-days: 1
           path: |
             build/**
-            !build/**/cmake/CMakeFiles/**
+            !build/**/cmake/**
 
-  test-windows:
-    name: Test ${{ matrix.arch }}-${{ matrix.platform }}
-    needs: [build-windows]
-    runs-on: windows-2022
+  build-and-test-linux:
+    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: i386
-            platform: windows
-            can-test: true
-            note: "Runs on x64 via WoW64 (32-bit compatibility)"
+            platform: linux
+            qemu: qemu-i386-static
+            note: "Runs via QEMU i386"
           - arch: x86_64
-            platform: windows
-            can-test: true
+            platform: linux
+            qemu: ""
             note: "Runs natively on x64"
+          - arch: armv7a
+            platform: linux
+            qemu: qemu-arm-static
+            note: "Runs via QEMU ARM"
           - arch: aarch64
-            platform: windows
-            can-test: false
-            note: "Build-only (requires ARM64 runner to execute)"
+            platform: linux
+            qemu: qemu-aarch64-static
+            note: "Runs via QEMU ARM64"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}
-          path: artifacts
+      - name: Install LLVM and Ninja
+        run: |
+          set -e
+          # Extract major version for apt (e.g., "20" from "20.1.6")
+          LLVM_VER=$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1)
+
+          # Install dependencies and Ninja
+          sudo apt-get update
+          sudo apt-get install -y ninja-build wget lsb-release ca-certificates gnupg cmake
+          ninja --version
+
+          # Add LLVM apt repository
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+
+          # Install LLVM, Clang, LLD, and tools
+          sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
+
+          # Create symbolic links for all required tools
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100
+
+          # Select the installed LLVM version
+          sudo update-alternatives --set clang /usr/bin/clang-${LLVM_VER}
+          sudo update-alternatives --set clang++ /usr/bin/clang++-${LLVM_VER}
+          sudo update-alternatives --set lld /usr/bin/lld-${LLVM_VER}
+          sudo update-alternatives --set ld.lld /usr/bin/ld.lld-${LLVM_VER}
+          sudo update-alternatives --set llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER}
+          sudo update-alternatives --set llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER}
+          sudo update-alternatives --set llvm-strings /usr/bin/llvm-strings-${LLVM_VER}
+
+          # Verify installation
+          clang --version
+
+      - name: Build
+        run: |
+          ARCH="${{ matrix.arch }}"
+          PLATFORM="${{ matrix.platform }}"
+          echo "=== BUILD: arch=$ARCH platform=$PLATFORM type=release ==="
+          cmake -B "build/release/$PLATFORM/$ARCH/cmake" \
+                -G Ninja \
+                "-DARCHITECTURE=$ARCH" \
+                "-DPLATFORM=$PLATFORM" \
+                "-DBUILD_TYPE=release"
+          cmake --build "build/release/$PLATFORM/$ARCH/cmake"
+
+      - name: Install QEMU
+        if: matrix.qemu != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
 
       - name: Run test
-        if: matrix.can-test
-        shell: cmd
         run: |
-          @echo off
-          echo === Testing ${{ matrix.arch }}-${{ matrix.platform }} ===
-          echo Note: ${{ matrix.note }}
-          echo.
+          set -euo pipefail
+          echo "=== Testing ${{ matrix.arch }}-${{ matrix.platform }} ==="
+          echo "Note: ${{ matrix.note }}"
+          echo ""
 
-          for /r artifacts %%f in (*.exe) do (
-            if not "%%~nf"=="a" (
-              set "TEST_EXE=%%f"
-            )
-          )
+          # Find the executable (*.elf on Linux)
+          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
 
-          if not defined TEST_EXE (
-            echo ERROR: No .exe found in artifacts/
-            exit /b 1
-          )
+          if [ -z "$TEST_EXE" ]; then
+            echo "ERROR: No executable found in build/"
+            exit 1
+          fi
 
-          echo === Executing: %TEST_EXE% ===
-          echo.
+          # Make it executable
+          chmod +x "$TEST_EXE"
 
-          "%TEST_EXE%"
-          set EXIT_CODE=%ERRORLEVEL%
+          echo "=== Executing: $TEST_EXE ==="
+          echo ""
 
-          echo.
-          if %EXIT_CODE%==0 (
-            echo TEST PASSED (exit code: %EXIT_CODE%)
-          ) else (
-            echo TEST FAILED: exit code %EXIT_CODE% (expected 0)
-            exit /b %EXIT_CODE%
-          )
+          # Run the test
+          set +e
+          if [ -n "${{ matrix.qemu }}" ]; then
+            ${{ matrix.qemu }} "$TEST_EXE"
+          else
+            "$TEST_EXE"
+          fi
+          EXIT_CODE=$?
+          set -e
 
-      - name: Upload test logs
-        if: matrix.can-test && always()
+          echo ""
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "TEST PASSED (exit code: $EXIT_CODE)"
+          else
+            echo "TEST FAILED: exit code $EXIT_CODE (expected 0)"
+            exit $EXIT_CODE
+          fi
+
+      - name: Upload build artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-logs-${{ matrix.arch }}-${{ matrix.platform }}
-          path: output.log.txt
-          if-no-files-found: warn
-
-      - name: Skip test
-        if: ${{ !matrix.can-test }}
-        shell: pwsh
-        run: |
-          $arch = "${{ matrix.arch }}"
-          $platform = "${{ matrix.platform }}"
-          Write-Host "=== Testing $arch-$platform ===" -ForegroundColor Cyan
-          Write-Host ""
-          Write-Host "⚠ Skipping test execution: ${{ matrix.note }}" -ForegroundColor Yellow
-          Write-Host ""
-          Write-Host "Build completed successfully - execution skipped on this runner." -ForegroundColor Green
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**

@@ -436,10 +436,9 @@ private:
 		// Test formatting output (this also tests that the values are properly passed through varargs)
 		for (INT32 i = 0; i < 10; i++)
 		{
-			// The Logger::Info call exercises the varargs casting
+			// The Logger::Info call exercises the varargs casting with custom DOUBLE type
 			DOUBLE val = testArray[i];
-			double native_val = (double)val;
-			Logger::Info<WCHAR>(L"    DOUBLE Array Value [%d]: %f"_embed, i, native_val);
+			Logger::Info<WCHAR>(L"    DOUBLE Array Value [%d]: %f"_embed, i, val);
 		}
 
 		return TRUE;

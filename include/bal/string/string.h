@@ -4,7 +4,6 @@
 #include "uint64.h"
 #include "int64.h"
 #include "double.h"
-#include "embedded_double.h"
 #include "embedded_string.h"
 
 // Class to handle string operations
@@ -169,85 +168,6 @@ BOOL String::Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase)
         str2++;
     }
     return (*str1 == *str2); // Both must land on the null terminator together
-}
-
-template <>
-inline INT32 String::ParseString<INT32>(const CHAR *str)
-{
-    INT32 num = 0;
-    INT32 sign = 1;
-
-    if (str == NULL)
-    {
-        return 0;
-    }
-    // Skip leading whitespace characters
-    while (*str == ' ')
-    {
-        str++;
-    }
-    // Check for optional sign character
-    if (*str == '-')
-    {
-        sign = -1; // If a negative sign is found, set the sign to -1
-        str++;     // Skip the sign character
-    }
-    else if (*str == '+')
-    {          // Check for a positive sign
-        str++; // Skip the positive sign character
-    }
-
-    // Convert string to integer
-    while (*str >= '0' && *str <= '9')
-    {
-        num = num * 10 + (*str - '0'); // Multiply the current number by 10 and add the integer value of the current character
-        str++;                         // Move to the next character in the string
-    }
-
-    return num * sign; // Return the final integer value, adjusting for sign
-}
-
-template <>
-inline DOUBLE String::ParseString<DOUBLE>(const CHAR *s)
-{
-    // Initialize result variables
-    DOUBLE sign = 1.0_embed;
-    DOUBLE result = 0.0_embed;
-    DOUBLE frac = 0.0_embed;
-    DOUBLE base = 1.0_embed;
-    DOUBLE tenDouble = 10.0_embed;
-
-    // sign
-    if (*s == '-')
-    {
-        sign = DOUBLE(-1.0_embed);
-        s++;
-    }
-    else if (*s == '+')
-    {
-        s++;
-    }
-
-    // integer part
-    while (*s >= '0' && *s <= '9')
-    {
-        result = result * tenDouble + DOUBLE(INT32(*s - '0'));
-        s++;
-    }
-
-    // fractional part
-    if (*s == '.')
-    {
-        s++; // skip the decimal point
-        while (*s >= '0' && *s <= '9')
-        {
-            frac = frac * tenDouble + DOUBLE(INT32(*s - '0'));
-            base = base * tenDouble;
-            s++;
-        }
-    }
-
-    return sign * (result + frac / base);
 }
 
 template <TCHAR TChar>

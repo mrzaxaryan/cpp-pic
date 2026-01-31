@@ -1,8 +1,7 @@
 #pragma once
 
 #include "ral.h"
-#include "ecc.h"
-#include "kernel32.h"
+
 
 class EccTests
 {

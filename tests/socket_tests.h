@@ -68,8 +68,6 @@ private:
 			return FALSE;
 		}
 
-		LOG_INFO("HTTP request sent successfully (%d bytes)", bytesSent);
-
 		// Receive response
 		CHAR buffer[512];
 		Memory::Zero(buffer, sizeof(buffer));
@@ -81,9 +79,6 @@ private:
 			sock.Close();
 			return FALSE;
 		}
-
-		LOG_INFO("Received HTTP response (%d bytes)", bytesRead);
-		LOG_DEBUG("Response preview: %.80s", buffer);
 
 		sock.Close();
 		return TRUE;
@@ -127,7 +122,6 @@ private:
 				return FALSE;
 			}
 
-			LOG_INFO("Connection %d successful (%d bytes received)", i + 1, bytesRead);
 			sock.Close();
 		}
 
@@ -234,8 +228,6 @@ private:
 			return FALSE;
 		}
 
-		LOG_INFO("HTTP request sent successfully over IPv6 (%d bytes)", bytesSent);
-
 		// Receive response
 		CHAR buffer[512];
 		Memory::Zero(buffer, sizeof(buffer));
@@ -247,9 +239,6 @@ private:
 			sock.Close();
 			return FALSE;
 		}
-
-		LOG_INFO("Received HTTP response over IPv6 (%d bytes)", bytesRead);
-		LOG_DEBUG("Response preview: %.80s", buffer);
 
 		sock.Close();
 		return TRUE;

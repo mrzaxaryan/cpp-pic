@@ -1,682 +1,445 @@
-# CPP-PIC: Position-Independent C++23 Runtime for Windows
+# CPP-PIC: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
-**A Revolutionary Approach to Zero-Dependency C++ Code Generation**
+## Introduction
 
-[![License](https://img.shields.io/badge/license-Proprietary-blue.svg)](LICENSE)
-[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Platform](https://img.shields.io/badge/platform-Windows-blue.svg)](README.md)
-[![Architecture](https://img.shields.io/badge/arch-i386%20%7C%20x86__64%20%7C%20armv7a%20%7C%20aarch64-orange.svg)](README.md)
+Shellcode, in security research and malware analysis, is a small, self-contained sequence of machine instructions that can be injected into memory and executed from an arbitrary location. It must operate without relying on external components such as DLLs, runtime initialization routines or fixed stack layouts. Because of these strict constraints, shellcode is traditionally written in assembly language, which provides precise control over instructions, registers, and memory access.
+While assembly ensures fully dependency-free and position-independent execution, it quickly becomes impractical as complexity grows due to its low-level nature and limited expressiveness. High-level languages like C offer improved readability, maintainability, and development speed, but standard C and C++ compilation models introduce significant challenges for shellcode development. Modern compilers typically generate binaries that depend on runtime libraries, import tables, relocation information, and read-only data sections. These dependencies violate the core requirement of shellcode—execution independent of any fixed memory layout or external support—and these problems do not admit simple or universally effective solutions.
+As a result, code produced by conventional toolchains cannot be used as standalone shellcode without substantial modification or manual restructuring.
 
----
+## Motivation
+A long time ago, in a corner of the darknet, two users debated which programming language was better. One argued that assembly provides almost complete control over execution, while the other claimed that C, as a higher-level language, is a better choice for implementing complex systems, since writing something like a TLS client in assembly is impractical.
+That debate ended with the assembly coder being kicked out from that forum.
 
-## Table of Contents
+With this work, I would like to add my two cents to that debate by arguing that it is possible to leverage modern C++23 without compromising the strict execution guarantees required for shellcode.
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Platform Support](#platform-support)
-- [Quick Start](#quick-start)
-- [How It Works](#how-it-works)
-- [Building](#building)
-- [Windows Implementation](#windows-implementation)
-- [Cryptography](#cryptography)
-- [Networking](#networking)
-- [Logging](#logging)
-- [Testing](#testing)
-- [Use Cases](#use-cases)
-- [Documentation](#documentation)
+## Common Problems Encountered
+1. Implicit reliance on `.rdata` for constant data
+2. Mandatory relocation processing
+3. Dependence on C runtime (CRT) initialization
+4. Static exposure of imported APIs
+5. Inability to execute reliably from arbitrary memory locations
 
----
+### Traditional Solutions
 
-## Overview
+* **Problem:** When writing shellcode in C, only the `.text` section is available after compilation, so global constants and string literals cannot be used because they are placed in `.rdata` or `.data`.
 
-CPP-PIC is a groundbreaking C++23 runtime library designed specifically for Windows that eliminates all `.rdata` section dependencies. By embedding constants directly in executable code, we've created a truly position-independent runtime suitable for shellcode, code injection, and embedded systems.
+* **Solution:** Minimize usage of constructs that cause generation of data in `.rdata` or `.data` by moving string literals to the stack. To create stack-based strings, represent the string as a character array stored in a local variable. This solution also obfuscates strings:
 
-This project represents years of research into compiler behavior, binary structure, and low-level Windows programming. Whether you're conducting security research, developing kernel components, or exploring the boundaries of modern C++, CPP-PIC provides unprecedented control over your binary's memory layout.
+    ```cpp
+    // "example.exe"
+    char path[] = {'e', 'x', 'a', 'm', 'p', 'l', 'e', '.', 'e', 'x', 'e', '\0'};
+    ```
 
-## Key Features
+    and in the case of wide character strings, the notation is as follows:
 
-- **Zero .rdata Dependencies**: All string literals and floating-point constants embedded as immediate values in code
-- **Position-Independent**: No relocations required, suitable for shellcode and injection payloads
-- **No CRT Required**: Complete standalone runtime with no standard library dependencies
-- **Modern C++23**: Leverages compile-time features including concepts, consteval, and fold expressions
-- **Windows-Native**: Direct syscalls, PEB walking, PE parsing - no imports
-- **Multi-Architecture**: Supports i386, x86_64, armv7a, and aarch64
-- **Full Optimization Support**: Works with all LLVM optimization levels (-O0 through -Oz)
-- **Cryptography**: SHA-256/512, ChaCha20, ECC (Elliptic Curve), Base64, cryptographic RNG
-- **Networking**: DNS resolution, HTTP client, WebSocket support, TLS 1.3 with certificate verification
-- **File System**: Complete file and directory operations via NTAPI
+    ```cpp
+    // L"example.exe"
+    wchar_t path[] = { L'e', L'x', L'a', L'm', L'p', L'l', L'e', L'.', L'e', L'x', L'e', L'\0' };
+    ```
 
-## Platform Support
+* **Alternative Solution:** Manually assign each character to an array element on the stack, one by one:
 
-| Architecture | Target Triple | Status |
-|-------------|---------------|--------|
-| **i386** | `i386-pc-windows-gnu` | ✅ Full support |
-| **x86_64** | `x86_64-pc-windows-gnu` | ✅ Full support |
-| **armv7a** | `armv7a-pc-windows-gnu` | ✅ Full support |
-| **aarch64** | `aarch64-pc-windows-gnu` | ✅ Full support |
+    ```cpp
+    char path[12];
+    path[0] = 'e';
+    path[1] = 'x';
+    path[2] = 'a';
+    path[3] = 'm';
+    path[4] = 'p';
+    path[5] = 'l';
+    path[6] = 'e';
+    path[7] = '.';
+    path[8] = 'e';
+    path[9] = 'x';
+    path[10] = 'e';
+    path[11] = '\0';
+    ```
 
-All architectures support both debug and release builds with comprehensive testing via GitHub Actions CI/CD.
+* **Why These Approaches Are Not Suitable**
 
-## Quick Start
+    These approaches are not universal because they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns—when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain.
 
-### Prerequisites
 
-**Required Tools:**
-- **LLVM/Clang 20+** - Download from [LLVM GitHub Releases](https://github.com/llvm/llvm-project/releases)
-  - Version 20.1.6 or later recommended
-  - Must include LLD linker
-- **CMake 3.20+** - Download from [cmake.org](https://cmake.org/download/)
-- **Ninja** - Install via: `winget install -e --id Ninja-build.Ninja`
+* **Problem:** C-generated shellcode relies on loader-handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
 
-**Installation:**
+* **Solution 1:** Use a custom shellcode loader.
 
-1. Download and install LLVM 20+ for Windows (LLVM-20.1.6-win64.exe)
-2. Add LLVM to your PATH during installation
-3. Install CMake and Ninja
-4. Verify installation:
-```powershell
-clang --version   # Should show version 20.x.x
-cmake --version   # Should show version 3.20+
-ninja --version
-```
+* **Solution 2:** Perform the relocation manually.
 
-### Build
+    At runtime, the shellcode can determine its own position in memory and perform the loader's work manually. In this approach, constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` for MSVC and a custom linker script for Clang. During execution, relocation entries are processed explicitly to fix up absolute addresses.
 
-```bash
-# Configure
-cmake -B build -G Ninja
-
-# Build
-cmake --build build
-
-# Run
-.\build\windows\x86_64\release\output.exe
-```
-
-### Build Options
-
-| Option | Values | Default | Description |
-|--------|--------|---------|-------------|
-| `ARCHITECTURE` | `i386`, `x86_64`, `armv7a`, `aarch64` | `x86_64` | Target CPU architecture |
-| `PLATFORM` | `windows` | `windows` | Target platform |
-| `BUILD_TYPE` | `debug`, `release` | `release` | Build configuration |
-
-### Build Examples
-
-**Windows x64 Release (default):**
-```bash
-cmake -B build -G Ninja
-cmake --build build
-```
-
-**Windows i386 Debug:**
-```bash
-cmake -B build/windows/i386/debug/cmake -G Ninja \
-    -DARCHITECTURE=i386 \
-    -DBUILD_TYPE=debug
-cmake --build build/windows/i386/debug/cmake
-```
-
-**Windows ARM64 Release:**
-```bash
-cmake -B build/windows/aarch64/release/cmake -G Ninja \
-    -DARCHITECTURE=aarch64 \
-    -DBUILD_TYPE=release
-cmake --build build/windows/aarch64/release/cmake
-```
-
-## How It Works
-
-CPP-PIC leverages cutting-edge C++23 features to achieve complete position independence through three key innovations:
-
-### 1. Compile-Time String Decomposition
-
-Using user-defined literal operators and variadic templates, strings are decomposed into individual characters at compile-time:
-
-```cpp
-template <typename TChar, TChar... Chars>
-class EMBEDDED_STRING {
-    TChar data[sizeof...(Chars) + 1];
-
-    NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING() {
-        USIZE i = 0;
-        ((data[i++] = Chars), ...);  // Fold expression
-        data[i] = 0;
-    }
-};
-```
-
-**Usage:**
-```cpp
-auto msg = "Hello, World!"_embed;   // Embedded in code, not .rdata
-```
-
-**Assembly Output:**
-```asm
-movw $0x48, (%rdi)      ; 'H'
-movw $0x65, 2(%rdi)     ; 'e'
-movw $0x6C, 4(%rdi)     ; 'l'
-movw $0x6C, 6(%rdi)     ; 'l'
-movw $0x6F, 8(%rdi)     ; 'o'
-```
-
-### 2. IEEE-754 Bit Pattern Embedding
-
-Floating-point values are converted to their IEEE-754 bit representation at compile-time:
-
-```cpp
-struct EMBEDDED_DOUBLE {
-    consteval explicit EMBEDDED_DOUBLE(double v) {
-        bits = __builtin_bit_cast(unsigned long long, v);
+    ```cpp
+    PCHAR GetInstructionAddress(VOID)
+    {
+        return __builtin_return_address(0);
     }
 
-    operator double() const {
-        return __builtin_bit_cast(double, bits);
+    PCHAR ReversePatternSearch(PCHAR rip, const CHAR *pattern, UINT32 len)
+    {
+        PCHAR p = rip;
+        while (1)
+        {
+            UINT32 i = 0;
+            for (; i < len; i++)
+            {
+                if (p[i] != pattern[i])
+                    break;
+            }
+            if (i == len)
+                return p; // found match
+            p--;    // move backward
+        }
     }
-};
-```
 
-**Usage:**
-```cpp
-auto pi = 3.14159_embed;  // IEEE-754 as immediate value
-```
+    ENTRYPOINT INT32 _start(VOID)
+    {
+    #if defined(PLATFORM_WINDOWS_I386)
 
-**Assembly Output:**
-```asm
-movabsq $0x400921f9f01b866e, %rax  ; Pi as 64-bit immediate
-```
+        PCHAR currentAddress = GetInstructionAddress(); // Get the return address of the caller function
+        UINT16 functionPrologue = 0x8955; // i386 function prologue: push ebp; mov ebp, esp
+            // Scan backward for function prologue
+        PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue));
 
-### 3. Pure Integer-Based Type Conversions
+    #endif
+    ```
 
-All type conversions use bitwise operations, eliminating compiler-generated conversion constants:
+    And then perform relocation like this:
 
-```cpp
-// Extracts integer value from IEEE-754 without FPU instructions
-INT64 operator(INT64)(const DOUBLE& d) {
-    UINT64 bits = d.bits;
-    int exponent = ((bits >> 52) & 0x7FF) - 1023;
-    UINT64 mantissa = (bits & 0xFFFFFFFFFFFFF) | 0x10000000000000;
-    // ... bit shifting magic ...
-}
-```
+    ```cpp
+    CHAR *string = "Hello, World!";
+    CHAR *relocatedString = string + (SSIZE)startAddress;
 
-## Building
+    WCHAR *wideString = L"Hello, World!";
+    WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
+    ```
 
-### VSCode Integration (Recommended)
+* **Why This Approach Is Not Suitable**
 
-The project includes comprehensive VSCode integration:
+    This method adds extra code and complexity, depends on unstable compiler behavior, and can easily break under optimization. As a result, it is unreliable and does not scale well for real-world shellcode.
 
-**Quick Actions:**
-- `Ctrl+Shift+B` - Build all configurations
-- `F5` - Run/Debug with selected configuration
+* **Problem:** Using floating-point arithmetic in C-generated shellcode introduces additional issues, as floating-point constants are typically emitted into read-only data sections such as `.rdata`. In a loaderless execution environment, these sections are not available, causing generated code to reference invalid memory. Consequently, floating-point operations cannot be relied upon for safe, position-independent shellcode execution.
 
-**Available Build Tasks:**
-- `i386-pc-windows-gnu-debug/release`
-- `x86_64-pc-windows-gnu-debug/release`
-- `armv7a-pc-windows-gnu-debug/release`
-- `aarch64-pc-windows-gnu-debug/release`
-- `Build All` - Builds all release configurations in parallel
+* **Solution:** The well-known solution is to represent floating-point values using their hexadecimal (IEEE-754) representation and then cast this value to a double at runtime:
 
-### Build Outputs
+    ```cpp
+    UINT64 f = 0x3426328629; // IEEE-754 representation
+    double d = *((double*)&f);
+    ```
 
-After building, artifacts are placed in `build/windows/<arch>/<type>/`:
+    An alternative solution is to take a string or integer and convert it to a double at runtime, which also has its own problems:
 
-| File | Description |
-|------|-------------|
-| `output.exe` | Main executable |
-| `output.bin` | Extracted `.text` section (PIC blob) |
-| `output.b64.txt` | Base64-encoded PIC blob |
-| `output.txt` | Disassembly and section dump |
-| `output.strings.txt` | Extracted strings (should be minimal) |
-| `output.map.txt` | Linker map file |
+    ```cpp
+    // Two ways: with string or with integer
+    toDouble("1.2353");
+    toDouble(1, 232342);
+    ```
 
-### Optimization Levels
+* **Why This Approach Is Not Suitable**
 
-**Default Settings:**
-- **DEBUG builds** use `-Og` (optimized for debugging experience)
-- **RELEASE builds** use `-O3` (maximum performance optimization)
+    While this does avoid embedding floating-point literals, it increases code size and complexity, which is not suitable for this type of work.
 
-**Features:**
-- Debug builds include CodeView symbols for WinDbg/Visual Studio debugging
-- Release builds include LTO (Link-Time Optimization), aggressive inlining, and loop unrolling
-- No string literals or floating-point constants in `.rdata` at any optimization level
+* **Problem:** Using function pointers in C-generated shellcode introduces relocation dependencies, as function addresses are normally resolved by the loader. In a loaderless execution environment, these relocations are not applied, causing indirect function calls to reference invalid addresses and break execution from arbitrary memory locations.
 
-## Windows Implementation
+* **Solution:** The traditional approach is to perform manual relocation at runtime. The problems with that approach were discussed above.
 
-### Direct Syscalls
+* **Problem:** Performing arithmetic with 64-bit integers on a 32-bit system, or with floating-point numbers, can cause issues because the compiler expects certain helper routines to be present.
 
-CPP-PIC bypasses the standard Windows API and uses direct syscalls:
+* **Solution:** The common way to solve this problem is to implement those helper routines manually.
 
-**ntdll.dll:**
-- `NtAllocateVirtualMemory` - Allocate memory pages
-- `NtFreeVirtualMemory` - Free memory pages
-- `NtTerminateProcess` - Exit process
+## What We Offer
+Within this work, we present fully alternative approaches to solve these problems. We introduce CPP-PIC, a C++23 runtime designed to achieve fully position-independent execution by eliminating dependencies on `.rdata`, the C runtime (CRT), and other loader-managed components. CPP-PIC provides full position-independence for shellcode, code injection, and embedded systems, enabling execution from arbitrary memory locations.
 
-**kernel32.dll:**
-- `GetStdHandle` - Get console handles
-- `WriteConsoleW` - Write wide strings to console
+### CPP-PIC Design Goals
 
-### PEB Walking
+CPP-PIC is designed around the following goals:
 
-The Process Environment Block (PEB) is accessed to locate loaded modules:
+1. **True position independence**  
+   Execution must not depend on fixed load addresses or loader-handled relocations.
 
-```cpp
-// Locate PEB (x64)
-PEB* peb = GetPEB();
+2. **Elimination of `.rdata` dependencies**  
+   No string literals or floating-point constants stored in read-only data sections.
 
-// Walk loaded modules
-PEB_LDR_DATA* ldr = peb->Ldr;
-LIST_ENTRY* moduleList = &ldr->InMemoryOrderModuleList;
+3. **No CRT or standard library reliance**  
+   A completely standalone runtime with no dependency on the C runtime or standard libraries.
 
-// Enumerate modules: ntdll.dll, kernel32.dll, etc.
-```
+4. **No static imports**  
+   All Windows functionality is resolved dynamically at runtime.
 
-### PE Parsing
+5. **Modern C++ expressiveness**  
+   Support for C++23 language features without requiring runtime initialization.
 
-Export tables are parsed to resolve API functions by hash:
-
-```cpp
-// Find export by DJB2 hash
-FARPROC GetExportByHash(HMODULE module, UINT32 hash);
-
-// Example: Resolve WriteConsoleW
-auto writeConsole = GetExportByHash(kernel32, 0x7B8F69D2);
-```
-
-**Benefits:**
-- No import table
-- No GetProcAddress calls
-- Hash-based lookups prevent string analysis
-- Position-independent
-
-### File System Operations
-
-Complete file and directory operations via NTAPI:
-
-```cpp
-// File operations
-File file;
-file.Open(path, FileMode::Read);
-file.Read(buffer, size, &bytesRead);
-file.Write(data, size, &bytesWritten);
-file.Close();
-
-// Directory operations
-Directory dir;
-dir.Create(path);
-dir.Exists(path);
-dir.Delete(path);
-dir.Enumerate(path, callback);
-```
-
-**Supported Operations:**
-- File create, read, write, delete
-- Directory create, enumerate, delete
-- File attributes and metadata
-- Path manipulation
-
-### Console Output
-
-Printf-style formatting without CRT:
-
-```cpp
-Console::WriteFormatted<WCHAR>(L"Integer: %d\n"_embed, 42);
-Console::WriteFormatted<WCHAR>(L"Float: %.5f\n"_embed, 3.14159_embed);
-Console::WriteFormatted<WCHAR>(L"Hex: 0x%X\n"_embed, 255);
-```
-
-**Format Specifiers:**
-- `%d` - Signed decimal integer
-- `%u` - Unsigned decimal integer
-- `%X` - Uppercase hexadecimal
-- `%f`, `%.Nf` - Floating-point with precision
-- `%s`, `%ls` - Narrow/wide strings
-- `%p` - Pointer
-
-### Linker Configuration
-
-Critical flags for position-independence:
-
-```cmake
-# Merge .rdata into .text (CRITICAL for PIC)
-/MERGE:.rdata=.text
-
-# Custom entry point (no CRT)
-/Entry:_start
-
-# Function ordering (i386 only)
-/ORDER:@orderfile.txt
-
-# Release optimizations
-/OPT:REF        # Remove unreferenced code
-/OPT:ICF        # Fold identical code
-/LTCG           # Link-time code generation
-```
-
-## Cryptography
-
-CPP-PIC includes a complete cryptographic suite implemented without any external dependencies:
-
-### Hashing
-
-```cpp
-// SHA-256
-UINT8 hash[32];
-Sha256::Hash(data, dataLen, hash);
-
-// SHA-512
-UINT8 hash[64];
-Sha512::Hash(data, dataLen, hash);
-
-// HMAC variants
-Sha256::Hmac(key, keyLen, data, dataLen, mac);
-```
-
-### Symmetric Encryption
-
-```cpp
-// ChaCha20 stream cipher
-ChaCha20 cipher(key, nonce);
-cipher.Encrypt(plaintext, ciphertext, length);
-```
-
-### Elliptic Curve Cryptography
-
-```cpp
-// ECC key generation and operations
-Ecc::GenerateKeyPair(privateKey, publicKey);
-Ecc::Sign(privateKey, message, signature);
-Ecc::Verify(publicKey, message, signature);
-```
-
-### Encoding
-
-```cpp
-// Base64 encoding/decoding
-Base64::Encode(input, inputLen, output, &outputLen);
-Base64::Decode(input, inputLen, output, &outputLen);
-```
-
-## Networking
-
-Full networking stack built on Windows sockets:
-
-### DNS Resolution
-
-```cpp
-// Resolve domain to IP address
-Dns dns;
-auto ip = dns.Resolve("example.com"_embed);
-```
-
-### HTTP Client
-
-```cpp
-// HTTP requests
-Http http;
-http.Connect(host, port);
-http.Get("/api/endpoint"_embed, response);
-```
-
-### WebSocket
-
-```cpp
-// WebSocket connections
-WebSocket ws;
-ws.Connect(host, port, path);
-ws.Send(message, length);
-ws.Receive(buffer, &received);
-```
-
-### TLS 1.3
-
-```cpp
-// Secure connections with certificate verification
-Tls tls;
-tls.Connect(host, port);
-tls.Send(data, length);
-tls.Receive(buffer, &received);
-```
-
-**TLS Features:**
-- TLS 1.3 only (RFC 8446)
-- Certificate chain verification
-- ChaCha20-Poly1305 cipher suite
-- ECDHE key exchange (secp256r1, secp384r1)
-
-## Logging
-
-The Logger class provides structured logging with multiple output targets:
-
-```cpp
-// Initialize logger with console and file output
-Logger logger;
-logger.SetLevel(LogLevel::Debug);
-logger.SetFileOutput("app.log"_embed);
-
-// Log messages at different levels
-logger.Debug("Debug message: %d"_embed, value);
-logger.Info("Information message"_embed);
-logger.Warning("Warning: %s"_embed, message);
-logger.Error("Error occurred: 0x%X"_embed, errorCode);
-```
-
-**Features:**
-- **Log Levels**: Debug, Info, Warning, Error
-- **ANSI Colors**: Colored output for different log levels (console)
-- **Timestamps**: Automatic timestamp prefixing
-- **File Output**: Write logs to file with automatic flushing
-- **Format Specifiers**: Full printf-style formatting support
-
-## Compiler & Linker Flags
-
-### PIC-Critical Flags
-
-| Flag | Purpose |
-|------|---------|
-| `-fno-jump-tables` | Prevents switch statement jump tables in .rdata |
-| `-fno-rtti` | Disables runtime type information |
-| `-fno-exceptions` | Disables C++ exceptions |
-| `/MERGE:.rdata=.text` | Merges read-only data into code section |
-
-### Base Compiler Flags
-
-| Flag | Purpose |
-|------|---------|
-| `-std=c++23` | Enable C++23 standard features |
-| `-nostdlib` | No standard C/C++ libraries |
-| `-fno-builtin` | Disable compiler built-ins |
-| `-fshort-wchar` | Use 2-byte wchar_t (Windows ABI) |
-| `-msoft-float` | Software floating-point (x86 only) |
-
-## Project Structure
-
-The codebase follows a **three-layer architecture** for clean separation of concerns:
-
-```
-cpp-pic/
-├── include/
-│   ├── bal/                       # Base Abstraction Layer (platform-independent)
-│   │   ├── primitives/            # EMBEDDED_STRING, UINT64, INT64, DOUBLE
-│   │   ├── djb2.h                 # Hash function for symbol lookup
-│   │   ├── memory.h               # Copy, Zero, Compare operations
-│   │   ├── string.h               # String manipulation utilities
-│   │   ├── string_formatter.h     # Printf-style formatting
-│   │   └── bal.h                  # Master header
-│   ├── pal/                       # Platform Abstraction Layer (OS/hardware)
-│   │   ├── windows/               # Windows-specific types and APIs
-│   │   ├── allocator.h            # Memory allocation interface
-│   │   ├── console.h              # Console I/O interface
-│   │   ├── date_time.h            # Date/time operations
-│   │   ├── file_system.h          # File and directory operations
-│   │   ├── socket.h               # Network socket interface
-│   │   └── pal.h                  # Master header
-│   └── ral/                       # Runtime Abstraction Layer (application features)
-│       ├── logger.h               # Logging with file output, ANSI colors
-│       ├── crypt/                 # Cryptography (SHA2, ChaCha20, ECC, Base64)
-│       ├── network/               # Networking (DNS, HTTP, WebSocket, TLS)
-│       └── ral.h                  # Master header
-├── src/
-│   ├── start.cc                   # Entry point (_start)
-│   ├── bal/                       # BAL implementations
-│   │   └── string.cc
-│   └── pal/windows/               # Windows PAL implementations
-│       ├── platform.windows.cc    # PEB walking, API resolution
-│       ├── allocator.windows.cc   # NtAllocateVirtualMemory
-│       ├── console.windows.cc     # WriteConsoleW
-│       ├── socket.windows.cc      # Windows sockets
-│       ├── file_system.cc         # File/directory operations
-│       ├── date_time.windows.cc   # Windows time functions
-│       ├── peb.cc                 # Process Environment Block
-│       ├── pe.cc                  # PE parsing for exports
-│       ├── ntdll.cc               # ntdll.dll API resolution
-│       ├── kernel32.cc            # kernel32.dll API resolution
-│       └── random/windows/        # Cryptographic RNG
-├── tests/                         # Test suite (13+ categories)
-├── docs/                          # Architecture and platform guides
-├── scripts/                       # Automation scripts (PowerShell loader)
-├── build/windows/                 # Build artifacts (generated)
-├── .vscode/                       # VSCode integration
-├── .github/workflows/             # CI/CD pipeline
-├── CMakeLists.txt
-└── README.md
-```
+6. **Multi-architecture and multi-platform support**
+   Compatibility across x86, x64, and ARM architectures on both Windows and Linux. The platform abstraction layer cleanly separates OS-specific code, making it straightforward to add support for additional operating systems by implementing the appropriate low-level interfaces.
+   
+7. **Full optimization support**
+   Supports all LLVM optimization levels, allowing builds from unoptimized (`-O0`) to maximum optimization (`-O3`) or size optimization (`-Oz`).
 
 ### Three-Layer Architecture
 
-| Layer | Purpose | Examples |
-|-------|---------|----------|
-| **BAL** (Base Abstraction) | Platform-independent primitives and utilities | EMBEDDED_STRING, UINT64, INT64, DOUBLE, DJB2, Memory, StringFormatter |
-| **PAL** (Platform Abstraction) | OS/hardware abstraction interfaces | Allocator, Console, Socket, FileSystem, DateTime |
-| **RAL** (Runtime Abstraction) | High-level application features | Logger, Cryptography (SHA, ChaCha20, ECC), Networking (DNS, HTTP, TLS) |
+CPP-PIC is built on a clean three-layer abstraction that separates concerns and enables multi-platform support:
 
-## Use Cases
-
-| Domain | Examples |
-|--------|----------|
-| **Security Research** | Shellcode, code injection, exploit development |
-| **Embedded Systems** | No CRT, minimal dependencies, bare metal |
-| **Kernel Development** | Windows kernel modules, drivers |
-| **Binary Analysis** | Understanding compiler behavior, reverse engineering |
-| **Education** | Compiler construction, OS development |
-
-### Why CPP-PIC?
-
-- **Security**: Position-independent payloads without relocation handling
-- **Embedded**: Modern C++23 in resource-constrained environments
-- **Kernel**: C++23 features without runtime initialization
-- **Research**: Explore compiler behavior and binary structure
-
-## Testing
-
-### Running Tests
-
-Tests run automatically when executing the built binary:
-
-```powershell
-# Run x64 release build
-.\build\windows\x86_64\release\output.exe
-
-# Run i386 debug build
-.\build\windows\i386\debug\output.exe
+```
+┌─────────────────────────────────────────────────────────────┐
+│  RAL (Runtime Abstraction Layer)                            │
+│  High-level features: Cryptography, Networking, TLS 1.3     │
+├─────────────────────────────────────────────────────────────┤
+│  PAL (Platform Abstraction Layer)                           │
+│  OS-specific: Windows PEB/NTAPI, Linux syscalls             │
+├─────────────────────────────────────────────────────────────┤
+│  BAL (Base Abstraction Layer)                               │
+│  Platform-independent: Types, Memory, Strings, Algorithms   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Expected Output:**
+**BAL (Base Abstraction Layer)** provides platform-independent primitives:
+- Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
+- Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
+- Memory operations, string utilities, and formatting
+- Algorithms (DJB2 hashing, Base64, random number generation)
+
+**PAL (Platform Abstraction Layer)** handles OS and hardware specifics:
+- Windows: PEB walking, PE parsing, NTAPI-based operations
+- Linux: Direct syscall interface without libc
+- Console I/O, file system, networking, memory allocation
+
+**RAL (Runtime Abstraction Layer)** provides high-level application features:
+- Cryptography: SHA-256/384/512, HMAC, ChaCha20-Poly1305, ECC
+- Networking: DNS resolution, HTTP client, WebSocket, TLS 1.3
+
+### Solutions We Offer
+* **Solution: Compile-Time String Decomposition**
+
+    CPP-PIC replaces conventional string literals with compile-time decomposed representations.
+    Using C++23 features such as user-defined literals, variadic templates, and fold expressions,
+    strings are decomposed into individual characters at compile time:
+
+    ```cpp
+    template <typename TChar, TChar... Chars>
+    class EMBEDDED_STRING
+    {
+        TChar data[sizeof...(Chars) + 1];
+        NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING()
+        {
+            USIZE i = 0;
+            ((data[i++] = Chars), ...); // Fold expression
+            data[i] = 0;
+        }
+    };
+    ```
+
+    Usage:
+    ```cpp
+    auto msg = "Hello, World!"_embed; // Embedded in code, not .rdata
+    ```
+
+    Assembly Output:
+    ```asm
+    movw $0x48, (%rdi)  ; 'H'
+    movw $0x65, 2(%rdi) ; 'e'
+    movw $0x6C, 4(%rdi) ; 'l'
+    movw $0x6C, 6(%rdi) ; 'l'
+    movw $0x6F, 8(%rdi) ; 'o'
+    ```
+
+    As a result, string data exists only transiently and never appears in static data sections.
+
+* **Solution: Compile-Time Array Embedding**
+
+    Similar to strings, constant arrays (lookup tables, binary data, magic bytes) are embedded using `EMBEDDED_ARRAY`. Elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
+
+    ```cpp
+    template <typename TChar, USIZE N>
+    class EMBEDDED_ARRAY
+    {
+        alignas(USIZE) USIZE words[WordCount]{};
+
+        consteval EMBEDDED_ARRAY(const TChar (&src)[N]) {
+            for (USIZE i = 0; i < N; ++i) {
+                // Pack each element byte-by-byte into words
+                for (USIZE b = 0; b < sizeof(TChar); ++b)
+                    SetByte(i * sizeof(TChar) + b, (src[i] >> (b * 8)) & 0xFF);
+            }
+        }
+
+        TChar operator[](USIZE index) const {
+            // Unpack element from words at runtime
+        }
+    };
+    ```
+
+    Usage:
+    ```cpp
+    constexpr UINT32 lookup[] = {0x12345678, 0xABCDEF00};
+    auto embedded = MakeEmbedArray(lookup);
+    UINT32 value = embedded[0]; // Unpacked at runtime
+    ```
+
+* **Solution: Floating-Point Constant Embedding**
+
+    We solve this issue for double values; applying the same technique to float values is straightforward and does not introduce any additional complications, so no further attention is required for that case.
+    Floating-point values are converted at compile time into IEEE-754 bit patterns and injected directly into registers as immediate operands. This eliminates all floating-point constants from `.rdata` and avoids implicit compiler-generated helpers.
+
+    ```cpp
+    struct EMBEDDED_DOUBLE
+    {
+        consteval explicit EMBEDDED_DOUBLE(double v) {
+            bits = __builtin_bit_cast(unsigned long long, v);
+        }
+
+        operator double() const {
+            return __builtin_bit_cast(double, bits);
+        }
+    };
+    ```
+
+    Usage:
+    ```cpp
+    auto pi = 3.14159_embed; // IEEE-754 as immediate value
+    ```
+
+    Assembly Output:
+    ```asm
+    movabsq $0x400921f9f01b866e, %rax ; Pi as 64-bit immediate
+    ```
+
+* **Solution: Pure Integer-Based Conversions**
+
+    All type conversions are implemented using explicit bitwise and integer operations, preventing the compiler from emitting hidden constants or helper routines.
+
+    ```cpp
+    // Extracts integer value from IEEE-754 without FPU instructions
+    INT64 d_to_i64(const DOUBLE& d)
+    {
+        UINT64 bits = d.bits;
+        int exponent = ((bits >> 52) & 0x7FF) - 1023;
+        UINT64 mantissa = (bits & 0xFFFFFFFFFFFFF) | 0x10000000000000;
+        // ... bit shifting logic ...
+    }
+    ```
+* **Solution: Function Pointer Embedding**
+
+    We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located in `embedded_function_pointer.h`.
+
+* **Solution: 64-bit Arithmetic on 32-bit Systems**
+
+    To perform 64-bit arithmetic on 32-bit systems, we manually defined a `UINT64` and `INT64` class that stores values as two 32-bit words (high and low). All operations are decomposed into 32-bit arithmetic with manual carry handling:
+
+    - **Multiplication**: Uses 16-bit partial products to avoid overflow, accumulating results with carry propagation across four 16-bit result segments
+    - **Division**: Implements bit-by-bit long division, extracting one quotient bit per iteration from most-significant to least-significant
+    - **Shifts**: Combines shifts across the word boundary with proper carry handling
+
+    ```cpp
+    // 64-bit multiplication using only 32-bit operations
+    // Split into 16-bit parts: (a3,a2,a1,a0) * (b3,b2,b1,b0)
+    UINT32 p0 = a0 * b0;  // bits [0:31]
+    UINT32 p1 = a1 * b0;  // bits [16:47]
+    UINT32 p2 = a0 * b1;  // bits [16:47]
+    // ... accumulate with carry propagation
+    ```
+
+    This eliminates the need for compiler-expected helper routines and guarantees no `.rdata` generation.
+
+* **Solution: Runtime Independence**
+
+    CPP-PIC achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Rather than relying on CRT startup code, CPP-PIC defines a custom entry point, enabling execution without loader-managed runtime setup.
+    Interaction with Windows system functionality is performed through low-level native interfaces. The runtime traverses the Process Environment Block (PEB) to locate loaded modules and parses PE export tables to resolve function addresses using hash-based lookup. By avoiding import tables, string-based API resolution, and `GetProcAddress` calls, CPP-PIC minimizes static analysis visibility and enables execution in constrained or adversarial environments.
+
+I would also like to highlight a challenge we faced during development. Ensuring that the shellcode entry point was placed at the very beginning of the `.text` section proved to be challenging, yet crucial for this architecture. After extensive research, we discovered a solution:
+
+For MSVC:
 ```
-CPP-PIC Runtime Starting...
-Running DJB2 Tests... PASSED
-Running Memory Tests... PASSED
-Running String Tests... PASSED
-Running UINT64 Tests... PASSED
-Running INT64 Tests... PASSED
-Running Double Tests... PASSED
-Running ArrayStorage Tests... PASSED
-Running StringFormatter Tests... PASSED
-Running Random Tests... PASSED
-Running SHA Tests... PASSED
-Running ECC Tests... PASSED
-Running Socket Tests... PASSED
-Running TLS Tests... PASSED
-Running DNS Tests... PASSED
-All tests passed!
+# Custom entry point (no CRT)
+/Entry:_start
+
+# Function ordering for MSVC
+/ORDER:@orderfile.txt
 ```
 
-### Test Coverage
+For Clang, we used custom linker scripts with section ordering directives to achieve the same result.
 
-The test suite validates all major components:
+## Build System
 
-| Test Suite | Purpose |
-|------------|---------|
-| **Djb2Tests** | Hash function consistency |
-| **MemoryTests** | Copy, Zero, Compare, Fill operations |
-| **StringTests** | String manipulation functions |
-| **Uint64Tests** | 64-bit unsigned arithmetic, shifts, comparisons |
-| **Int64Tests** | 64-bit signed arithmetic with sign handling |
-| **DoubleTests** | IEEE-754 floating-point operations and conversions |
-| **ArrayStorageTests** | Compile-time template array storage |
-| **StringFormatterTests** | Printf-style format specifiers (%d, %f, %s, %x, etc.) |
-| **RandomTests** | Cryptographic RNG (Windows entropy source) |
-| **ShaTests** | SHA-256/512 hashing with HMAC variants |
-| **EccTests** | Elliptic curve cryptography operations |
-| **SocketTests** | TCP socket connectivity |
-| **TlsTests** | TLS 1.3 handshake, encryption, certificate verification |
-| **DnsTests** | Domain name resolution |
+### Critical Compiler Flags
 
-### CI/CD Testing
+Achieving true position-independence requires specific compiler flags that prevent the compiler from generating `.rdata` dependencies:
 
-GitHub Actions automatically tests all configurations:
-- Builds: i386, x86_64, aarch64 (Windows)
-- Tests: i386 (WoW64), x86_64 (native), aarch64 (self-hosted ARM64 runner)
-- Validation: No .rdata dependencies, correct exit codes
-
-## Binary Analysis
-
-### Verifying Position Independence
-
-```powershell
-# Check .rdata section (should be minimal)
-llvm-objdump -h build\windows\x86_64\release\output.exe | findstr .rdata
-
-# Extract strings (should not contain your embedded strings)
-llvm-strings build\windows\x86_64\release\output.exe
-
-# View disassembly showing immediate values
-llvm-objdump -d build\windows\x86_64\release\output.exe | findstr "mov.*\$0x"
+```bash
+-fno-jump-tables      # CRITICAL: Prevents switch statement jump tables in .rdata
+-fno-exceptions       # No exception handling tables (.pdata/.xdata)
+-fno-rtti             # No runtime type information (no typeinfo in .rdata)
+-nostdlib             # No standard C/C++ libraries (no CRT linkage)
+-fno-builtin          # Disable compiler built-in functions
+-ffunction-sections   # Each function in own section (enables dead code elimination)
+-fdata-sections       # Each data item in own section (enables garbage collection)
+-fshort-wchar         # 2-byte wchar_t (Windows ABI compatibility)
 ```
 
-**Expected Results:**
-- `.rdata`: Only ~32 bytes (compiler constants)
-- Strings: None of your embedded strings visible
-- Disassembly: Characters as immediate operands (`movw $0x57, (%rax)`)
+The `-fno-jump-tables` flag is particularly critical—without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
 
-## Documentation
+### Post-Build Verification
 
-For more detailed information:
+The build system automatically verifies that no data sections exist in the final binary:
 
-- **[Architecture Guide](docs/architecture.md)** - System design and components
-- **[Platform Guide](docs/platform_guide.md)** - Windows implementation details
-- **[Project Structure](STRUCTURE.md)** - Project organization
-- **[Scripts Documentation](scripts/README.md)** - Automation scripts
+```cmake
+# Verify no .rdata/.rodata/.data/.bss sections exist
+string(REGEX MATCH "\\.rdata" RDATA_FOUND "${MAP_CONTENT}")
+string(REGEX MATCH "\\.rodata" RODATA_FOUND "${MAP_CONTENT}")
+string(REGEX MATCH "\\.data" DATA_FOUND "${MAP_CONTENT}")
+string(REGEX MATCH "\\.bss" BSS_FOUND "${MAP_CONTENT}")
 
-## Contributing
+if(RDATA_FOUND OR RODATA_FOUND OR DATA_FOUND OR BSS_FOUND)
+    message(FATAL_ERROR "Data section detected - breaks position-independence!")
+endif()
+```
 
-This is a private research project. Code is provided for educational and authorized security research purposes only.
+This verification runs after every build, ensuring that code changes don't accidentally introduce `.rdata` dependencies.
 
-## License
+## Windows Implementation
 
-Proprietary - All rights reserved
+CPP-PIC integrates deeply with Windows internals to provide a fully functional, standalone execution environment while maintaining position independence.
 
-## Security Notice
+### Low-Level Native Interfaces
 
-This runtime is designed for position-independent code (PIC) environments including shellcode and injection payloads. It should only be used for:
+By completely eliminating static import tables and bypassing loader-dependent API resolution mechanisms such as `GetProcAddress`, CPP-PIC removes all dependencies on the operating system’s runtime initialization and dynamic linking processes. This ensures that all required function addresses are resolved internally at runtime, using hash-based lookups of exported symbols in loaded modules. As a result, the generated binaries are fully self-contained, do not rely on predefined memory locations, and can execute correctly from any arbitrary memory address without requiring relocation tables or loader-managed fixups.
 
-- Authorized security testing and penetration testing
-- Academic research and education
-- Legitimate software development requiring PIC constraints
-- Defensive security research and analysis
+### File System Support
+A complete abstraction over `NTAPI` enables file and directory operations:
+* File creation, reading, writing, deletion
+* Directory creation, enumeration, deletion
+* Path and attribute management
 
-Unauthorized use for malicious purposes is strictly prohibited.
+All file system operations are executed without relying on CRT or standard libraries.
 
----
+### Console Output
+Printf-style output is implemented natively within the runtime. This allows robust console output without runtime support.
 
-**CPP-PIC** - Pushing the boundaries of position-independent C++23 on Windows.
+### Cryptography and Networking
+CPP-PIC provides a complete cryptographic and networking stack:
+* Cryptography: SHA-256/512, HMAC, ChaCha20, ECC, Base64 encoding/decoding
+* Networking: DNS resolution, HTTP client, WebSocket connections, TLS 1.3 with certificate verification
+
+All functionality is implemented using low-level native interfaces to avoid external dependencies.
+
+## Practical Use Cases
+
+CPP-PIC is designed to support execution environments where traditional runtime assumptions do not hold. Its architecture makes it particularly suitable for the following domains:
+- Shellcode and loaderless code execution
+- Security research and malware analysis
+- Embedded and low-level system programming
+- Cross-architecture C++ development
+- Environments without standard C runtime support
+
+## To Do
+This project is still a work in progress. Below is a list of remaining tasks and planned improvements. Any help or contributions are greatly appreciated.
+
+- Support for additional platforms (macOS, FreeBSD)
+- Windows direct syscall implementations (bypassing ntdll)
+- Compile-time polymorphism
+
+## Conclusion
+
+CPP-PIC is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows or an ELF file on Linux, supporting i386, x86_64, armv7a, and aarch64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, CPP-PIC enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
+
+The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, and Linux with its direct syscall approach—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
+
+This project is intended for researchers, systems programmers, and security engineers who are willing to work beneath high-level abstractions and take full control of the machine. Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project’s design goals.

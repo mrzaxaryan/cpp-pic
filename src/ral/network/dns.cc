@@ -414,9 +414,9 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     LOG_DEBUG("DNS_resolve(host: %s, dnstype: %d) called", host, dnstype);
 
     // Check for localhost
-    PCCHAR localhost = (PCCHAR) "localhost"_embed;
+    auto localhost = "localhost"_embed;
     // If the host is localhost, set the IP address to
-    if (String::Compare(host, localhost))
+    if (String::Compare(host, (PCCHAR)localhost))
     {
         return IPAddress::FromIPv4(0x0100007F);
     }
@@ -483,9 +483,9 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     // Validate the input parameters
 
     // Check for localhost
-    PCCHAR localhost = (PCCHAR) "localhost"_embed;
+    auto localhost = "localhost"_embed;
     // If the host is localhost, set the IP address to
-    if (String::Compare(host, localhost))
+    if (String::Compare(host, (PCCHAR)localhost))
     {
         return IPAddress::FromIPv4(0x0100007F);
     }
@@ -575,30 +575,50 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     // Move the pointer to the start of the content length value
     totalBytesRead += contentLengthHeaderSize;
     dnsResponse += totalBytesRead;                 // Move the pointer to the start of the content length value
-    while (isdigit(*dnsResponse + totalBytesRead)) // Find the end of the content length value
+
+    // Find the end of the content length digits
+    USIZE digitIdx = 0;
+    while (isdigit(dnsResponse[digitIdx]))
     {
-        totalBytesRead++;
+        digitIdx++;
     }
 
-    dnsResponse[totalBytesRead] = '\0';                             // Null-terminate the content length value
-    UINT32 contentLength = String::ParseString<INT32>(dnsResponse); // Convert the content length value to an integer
+    dnsResponse[digitIdx] = '\0';                             // Null-terminate the content length value
+    INT64 contentLength = INT64::Parse(dnsResponse); // Convert the content length value to an integer
     LOG_DEBUG("Content length: %d", contentLength);
 
     // Read the DNS response from the TLS server
-    tlsClient.Read(dnsResponse, contentLength);
+    tlsClient.Read(dnsResponse, (UINT32)contentLength);
+    dnsResponse[contentLength] = '\0'; // Null-terminate the JSON response
 
     LOG_DEBUG("DNS response header read successfully, \n%s", dnsResponse);
 
-    PCHAR ipAddressStartPattern = (PCHAR)(PCCHAR) "\"data\":\""_embed; // Pointer to hold the data header
+    // Search for "data" field - handle both "data":"value" and "data": "value" (with space)
+    PCHAR dataField = (PCHAR)(PCCHAR) "\"data\":"_embed;
+    USIZE dataFieldSize = String::Length(dataField);
+    USIZE searchIdx = 0;
+    USIZE maxSearch = (USIZE)contentLength - dataFieldSize;
 
-    USIZE ipAddressStartPatternSize = String::Length(ipAddressStartPattern); // Get the length of the data header
-    while (Memory::Compare(dnsResponse, ipAddressStartPattern, ipAddressStartPatternSize) != 0)
+    while (searchIdx < maxSearch && Memory::Compare(dnsResponse + searchIdx, dataField, dataFieldSize) != 0)
+    {
+        searchIdx++;
+    }
+
+    if (searchIdx >= maxSearch)
+    {
+        LOG_ERROR("Could not find 'data' field in DNS JSON response");
+        tlsClient.Close();
+        delete[] dnsResponseStart;
+        return IPAddress::Invalid();
+    }
+
+    // Move past "data": and skip any whitespace or opening quote
+    dnsResponse += searchIdx + dataFieldSize;
+    while (*dnsResponse == ' ' || *dnsResponse == '"')
     {
         dnsResponse++;
     }
 
-    // Move the pointer to the start of the data value
-    dnsResponse += ipAddressStartPatternSize;
     PCHAR ipAddressEnd = dnsResponse;
 
     while (*ipAddressEnd && *ipAddressEnd != '"') // Find the end of the IP address value
@@ -622,9 +642,9 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PC
 {
     // Use DNS over HTTPS Post
     // Check for localhost
-    PCCHAR localhost = (PCCHAR) "localhost"_embed;
+    auto localhost = "localhost"_embed;
     // If the host is localhost, set the IP address to
-    if (String::Compare(host, localhost))
+    if (String::Compare(host, (PCCHAR)localhost))
     {
         return IPAddress::FromIPv4(0x0100007F);
     }
@@ -719,17 +739,17 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress& DNSServerIp, PC
     offsetOfContentLength += contentLengthHeaderSize;
 
     // dnsResponse[totalBytesRead] = '\0';                          // Null-terminate the content length value
-    UINT32 contentLength = String::ParseString<INT32>((PCHAR)dnsResponse + offsetOfContentLength); // Convert the content length value to an integer
+    INT64 contentLength = INT64::Parse((PCHAR)dnsResponse + offsetOfContentLength); // Convert the content length value to an integer
     LOG_DEBUG("Content length: %d", contentLength);
 
     delete[] dnsResponseStart;
 
     CHAR binaryResponse[0xff];
-    tlsClient.Read(binaryResponse, contentLength); // Move the pointer to the start of the binary response
+    tlsClient.Read(binaryResponse, (UINT32)contentLength); // Move the pointer to the start of the binary response
 
     IPAddress ipAddress;
 
-    if (!DNS_parse((PUINT8)binaryResponse, contentLength, &ipAddress))
+    if (!DNS_parse((PUINT8)binaryResponse, (UINT16)contentLength, &ipAddress))
     {
         tlsClient.Close();
         LOG_ERROR("Failed to parse DNS response");

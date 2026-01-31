@@ -126,7 +126,7 @@ public:
 	static UINT32 Write(const TChar *text);
 
 	/**
-	 * WriteFormatted - Printf-style formatted output
+	 * WriteFormatted - Printf-style formatted output using C++11 variadic templates
 	 *
 	 * Supports standard printf format specifiers:
 	 *   %d    - Signed decimal integer
@@ -134,7 +134,7 @@ public:
 	 *   %ld   - Long signed decimal integer
 	 *   %X    - Uppercase hexadecimal
 	 *   %x    - Lowercase hexadecimal
-	 *   %f    - Floating-point (default precision)
+	 *   %f    - Floating-point (default precision) - accepts DOUBLE directly!
 	 *   %.Nf  - Floating-point with N decimal places
 	 *   %c    - Single character
 	 *   %s    - Narrow string (CHAR*)
@@ -142,17 +142,18 @@ public:
 	 *   %p    - Pointer (hexadecimal)
 	 *
 	 * @param format - Format string with embedded specifiers
-	 * @param ...    - Variable arguments matching format specifiers
+	 * @param args   - Variable arguments matching format specifiers (supports custom types!)
 	 * @return Number of characters written
 	 *
-	 * TEMPLATE PARAMETER:
+	 * TEMPLATE PARAMETERS:
 	 *   TChar - Character type for format string (CHAR or WCHAR)
+	 *   Args  - Variadic template arguments (deduced automatically)
 	 *
 	 * USAGE:
 	 *   Console::WriteFormatted<WCHAR>(
 	 *       L"Value: %d, Pi: %.5f\n"_embed,
 	 *       42,
-	 *       3.14159_embed
+	 *       3.14159_embed  // Pass DOUBLE directly - no casting needed!
 	 *   );
 	 *
 	 * POSITION-INDEPENDENT IMPLEMENTATION:
@@ -160,33 +161,10 @@ public:
 	 *   - Floating-point constants as immediates
 	 *   - Stack-based buffer for formatting
 	 *   - No heap allocations
+	 *   - Type-safe variadic templates (no VA_LIST)
 	 */
-	template <TCHAR TChar>
-	static UINT32 WriteFormatted(const TChar *format, ...);
-
-	/**
-	 * WriteFormattedV - Printf-style formatted output (va_list version)
-	 *
-	 * Same as WriteFormatted but accepts a va_list instead of variadic args.
-	 * Useful when you're already in a variadic function and want to forward args.
-	 *
-	 * @param format - Format string with embedded specifiers
-	 * @param args   - Variable arguments list (already initialized)
-	 * @return Number of characters written
-	 *
-	 * IMPLEMENTATION DETAIL:
-	 *   This function uses EMBEDDED_FUNCTION_POINTER for position-independent callbacks:
-	 *   1. Gets address of FormatterCallback<TChar> using EMBEDDED_FUNCTION_POINTER
-	 *   2. Uses PC-relative addressing (no base address lookup needed)
-	 *   3. Passes position-independent callback to StringFormatter::FormatV()
-	 *
-	 * WHY EMBEDDED_FUNCTION_POINTER:
-	 *   In position-independent code, function addresses need PC-relative calculation.
-	 *   EMBEDDED_FUNCTION_POINTER automatically handles this for both PIC and normal EXE.
-	 *   Works universally without runtime mode checks or base address lookups.
-	 */
-	template <TCHAR TChar>
-	static UINT32 WriteFormattedV(const TChar *format, VA_LIST args);
+	template <TCHAR TChar, typename... Args>
+	static UINT32 WriteFormatted(const TChar *format, Args&&... args);
 };
 
 // ============================================================================
@@ -233,10 +211,10 @@ BOOL Console::FormatterCallback(PVOID context, TChar ch)
 }
 
 /**
- * WriteFormattedV<TChar> - Variadic formatting implementation
+ * WriteFormatted<TChar, Args...> - Variadic template formatting implementation
  *
- * This is the core formatting function. WriteFormatted() is just a thin
- * wrapper that sets up the va_list and calls this function.
+ * This function uses C++11 variadic templates for type-safe formatting.
+ * No more VA_LIST or VA_ARG - everything is type-safe at compile time!
  *
  * POSITION-INDEPENDENT CALLBACK USING EMBEDDED_FUNCTION_POINTER:
  *
@@ -248,12 +226,18 @@ BOOL Console::FormatterCallback(PVOID context, TChar ch)
  *   1. Template instantiation: FormatterCallback<TChar>
  *   2. PC-relative wrapper: EMBEDDED_FUNCTION_POINTER<BOOL (*)(PVOID, TChar), FormatterCallback<TChar>>
  *   3. Get position-independent pointer: ::Get()
- *   4. Pass to formatter: StringFormatter::FormatV(callback, ...)
+ *   4. Pass to formatter: StringFormatter::Format(callback, ...)
  *
  * This works correctly in both PIC blob and normal EXE modes without runtime checks.
+ *
+ * BENEFITS OVER VA_LIST:
+ *   - Type-safe: compiler knows exact types at compile time
+ *   - Supports custom types like DOUBLE without casting
+ *   - No POD requirement
+ *   - Better optimization opportunities
  */
-template <TCHAR TChar>
-UINT32 Console::WriteFormattedV(const TChar *format, VA_LIST args)
+template <TCHAR TChar, typename... Args>
+UINT32 Console::WriteFormatted(const TChar *format, Args&&... args)
 {
 	// Get position-independent function pointer using EMBED_FUNC
 	// This works correctly regardless of where the code is loaded (PIC or normal EXE)
@@ -264,29 +248,6 @@ UINT32 Console::WriteFormattedV(const TChar *format, VA_LIST args)
 	//   fixed  - Position-independent callback function
 	//   NULL   - Context (unused, could be used for buffering)
 	//   format - Format string (embedded, not in .rdata)
-	//   args   - Variable arguments list
-	return StringFormatter::FormatV(fixed, NULL, format, args);
-}
-
-/**
- * WriteFormatted<TChar> - Variadic formatting wrapper
- *
- * This function uses the C-style variadic argument mechanism:
- *   1. VA_LIST declares the va_list variable
- *   2. VA_START initializes it, pointing to the first unnamed argument
- *   3. WriteFormattedV processes the arguments
- *   4. VA_END cleans up (usually a no-op on modern platforms)
- *
- * CALLING CONVENTION NOTE:
- *   On x64, the first few arguments are passed in registers (RCX, RDX, R8, R9),
- *   with overflow on the stack. va_list abstracts this complexity.
- */
-template <TCHAR TChar>
-UINT32 Console::WriteFormatted(const TChar *format, ...)
-{
-	VA_LIST args;                                  // Declare va_list variable
-	VA_START(args, format);                        // Initialize va_list (points after 'format')
-	INT32 written = WriteFormattedV(format, args); // Call the va_list version
-	VA_END(args);                                  // Clean up va_list (required by C standard)
-	return written;                                // Return number of characters written
+	//   args   - Variadic template arguments (perfectly forwarded)
+	return StringFormatter::Format(fixed, NULL, format, static_cast<Args&&>(args)...);
 }

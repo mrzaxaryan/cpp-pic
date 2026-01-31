@@ -111,8 +111,6 @@ private:
 			return FALSE;
 		}
 
-		LOG_INFO("Sent text message: %s (%d bytes)", (PCCHAR)testMessage, bytesSent);
-
 		// Receive echo response
 		USIZE responseLength = 0;
 		INT8 opcode = 0;
@@ -132,12 +130,6 @@ private:
 			wsClient.Close();
 			return FALSE;
 		}
-
-		// Null-terminate for logging
-		PCHAR responseStr = (PCHAR)response;
-		responseStr[responseLength] = '\0';
-
-		LOG_INFO("Received echo response: %s (opcode: %d, length: %d)", responseStr, opcode, responseLength);
 
 		// Verify echo matches sent message
 		BOOL matches = (responseLength == testMessage.Length) &&
@@ -290,8 +282,6 @@ private:
 			wsClient.Close();
 			return FALSE;
 		}
-		((PCHAR)resp1)[len1] = '\0';
-		LOG_INFO("Message 1 echo: %s", (PCHAR)resp1);
 		delete[] (PCHAR)resp1;
 
 		// Send and receive message 2
@@ -313,8 +303,6 @@ private:
 			wsClient.Close();
 			return FALSE;
 		}
-		((PCHAR)resp2)[len2] = '\0';
-		LOG_INFO("Message 2 echo: %s", (PCHAR)resp2);
 		delete[] (PCHAR)resp2;
 
 		// Send and receive message 3
@@ -336,8 +324,6 @@ private:
 			wsClient.Close();
 			return FALSE;
 		}
-		((PCHAR)resp3)[len3] = '\0';
-		LOG_INFO("Message 3 echo: %s", (PCHAR)resp3);
 		delete[] (PCHAR)resp3;
 
 		LOG_INFO("Multiple message test passed");

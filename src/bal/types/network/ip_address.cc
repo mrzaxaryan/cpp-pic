@@ -258,7 +258,7 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
         UINT32 dwCompletedOctetCount = 0;
         UINT32 dwEndOfOctet = 0;
         UINT32 dwEndOfString = 0;
-        UINT32 dwOctet = 0;
+        INT64 dwOctet = 0;
         UINT8 bOctets[4];
         UINT32 dwAddr = 0;
 
@@ -302,7 +302,7 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
                     return Invalid();
                 }
 
-                dwOctet = String::ParseString<INT32>(szCurrOctet);
+                dwOctet = INT64::Parse(szCurrOctet);
                 if (dwOctet > 255)
                 {
                     return Invalid();

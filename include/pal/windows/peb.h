@@ -77,6 +77,8 @@ typedef struct _PEB
 PPEB GetCurrentPEB(VOID);
 // Function to resolve module handle by its name
 PVOID GetModuleHandleFromPEB(USIZE moduleNameHash);
+// Function to get export address from PEB modules
+PVOID ResolveExportAddressFromPebModule(USIZE moduleNameHash, USIZE functionNameHash);
 
 #else
 #error Unsupported platform

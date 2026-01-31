@@ -6,6 +6,52 @@
 class StringFormatter
 {
 private:
+    // Type-erased argument holder using PIC-safe types from primitives.h
+    struct Argument {
+        enum class Type { INT32, UINT32, INT64, UINT64, DOUBLE, CSTR, WSTR, PTR };
+
+        Type type;
+        union {
+            INT32 i32;
+            UINT32 u32;
+            INT64 i64;
+            UINT64 u64;
+            DOUBLE dbl;
+            const CHAR* cstr;
+            const WCHAR* wstr;
+            PVOID ptr;
+        };
+
+        // Default constructor
+        Argument() : type(Type::INT32), i32(0) {}
+
+        // PIC-safe primitive type constructors
+        Argument(INT32 v) : type(Type::INT32), i32(v) {}
+        Argument(UINT32 v) : type(Type::UINT32), u32(v) {}
+        Argument(INT64 v) : type(Type::INT64), i64(v) {}
+        Argument(UINT64 v) : type(Type::UINT64), u64(v) {}
+        Argument(DOUBLE v) : type(Type::DOUBLE), dbl(v) {}
+
+        // String and pointer constructors
+        Argument(const CHAR* v) : type(Type::CSTR), cstr(v) {}
+        Argument(CHAR* v) : type(Type::CSTR), cstr(v) {}
+        Argument(const WCHAR* v) : type(Type::WSTR), wstr(v) {}
+        Argument(WCHAR* v) : type(Type::WSTR), wstr(v) {}
+        Argument(PVOID v) : type(Type::PTR), ptr(v) {}
+
+        // Native C++ type compatibility
+        Argument(signed long long v) : type(Type::INT64), i64(INT64(v)) {}
+        Argument(unsigned long long v) : type(Type::UINT64), u64(UINT64(v)) {}
+#if defined(__LP64__) || defined(_LP64)
+        Argument(signed long v) : type(Type::INT64), i64(INT64(v)) {}
+        Argument(unsigned long v) : type(Type::UINT64), u64(UINT64(v)) {}
+#endif
+    };
+
+    template <TCHAR TChar>
+    static INT32 FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, const Argument* args, INT32 argCount);
+
+private:
     template <TCHAR TChar>
     static INT32 FormatInt64(BOOL (*writer)(PVOID, TChar), PVOID context, INT64 num, INT32 width = 0, INT32 zeroPad = 0, INT32 leftAlign = 0);
     template <TCHAR TChar>
@@ -20,11 +66,9 @@ private:
     static INT32 FormatUInt32AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT32 num, INT32 fieldWidth = 0, INT32 uppercase = 0, INT32 zeroPad = 0, BOOL addPrefix = FALSE);
 
 public:
-    // Note: naming may be improved later
-    template <TCHAR TChar>
-    static INT32 Format(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, ...);
-    template <TCHAR TChar>
-    static INT32 FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, VA_LIST args);
+    // C++11 variadic template version - supports custom types like DOUBLE
+    template <TCHAR TChar, typename... Args>
+    static INT32 Format(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, Args&&... args);
 };
 
 template <TCHAR TChar>
@@ -429,27 +473,35 @@ INT32 StringFormatter::FormatDouble(
     return written;
 }
 
-template <TCHAR TChar>
-INT32 StringFormatter::Format(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, ...)
+// Variadic template implementation
+template <TCHAR TChar, typename... Args>
+INT32 StringFormatter::Format(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, Args&&... args)
 {
-    VA_LIST args;                                       // Variatic arguments list
-    VA_START(args, format);                             // Initialize the argument list with format so we can access the variable arguments
-    INT32 len = FormatV(writer, context, format, args); // Format the string using the variable arguments
-    VA_END(args);                                       // Clean up the argument list
-    return len;                                         // Return the length of the formatted string
+    if constexpr (sizeof...(Args) == 0)
+    {
+        // No arguments, just copy the format string
+        return FormatWithArgs<TChar>(writer, context, format, nullptr, 0);
+    }
+    else
+    {
+        // Pack arguments into array
+        Argument argArray[] = { Argument(args)... };
+        return FormatWithArgs<TChar>(writer, context, format, argArray, sizeof...(Args));
+    }
 }
 
 template <TCHAR TChar>
-INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, VA_LIST args)
-{
-    INT32 i = 0, j = 0;  // Index for the format string and output string
-    INT32 precision = 6; // Default precision for floating-point numbers
-
-    // Validate the output string
-    if (format == NULL)
+INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, const Argument* args, INT32 argCount)
     {
-        return 0;
-    }
+        INT32 i = 0, j = 0;  // Index for the format string and output string
+        INT32 precision = 6; // Default precision for floating-point numbers
+        INT32 currentArg = 0; // Current argument index
+
+        // Validate the output string
+        if (format == NULL)
+        {
+            return 0;
+        }
 
     // Loop through the format string to process each character
     while (format[i] != (TChar)'\0')
@@ -508,9 +560,10 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
             if (format[i] == (TChar)'X')
             {
                 i++; // Skip 'X'
-                UINT32 num = (UINT32)VA_ARG(args, UINT32);
+                if (currentArg >= argCount) continue;
+                UINT32 num = args[currentArg++].u32;
                 // Format the number as uppercase hexadecimal.
-                j += FormatUInt32AsHex(writer, context, num, fieldWidth, 1, zeroPad, addPrefix);
+                j += StringFormatter::FormatUInt32AsHex(writer, context, num, fieldWidth, 1, zeroPad, addPrefix);
 
                 // If a '-' follows, add it (for MAC address separators)
                 if (format[i] == (TChar)'-')
@@ -524,39 +577,42 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
             // NOTE: making specifiers lowercase to handle both cases (e.g., %d and %D), that's why we use ToLowerCase function
             else if (String::ToLowerCase(format[i]) == (TChar)'f')
             {
-
-                // VA_ARG requires POD types, so extract as native double then convert to DOUBLE
-                double native_num = VA_ARG(args, double);
-                DOUBLE num = DOUBLE(native_num);
-                j += FormatDouble(writer, context, num, precision, fieldWidth, zeroPad); // Convert the double to string with specified formatting
+                // Now we can use DOUBLE directly without casting!
+                if (currentArg >= argCount) { i++; continue; }
+                DOUBLE num = args[currentArg++].dbl;
+                j += StringFormatter::FormatDouble(writer, context, num, precision, fieldWidth, zeroPad); // Convert the double to string with specified formatting
                 i++;                                                                     // Skip 'f'
                 continue;
             }
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'d')
             {                                                                           // Handle %d (signed integer) :
-                INT32 num = VA_ARG(args, INT32);                                        // Get the next argument as an INT32
-                j += FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the integer to string with specified formatting
+                if (currentArg >= argCount) { i++; continue; }
+                INT32 num = args[currentArg++].i32;                                     // Get the next argument as an INT32
+                j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the integer to string with specified formatting
                 i++;                                                                    // Skip 'd'
                 continue;
             }
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'u')
             {                                                                            // Handle %u (unsigned integer)
-                UINT32 num = VA_ARG(args, UINT32);                                       // Get the next argument as an UINT32
-                j += FormatUInt64(writer, context, UINT64(num), fieldWidth, zeroPad, leftAlign); // Convert the unsigned integer to string with specified formatting
+                if (currentArg >= argCount) { i++; continue; }
+                UINT32 num = args[currentArg++].u32;                                     // Get the next argument as an UINT32
+                j += StringFormatter::FormatUInt64(writer, context, UINT64(num), fieldWidth, zeroPad, leftAlign); // Convert the unsigned integer to string with specified formatting
                 i++;                                                                     // Skip 'u'
                 continue;
             }
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'x')
             {                                                                                    // Handle %x (hexadecimal, lowercase)
-                UINT32 num = VA_ARG(args, UINT32);                                               // Get the next argument as an UINT32
-                j += FormatUInt32AsHex(writer, context, num, fieldWidth, 0, zeroPad, addPrefix); // Convert the number to lowercase hexadecimal with specified formatting
+                if (currentArg >= argCount) { i++; continue; }
+                UINT32 num = args[currentArg++].u32;                                             // Get the next argument as an UINT32
+                j += StringFormatter::FormatUInt32AsHex(writer, context, num, fieldWidth, 0, zeroPad, addPrefix); // Convert the number to lowercase hexadecimal with specified formatting
                 i++;                                                                             // Skip 'x'
                 continue;
             }
             else if (String::ToLowerCase(format[i]) == (TChar)'p')
             {                                                                  // Handle %p (pointer)
                 i++;                                                           // Skip 'p'
-                j += FormatPointerAsHex(writer, context, VA_ARG(args, PVOID)); // Convert the pointer address to hexadecimal string
+                if (currentArg >= argCount) continue;
+                j += StringFormatter::FormatPointerAsHex(writer, context, args[currentArg++].ptr); // Convert the pointer address to hexadecimal string
                 continue;
             }
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'c')
@@ -567,7 +623,9 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
                     writer(context, (TChar)' '); // Add spaces for field width
                     j++;
                 }
-                writer(context, (TChar)VA_ARG(args, INT32)); // Get the next argument as an INT32 (character) and add it to the string
+                if (currentArg < argCount) {
+                    writer(context, (TChar)args[currentArg++].i32); // Get the next argument as an INT32 (character) and add it to the string
+                }
                 j++;
                 i++; // Skip 'c'
                 continue;
@@ -575,7 +633,8 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'s')
             {                                     // Handle %s (narrow string)
                 i++;                              // Skip 's'
-                CHAR *str = VA_ARG(args, CHAR *); // Get the next argument as a PWCHAR (narrow string)
+                if (currentArg >= argCount) continue;
+                CHAR *str = (CHAR*)args[currentArg++].cstr; // Get the next argument as a PWCHAR (narrow string)
                 // C standard does not allow NULL strings, so if the string is NULL, handle it by printing '?'.
                 if (str == NULL)
                 {
@@ -619,7 +678,8 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
                 if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'s')
                 {
                     i += 2;                              // Skip over "ws"
-                    WCHAR *wstr = VA_ARG(args, WCHAR *); // Get the next argument as a PWCHAR (wide string)
+                    if (currentArg >= argCount) continue;
+                    WCHAR *wstr = (WCHAR*)args[currentArg++].wstr; // Get the next argument as a PWCHAR (wide string)
                     // C standard does not allow NULL strings, so if the string is NULL, handle it by printing '?'.
                     if (wstr == NULL)
                     {
@@ -650,7 +710,8 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
                 if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'s')
                 {
                     i += 2;                              // Skip over "ls"
-                    WCHAR *wstr = VA_ARG(args, WCHAR *); // Get the next argument as a PWCHAR (wide string)
+                    if (currentArg >= argCount) continue;
+                    WCHAR *wstr = (WCHAR*)args[currentArg++].wstr; // Get the next argument as a PWCHAR (wide string)
                     // C standard does not allow NULL strings, so if the string is NULL, handle it by printing '?'.
                     if (wstr == NULL)
                     {
@@ -673,33 +734,63 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
                 else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'d')
                 {                                                                           // long int (%ld)
                     i += 2;                                                                 // Skip over "ld"
-                    INT32 num = VA_ARG(args, INT32);                                        // Get the next argument as an INT32 (long int)
-                    j += FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the long int to string with specified formatting
+                    if (currentArg >= argCount) continue;
+                    INT32 num = args[currentArg++].i32;                                     // Get the next argument as an INT32 (long int)
+                    j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the long int to string with specified formatting
                     continue;
                 }
                 else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'u')
                 {                                                                            // unsigned long int (%lu)
                     i += 2;                                                                  // Skip over "lu"
-                    UINT32 num = VA_ARG(args, UINT32);                                       // Get the next argument as an UINT32 (unsigned long int)
-                    j += FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the unsigned long int to string with specified formatting
+                    if (currentArg >= argCount) continue;
+                    UINT32 num = args[currentArg++].u32;                                     // Get the next argument as an UINT32 (unsigned long int)
+                    j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the unsigned long int to string with specified formatting
                     continue;
                 }
                 else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'l' && String::ToLowerCase<TChar>(format[i + 2]) == (TChar)'d')
                 {                                                                           // long long int (%lld)
                     i += 3;                                                                 // Skip over "lld"
-                    // VA_ARG requires POD types, so extract as native signed long long then convert to INT64
-                    signed long long native_num = VA_ARG(args, signed long long);
-                    INT64 num = INT64(native_num);
-                    j += FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the long long int to string with specified formatting
+                    if (currentArg >= argCount) continue;
+                    // Now we can use INT64 directly!
+                    INT64 num = args[currentArg++].i64;
+                    j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the long long int to string with specified formatting
                     continue;
                 }
                 else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'l' && String::ToLowerCase<TChar>(format[i + 2]) == (TChar)'u')
                 {
                     i += 3;                                                                  // Skip over "llu"
-                    // VA_ARG requires POD types, so extract as native unsigned long long then convert to UINT64
-                    unsigned long long native_num = VA_ARG(args, unsigned long long);
-                    UINT64 num = UINT64(native_num);
-                    j += FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the unsigned long long int to string with specified formatting
+                    if (currentArg >= argCount) continue;
+                    // Now we can use UINT64 directly!
+                    UINT64 num = args[currentArg++].u64;
+                    j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the unsigned long long int to string with specified formatting
+                    continue;
+                }
+                else
+                {
+                    writer(context, format[i++]); // If it's not recognized, just copy the character as is.
+                    j++;
+                    continue;
+                }
+            }
+            // Handle size_t variants (%zu, %zd) - USIZE/SSIZE are stored as UINT64/INT64
+            else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'z')
+            {
+                if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'u')
+                {                                                                            // unsigned size_t (%zu)
+                    i += 2;                                                                  // Skip over "zu"
+                    if (currentArg >= argCount) continue;
+                    // USIZE is converted to UINT64 through Argument constructor
+                    UINT64 num = args[currentArg++].u64;                                     // Get as UINT64
+                    j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert USIZE to string
+                    continue;
+                }
+                else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'d')
+                {                                                                            // signed size_t (%zd)
+                    i += 2;                                                                  // Skip over "zd"
+                    if (currentArg >= argCount) continue;
+                    // SSIZE is converted to INT64 through Argument constructor
+                    INT64 num = args[currentArg++].i64;                                      // Get as INT64
+                    j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert SSIZE to string
                     continue;
                 }
                 else
@@ -712,10 +803,10 @@ INT32 StringFormatter::FormatV(BOOL (*writer)(PVOID, TChar), PVOID context, cons
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'f')
             {                                                                            // Handle %f (double)
                 i++;                                                                     // Skip 'f'
-                // VA_ARG requires POD types, so extract as native double then convert to DOUBLE
-                double native_num = VA_ARG(args, double);
-                DOUBLE num = DOUBLE(native_num);
-                j += FormatDouble(writer, context, num, precision, fieldWidth, zeroPad); // Convert the double to string with specified formatting
+                if (currentArg >= argCount) continue;
+                // Now we can use DOUBLE directly without casting!
+                DOUBLE num = args[currentArg++].dbl;
+                j += StringFormatter::FormatDouble(writer, context, num, precision, fieldWidth, zeroPad); // Convert the double to string with specified formatting
                 continue;
             }
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'%')

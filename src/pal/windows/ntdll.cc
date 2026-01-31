@@ -1,5 +1,6 @@
 #include "ntdll.h"
 #include "pal.h"
+#include "peb.h"
 
 #define ResolveNtdllExportAddress(functionName) ResolveExportAddressFromPebModule(Djb2::HashCompileTime(L"ntdll.dll"), Djb2::HashCompileTime(functionName))
 

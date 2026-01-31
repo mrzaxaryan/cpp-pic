@@ -13,9 +13,6 @@
 // Platform Core
 // =============================================================================
 
-// Function to get export address from PEB modules
-PVOID ResolveExportAddressFromPebModule(USIZE moduleNameHash, USIZE functionNameHash);
-
 // Cross-platform exit process function
 NO_RETURN VOID ExitProcess(USIZE code);
 

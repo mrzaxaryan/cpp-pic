@@ -42,7 +42,7 @@ project(cpp-pic LANGUAGES CXX)
 # Configuration Options
 # =============================================================================
 set(ARCHITECTURE "x86_64" CACHE STRING "Target architecture: i386, x86_64, armv7a, aarch64")
-set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux, uefi (extensible for future platforms)")
+set(PLATFORM "windows" CACHE STRING "Target platform: windows, linux")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 
 # Normalize inputs to lowercase
@@ -52,7 +52,7 @@ string(TOLOWER "${BUILD_TYPE}" BUILD_TYPE_LC)
 
 # Validate inputs
 set(VALID_ARCHITECTURES "i386" "x86_64" "armv7a" "aarch64")
-set(VALID_PLATFORMS "windows" "linux" "uefi")
+set(VALID_PLATFORMS "windows" "linux")
 set(VALID_BUILD_TYPES "debug" "release")
 
 if(NOT ARCHITECTURE_LC IN_LIST VALID_ARCHITECTURES)
@@ -77,18 +77,34 @@ set(OUTPUT_DIR "${BUILD_ROOT}")
 # =============================================================================
 # Architecture-Specific Target Triple
 # =============================================================================
-if(ARCHITECTURE_LC STREQUAL "i386")
-    set(TARGET_TRIPLE "i386-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_WINDOWS PLATFORM_WINDOWS_I386)
-elseif(ARCHITECTURE_LC STREQUAL "x86_64")
-    set(TARGET_TRIPLE "x86_64-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_WINDOWS PLATFORM_WINDOWS_X86_64)
-elseif(ARCHITECTURE_LC STREQUAL "armv7a")
-    set(TARGET_TRIPLE "armv7a-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_ARMV7A PLATFORM_WINDOWS PLATFORM_WINDOWS_ARMV7A)
-elseif(ARCHITECTURE_LC STREQUAL "aarch64")
-    set(TARGET_TRIPLE "aarch64-pc-windows-gnu")
-    set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_WINDOWS PLATFORM_WINDOWS_AARCH64)
+if(PLATFORM_LC STREQUAL "windows")
+    if(ARCHITECTURE_LC STREQUAL "i386")
+        set(TARGET_TRIPLE "i386-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_WINDOWS PLATFORM_WINDOWS_I386)
+    elseif(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(TARGET_TRIPLE "x86_64-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_WINDOWS PLATFORM_WINDOWS_X86_64)
+    elseif(ARCHITECTURE_LC STREQUAL "armv7a")
+        set(TARGET_TRIPLE "armv7a-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_ARMV7A PLATFORM_WINDOWS PLATFORM_WINDOWS_ARMV7A)
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(TARGET_TRIPLE "aarch64-pc-windows-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_WINDOWS PLATFORM_WINDOWS_AARCH64)
+    endif()
+elseif(PLATFORM_LC STREQUAL "linux")
+    if(ARCHITECTURE_LC STREQUAL "i386")
+        set(TARGET_TRIPLE "i386-unknown-linux-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_LINUX PLATFORM_LINUX_I386)
+    elseif(ARCHITECTURE_LC STREQUAL "x86_64")
+        set(TARGET_TRIPLE "x86_64-unknown-linux-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_LINUX PLATFORM_LINUX_X86_64)
+    elseif(ARCHITECTURE_LC STREQUAL "armv7a")
+        set(TARGET_TRIPLE "armv7a-unknown-linux-gnueabihf")
+        set(ARCH_DEFINES ARCHITECTURE_ARMV7A PLATFORM_LINUX PLATFORM_LINUX_ARMV7A)
+    elseif(ARCHITECTURE_LC STREQUAL "aarch64")
+        set(TARGET_TRIPLE "aarch64-unknown-linux-gnu")
+        set(ARCH_DEFINES ARCHITECTURE_AARCH64 PLATFORM_LINUX PLATFORM_LINUX_AARCH64)
+    endif()
 endif()
 
 # =============================================================================
@@ -128,7 +144,6 @@ set(INCLUDE_PATHS
     ${CMAKE_SOURCE_DIR}/include/pal/io/
     ${CMAKE_SOURCE_DIR}/include/pal/network/
     ${CMAKE_SOURCE_DIR}/include/pal/system/
-    ${CMAKE_SOURCE_DIR}/include/pal/windows/
     # RAL - Runtime Abstraction Layer (application features)
     ${CMAKE_SOURCE_DIR}/include/ral/
     ${CMAKE_SOURCE_DIR}/include/ral/crypt/
@@ -137,12 +152,22 @@ set(INCLUDE_PATHS
     ${CMAKE_SOURCE_DIR}/tests/
 )
 
+# Add platform-specific include paths
+if(PLATFORM_LC STREQUAL "windows")
+    list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/windows/)
+elseif(PLATFORM_LC STREQUAL "linux")
+    list(APPEND INCLUDE_PATHS ${CMAKE_SOURCE_DIR}/include/pal/linux/)
+endif()
+
 # Collect all source files from src/ directory
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.cc)
 
 # Exclude platform-specific files for non-target platforms
-list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
-list(FILTER SOURCES EXCLUDE REGEX ".*/uefi/.*")
+if(PLATFORM_LC STREQUAL "windows")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/linux/.*")
+elseif(PLATFORM_LC STREQUAL "linux")
+    list(FILTER SOURCES EXCLUDE REGEX ".*/windows/.*")
+endif()
 
 # =============================================================================
 # Base Compiler Flags (All Architectures)
@@ -191,10 +216,15 @@ endif()
 if(BUILD_TYPE_LC STREQUAL "debug")
     # Debug-specific compiler flags
     list(APPEND BASE_COMPILER_FLAGS
-        -gcodeview                          # CodeView debug info (WinDbg/VS)
         -g3                                 # Maximum debug information
         -fno-omit-frame-pointer             # Keep frame pointer for stack traces
     )
+    # Platform-specific debug info format
+    if(PLATFORM_LC STREQUAL "windows")
+        list(APPEND BASE_COMPILER_FLAGS
+            -gcodeview                      # CodeView debug info (WinDbg/VS)
+        )
+    endif()
 else()
     # Release-specific compiler flags (maximum optimization)
     list(APPEND BASE_COMPILER_FLAGS
@@ -216,43 +246,75 @@ set(BASE_LINKER_FLAGS
     -nostdlib                               # No standard libraries (no CRT startup)
 )
 
-# Windows linker flags (passed to LLD via -Wl):
-#   /Entry:_start        - Use _start as entry point (bypass CRT)
-#   /SUBSYSTEM:CONSOLE   - Console application
-#   /ORDER:@orderfile    - Control function placement in .text
-#   /MERGE:.rdata=.text  - CRITICAL: Merge read-only data into code for PIC
-set(LINKER_BASE "-Wl,/Entry:_start,/SUBSYSTEM:CONSOLE,/ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt,/MERGE:.rdata=.text")
+# =============================================================================
+# Platform-Specific Linker Flags
+# =============================================================================
+if(PLATFORM_LC STREQUAL "windows")
+    # Windows linker flags (passed to LLD via -Wl):
+    #   /Entry:_start        - Use _start as entry point (bypass CRT)
+    #   /SUBSYSTEM:CONSOLE   - Console application
+    #   /ORDER:@orderfile    - Control function placement in .text
+    #   /MERGE:.rdata=.text  - CRITICAL: Merge read-only data into code for PIC
+    set(LINKER_BASE "-Wl,/Entry:_start,/SUBSYSTEM:CONSOLE,/ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt,/MERGE:.rdata=.text")
 
-# =============================================================================
-# Architecture-Specific Linker Flags
-# =============================================================================
-if(ARCHITECTURE_LC STREQUAL "i386")
-    # i386-specific linker flags:
-    #   /BASE:0x400000    - Preferred load address (standard for 32-bit Windows)
-    #   /FILEALIGN:0x1000 - File section alignment (4KB pages)
-    #   /SAFESEH:NO       - Disable SafeSEH
-    set(LINKER_EXTRA ",/BASE:0x400000,/FILEALIGN:0x1000,/SAFESEH:NO")
-else()
-    set(LINKER_EXTRA "")
-endif()
+    # =============================================================================
+    # Architecture-Specific Linker Flags (Windows)
+    # =============================================================================
+    if(ARCHITECTURE_LC STREQUAL "i386")
+        # i386-specific linker flags:
+        #   /BASE:0x400000    - Preferred load address (standard for 32-bit Windows)
+        #   /FILEALIGN:0x1000 - File section alignment (4KB pages)
+        #   /SAFESEH:NO       - Disable SafeSEH
+        set(LINKER_EXTRA ",/BASE:0x400000,/FILEALIGN:0x1000,/SAFESEH:NO")
+    else()
+        set(LINKER_EXTRA "")
+    endif()
 
-# =============================================================================
-# Build Type Specific Linker Flags
-# =============================================================================
-if(BUILD_TYPE_LC STREQUAL "debug")
-    # Debug linker flags:
-    #   /DEBUG - Include debug information in PE
-    #   /MAP   - Generate linker map file
-    set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},/DEBUG,/MAP:${OUTPUT_DIR}/output.map.txt")
-else()
-    # Release linker flags:
-    #   --strip-all - Remove all symbols and debug info
-    #   /OPT:REF    - Remove unreferenced functions/data
-    #   /OPT:ICF    - Fold identical code sequences
-    #   /RELEASE    - Set release flag in PE header
-    #   /LTCG       - Link-time code generation
-    #   /MAP        - Generate linker map file
-    set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},--strip-all,/OPT:REF,/OPT:ICF,/RELEASE,/LTCG,/MAP:${OUTPUT_DIR}/output.map.txt")
+    # =============================================================================
+    # Build Type Specific Linker Flags (Windows)
+    # =============================================================================
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        # Debug linker flags:
+        #   /DEBUG - Include debug information in PE
+        #   /MAP   - Generate linker map file
+        set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},/DEBUG,/MAP:${OUTPUT_DIR}/output.map.txt")
+    else()
+        # Release linker flags:
+        #   --strip-all - Remove all symbols and debug info
+        #   /OPT:REF    - Remove unreferenced functions/data
+        #   /OPT:ICF    - Fold identical code sequences
+        #   /RELEASE    - Set release flag in PE header
+        #   /LTCG       - Link-time code generation
+        #   /MAP        - Generate linker map file
+        set(LINKER_FLAGS "${LINKER_BASE}${LINKER_EXTRA},--strip-all,/OPT:REF,/OPT:ICF,/RELEASE,/LTCG,/MAP:${OUTPUT_DIR}/output.map.txt")
+    endif()
+
+    set(OUTPUT_EXTENSION ".exe")
+
+elseif(PLATFORM_LC STREQUAL "linux")
+    # Linux linker flags (ELF format):
+    #   -e _start               - Use _start as entry point
+    #   -T linker_script.txt    - Use linker script to place _start first
+    #   --build-id=none         - Don't add build ID section
+    set(LINKER_BASE "-Wl,-e,_start,-T,${CMAKE_SOURCE_DIR}/linker_script.txt,--build-id=none")
+
+    # =============================================================================
+    # Build Type Specific Linker Flags (Linux)
+    # =============================================================================
+    if(BUILD_TYPE_LC STREQUAL "debug")
+        # Debug linker flags:
+        #   -Map - Generate linker map file
+        set(LINKER_FLAGS "${LINKER_BASE},-Map,${OUTPUT_DIR}/output.map.txt")
+    else()
+        # Release linker flags:
+        #   --strip-all - Remove all symbols and debug info
+        #   --gc-sections - Remove unused sections
+        #   -Map - Generate linker map file
+        set(LINKER_FLAGS "${LINKER_BASE},--strip-all,--gc-sections,-Map,${OUTPUT_DIR}/output.map.txt")
+    endif()
+
+    set(OUTPUT_EXTENSION ".elf")
+
 endif()
 
 # =============================================================================
@@ -272,7 +334,7 @@ add_executable(${TARGET_TRIPLE} ${SOURCES})
 # Set target properties - use simple "output" name (directory provides context)
 set_target_properties(${TARGET_TRIPLE} PROPERTIES
     OUTPUT_NAME "output"
-    SUFFIX ".exe"
+    SUFFIX "${OUTPUT_EXTENSION}"
 )
 
 # Include directories
@@ -298,7 +360,7 @@ target_link_options(${TARGET_TRIPLE} PRIVATE
 # =============================================================================
 # Post-Build Commands (PIC Blob Generation & Analysis)
 # =============================================================================
-set(OUTPUT_EXE "${OUTPUT_DIR}/output.exe")
+set(OUTPUT_EXE "${OUTPUT_DIR}/output${OUTPUT_EXTENSION}")
 set(OUTPUT_BIN "${OUTPUT_DIR}/output.bin")
 set(OUTPUT_TXT "${OUTPUT_DIR}/output.txt")
 set(OUTPUT_STR "${OUTPUT_DIR}/output.strings.txt")
@@ -422,6 +484,6 @@ message(STATUS "PLATFORM:         ${PLATFORM_LC}")
 message(STATUS "ARCHITECTURE:     ${ARCHITECTURE_LC}")
 message(STATUS "TARGET_TRIPLE:    ${TARGET_TRIPLE}")
 message(STATUS "OUTPUT_DIR:       ${OUTPUT_DIR}")
-message(STATUS "OUTPUT:           output.exe")
+message(STATUS "OUTPUT:           ${OUTPUT_EXE}")
 message(STATUS "===========================")
 message(STATUS "")

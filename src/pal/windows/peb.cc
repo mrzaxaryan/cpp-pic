@@ -1,6 +1,7 @@
 #include "peb.h"
 #include "pal.h"
 #include "djb2.h"
+#include "pe.h"
 
 // Returns the current process's PEB pointer
 PPEB GetCurrentPEB(VOID)
@@ -46,4 +47,16 @@ PVOID GetModuleHandleFromPEB(USIZE moduleNameHash)
     }
 
     return NULL;
+}
+
+PVOID ResolveExportAddressFromPebModule(USIZE moduleNameHash, USIZE functionNameHash)
+{
+    // Resolve the module handle
+    PVOID moduleBase = GetModuleHandleFromPEB(moduleNameHash);
+    // Validate the module handle
+    if (moduleBase == NULL)
+        return NULL;
+    // Resolve the function address
+    PVOID functionAddress = GetExportAddress(moduleBase, functionNameHash);
+    return functionAddress;
 }

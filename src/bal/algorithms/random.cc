@@ -1,9 +1,4 @@
 #include "random.h"
-#include "date_time.h"
-#include "pal.h"
-#include "kernel32.h"
-#include "peb.h"
-#include "logger.h"
 
 static inline UINT64 GetHardwareTimestamp()
 {
@@ -20,10 +15,21 @@ static inline UINT64 GetHardwareTimestamp()
     return virtual_timer_value;
 
 #elif defined(ARCHITECTURE_ARMV7A)
-    // ARMv7-A (32-bit): Use mrrc to read the 64-bit CNTVCT into two registers
-    unsigned int lo, hi;
-    __asm__ __volatile__("mrrc p15, 1, %0, %1, c14" : "=r"(lo), "=r"(hi));
-    return ((UINT64)hi << 32) | lo;
+    // ARMv7-A (32-bit): User-space timestamp using software counters
+    // Hardware counters require kernel/QEMU config to enable user access
+    static UINT64 counter = 0;
+    unsigned int sp, lr;
+
+    // Read stack pointer and link register for entropy
+    __asm__ __volatile__(
+        "mov %0, sp\n\t"
+        "mov %1, lr"
+        : "=r"(sp), "=r"(lr)
+    );
+
+    // Combine: incrementing counter + stack pointer + return address
+    counter++;
+    return counter ^ ((UINT64)sp << 32) ^ ((UINT64)lr << 16);
 
 #else
 #error "GetHardwareTimestamp not implemented for this architecture"
@@ -36,7 +42,6 @@ INT32 Random::Get()
 {
     // simple linear congruential generator
     seed = (seed * GetHardwareTimestamp() + (UINT64)214013) & 0x7FFFFFFF;
-    Logger::Debug<WCHAR>(L"[Random] Generated value: %u"_embed, static_cast<UINT32>((seed >> 16) & 0x7FFF));
     return static_cast<INT32>(seed % MAX);
 }
 
@@ -44,5 +49,4 @@ INT32 Random::Get()
 Random::Random()
 {
     seed = GetHardwareTimestamp();
-    Logger::Debug<WCHAR>(L"[Random] Initialized with seed: %llu"_embed, seed);
 }

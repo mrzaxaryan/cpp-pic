@@ -53,8 +53,6 @@ private:
 			return FALSE;
 		}
 
-		LOG_INFO("Sent %d bytes via TLS", bytesSent);
-
 		// Receive echo response
 		CHAR buffer[128];
 		Memory::Zero(buffer, sizeof(buffer));
@@ -66,8 +64,6 @@ private:
 			tlsClient.Close();
 			return FALSE;
 		}
-
-		LOG_INFO("Received echo response (%d bytes): %s ....", bytesRead, buffer);
 
 		LOG_INFO("TLS echo test passed");
 		tlsClient.Close();
@@ -117,7 +113,6 @@ private:
 			tlsClient.Close();
 			return FALSE;
 		}
-		LOG_INFO("Message 1 echo: %s ....", buffer1);
 
 		// Send and receive message 2
 		UINT32 sent2 = tlsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length);
@@ -137,7 +132,6 @@ private:
 			tlsClient.Close();
 			return FALSE;
 		}
-		LOG_INFO("Message 2 echo: %s ....", buffer2);
 
 		// Send and receive message 3
 		UINT32 sent3 = tlsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length);
@@ -157,7 +151,6 @@ private:
 			tlsClient.Close();
 			return FALSE;
 		}
-		LOG_INFO("Message 3 echo: %s ....", buffer3);
 
 		LOG_INFO("Multiple message echo test passed");
 		tlsClient.Close();

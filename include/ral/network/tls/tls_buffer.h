@@ -12,7 +12,7 @@ private:
 public:
     TlsBuffer() : buffer(nullptr), capacity(0), size(0) {};
     ~TlsBuffer() { Clear(); }
-    INT32 Append(const void *data, INT32 size);
+    INT32 Append(PCVOID data, INT32 size);
     INT32 Append(CHAR data);
     INT32 Append(INT16 data);
     INT32 AppendSize(INT32 size);

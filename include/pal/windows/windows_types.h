@@ -126,5 +126,5 @@ typedef union _LARGE_INTEGER
         UINT32 LowPart;
         INT32 HighPart;
     } u;
-    signed long long QuadPart;
+    INT64 QuadPart;
 } LARGE_INTEGER, *PLARGE_INTEGER;

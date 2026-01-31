@@ -427,7 +427,7 @@ private:
 		for (INT64 i = 0; i < 10; i++)
 		{
 			INT64 index = i;
-			DOUBLE val = testArray[(signed long long)index];
+			DOUBLE val = testArray[(INT64)index];
 			// Just verify non-zero (all values are > 1.0)
 			if (val.Bits() == 0)
 				return FALSE;

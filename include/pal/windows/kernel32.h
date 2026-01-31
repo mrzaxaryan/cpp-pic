@@ -105,10 +105,10 @@ private:
 public:
 	// This function writes a character string to a console screen buffer beginning at the current cursor location.
 	// Minimum supported client	Windows 2000 Professional [desktop apps only]
-	static BOOL WriteConsoleA(PVOID hConsoleOutput, const void *lpBuffer, INT32 nNumberOfCharsToWrite, PUINT32 lpNumberOfCharsWritten, LPOVERLAPPED lpOverlapped);
+	static BOOL WriteConsoleA(PVOID hConsoleOutput, PCVOID lpBuffer, INT32 nNumberOfCharsToWrite, PUINT32 lpNumberOfCharsWritten, LPOVERLAPPED lpOverlapped);
 	// This function writes a character string to a console screen buffer beginning at the current cursor location.
 	// Minimum supported client	Windows 2000 Professional [desktop apps only]
-	static BOOL WriteConsoleW(PVOID hConsoleOutput, const void *lpBuffer, INT32 nNumberOfCharsToWrite, PUINT32 lpNumberOfCharsWritten, LPOVERLAPPED lpOverlapped);
+	static BOOL WriteConsoleW(PVOID hConsoleOutput, PCVOID lpBuffer, INT32 nNumberOfCharsToWrite, PUINT32 lpNumberOfCharsWritten, LPOVERLAPPED lpOverlapped);
 	// This function creates an anonymous pipe, and returns handles to the read and write ends of the pipe.
 	// Minimum supported client	Windows 2000 Professional [desktop apps | UWP apps]
 	static BOOL CreatePipe(PPVOID hReadPipe, PPVOID hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, UINT32 nSize);
@@ -120,7 +120,7 @@ public:
 	static BOOL CreateProcessA(PCHAR lpApplicationName, PCHAR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, UINT32 dwCreationFlags, PVOID lpEnvironment, PCHAR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 	// This function writes data to the specified file or input/output (I/O) device.
 	// Minimum supported client	Windows XP [desktop apps | UWP apps]
-	static BOOL WriteFile(PVOID hFile, const void *lpBuffer, INT32 nNumberOfBytesToWrite, PUINT32 lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+	static BOOL WriteFile(PVOID hFile, PCVOID lpBuffer, INT32 nNumberOfBytesToWrite, PUINT32 lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 	// This function reads data from the specified file or input/output (I/O) device.
 	// Minimum supported client	Windows XP [desktop apps | UWP apps]
 	static BOOL ReadFile(PVOID hFile, PVOID lpBuffer, INT32 nNumberOfBytesToRead, PUINT32 lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);

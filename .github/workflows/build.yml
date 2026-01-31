@@ -221,19 +221,15 @@ jobs:
         include:
           - arch: i386
             platform: linux
-            qemu: qemu-i386-static
             note: "Runs via QEMU i386"
           - arch: x86_64
             platform: linux
-            qemu: ""
             note: "Runs natively on x64"
           - arch: armv7a
             platform: linux
-            qemu: qemu-arm-static
             note: "Runs via QEMU ARM"
           - arch: aarch64
             platform: linux
-            qemu: qemu-aarch64-static
             note: "Runs via QEMU ARM64"
     steps:
       - name: Checkout
@@ -281,7 +277,7 @@ jobs:
           clang --version
 
       - name: Install QEMU
-        if: matrix.qemu != ''
+        if: matrix.arch != 'x86_64'
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
@@ -304,9 +300,7 @@ jobs:
 
       - name: Test -O0
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Build -O1
         id: build-o1
@@ -326,9 +320,7 @@ jobs:
 
       - name: Test -O1
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Build -O2
         id: build-o2
@@ -348,9 +340,7 @@ jobs:
 
       - name: Test -O2
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Build -O3
         id: build-o3
@@ -370,9 +360,7 @@ jobs:
 
       - name: Test -O3
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Build -Os
         id: build-os
@@ -392,9 +380,7 @@ jobs:
 
       - name: Test -Os
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Build -Oz
         id: build-oz
@@ -414,9 +400,7 @@ jobs:
 
       - name: Test -Oz
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Build -Og
         id: build-og
@@ -436,6 +420,4 @@ jobs:
 
       - name: Test -Og
         run: |
-          TEST_EXE=$(find build -type f -name "*.elf" | head -n 1)
-          chmod +x "$TEST_EXE"
-          if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
+          python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)

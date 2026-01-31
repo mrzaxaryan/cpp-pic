@@ -71,6 +71,62 @@
             "preLaunchTask": "aarch64-windows-debug"
         },
         {
+            "name": "i386-linux-release (PIC)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "i386",
+                "${workspaceFolder}/build/release/linux/i386/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "i386-linux-release"
+        },
+        {
+            "name": "x86_64-linux-release (PIC)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "x86_64",
+                "${workspaceFolder}/build/release/linux/x86_64/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "x86_64-linux-release"
+        },
+        {
+            "name": "armv7a-linux-release (PIC)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "armv7a",
+                "${workspaceFolder}/build/release/linux/armv7a/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "armv7a-linux-release"
+        },
+        {
+            "name": "aarch64-linux-release (PIC)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "aarch64",
+                "${workspaceFolder}/build/release/linux/aarch64/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "aarch64-linux-release"
+        },
+        {
             "name": "i386-linux-debug (WSL)",
             "type": "lldb-dap",
             "request": "launch",

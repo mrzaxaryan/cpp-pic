@@ -59,13 +59,14 @@ jobs:
           "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Build -O0
+        id: build-o0
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O0
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O0
-        if: always()
+        if: steps.build-o0.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O0
@@ -80,13 +81,14 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Build -O1
+        id: build-o1
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O1
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O1
-        if: always()
+        if: steps.build-o1.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O1
@@ -101,13 +103,14 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Build -O2
+        id: build-o2
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O2
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O2
-        if: always()
+        if: steps.build-o2.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O2
@@ -122,13 +125,14 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Build -O3
+        id: build-o3
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O3
-        if: always()
+        if: steps.build-o3.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O3
@@ -143,13 +147,14 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Build -Os
+        id: build-os
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Os
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -Os
-        if: always()
+        if: steps.build-os.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-Os
@@ -164,13 +169,14 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Build -Oz
+        id: build-oz
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Oz
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -Oz
-        if: always()
+        if: steps.build-oz.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-Oz
@@ -185,13 +191,14 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Build -Og
+        id: build-og
         shell: pwsh
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Og
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -Og
-        if: always()
+        if: steps.build-og.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-Og
@@ -280,12 +287,13 @@ jobs:
           sudo apt-get install -y qemu-user-static
 
       - name: Build -O0
+        id: build-o0
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O0
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O0
-        if: always()
+        if: steps.build-o0.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O0
@@ -301,12 +309,13 @@ jobs:
           if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
 
       - name: Build -O1
+        id: build-o1
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O1
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O1
-        if: always()
+        if: steps.build-o1.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O1
@@ -322,12 +331,13 @@ jobs:
           if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
 
       - name: Build -O2
+        id: build-o2
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O2
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O2
-        if: always()
+        if: steps.build-o2.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O2
@@ -343,12 +353,13 @@ jobs:
           if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
 
       - name: Build -O3
+        id: build-o3
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -O3
-        if: always()
+        if: steps.build-o3.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-O3
@@ -364,12 +375,13 @@ jobs:
           if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
 
       - name: Build -Os
+        id: build-os
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Os
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -Os
-        if: always()
+        if: steps.build-os.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-Os
@@ -385,12 +397,13 @@ jobs:
           if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
 
       - name: Build -Oz
+        id: build-oz
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Oz
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -Oz
-        if: always()
+        if: steps.build-oz.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-Oz
@@ -406,12 +419,13 @@ jobs:
           if [ -n "${{ matrix.qemu }}" ]; then ${{ matrix.qemu }} "$TEST_EXE"; else "$TEST_EXE"; fi
 
       - name: Build -Og
+        id: build-og
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Og
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
 
       - name: Upload artifacts -Og
-        if: always()
+        if: steps.build-og.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.arch }}-${{ matrix.platform }}-Og

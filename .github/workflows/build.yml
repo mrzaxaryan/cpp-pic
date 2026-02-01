@@ -609,6 +609,7 @@ jobs:
             -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
             -m 512 \
             -nographic \
+            -serial mon:stdio \
             -nic user,model=${{ matrix.nic_model }} \
             -no-reboot || true
           echo "QEMU test completed"

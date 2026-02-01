@@ -517,6 +517,7 @@ jobs:
             qemu_cmd: qemu-system-x86_64
             boot_file: BOOTX64.EFI
             nic_model: e1000
+            drive_if: ide,index=0
           - arch: aarch64
             platform: uefi
             ovmf_pkg: qemu-efi-aarch64
@@ -524,6 +525,7 @@ jobs:
             qemu_cmd: qemu-system-aarch64 -M virt -cpu cortex-a72
             boot_file: BOOTAA64.EFI
             nic_model: virtio
+            drive_if: virtio
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -602,12 +604,11 @@ jobs:
         run: |
           echo "Running UEFI application in QEMU with networking..."
           # Run QEMU with user-mode networking for TCP/IP support
-          # Using simplified -nic syntax for better compatibility
-          # SLIRP defaults: guest=10.0.2.15, gateway=10.0.2.2, dns=10.0.2.3
+          # Using static IP config (10.0.2.15) with SLIRP gateway (10.0.2.2)
           # Strip ANSI escape codes - OVMF serial output corrupts ESC chars in CI logs
           timeout 180s ${{ matrix.qemu_cmd }} \
             -bios "${{ matrix.ovmf_path }}" \
-            -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
             -m 512 \
             -nographic \
             -serial mon:stdio \

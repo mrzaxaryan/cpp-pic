@@ -9,8 +9,10 @@
 #include "efi_tcp6_protocol.h"
 #include "efi_service_binding.h"
 #include "efi_simple_network_protocol.h"
+#include "efi_ip4_config2_protocol.h"
 
 static BOOL g_NetworkInitialized = FALSE;
+static BOOL g_DhcpInitialized = FALSE;
 
 // =============================================================================
 // Internal Socket Context
@@ -72,6 +74,53 @@ static BOOL InitializeNetworkInterface(EFI_BOOT_SERVICES *bs, EFI_HANDLE ImageHa
 
 	bs->FreePool(HandleBuffer);
 	return g_NetworkInitialized;
+}
+
+static BOOL InitializeDhcp(EFI_BOOT_SERVICES *bs, EFI_HANDLE ImageHandle)
+{
+	if (g_DhcpInitialized)
+		return TRUE;
+
+	EFI_GUID Ip4Config2Guid = EFI_IP4_CONFIG2_PROTOCOL_GUID;
+	USIZE HandleCount = 0;
+	EFI_HANDLE *HandleBuffer = NULL;
+
+	if (EFI_ERROR_CHECK(bs->LocateHandleBuffer(ByProtocol, &Ip4Config2Guid, NULL, &HandleCount, &HandleBuffer)) || HandleCount == 0)
+		return FALSE;
+
+	for (USIZE i = 0; i < HandleCount; i++)
+	{
+		EFI_IP4_CONFIG2_PROTOCOL *Ip4Config2 = NULL;
+		if (EFI_ERROR_CHECK(bs->OpenProtocol(HandleBuffer[i], &Ip4Config2Guid, (PVOID *)&Ip4Config2, ImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL)) || Ip4Config2 == NULL)
+			continue;
+
+		// Set DHCP policy
+		EFI_IP4_CONFIG2_POLICY Policy = Ip4Config2PolicyDhcp;
+		EFI_STATUS Status = Ip4Config2->SetData(Ip4Config2, Ip4Config2DataTypePolicy, sizeof(Policy), &Policy);
+		if (EFI_ERROR_CHECK(Status) && Status != EFI_ALREADY_STARTED)
+			continue;
+
+		// Wait for DHCP to complete by polling for gateway (indicates DHCP success)
+		for (UINT32 retry = 0; retry < 50; retry++)
+		{
+			USIZE DataSize = 0;
+			Status = Ip4Config2->GetData(Ip4Config2, Ip4Config2DataTypeGateway, &DataSize, NULL);
+			if (Status == EFI_BUFFER_TOO_SMALL && DataSize >= sizeof(EFI_IPv4_ADDRESS))
+			{
+				// DHCP has configured a gateway
+				g_DhcpInitialized = TRUE;
+				bs->Stall(500000); // 500ms for TCP stack readiness
+				break;
+			}
+			bs->Stall(100000); // 100ms
+		}
+
+		if (g_DhcpInitialized)
+			break;
+	}
+
+	bs->FreePool(HandleBuffer);
+	return g_DhcpInitialized;
 }
 
 // Wait for async operation with Poll to drive network stack
@@ -183,6 +232,7 @@ BOOL Socket::Open()
 	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
 
 	InitializeNetworkInterface(bs, ctx->ImageHandle);
+	InitializeDhcp(bs, ctx->ImageHandle);
 
 	EFI_EVENT ConnectEvent;
 	if (EFI_ERROR_CHECK(bs->CreateEvent(EVT_NOTIFY_SIGNAL, TPL_CALLBACK, EmptyNotify, NULL, &ConnectEvent)))

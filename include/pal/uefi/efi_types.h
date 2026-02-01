@@ -101,7 +101,9 @@ typedef enum {
 #define EFI_WRITE_PROTECTED EFI_ERROR(8)
 #define EFI_OUT_OF_RESOURCES EFI_ERROR(9)
 #define EFI_NOT_FOUND EFI_ERROR(14)
+#define EFI_ACCESS_DENIED EFI_ERROR(15)
 #define EFI_TIMEOUT EFI_ERROR(18)
+#define EFI_ALREADY_STARTED EFI_ERROR(20)
 #define EFI_ABORTED EFI_ERROR(21)
 
 // Warning codes (high bit clear, but non-zero)

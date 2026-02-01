@@ -120,22 +120,12 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 		if (EFI_ERROR_CHECK(bs->OpenProtocol(HandleBuffer[i], &Ip4Config2Guid, (PVOID *)&Ip4Config2, ctx->ImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL)) || Ip4Config2 == NULL)
 			continue;
 
-		// Check if we already have an IP address configured
-		USIZE DataSize = 0;
-		EFI_STATUS Status = Ip4Config2->GetData(Ip4Config2, Ip4Config2DataTypeInterfaceInfo, &DataSize, NULL);
-		if (Status == EFI_BUFFER_TOO_SMALL && DataSize > 0)
-		{
-			LOG_DEBUG("Socket: IP already configured (interface info exists, size=%u), skipping DHCP wait", (UINT32)DataSize);
-			ctx->DhcpConfigured = TRUE;
-			break;
-		}
-
 		// Check if gateway exists (DHCP already completed)
-		DataSize = 0;
-		Status = Ip4Config2->GetData(Ip4Config2, Ip4Config2DataTypeGateway, &DataSize, NULL);
+		USIZE DataSize = 0;
+		EFI_STATUS Status = Ip4Config2->GetData(Ip4Config2, Ip4Config2DataTypeGateway, &DataSize, NULL);
 		if (Status == EFI_BUFFER_TOO_SMALL && DataSize >= sizeof(EFI_IPv4_ADDRESS))
 		{
-			LOG_DEBUG("Socket: DHCP already configured (gateway exists)");
+			LOG_DEBUG("Socket: DHCP already configured (gateway exists, size=%u)", (UINT32)DataSize);
 			ctx->DhcpConfigured = TRUE;
 			break;
 		}
@@ -150,26 +140,25 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 			continue;
 		}
 
-		// Quick check for DHCP - only wait briefly since UseDefaultAddress=TRUE works without it
-		LOG_DEBUG("Socket: Quick DHCP check (up to 500ms)...");
-		for (UINT32 retry = 0; retry < 5; retry++)
+		// Wait for DHCP to complete - check for gateway assignment
+		LOG_DEBUG("Socket: Waiting for DHCP (up to 5s)...");
+		for (UINT32 retry = 0; retry < 50; retry++)
 		{
 			DataSize = 0;
 			Status = Ip4Config2->GetData(Ip4Config2, Ip4Config2DataTypeGateway, &DataSize, NULL);
 			if (Status == EFI_BUFFER_TOO_SMALL && DataSize >= sizeof(EFI_IPv4_ADDRESS))
 			{
-				LOG_DEBUG("Socket: DHCP completed after %u retries (%ums)", retry, retry * 100);
+				LOG_DEBUG("Socket: DHCP completed after %ums", retry * 100);
 				ctx->DhcpConfigured = TRUE;
 				break;
 			}
 			bs->Stall(100000); // 100ms
 		}
 
-		// Even if DHCP didn't complete, mark as configured since UseDefaultAddress works
 		if (!ctx->DhcpConfigured)
 		{
-			LOG_DEBUG("Socket: DHCP timeout, proceeding with UseDefaultAddress");
-			ctx->DhcpConfigured = TRUE; // Allow TCP to use default address
+			LOG_DEBUG("Socket: DHCP timeout after 5s, proceeding anyway");
+			ctx->DhcpConfigured = TRUE; // Allow TCP to try with whatever config exists
 		}
 		break;
 	}

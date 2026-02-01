@@ -604,24 +604,13 @@ jobs:
           # Run QEMU with user-mode networking for TCP/IP support
           # Using simplified -nic syntax for better compatibility
           # SLIRP defaults: guest=10.0.2.15, gateway=10.0.2.2, dns=10.0.2.3
-          # x86_64 OVMF corrupts ANSI escape codes on serial, strip them
-          if [ "${{ matrix.arch }}" = "x86_64" ]; then
-            timeout 180s ${{ matrix.qemu_cmd }} \
-              -bios "${{ matrix.ovmf_path }}" \
-              -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
-              -m 512 \
-              -nographic \
-              -serial mon:stdio \
-              -nic user,model=${{ matrix.nic_model }} \
-              -no-reboot 2>&1 | sed 's/\x1b\[[0-9;]*m//g' || true
-          else
-            timeout 180s ${{ matrix.qemu_cmd }} \
-              -bios "${{ matrix.ovmf_path }}" \
-              -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
-              -m 512 \
-              -nographic \
-              -serial mon:stdio \
-              -nic user,model=${{ matrix.nic_model }} \
-              -no-reboot || true
-          fi
+          # Strip ANSI escape codes - OVMF serial output corrupts ESC chars in CI logs
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            -no-reboot 2>&1 | sed 's/\x1b\[[0-9;]*m//g' || true
           echo "QEMU test completed"

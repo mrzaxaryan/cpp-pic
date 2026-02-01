@@ -413,9 +413,10 @@ BOOL Socket::Open()
 			ConfigData.AccessPoint.RemoteAddress.Addr[3],
 			(UINT32)port);
 
-		if (EFI_ERROR_CHECK(sockCtx->Tcp4->Configure(sockCtx->Tcp4, &ConfigData)))
+		Status = sockCtx->Tcp4->Configure(sockCtx->Tcp4, &ConfigData);
+		if (EFI_ERROR_CHECK(Status))
 		{
-			LOG_DEBUG("Socket: TCP4 Configure failed");
+			LOG_DEBUG("Socket: TCP4 Configure failed: 0x%lx", (UINT64)Status);
 			bs->CloseEvent(ConnectEvent);
 			return FALSE;
 		}

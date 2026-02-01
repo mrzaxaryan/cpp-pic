@@ -66,10 +66,10 @@ if(NOT BUILD_TYPE_LC IN_LIST VALID_BUILD_TYPES)
     message(FATAL_ERROR "Invalid BUILD_TYPE: ${BUILD_TYPE}. Must be one of: ${VALID_BUILD_TYPES}")
 endif()
 
-# UEFI is supported on i386, x86_64, and aarch64
+# UEFI is supported on x86_64 and aarch64
 if(PLATFORM_LC STREQUAL "uefi")
-    if(NOT (ARCHITECTURE_LC STREQUAL "i386" OR ARCHITECTURE_LC STREQUAL "x86_64" OR ARCHITECTURE_LC STREQUAL "aarch64"))
-        message(FATAL_ERROR "UEFI platform only supports i386, x86_64 and aarch64 architectures")
+    if(NOT (ARCHITECTURE_LC STREQUAL "x86_64" OR ARCHITECTURE_LC STREQUAL "aarch64"))
+        message(FATAL_ERROR "UEFI platform only supports x86_64 and aarch64 architectures")
     endif()
 endif()
 
@@ -116,10 +116,7 @@ elseif(PLATFORM_LC STREQUAL "linux")
 elseif(PLATFORM_LC STREQUAL "uefi")
     # UEFI uses Windows-GNU target triple for PE/COFF format
     # This avoids MSVC-specific CRT symbols like _fltused
-    if(ARCHITECTURE_LC STREQUAL "i386")
-        set(TARGET_TRIPLE "i386-pc-windows-gnu")
-        set(ARCH_DEFINES ARCHITECTURE_I386 PLATFORM_UEFI PLATFORM_UEFI_I386)
-    elseif(ARCHITECTURE_LC STREQUAL "x86_64")
+    if(ARCHITECTURE_LC STREQUAL "x86_64")
         set(TARGET_TRIPLE "x86_64-pc-windows-gnu")
         set(ARCH_DEFINES ARCHITECTURE_X86_64 PLATFORM_UEFI PLATFORM_UEFI_X86_64)
     elseif(ARCHITECTURE_LC STREQUAL "aarch64")

@@ -160,24 +160,6 @@
       "group": "build"
     },
     {
-      "label": "i386-uefi-debug",
-      "type": "shell",
-      "command": "cmake -B build/debug/uefi/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/uefi/i386/cmake",
-      "problemMatcher": [
-        "$gcc"
-      ],
-      "group": "build"
-    },
-    {
-      "label": "i386-uefi-release",
-      "type": "shell",
-      "command": "cmake -B build/release/uefi/i386/cmake -DARCHITECTURE=i386 -DPLATFORM=uefi -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3 -G Ninja && cmake --build build/release/uefi/i386/cmake",
-      "problemMatcher": [
-        "$gcc"
-      ],
-      "group": "build"
-    },
-    {
       "label": "x86_64-uefi-debug",
       "type": "shell",
       "command": "cmake -B build/debug/uefi/x86_64/cmake -DARCHITECTURE=x86_64 -DPLATFORM=uefi -DBUILD_TYPE=debug -DOPTIMIZATION_LEVEL=Og -G Ninja && cmake --build build/debug/uefi/x86_64/cmake",
@@ -240,20 +222,11 @@
       "label": "Build All UEFI",
       "dependsOrder": "parallel",
       "dependsOn": [
-        "i386-uefi-release",
         "x86_64-uefi-release",
         "aarch64-uefi-release"
       ],
       "group": "build",
       "problemMatcher": []
-    },
-    {
-      "label": "Run UEFI i386 (QEMU)",
-      "type": "shell",
-      "command": "qemu-system-i386 -machine q35 -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF32_CODE_4M.fd -drive file=fat:rw:build/release/uefi/i386,if=ide,index=0 -m 512 -nographic -nic user,model=e1000 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -no-reboot; ret=$?; if [ $ret -eq 1 ]; then exit 0; else exit $ret; fi",
-      "dependsOn": "i386-uefi-release",
-      "problemMatcher": [],
-      "group": "test"
     },
     {
       "label": "Run UEFI x86_64 (QEMU)",

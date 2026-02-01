@@ -13,10 +13,7 @@
 // UEFI Calling Convention
 // =============================================================================
 
-#if defined(ARCHITECTURE_I386)
-// i386 UEFI uses cdecl calling convention (explicitly specified for safety)
-#define EFIAPI __attribute__((cdecl))
-#elif defined(ARCHITECTURE_X86_64)
+#if defined(ARCHITECTURE_X86_64)
 // x86_64 UEFI uses Microsoft x64 ABI
 #define EFIAPI __attribute__((ms_abi))
 #elif defined(ARCHITECTURE_AARCH64)
@@ -85,12 +82,8 @@ typedef enum {
 
 #define EFI_SUCCESS 0ULL
 
-// Error codes (high bit set)
-#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
+// Error codes (high bit set for 64-bit architectures)
 #define EFI_ERROR_MASK (1ULL << 63)
-#else
-#define EFI_ERROR_MASK (1UL << 31)
-#endif
 
 #define EFI_ERROR(code) (EFI_ERROR_MASK | (code))
 

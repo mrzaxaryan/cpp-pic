@@ -510,16 +510,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: i386
-            platform: uefi
-            ovmf_pkg: ovmf-ia32
-            bios_opt: -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF32_CODE_4M.fd
-            qemu_cmd: qemu-system-i386 -machine q35
-            boot_file: BOOTIA32.EFI
-            nic_model: e1000
-            drive_if: ide,index=0
-            debug_exit: -device isa-debug-exit,iobase=0xf4,iosize=0x04
-            success_code: 1
           - arch: x86_64
             platform: uefi
             ovmf_pkg: ovmf

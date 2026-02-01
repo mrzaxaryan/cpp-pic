@@ -24,9 +24,9 @@ code .
 - Ensure WSL is properly configured on your Windows system
 - Install QEMU and UEFI firmware:
   ```bash
-  sudo apt-get update && sudo apt-get install -y qemu-user-static qemu-system-x86 qemu-system-arm ovmf ovmf-ia32 qemu-efi-aarch64
+  sudo apt-get update && sudo apt-get install -y qemu-user-static qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64
   ```
-  This installs QEMU for cross-architecture execution (ARM on x86_64) and UEFI testing in virtual machines (i386, x86_64, and aarch64).
+  This installs QEMU for cross-architecture execution (ARM on x86_64) and UEFI testing in virtual machines (x86_64 and aarch64).
 
 For more information, see the [VSCode WSL documentation](https://code.visualstudio.com/docs/remote/wsl).
 

@@ -177,19 +177,82 @@ endmacro()
 function(cpppic_add_postbuild target_name)
     set(_out "${CPPPIC_OUTPUT_DIR}/output")
 
-    add_custom_command(TARGET ${target_name} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Build complete: ${_out}${CPPPIC_EXT}"
-        COMMAND llvm-objdump -d -s -h -j .text "${_out}${CPPPIC_EXT}" > "${_out}.txt"
-        COMMAND llvm-objcopy --dump-section=.text="${_out}.bin" "${_out}${CPPPIC_EXT}"
-        COMMAND llvm-strings "${_out}${CPPPIC_EXT}" > "${_out}.strings.txt"
-        COMMAND ${CMAKE_COMMAND}
-            -DPIC_FILE="${_out}.bin"
-            -DBASE64_FILE="${_out}.b64.txt"
-            -P "${CMAKE_SOURCE_DIR}/cmake/Base64Encode.cmake"
-        COMMAND ${CMAKE_COMMAND}
-            -DMAP_FILE="${CPPPIC_MAP_FILE}"
-            -P "${CMAKE_SOURCE_DIR}/cmake/VerifyPICMode.cmake"
-        COMMENT "Generating PIC artifacts..."
-        VERBATIM
-    )
+    # Determine the host OS for command execution
+    if(CMAKE_HOST_WIN32)
+        set(_is_host_windows TRUE)
+    else()
+        set(_is_host_windows FALSE)
+    endif()
+
+    if(_is_host_windows)
+        # Host Windows: Use cmd for redirections
+        if(CPPPIC_PLATFORM STREQUAL "windows")
+            # Windows PE target: use binary output with section filter
+            add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E echo "Build complete: ${_out}${CPPPIC_EXT}"
+                COMMAND cmd /c "llvm-objdump -d -s -h -j .text \"${_out}${CPPPIC_EXT}\" > \"${_out}.txt\""
+                COMMAND cmd /c "llvm-objcopy --output-target=binary -j .text \"${_out}${CPPPIC_EXT}\" \"${_out}.bin\""
+                COMMAND cmd /c "llvm-strings \"${_out}${CPPPIC_EXT}\" > \"${_out}.strings.txt\""
+                COMMAND ${CMAKE_COMMAND}
+                    -DPIC_FILE="${_out}.bin"
+                    -DBASE64_FILE="${_out}.b64.txt"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/Base64Encode.cmake"
+                COMMAND ${CMAKE_COMMAND}
+                    -DMAP_FILE="${CPPPIC_MAP_FILE}"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/VerifyPICMode.cmake"
+                COMMENT "Generating PIC artifacts..."
+            )
+        else()
+            # ELF target: use dump-section
+            add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E echo "Build complete: ${_out}${CPPPIC_EXT}"
+                COMMAND cmd /c "llvm-objdump -d -s -h -j .text \"${_out}${CPPPIC_EXT}\" > \"${_out}.txt\""
+                COMMAND cmd /c "llvm-objcopy --dump-section=.text=\"${_out}.bin\" \"${_out}${CPPPIC_EXT}\""
+                COMMAND cmd /c "llvm-strings \"${_out}${CPPPIC_EXT}\" > \"${_out}.strings.txt\""
+                COMMAND ${CMAKE_COMMAND}
+                    -DPIC_FILE="${_out}.bin"
+                    -DBASE64_FILE="${_out}.b64.txt"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/Base64Encode.cmake"
+                COMMAND ${CMAKE_COMMAND}
+                    -DMAP_FILE="${CPPPIC_MAP_FILE}"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/VerifyPICMode.cmake"
+                COMMENT "Generating PIC artifacts..."
+            )
+        endif()
+    else()
+        # Host Unix: Use shell for redirections
+        if(CPPPIC_PLATFORM STREQUAL "windows")
+            # Windows PE target: use binary output with section filter
+            add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E echo "Build complete: ${_out}${CPPPIC_EXT}"
+                COMMAND sh -c "llvm-objdump -d -s -h -j .text '${_out}${CPPPIC_EXT}' > '${_out}.txt'"
+                COMMAND sh -c "llvm-objcopy --output-target=binary -j .text '${_out}${CPPPIC_EXT}' '${_out}.bin'"
+                COMMAND sh -c "llvm-strings '${_out}${CPPPIC_EXT}' > '${_out}.strings.txt'"
+                COMMAND ${CMAKE_COMMAND}
+                    -DPIC_FILE="${_out}.bin"
+                    -DBASE64_FILE="${_out}.b64.txt"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/Base64Encode.cmake"
+                COMMAND ${CMAKE_COMMAND}
+                    -DMAP_FILE="${CPPPIC_MAP_FILE}"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/VerifyPICMode.cmake"
+                COMMENT "Generating PIC artifacts..."
+            )
+        else()
+            # ELF target: use dump-section
+            add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E echo "Build complete: ${_out}${CPPPIC_EXT}"
+                COMMAND sh -c "llvm-objdump -d -s -h -j .text '${_out}${CPPPIC_EXT}' > '${_out}.txt'"
+                COMMAND sh -c "llvm-objcopy --dump-section=.text='${_out}.bin' '${_out}${CPPPIC_EXT}'"
+                COMMAND sh -c "llvm-strings '${_out}${CPPPIC_EXT}' > '${_out}.strings.txt'"
+                COMMAND ${CMAKE_COMMAND}
+                    -DPIC_FILE="${_out}.bin"
+                    -DBASE64_FILE="${_out}.b64.txt"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/Base64Encode.cmake"
+                COMMAND ${CMAKE_COMMAND}
+                    -DMAP_FILE="${CPPPIC_MAP_FILE}"
+                    -P "${CMAKE_SOURCE_DIR}/cmake/VerifyPICMode.cmake"
+                COMMENT "Generating PIC artifacts..."
+            )
+        endif()
+    endif()
 endfunction()

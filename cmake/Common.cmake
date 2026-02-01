@@ -177,15 +177,9 @@ endmacro()
 function(cpppic_add_postbuild target_name)
     set(_out "${CPPPIC_OUTPUT_DIR}/output")
 
-    # Configure objcopy based on target platform
-    # Windows .exe: Use binary output with section filter (LLVM 21+ compatible)
-    # UEFI .efi: Use dump-section (binary output has issues with debug directory)
-    # Linux .elf: Use dump-section (traditional approach)
-    if(CPPPIC_PLATFORM STREQUAL "windows")
-        set(_objcopy_cmd llvm-objcopy --output-target=binary -j .text "${_out}${CPPPIC_EXT}" "${_out}.bin")
-    else()
-        set(_objcopy_cmd llvm-objcopy --dump-section=.text="${_out}.bin" "${_out}${CPPPIC_EXT}" "${_out}.bin")
-    endif()
+    # Extract raw .text section bytes using --dump-section for all platforms
+    # This produces pure section content that the loader script expects
+    set(_objcopy_cmd llvm-objcopy --dump-section=.text="${_out}.bin" "${_out}${CPPPIC_EXT}" "${_out}.bin")
 
     add_custom_command(TARGET ${target_name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CPPPIC_OUTPUT_DIR}"

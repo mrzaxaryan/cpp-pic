@@ -36,6 +36,7 @@ private:
         Argument(const WCHAR* v) : type(Type::WSTR), wstr(v) {}
         Argument(WCHAR* v) : type(Type::WSTR), wstr(v) {}
         Argument(PVOID v) : type(Type::PTR), ptr(v) {}
+        Argument(const void* v) : type(Type::PTR), ptr(const_cast<PVOID>(v)) {}
 
         // Native C++ type compatibility (INT64/UINT64 are typedefs)
         Argument(INT64 v) : type(Type::INT64), i64(v) {}

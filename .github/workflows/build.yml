@@ -503,8 +503,8 @@ jobs:
         run: |
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
-  build-uefi:
-    name: Build UEFI ${{ matrix.arch }}
+  build-and-test-uefi:
+    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -572,25 +572,134 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 qemu-system-arm ${{ matrix.ovmf_pkg }} libslirp0 qemu-system-common
 
+      - name: Build -O0
+        id: build-o0
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O0
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Upload artifacts -O0
+        if: steps.build-o0.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O0
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI -O0
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          echo "Running UEFI application in QEMU with networking..."
+          set +e
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi
+
+      - name: Build -O1
+        id: build-o1
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O1
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Upload artifacts -O1
+        if: steps.build-o1.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O1
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI -O1
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          echo "Running UEFI application in QEMU with networking..."
+          set +e
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi
+
+      - name: Build -O2
+        id: build-o2
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O2
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Upload artifacts -O2
+        if: steps.build-o2.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O2
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI -O2
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          echo "Running UEFI application in QEMU with networking..."
+          set +e
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi
+
       - name: Build -O3
         id: build-o3
         run: |
           cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=O3
           cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
-
-      - name: Verify EFI output
-        run: |
-          EFI_FILE="build/release/${{ matrix.platform }}/${{ matrix.arch }}/output.efi"
-          BOOT_FILE="build/release/${{ matrix.platform }}/${{ matrix.arch }}/EFI/BOOT/${{ matrix.boot_file }}"
-
-          echo "Checking for EFI file..."
-          ls -la "$EFI_FILE"
-          file "$EFI_FILE"
-
-          echo "Checking for boot file..."
-          ls -la "$BOOT_FILE"
-
-          echo "EFI file size: $(stat -c%s "$EFI_FILE") bytes"
 
       - name: Upload artifacts -O3
         if: steps.build-o3.outcome == 'success'
@@ -602,7 +711,130 @@ jobs:
             build/**
             !build/**/cmake/**
 
-      - name: Test UEFI in QEMU
+      - name: Test UEFI -O3
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          echo "Running UEFI application in QEMU with networking..."
+          set +e
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi
+
+      - name: Build -Os
+        id: build-os
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Os
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Upload artifacts -Os
+        if: steps.build-os.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Os
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI -Os
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          echo "Running UEFI application in QEMU with networking..."
+          set +e
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi
+
+      - name: Build -Oz
+        id: build-oz
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Oz
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Upload artifacts -Oz
+        if: steps.build-oz.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Oz
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI -Oz
+        timeout-minutes: 5
+        run: |
+          set -o pipefail
+          echo "Running UEFI application in QEMU with networking..."
+          set +e
+          timeout 180s ${{ matrix.qemu_cmd }} \
+            -bios "${{ matrix.ovmf_path }}" \
+            -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi
+
+      - name: Build -Og
+        id: build-og
+        run: |
+          cmake -B "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake" -G Ninja -DARCHITECTURE=${{ matrix.arch }} -DPLATFORM=${{ matrix.platform }} -DBUILD_TYPE=release -DOPTIMIZATION_LEVEL=Og
+          cmake --build "build/release/${{ matrix.platform }}/${{ matrix.arch }}/cmake"
+
+      - name: Upload artifacts -Og
+        if: steps.build-og.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Og
+          retention-days: 1
+          path: |
+            build/**
+            !build/**/cmake/**
+
+      - name: Test UEFI -Og
         timeout-minutes: 5
         run: |
           set -o pipefail

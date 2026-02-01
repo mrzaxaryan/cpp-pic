@@ -15,17 +15,6 @@
 
 #if defined(PLATFORM_UEFI)
 #include "efi_context.h"
-
-// Static context storage for UEFI
-static EFI_CONTEXT g_EfiContext;
-
-/**
- * GetEfiContext - Return pointer to the global EFI context
- */
-EFI_CONTEXT *GetEfiContext()
-{
-	return &g_EfiContext;
-}
 #endif
 
 // =============================================================================
@@ -126,9 +115,12 @@ static BOOL RunAllTests()
  */
 extern "C" EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
-	// Store context for PAL layer access
-	g_EfiContext.ImageHandle = ImageHandle;
-	g_EfiContext.SystemTable = SystemTable;
+	// Allocate context on stack and store pointer in CPU register (GS/TPIDR_EL0)
+	// This eliminates the need for a global variable in .data section
+	EFI_CONTEXT efiContext = {};
+	efiContext.ImageHandle = ImageHandle;
+	efiContext.SystemTable = SystemTable;
+	SetEfiContextRegister(&efiContext);
 
 	// Disable watchdog timer (default is 5 minutes)
 	SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);

@@ -24,22 +24,64 @@ struct EFI_CONTEXT
 };
 
 // =============================================================================
-// Context Accessor
+// Context Register Access (GS on x86_64, TPIDR_EL0 on aarch64)
 // =============================================================================
 
+// IA32_GS_BASE MSR number for x86_64
+#if defined(ARCHITECTURE_X86_64)
+inline constexpr UINT32 IA32_GS_BASE = 0xC0000101;
+#endif
+
 /**
- * GetEfiContext - Get the global EFI context
+ * SetEfiContextRegister - Store context pointer in CPU register
  *
- * Returns pointer to the EFI context containing ImageHandle
- * and SystemTable. This is set by efi_main at startup.
+ * Uses architecture-specific registers to store the context pointer:
+ * - x86_64: GS base via MSR (IA32_GS_BASE = 0xC0000101)
+ * - aarch64: TPIDR_EL0 (thread pointer register)
  *
- * Note: For UEFI, we use a static global because:
- * 1. UEFI applications control their entire address space
- * 2. The .data section is allowed in UEFI PE files
- * 3. There is only ever one instance running
- * 4. Passing context through all call chains would require
- *    changing all PAL function signatures
+ * Note: We use WRMSR instead of WRGSBASE because WRGSBASE requires
+ * CR4.FSGSBASE to be enabled, which UEFI firmware may not set.
+ * WRMSR works in ring 0 (where UEFI apps run) without this requirement.
+ *
+ * @param ctx Pointer to the EFI context to store
+ */
+inline void SetEfiContextRegister(EFI_CONTEXT *ctx)
+{
+#if defined(ARCHITECTURE_X86_64)
+	UINT64 value = reinterpret_cast<UINT64>(ctx);
+	UINT32 low = static_cast<UINT32>(value);
+	UINT32 high = static_cast<UINT32>(value >> 32);
+	__asm__ volatile(
+		"wrmsr"
+		:
+		: "c"(IA32_GS_BASE), "a"(low), "d"(high)
+		: "memory");
+#elif defined(ARCHITECTURE_AARCH64)
+	__asm__ volatile("msr tpidr_el0, %0" : : "r"(ctx) : "memory");
+#endif
+}
+
+/**
+ * GetEfiContext - Get the EFI context from CPU register
+ *
+ * Retrieves the context pointer from architecture-specific register:
+ * - x86_64: GS base via MSR (IA32_GS_BASE = 0xC0000101)
+ * - aarch64: TPIDR_EL0 (thread pointer register)
  *
  * @return Pointer to the EFI context
  */
-EFI_CONTEXT *GetEfiContext();
+inline EFI_CONTEXT *GetEfiContext()
+{
+#if defined(ARCHITECTURE_X86_64)
+	UINT32 low, high;
+	__asm__ volatile(
+		"rdmsr"
+		: "=a"(low), "=d"(high)
+		: "c"(IA32_GS_BASE));
+	return reinterpret_cast<EFI_CONTEXT *>((static_cast<UINT64>(high) << 32) | low);
+#elif defined(ARCHITECTURE_AARCH64)
+	EFI_CONTEXT *ctx;
+	__asm__ volatile("mrs %0, tpidr_el0" : "=r"(ctx));
+	return ctx;
+#endif
+}

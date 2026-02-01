@@ -516,14 +516,14 @@ jobs:
             ovmf_path: /usr/share/ovmf/OVMF.fd
             qemu_cmd: qemu-system-x86_64
             boot_file: BOOTX64.EFI
-            net_device: e1000
+            nic_model: e1000
           - arch: aarch64
             platform: uefi
             ovmf_pkg: qemu-efi-aarch64
             ovmf_path: /usr/share/qemu-efi-aarch64/QEMU_EFI.fd
             qemu_cmd: qemu-system-aarch64 -M virt -cpu cortex-a72
             boot_file: BOOTAA64.EFI
-            net_device: virtio-net-pci
+            nic_model: virtio
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -602,16 +602,13 @@ jobs:
         run: |
           echo "Running UEFI application in QEMU with networking..."
           # Run QEMU with user-mode networking for TCP/IP support
-          # e1000 (x86_64) and virtio-net-pci (aarch64) have UEFI drivers in OVMF
-          # Network config: guest=10.0.2.15, gateway=10.0.2.2, dns=10.0.2.3
-          # -m 512: More memory for UEFI network stack
-          # restrict=off: Allow unrestricted network access
+          # Using simplified -nic syntax for better compatibility
+          # SLIRP defaults: guest=10.0.2.15, gateway=10.0.2.2, dns=10.0.2.3
           timeout 180s ${{ matrix.qemu_cmd }} \
             -bios "${{ matrix.ovmf_path }}" \
             -drive format=raw,file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }} \
             -m 512 \
             -nographic \
-            -device ${{ matrix.net_device }},netdev=net0,mac=52:54:00:12:34:56 \
-            -netdev user,id=net0,net=10.0.2.0/24,dhcpstart=10.0.2.15,dns=10.0.2.3,hostfwd=tcp::8080-:80 \
+            -nic user,model=${{ matrix.nic_model }} \
             -no-reboot || true
           echo "QEMU test completed"

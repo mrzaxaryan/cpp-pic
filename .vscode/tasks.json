@@ -231,7 +231,7 @@
     {
       "label": "Run UEFI x86_64 (QEMU)",
       "type": "shell",
-      "command": "timeout 180s qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -drive format=raw,file=fat:rw:build/release/uefi/x86_64 -m 512 -nographic -device e1000,netdev=net0,mac=52:54:00:12:34:56 -netdev user,id=net0,net=10.0.2.0/24,dhcpstart=10.0.2.15,dns=10.0.2.3,hostfwd=tcp::8080-:80 -no-reboot || true",
+      "command": "timeout 180s qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -drive format=raw,file=fat:rw:build/release/uefi/x86_64 -m 512 -nographic -nic user,model=e1000 -no-reboot || true",
       "dependsOn": "x86_64-uefi-release",
       "problemMatcher": [],
       "group": "test"
@@ -239,7 +239,7 @@
     {
       "label": "Run UEFI aarch64 (QEMU)",
       "type": "shell",
-      "command": "timeout 180s qemu-system-aarch64 -M virt -cpu cortex-a72 -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -drive format=raw,file=fat:rw:build/release/uefi/aarch64 -m 512 -nographic -device virtio-net-pci,netdev=net0,mac=52:54:00:12:34:56 -netdev user,id=net0,net=10.0.2.0/24,dhcpstart=10.0.2.15,dns=10.0.2.3,hostfwd=tcp::8080-:80 -no-reboot || true",
+      "command": "timeout 180s qemu-system-aarch64 -M virt -cpu cortex-a72 -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -drive format=raw,file=fat:rw:build/release/uefi/aarch64 -m 512 -nographic -nic user,model=virtio -no-reboot || true",
       "dependsOn": "aarch64-uefi-release",
       "problemMatcher": [],
       "group": "test"

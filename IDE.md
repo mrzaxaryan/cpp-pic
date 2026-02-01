@@ -22,11 +22,11 @@ code .
 
 **Prerequisites:**
 - Ensure WSL is properly configured on your Windows system
-- Install QEMU for cross-architecture code execution:
+- Install QEMU and UEFI firmware:
   ```bash
-  sudo apt-get update && sudo apt-get install -y qemu-user-static
+  sudo apt-get update && sudo apt-get install -y qemu-user-static qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64
   ```
-  This is required to run binaries for different architectures (e.g., running ARM code on x86_64).
+  This installs QEMU for cross-architecture execution (ARM on x86_64) and UEFI testing in virtual machines.
 
 For more information, see the [VSCode WSL documentation](https://code.visualstudio.com/docs/remote/wsl).
 

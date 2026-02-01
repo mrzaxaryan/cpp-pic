@@ -205,34 +205,24 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 
 // Wait for async operation with Poll to drive network stack
 template <typename TCP_PROTOCOL>
-static EFI_STATUS WaitForCompletion(EFI_BOOT_SERVICES *bs, TCP_PROTOCOL *Tcp, EFI_EVENT Event, volatile EFI_STATUS *TokenStatus, UINT64 TimeoutMs, const CHAR *opName = nullptr)
+static EFI_STATUS WaitForCompletion(EFI_BOOT_SERVICES *bs, TCP_PROTOCOL *Tcp, EFI_EVENT Event, volatile EFI_STATUS *TokenStatus, UINT64 TimeoutMs)
 {
 	(VOID)Event;
 
 	// Check immediately - fast path
 	Tcp->Poll(Tcp);
 	if (*TokenStatus != EFI_NOT_READY)
-	{
-		if (opName)
-			LOG_DEBUG("Socket: %s completed immediately (0ms)", opName);
 		return EFI_SUCCESS;
-	}
 
 	// Poll loop with short stalls
 	for (UINT64 i = 0; i < TimeoutMs; i++)
 	{
 		Tcp->Poll(Tcp);
 		if (*TokenStatus != EFI_NOT_READY)
-		{
-			if (opName)
-				LOG_DEBUG("Socket: %s completed after %ums", opName, (UINT32)(i + 1));
 			return EFI_SUCCESS;
-		}
 		bs->Stall(1000); // 1ms
 	}
 
-	if (opName)
-		LOG_DEBUG("Socket: %s TIMEOUT after %ums", opName, (UINT32)TimeoutMs);
 	return EFI_TIMEOUT;
 }
 
@@ -265,14 +255,65 @@ Socket::Socket(const IPAddress &ipAddress, UINT16 portNum)
 	Memory::Zero(sockCtx, sizeof(UefiSocketContext));
 	sockCtx->IsIPv6 = ip.IsIPv6();
 
-	EFI_GUID ServiceBindingGuid = sockCtx->IsIPv6
-		? (EFI_GUID)EFI_TCP6_SERVICE_BINDING_PROTOCOL_GUID
-		: (EFI_GUID)EFI_TCP4_SERVICE_BINDING_PROTOCOL_GUID;
-	EFI_GUID ProtocolGuid = sockCtx->IsIPv6
-		? (EFI_GUID)EFI_TCP6_PROTOCOL_GUID
-		: (EFI_GUID)EFI_TCP4_PROTOCOL_GUID;
+	// Initialize GUIDs field-by-field to avoid .rdata section
+	EFI_GUID ServiceBindingGuid;
+	EFI_GUID ProtocolGuid;
+	if (sockCtx->IsIPv6)
+	{
+		// EFI_TCP6_SERVICE_BINDING_PROTOCOL_GUID {EC20EB79-6C1A-4664-9A0D-D2E4CC16D664}
+		ServiceBindingGuid.Data1 = 0xEC20EB79;
+		ServiceBindingGuid.Data2 = 0x6C1A;
+		ServiceBindingGuid.Data3 = 0x4664;
+		ServiceBindingGuid.Data4[0] = 0x9A;
+		ServiceBindingGuid.Data4[1] = 0x0D;
+		ServiceBindingGuid.Data4[2] = 0xD2;
+		ServiceBindingGuid.Data4[3] = 0xE4;
+		ServiceBindingGuid.Data4[4] = 0xCC;
+		ServiceBindingGuid.Data4[5] = 0x16;
+		ServiceBindingGuid.Data4[6] = 0xD6;
+		ServiceBindingGuid.Data4[7] = 0x64;
+		// EFI_TCP6_PROTOCOL_GUID {46E44855-BD60-4AB7-AB0D-A6790824A3F0}
+		ProtocolGuid.Data1 = 0x46E44855;
+		ProtocolGuid.Data2 = 0xBD60;
+		ProtocolGuid.Data3 = 0x4AB7;
+		ProtocolGuid.Data4[0] = 0xAB;
+		ProtocolGuid.Data4[1] = 0x0D;
+		ProtocolGuid.Data4[2] = 0xA6;
+		ProtocolGuid.Data4[3] = 0x79;
+		ProtocolGuid.Data4[4] = 0x08;
+		ProtocolGuid.Data4[5] = 0x24;
+		ProtocolGuid.Data4[6] = 0xA3;
+		ProtocolGuid.Data4[7] = 0xF0;
+	}
+	else
+	{
+		// EFI_TCP4_SERVICE_BINDING_PROTOCOL_GUID {00720665-67EB-4A99-BAF7-D3C33A1C7CC9}
+		ServiceBindingGuid.Data1 = 0x00720665;
+		ServiceBindingGuid.Data2 = 0x67EB;
+		ServiceBindingGuid.Data3 = 0x4A99;
+		ServiceBindingGuid.Data4[0] = 0xBA;
+		ServiceBindingGuid.Data4[1] = 0xF7;
+		ServiceBindingGuid.Data4[2] = 0xD3;
+		ServiceBindingGuid.Data4[3] = 0xC3;
+		ServiceBindingGuid.Data4[4] = 0x3A;
+		ServiceBindingGuid.Data4[5] = 0x1C;
+		ServiceBindingGuid.Data4[6] = 0x7C;
+		ServiceBindingGuid.Data4[7] = 0xC9;
+		// EFI_TCP4_PROTOCOL_GUID {65530BC7-A359-410F-B010-5AADC7EC2B62}
+		ProtocolGuid.Data1 = 0x65530BC7;
+		ProtocolGuid.Data2 = 0xA359;
+		ProtocolGuid.Data3 = 0x410F;
+		ProtocolGuid.Data4[0] = 0xB0;
+		ProtocolGuid.Data4[1] = 0x10;
+		ProtocolGuid.Data4[2] = 0x5A;
+		ProtocolGuid.Data4[3] = 0xAD;
+		ProtocolGuid.Data4[4] = 0xC7;
+		ProtocolGuid.Data4[5] = 0xEC;
+		ProtocolGuid.Data4[6] = 0x2B;
+		ProtocolGuid.Data4[7] = 0x62;
+	}
 
-	LOG_DEBUG("Socket: LocateHandleBuffer for TCP%s...", sockCtx->IsIPv6 ? "6" : "4");
+	LOG_DEBUG("Socket: LocateHandleBuffer for TCP%d...", sockCtx->IsIPv6 ? 6 : 4);
 	USIZE HandleCount = 0;
 	EFI_HANDLE *HandleBuffer = NULL;
 	if (EFI_ERROR_CHECK(bs->LocateHandleBuffer(ByProtocol, &ServiceBindingGuid, NULL, &HandleCount, &HandleBuffer)) || HandleCount == 0)
@@ -390,7 +431,7 @@ BOOL Socket::Open()
 		Status = sockCtx->Tcp6->Connect(sockCtx->Tcp6, &ConnectToken);
 		if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
 		{
-			Status = WaitForCompletion(bs, sockCtx->Tcp6, ConnectEvent, &ConnectToken.CompletionToken.Status, 30000, "TCP6 Connect");
+			Status = WaitForCompletion(bs, sockCtx->Tcp6, ConnectEvent, &ConnectToken.CompletionToken.Status, 30000);
 			success = !EFI_ERROR_CHECK(Status) && !EFI_ERROR_CHECK(ConnectToken.CompletionToken.Status);
 		}
 		else
@@ -446,7 +487,7 @@ BOOL Socket::Open()
 		Status = sockCtx->Tcp4->Connect(sockCtx->Tcp4, &ConnectToken);
 		if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
 		{
-			Status = WaitForCompletion(bs, sockCtx->Tcp4, ConnectEvent, &ConnectToken.CompletionToken.Status, 30000, "TCP4 Connect");
+			Status = WaitForCompletion(bs, sockCtx->Tcp4, ConnectEvent, &ConnectToken.CompletionToken.Status, 30000);
 			success = !EFI_ERROR_CHECK(Status) && !EFI_ERROR_CHECK(ConnectToken.CompletionToken.Status);
 		}
 		else
@@ -506,7 +547,7 @@ BOOL Socket::Close()
 
 				EFI_STATUS Status = sockCtx->Tcp6->Close(sockCtx->Tcp6, &CloseToken);
 				if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
-					WaitForCompletion(bs, sockCtx->Tcp6, CloseEvent, &CloseToken.CompletionToken.Status, 100, "TCP6 Close");
+					WaitForCompletion(bs, sockCtx->Tcp6, CloseEvent, &CloseToken.CompletionToken.Status, 100);
 
 				bs->CloseEvent(CloseEvent);
 			}
@@ -539,7 +580,7 @@ BOOL Socket::Close()
 
 				EFI_STATUS Status = sockCtx->Tcp4->Close(sockCtx->Tcp4, &CloseToken);
 				if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
-					WaitForCompletion(bs, sockCtx->Tcp4, CloseEvent, &CloseToken.CompletionToken.Status, 100, "TCP4 Close");
+					WaitForCompletion(bs, sockCtx->Tcp4, CloseEvent, &CloseToken.CompletionToken.Status, 100);
 
 				bs->CloseEvent(CloseEvent);
 			}
@@ -554,7 +595,63 @@ BOOL Socket::Close()
 	}
 
 	LOG_DEBUG("Socket: CloseProtocol on TcpHandle...");
-	EFI_GUID ProtocolGuid = sockCtx->IsIPv6 ? (EFI_GUID)EFI_TCP6_PROTOCOL_GUID : (EFI_GUID)EFI_TCP4_PROTOCOL_GUID;
+	// Initialize GUIDs field-by-field to avoid .rdata section
+	EFI_GUID ProtocolGuid;
+	EFI_GUID ServiceBindingGuid;
+	if (sockCtx->IsIPv6)
+	{
+		// EFI_TCP6_PROTOCOL_GUID {46E44855-BD60-4AB7-AB0D-A6790824A3F0}
+		ProtocolGuid.Data1 = 0x46E44855;
+		ProtocolGuid.Data2 = 0xBD60;
+		ProtocolGuid.Data3 = 0x4AB7;
+		ProtocolGuid.Data4[0] = 0xAB;
+		ProtocolGuid.Data4[1] = 0x0D;
+		ProtocolGuid.Data4[2] = 0xA6;
+		ProtocolGuid.Data4[3] = 0x79;
+		ProtocolGuid.Data4[4] = 0x08;
+		ProtocolGuid.Data4[5] = 0x24;
+		ProtocolGuid.Data4[6] = 0xA3;
+		ProtocolGuid.Data4[7] = 0xF0;
+		// EFI_TCP6_SERVICE_BINDING_PROTOCOL_GUID {EC20EB79-6C1A-4664-9A0D-D2E4CC16D664}
+		ServiceBindingGuid.Data1 = 0xEC20EB79;
+		ServiceBindingGuid.Data2 = 0x6C1A;
+		ServiceBindingGuid.Data3 = 0x4664;
+		ServiceBindingGuid.Data4[0] = 0x9A;
+		ServiceBindingGuid.Data4[1] = 0x0D;
+		ServiceBindingGuid.Data4[2] = 0xD2;
+		ServiceBindingGuid.Data4[3] = 0xE4;
+		ServiceBindingGuid.Data4[4] = 0xCC;
+		ServiceBindingGuid.Data4[5] = 0x16;
+		ServiceBindingGuid.Data4[6] = 0xD6;
+		ServiceBindingGuid.Data4[7] = 0x64;
+	}
+	else
+	{
+		// EFI_TCP4_PROTOCOL_GUID {65530BC7-A359-410F-B010-5AADC7EC2B62}
+		ProtocolGuid.Data1 = 0x65530BC7;
+		ProtocolGuid.Data2 = 0xA359;
+		ProtocolGuid.Data3 = 0x410F;
+		ProtocolGuid.Data4[0] = 0xB0;
+		ProtocolGuid.Data4[1] = 0x10;
+		ProtocolGuid.Data4[2] = 0x5A;
+		ProtocolGuid.Data4[3] = 0xAD;
+		ProtocolGuid.Data4[4] = 0xC7;
+		ProtocolGuid.Data4[5] = 0xEC;
+		ProtocolGuid.Data4[6] = 0x2B;
+		ProtocolGuid.Data4[7] = 0x62;
+		// EFI_TCP4_SERVICE_BINDING_PROTOCOL_GUID {00720665-67EB-4A99-BAF7-D3C33A1C7CC9}
+		ServiceBindingGuid.Data1 = 0x00720665;
+		ServiceBindingGuid.Data2 = 0x67EB;
+		ServiceBindingGuid.Data3 = 0x4A99;
+		ServiceBindingGuid.Data4[0] = 0xBA;
+		ServiceBindingGuid.Data4[1] = 0xF7;
+		ServiceBindingGuid.Data4[2] = 0xD3;
+		ServiceBindingGuid.Data4[3] = 0xC3;
+		ServiceBindingGuid.Data4[4] = 0x3A;
+		ServiceBindingGuid.Data4[5] = 0x1C;
+		ServiceBindingGuid.Data4[6] = 0x7C;
+		ServiceBindingGuid.Data4[7] = 0xC9;
+	}
 	EFI_STATUS closeStatus = bs->CloseProtocol(sockCtx->TcpHandle, &ProtocolGuid, ctx->ImageHandle, NULL);
 	LOG_DEBUG("Socket: CloseProtocol returned 0x%lx", (UINT64)closeStatus);
 
@@ -563,7 +660,6 @@ BOOL Socket::Close()
 	LOG_DEBUG("Socket: DestroyChild returned 0x%lx", (UINT64)destroyStatus);
 
 	LOG_DEBUG("Socket: CloseProtocol on ServiceHandle...");
-	EFI_GUID ServiceBindingGuid = sockCtx->IsIPv6 ? (EFI_GUID)EFI_TCP6_SERVICE_BINDING_PROTOCOL_GUID : (EFI_GUID)EFI_TCP4_SERVICE_BINDING_PROTOCOL_GUID;
 	bs->CloseProtocol(sockCtx->ServiceHandle, &ServiceBindingGuid, ctx->ImageHandle, NULL);
 
 	LOG_DEBUG("Socket: FreePool...");
@@ -635,7 +731,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferLength)
 		EFI_STATUS Status = sockCtx->Tcp6->Receive(sockCtx->Tcp6, &RxToken);
 		if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
 		{
-			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp6, RxEvent, &RxToken.CompletionToken.Status, 60000, "TCP6 Receive")) && !EFI_ERROR_CHECK(RxToken.CompletionToken.Status))
+			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp6, RxEvent, &RxToken.CompletionToken.Status, 60000)) && !EFI_ERROR_CHECK(RxToken.CompletionToken.Status))
 				bytesRead = (SSIZE)RxData.DataLength;
 		}
 		else
@@ -661,7 +757,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferLength)
 		EFI_STATUS Status = sockCtx->Tcp4->Receive(sockCtx->Tcp4, &RxToken);
 		if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
 		{
-			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp4, RxEvent, &RxToken.CompletionToken.Status, 60000, "TCP4 Receive")) && !EFI_ERROR_CHECK(RxToken.CompletionToken.Status))
+			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp4, RxEvent, &RxToken.CompletionToken.Status, 60000)) && !EFI_ERROR_CHECK(RxToken.CompletionToken.Status))
 				bytesRead = (SSIZE)RxData.DataLength;
 		}
 		else
@@ -727,7 +823,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		EFI_STATUS Status = sockCtx->Tcp6->Transmit(sockCtx->Tcp6, &TxToken);
 		if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
 		{
-			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp6, TxEvent, &TxToken.CompletionToken.Status, 30000, "TCP6 Transmit")) && !EFI_ERROR_CHECK(TxToken.CompletionToken.Status))
+			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp6, TxEvent, &TxToken.CompletionToken.Status, 30000)) && !EFI_ERROR_CHECK(TxToken.CompletionToken.Status))
 				bytesSent = bufferLength;
 		}
 		else
@@ -754,7 +850,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		EFI_STATUS Status = sockCtx->Tcp4->Transmit(sockCtx->Tcp4, &TxToken);
 		if (!EFI_ERROR_CHECK(Status) || Status == EFI_NOT_READY)
 		{
-			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp4, TxEvent, &TxToken.CompletionToken.Status, 30000, "TCP4 Transmit")) && !EFI_ERROR_CHECK(TxToken.CompletionToken.Status))
+			if (!EFI_ERROR_CHECK(WaitForCompletion(bs, sockCtx->Tcp4, TxEvent, &TxToken.CompletionToken.Status, 30000)) && !EFI_ERROR_CHECK(TxToken.CompletionToken.Status))
 				bytesSent = bufferLength;
 		}
 		else

@@ -518,6 +518,8 @@ jobs:
             boot_file: BOOTX64.EFI
             nic_model: e1000
             drive_if: ide,index=0
+            debug_exit: -device isa-debug-exit,iobase=0xf4,iosize=0x04
+            success_code: 1
           - arch: aarch64
             platform: uefi
             ovmf_pkg: qemu-efi-aarch64
@@ -526,6 +528,8 @@ jobs:
             boot_file: BOOTAA64.EFI
             nic_model: virtio
             drive_if: virtio
+            debug_exit: -semihosting
+            success_code: 0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -603,6 +607,7 @@ jobs:
         run: |
           set -o pipefail
           echo "Running UEFI application in QEMU with networking..."
+          set +e
           timeout 180s ${{ matrix.qemu_cmd }} \
             -bios "${{ matrix.ovmf_path }}" \
             -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
@@ -610,4 +615,14 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=${{ matrix.nic_model }} \
+            ${{ matrix.debug_exit }} \
             -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          echo "QEMU exit code: $ret (expected ${{ matrix.success_code }} for success)"
+          if [ "$ret" -eq "${{ matrix.success_code }}" ]; then
+            echo "Test passed!"
+            exit 0
+          else
+            echo "Test failed with exit code $ret"
+            exit 1
+          fi

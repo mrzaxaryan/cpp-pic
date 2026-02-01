@@ -16,7 +16,7 @@ env:
 
 jobs:
   build-and-test-windows:
-    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    name: Build & Test ${{ matrix.platform }}-${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -69,7 +69,7 @@ jobs:
         if: steps.build-o0.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O0
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O0
           retention-days: 1
           path: |
             build/**
@@ -96,7 +96,7 @@ jobs:
         if: steps.build-o1.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O1
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O1
           retention-days: 1
           path: |
             build/**
@@ -123,7 +123,7 @@ jobs:
         if: steps.build-o2.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O2
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O2
           retention-days: 1
           path: |
             build/**
@@ -150,7 +150,7 @@ jobs:
         if: steps.build-o3.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O3
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O3
           retention-days: 1
           path: |
             build/**
@@ -177,7 +177,7 @@ jobs:
         if: steps.build-os.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Os
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Os
           retention-days: 1
           path: |
             build/**
@@ -204,7 +204,7 @@ jobs:
         if: steps.build-oz.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Oz
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Oz
           retention-days: 1
           path: |
             build/**
@@ -231,7 +231,7 @@ jobs:
         if: steps.build-og.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Og
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Og
           retention-days: 1
           path: |
             build/**
@@ -248,7 +248,7 @@ jobs:
           python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
   build-and-test-linux:
-    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    name: Build & Test ${{ matrix.platform }}-${{ matrix.arch }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -331,7 +331,7 @@ jobs:
         if: steps.build-o0.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O0
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O0
           retention-days: 1
           path: |
             build/**
@@ -357,7 +357,7 @@ jobs:
         if: steps.build-o1.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O1
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O1
           retention-days: 1
           path: |
             build/**
@@ -383,7 +383,7 @@ jobs:
         if: steps.build-o2.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O2
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O2
           retention-days: 1
           path: |
             build/**
@@ -409,7 +409,7 @@ jobs:
         if: steps.build-o3.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O3
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O3
           retention-days: 1
           path: |
             build/**
@@ -435,7 +435,7 @@ jobs:
         if: steps.build-os.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Os
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Os
           retention-days: 1
           path: |
             build/**
@@ -461,7 +461,7 @@ jobs:
         if: steps.build-oz.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Oz
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Oz
           retention-days: 1
           path: |
             build/**
@@ -487,7 +487,7 @@ jobs:
         if: steps.build-og.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Og
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Og
           retention-days: 1
           path: |
             build/**
@@ -504,7 +504,7 @@ jobs:
           python3 scripts/loader.py --arch ${{ matrix.arch }} $(find build -type f -name "output.bin" | head -n 1)
 
   build-and-test-uefi:
-    name: Build & Test ${{ matrix.arch }}-${{ matrix.platform }}
+    name: Build & Test ${{ matrix.platform }}-${{ matrix.arch }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -582,7 +582,7 @@ jobs:
         if: steps.build-o0.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O0
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O0
           retention-days: 1
           path: |
             build/**
@@ -623,7 +623,7 @@ jobs:
         if: steps.build-o1.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O1
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O1
           retention-days: 1
           path: |
             build/**
@@ -664,7 +664,7 @@ jobs:
         if: steps.build-o2.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O2
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O2
           retention-days: 1
           path: |
             build/**
@@ -705,7 +705,7 @@ jobs:
         if: steps.build-o3.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-O3
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-O3
           retention-days: 1
           path: |
             build/**
@@ -746,7 +746,7 @@ jobs:
         if: steps.build-os.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Os
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Os
           retention-days: 1
           path: |
             build/**
@@ -787,7 +787,7 @@ jobs:
         if: steps.build-oz.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Oz
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Oz
           retention-days: 1
           path: |
             build/**
@@ -828,7 +828,7 @@ jobs:
         if: steps.build-og.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.arch }}-${{ matrix.platform }}-Og
+          name: build-${{ matrix.platform }}-${{ matrix.arch }}-Og
           retention-days: 1
           path: |
             build/**

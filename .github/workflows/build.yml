@@ -600,18 +600,31 @@ jobs:
 
       - name: Test UEFI in QEMU
         timeout-minutes: 5
-        continue-on-error: true
         run: |
           echo "Running UEFI application in QEMU with networking..."
           # Run QEMU with user-mode networking for TCP/IP support
           # Using static IP config (10.0.2.15) with SLIRP gateway (10.0.2.2)
           # Strip ANSI escape codes - OVMF serial output corrupts ESC chars in CI logs
-          timeout 180s ${{ matrix.qemu_cmd }} \
+          # Capture output and check for test results
+          OUTPUT=$(timeout 180s ${{ matrix.qemu_cmd }} \
             -bios "${{ matrix.ovmf_path }}" \
             -drive file=fat:rw:build/release/${{ matrix.platform }}/${{ matrix.arch }},if=${{ matrix.drive_if }} \
             -m 512 \
             -nographic \
             -serial mon:stdio \
             -nic user,model=${{ matrix.nic_model }} \
-            -no-reboot 2>&1 | sed 's/?\[[0-9;]*m//g' || true
+            -no-reboot 2>&1 | sed 's/?\[[0-9;]*m//g' || true)
+          echo "$OUTPUT"
           echo "QEMU test completed"
+          # Check for test failure markers in output
+          if echo "$OUTPUT" | grep -q "SOME TESTS FAILED"; then
+            echo "::error::UEFI tests failed"
+            exit 1
+          fi
+          if echo "$OUTPUT" | grep -q "ALL TESTS PASSED"; then
+            echo "UEFI tests passed successfully"
+            exit 0
+          fi
+          # If neither marker found, treat as failure (app may have crashed)
+          echo "::error::Test output markers not found - UEFI app may have crashed"
+          exit 1

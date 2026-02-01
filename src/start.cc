@@ -134,7 +134,7 @@ extern "C" EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *
 
 	// Run tests and exit
 	BOOL allPassed = RunAllTests();
-	ExitProcess(allPassed ? 0 : 1);
+	ExitProcess(allPassed ? 2 : 1);
 
 	return EFI_SUCCESS;
 }

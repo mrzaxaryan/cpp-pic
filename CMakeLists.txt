@@ -457,12 +457,6 @@ if(NOT DEFINED MAP_FILE)
     message(FATAL_ERROR "MAP_FILE must be defined")
 endif()
 
-# Skip verification for UEFI - standard PE sections are required
-if(DEFINED SKIP_RDATA_CHECK AND SKIP_RDATA_CHECK)
-    message(STATUS "Skipping .rdata verification for UEFI (standard PE sections required)")
-    return()
-endif()
-
 # Map file may not exist for debug builds
 if(NOT EXISTS "${MAP_FILE}")
     message(STATUS "Map file not found (expected for debug): ${MAP_FILE}")
@@ -540,12 +534,6 @@ if(NOT RES EQUAL 0)
 endif()
 ]])
 
-# Set UEFI skip flag for rdata verification
-if(PLATFORM_LC STREQUAL "uefi")
-    set(SKIP_RDATA_CHECK_FLAG "-DSKIP_RDATA_CHECK=TRUE")
-else()
-    set(SKIP_RDATA_CHECK_FLAG "")
-endif()
 
 add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Build SUCCEEDED: ${OUTPUT_EXE}"
@@ -563,7 +551,7 @@ add_custom_command(TARGET ${TARGET_TRIPLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -DPIC_FILE=${OUTPUT_BIN} -DBASE64_FILE=${OUTPUT_B64} -P "${BASE64_ENCODE_SCRIPT}"
 
     # Verify no .rdata section exists (critical for PIC, skipped for UEFI)
-    COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} ${SKIP_RDATA_CHECK_FLAG} -P "${VERIFY_RDATA_SCRIPT}"
+    COMMAND ${CMAKE_COMMAND} -DMAP_FILE=${OUTPUT_MAP} -P "${VERIFY_RDATA_SCRIPT}"
 
     COMMENT "Generating PIC blob and analysis files..."
     VERBATIM

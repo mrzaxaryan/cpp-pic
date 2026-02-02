@@ -70,7 +70,7 @@ script::Value Func_Sum(script::FunctionContext& ctx)
 // EXAMPLE 1: Using Standard Library
 // ============================================================================
 
- void Example_WithStdLib()
+NOINLINE void Example_WithStdLib()
 {
     Console::Write<CHAR>("=== Example 1: With Standard Library ===\n"_embed);
 
@@ -79,7 +79,11 @@ script::Value Func_Sum(script::FunctionContext& ctx)
     // Register standard library (print, len, str, num, type, abs, min, max)
     script::OpenStdLib(L);
 
-    auto source = "(print(\"Hello from PICScript!\");print(\"1 + 2 =\", 1 + 2);print(\"Type of 42:\", type(42));print(\"len(hello):\", len(\"hello\"));)"_embed;
+    auto source = R"(print("Hello from PICScript!");
+print("1 + 2 =", 1 + 2);
+print("Type of 42:", type(42));
+print("len(hello):", len("hello"));
+)"_embed;
 
     L.DoString(source);
     Console::Write<CHAR>("\n"_embed);

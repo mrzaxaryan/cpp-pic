@@ -1,19 +1,6 @@
 #include "console.h"
+#include "syscall.h"
 #include "system.h"
-
-// Linux stdout file descriptor
-#define STDOUT_FILENO 1
-
-// Linux syscall numbers for this file
-#if defined(ARCHITECTURE_X86_64)
-constexpr USIZE SYS_WRITE = 1;
-#elif defined(ARCHITECTURE_I386)
-constexpr USIZE SYS_WRITE = 4;
-#elif defined(ARCHITECTURE_AARCH64)
-constexpr USIZE SYS_WRITE = 64;
-#elif defined(ARCHITECTURE_ARMV7A)
-constexpr USIZE SYS_WRITE = 4;
-#endif
 
 // Write ANSI/ASCII string to console (straightforward)
 UINT32 Console::Write(const CHAR *text, USIZE length)

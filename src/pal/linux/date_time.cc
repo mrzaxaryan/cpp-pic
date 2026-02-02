@@ -1,26 +1,6 @@
 #include "date_time.h"
+#include "syscall.h"
 #include "system.h"
-
-// Linux syscall numbers for clock_gettime
-#if defined(ARCHITECTURE_X86_64)
-constexpr USIZE SYS_CLOCK_GETTIME = 228;
-#elif defined(ARCHITECTURE_I386)
-constexpr USIZE SYS_CLOCK_GETTIME = 265;
-#elif defined(ARCHITECTURE_AARCH64)
-constexpr USIZE SYS_CLOCK_GETTIME = 113;
-#elif defined(ARCHITECTURE_ARMV7A)
-constexpr USIZE SYS_CLOCK_GETTIME = 263;
-#endif
-
-constexpr USIZE CLOCK_REALTIME = 0;
-constexpr USIZE CLOCK_MONOTONIC = 1;
-
-// Linux timespec structure
-struct timespec
-{
-    SSIZE tv_sec;   // seconds
-    SSIZE tv_nsec;  // nanoseconds
-};
 
 DateTime DateTime::Now()
 {
@@ -93,7 +73,7 @@ DateTime DateTime::Now()
     daysInMonth[9] = 31;  // October
     daysInMonth[10] = 30; // November
     daysInMonth[11] = 31; // December
-    
+
 
     // Adjust February for leap year
     if (DateTime::IsLeapYear(year))

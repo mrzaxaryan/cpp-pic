@@ -1,26 +1,6 @@
 #include "allocator.h"
+#include "syscall.h"
 #include "system.h"
-
-// Linux syscall numbers for memory management
-#if defined(ARCHITECTURE_X86_64)
-constexpr USIZE SYS_MMAP = 9;
-constexpr USIZE SYS_MUNMAP = 11;
-#elif defined(ARCHITECTURE_I386)
-constexpr USIZE SYS_MMAP2 = 192;
-constexpr USIZE SYS_MUNMAP = 91;
-#elif defined(ARCHITECTURE_AARCH64)
-constexpr USIZE SYS_MMAP = 222;
-constexpr USIZE SYS_MUNMAP = 215;
-#elif defined(ARCHITECTURE_ARMV7A)
-constexpr USIZE SYS_MMAP2 = 192;
-constexpr USIZE SYS_MUNMAP = 91;
-#endif
-
-// mmap flags and protection
-constexpr INT32 PROT_READ = 0x1;
-constexpr INT32 PROT_WRITE = 0x2;
-constexpr INT32 MAP_PRIVATE = 0x2;
-constexpr INT32 MAP_ANONYMOUS = 0x20;
 
 // Memory allocator using mmap/munmap
 // Each allocation is a separate mmap, which is simple but not efficient for

@@ -1,87 +1,45 @@
 #include "socket.h"
+#include "syscall.h"
 #include "system.h"
 #include "memory.h"
 #include "ip_address.h"
 
-// Linux syscall numbers for socket operations
-#if defined(ARCHITECTURE_X86_64)
-constexpr USIZE SYS_SOCKET = 41;
-constexpr USIZE SYS_CONNECT = 42;
-constexpr USIZE SYS_SENDTO = 44;
-constexpr USIZE SYS_RECVFROM = 45;
-constexpr USIZE SYS_BIND = 49;
-constexpr USIZE SYS_CLOSE = 3;
-#elif defined(ARCHITECTURE_I386)
-// i386 uses socketcall multiplexer
-constexpr USIZE SYS_SOCKETCALL = 102;
-constexpr USIZE SYS_CLOSE = 6;
-// socketcall opcodes
-constexpr USIZE SYS_SOCKET_SC = 1;
-constexpr USIZE SYS_BIND_SC = 2;
-constexpr USIZE SYS_CONNECT_SC = 3;
-constexpr USIZE SYS_SEND_SC = 9;
-constexpr USIZE SYS_RECV_SC = 10;
-#elif defined(ARCHITECTURE_AARCH64)
-constexpr USIZE SYS_SOCKET = 198;
-constexpr USIZE SYS_CONNECT = 203;
-constexpr USIZE SYS_SENDTO = 206;
-constexpr USIZE SYS_RECVFROM = 207;
-constexpr USIZE SYS_BIND = 200;
-constexpr USIZE SYS_CLOSE = 57;
-#elif defined(ARCHITECTURE_ARMV7A)
-// ARMv7 uses socketcall multiplexer
-constexpr USIZE SYS_SOCKETCALL = 102;
-constexpr USIZE SYS_CLOSE = 6;
-// socketcall opcodes
-constexpr USIZE SYS_SOCKET_SC = 1;
-constexpr USIZE SYS_BIND_SC = 2;
-constexpr USIZE SYS_CONNECT_SC = 3;
-constexpr USIZE SYS_SEND_SC = 9;
-constexpr USIZE SYS_RECV_SC = 10;
-#endif
-
-// Protocol numbers
-#define IPPROTO_TCP 6
-
-// Socket invalid value
-constexpr SSIZE INVALID_SOCKET = -1;
-
 // Helper functions for socketcall architectures (i386, ARMv7)
-#if defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
+#if defined(ARCHITECTURE_I386)
 
 static SSIZE linux_socket(INT32 domain, INT32 type, INT32 protocol)
 {
     USIZE args[3] = {(USIZE)domain, (USIZE)type, (USIZE)protocol};
-    return System::Call(SYS_SOCKETCALL, SYS_SOCKET_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SOCKOP_SOCKET, (USIZE)args);
 }
 
 static SSIZE linux_bind(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
     USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
-    return System::Call(SYS_SOCKETCALL, SYS_BIND_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SOCKOP_BIND, (USIZE)args);
 }
 
 static SSIZE linux_connect(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
     USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
-    return System::Call(SYS_SOCKETCALL, SYS_CONNECT_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SOCKOP_CONNECT, (USIZE)args);
 }
 
 static SSIZE linux_send(SSIZE sockfd, const VOID* buf, USIZE len, INT32 flags)
 {
     USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
-    return System::Call(SYS_SOCKETCALL, SYS_SEND_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SOCKOP_SEND, (USIZE)args);
 }
 
 static SSIZE linux_recv(SSIZE sockfd, VOID* buf, USIZE len, INT32 flags)
 {
     USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
-    return System::Call(SYS_SOCKETCALL, SYS_RECV_SC, (USIZE)args);
+    return System::Call(SYS_SOCKETCALL, SOCKOP_RECV, (USIZE)args);
 }
 
 #else
 
-// Direct syscall versions for x86_64 and AArch64
+// Direct syscall versions for x86_64, AArch64, and ARMv7A
 static SSIZE linux_socket(INT32 domain, INT32 type, INT32 protocol)
 {
     return System::Call(SYS_SOCKET, domain, type, protocol);
@@ -120,7 +78,7 @@ Socket::Socket(const IPAddress& ipAddress, UINT16 port)
     SSIZE fd = linux_socket(addressFamily, socketType, protocol);
     if (fd < 0)
     {
-        m_socket = (PVOID)INVALID_SOCKET;
+        m_socket = (PVOID)INVALID_FD;
         return;
     }
 
@@ -199,7 +157,7 @@ BOOL Socket::Close()
 
     SSIZE sockfd = (SSIZE)m_socket;
     System::Call(SYS_CLOSE, sockfd);
-    m_socket = (PVOID)INVALID_SOCKET;
+    m_socket = (PVOID)INVALID_FD;
     return TRUE;
 }
 

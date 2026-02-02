@@ -18,12 +18,19 @@
 #pragma once
 
 #include "pal.h" // Includes bal.h (with string_formatter.h), console.h, date_time.h
-
+#if defined(ENABLE_LOGGING)
 // Convenience macros that automatically embed wide strings
 #define LOG_INFO(format, ...) Logger::Info<WCHAR>(L##format##_embed, ##__VA_ARGS__)
 #define LOG_ERROR(format, ...) Logger::Error<WCHAR>(L##format##_embed, ##__VA_ARGS__)
 #define LOG_DEBUG(format, ...) Logger::Debug<WCHAR>(L##format##_embed, ##__VA_ARGS__)
 #define LOG_WARNING(format, ...) Logger::Warning<WCHAR>(L##format##_embed, ##__VA_ARGS__)
+#else
+// Define empty macros when logging is disabled
+#define LOG_INFO(format, ...)
+#define LOG_ERROR(format, ...)
+#define LOG_DEBUG(format, ...)
+#define LOG_WARNING(format, ...)
+#endif // ENABLE_LOGGING
 
 /**
  * LogLevels - Compile-time log filtering levels

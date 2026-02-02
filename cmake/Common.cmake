@@ -11,6 +11,7 @@ set(ARCHITECTURE "x86_64" CACHE STRING "Target: i386, x86_64, armv7a, aarch64")
 set(PLATFORM "windows" CACHE STRING "Target: windows, linux, uefi")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 set(OPTIMIZATION_LEVEL "" CACHE STRING "Override optimization level (e.g., O2, Os)")
+option(ENABLE_LOGGING "Enable logging macros" ON)
 
 # Normalize inputs
 string(TOLOWER "${ARCHITECTURE}" CPPPIC_ARCH)
@@ -86,6 +87,9 @@ set(CPPPIC_DEFINES
 )
 if(CPPPIC_BUILD_TYPE STREQUAL "debug")
     list(APPEND CPPPIC_DEFINES DEBUG)
+endif()
+if(ENABLE_LOGGING)
+    list(APPEND CPPPIC_DEFINES ENABLE_LOGGING)
 endif()
 
 # =============================================================================

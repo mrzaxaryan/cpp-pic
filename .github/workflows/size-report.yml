@@ -54,10 +54,10 @@ jobs:
         shell: pwsh
         run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
 
-      - name: Build with -Oz
+      - name: Build with -Oz (no logging)
         shell: pwsh
         run: |
-          cmake --preset windows-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --preset windows-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
           cmake --build --preset windows-${{ matrix.arch }}-release
 
       - name: Get sizes
@@ -115,7 +115,7 @@ jobs:
       - name: Build with -Oz
         shell: pwsh
         run: |
-          cmake --preset windows-aarch64-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --preset windows-aarch64-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
           cmake --build --preset windows-aarch64-release
 
       - name: Get sizes
@@ -176,7 +176,7 @@ jobs:
 
       - name: Build with -Oz
         run: |
-          cmake --preset linux-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --preset linux-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
           cmake --build --preset linux-${{ matrix.arch }}-release
 
       - name: Get sizes
@@ -235,7 +235,7 @@ jobs:
 
       - name: Build with -Oz
         run: |
-          cmake --preset uefi-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --preset uefi-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
           cmake --build --preset uefi-${{ matrix.arch }}-release
 
       - name: Get sizes

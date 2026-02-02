@@ -1,29 +1,6 @@
 # Toolchain Installation Guide
 
-This guide provides step-by-step instructions for installing the required build toolchain (LLVM/Clang, CMake, Ninja) for NOSTDLIB-RUNTIME on Linux and Windows.
-
-## Linux Installation
-
-### Ubuntu/Debian
-
-Copy and paste the following command to install all dependencies:
-
-```bash
-# Install all dependencies (LLVM 20)
-LLVM_VER=20 && sudo apt-get update && sudo apt-get install -y wget lsb-release ca-certificates gnupg cmake ninja-build && sudo mkdir -p /etc/apt/keyrings && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null && echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list && sudo apt-get update && sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER} lldb-${LLVM_VER} && sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lldb-dap lldb-dap /usr/bin/lldb-dap-${LLVM_VER} 100 && sudo update-alternatives --set clang "/usr/bin/clang-${LLVM_VER}" && sudo update-alternatives --set clang++ "/usr/bin/clang++-${LLVM_VER}" && sudo update-alternatives --set lld "/usr/bin/lld-${LLVM_VER}" && sudo update-alternatives --set llvm-objdump "/usr/bin/llvm-objdump-${LLVM_VER}" && sudo update-alternatives --set llvm-objcopy "/usr/bin/llvm-objcopy-${LLVM_VER}" && sudo update-alternatives --set llvm-strings "/usr/bin/llvm-strings-${LLVM_VER}" && sudo update-alternatives --set lldb-dap "/usr/bin/lldb-dap-${LLVM_VER}"
-```
-
-**Note:** To install a different LLVM version, change `LLVM_VER=20` to your desired version (e.g., `LLVM_VER=21`).
-
-### Verify Installation
-
-```bash
-clang --version
-clang++ --version
-lld --version
-cmake --version
-ninja --version
-```
+This guide provides step-by-step instructions for installing the required build toolchain (LLVM/Clang, CMake, Ninja) for NOSTDLIB-RUNTIME on Windows and Linux.
 
 ## Windows Installation
 
@@ -54,11 +31,69 @@ cmake --version
 ninja --version
 ```
 
+## Linux Installation
+
+### Ubuntu/Debian
+
+Copy and paste the following command to install all dependencies:
+
+```bash
+# Install all dependencies (LLVM 20)
+LLVM_VER=20 && sudo apt-get update && sudo apt-get install -y wget lsb-release ca-certificates gnupg cmake ninja-build && sudo mkdir -p /etc/apt/keyrings && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null && echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list && sudo apt-get update && sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER} lldb-${LLVM_VER} && sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lldb-dap lldb-dap /usr/bin/lldb-dap-${LLVM_VER} 100 && sudo update-alternatives --set clang "/usr/bin/clang-${LLVM_VER}" && sudo update-alternatives --set clang++ "/usr/bin/clang++-${LLVM_VER}" && sudo update-alternatives --set lld "/usr/bin/lld-${LLVM_VER}" && sudo update-alternatives --set llvm-objdump "/usr/bin/llvm-objdump-${LLVM_VER}" && sudo update-alternatives --set llvm-objcopy "/usr/bin/llvm-objcopy-${LLVM_VER}" && sudo update-alternatives --set llvm-strings "/usr/bin/llvm-strings-${LLVM_VER}" && sudo update-alternatives --set lldb-dap "/usr/bin/lldb-dap-${LLVM_VER}"
+```
+
+**Note:** To install a different LLVM version, change `LLVM_VER=20` to your desired version (e.g., `LLVM_VER=21`).
+
+### Verify Installation
+
+```bash
+clang --version
+clang++ --version
+lld --version
+cmake --version
+ninja --version
+```
+
+## IDE Configuration
+
+### Visual Studio Code
+
+This project is designed and optimized for [Visual Studio Code](https://code.visualstudio.com/).
+
+When you open this project in VSCode, you will be automatically prompted to install the recommended extensions.
+
+### WSL Integration
+
+If you're developing on Windows with WSL (Windows Subsystem for Linux), you can open this project in WSL using VSCode's remote development features. This is recommended for C++ development as it provides a Linux build environment.
+
+#### Opening in WSL
+
+**From within WSL:**
+
+Navigate to the project directory and run:
+
+```bash
+code .
+```
+
+**Prerequisites:**
+- Ensure WSL is properly configured on your Windows system
+- Install QEMU and UEFI firmware:
+  ```bash
+  sudo apt-get update && sudo apt-get install -y qemu-user-static qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64
+  ```
+  This installs QEMU for cross-architecture execution (ARM on x86_64) and UEFI testing in virtual machines (x86_64 and aarch64).
+
+For more information, see the [VSCode WSL documentation](https://code.visualstudio.com/docs/remote/wsl).
+
+Refer to [.vscode/README.md](.vscode/README.md) for detailed VSCode configuration and usage instructions.
+
 ## Version Requirements
 
 - **CMake**: 3.20 or higher
 - **Ninja**: 1.10 or higher
 - **LLVM/Clang**: 20 or higher
+
 ## Next Steps
 
 After installing the toolchain, refer to the main [README.md](README.md) for build instructions and usage examples.

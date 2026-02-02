@@ -309,9 +309,19 @@ jobs:
           print(Path("sizes.json").read_text())
           EOF
 
-          # Commit sizes.json to main branch
+          # Push sizes.json to build-sizes branch
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create orphan build-sizes branch or switch to it
+          git fetch origin build-sizes:build-sizes 2>/dev/null || git checkout --orphan build-sizes
+          git checkout build-sizes 2>/dev/null || git checkout --orphan build-sizes
+
+          # Remove all files except sizes.json
+          git rm -rf . 2>/dev/null || true
+          mv sizes.json . 2>/dev/null || true
+
+          # Commit and push
           git add sizes.json
-          git diff --staged --quiet || git commit -m "Update binary sizes [skip ci]"
-          git push
+          git diff --staged --quiet || git commit -m "Update binary sizes"
+          git push origin build-sizes --force

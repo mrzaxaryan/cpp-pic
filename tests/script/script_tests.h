@@ -39,35 +39,23 @@ static BOOL RunScriptTests()
     LOG_INFO("");
 
     // State API tests
-    if (!StateTests::RunAll())
-        allPassed = FALSE;
-    LOG_INFO("");
+    RUN_TEST_SUITE(allPassed, StateTests);
 
     // Standard library tests
-    if (!StdLibTests::RunAll())
-        allPassed = FALSE;
-    LOG_INFO("");
+    RUN_TEST_SUITE(allPassed, StdLibTests);
 
     // Language feature tests
-    if (!LanguageTests::RunAll())
-        allPassed = FALSE;
-    LOG_INFO("");
+    RUN_TEST_SUITE(allPassed, LanguageTests);
 
     // Error handling tests
-    if (!ErrorTests::RunAll())
-        allPassed = FALSE;
-    LOG_INFO("");
+    RUN_TEST_SUITE(allPassed, ErrorTests);
 
     // Final summary
     LOG_INFO("=== PICScript Test Suite Complete ===");
     if (allPassed)
-    {
         LOG_INFO("ALL SCRIPT TESTS PASSED!");
-    }
     else
-    {
         LOG_ERROR("SOME SCRIPT TESTS FAILED!");
-    }
 
     return allPassed;
 }

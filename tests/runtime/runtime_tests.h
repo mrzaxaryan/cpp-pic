@@ -60,84 +60,39 @@ static BOOL RunRuntimeTests()
 	BOOL allPassed = TRUE;
 
 	LOG_INFO("=== CPP-PIC Test Suite ===");
-
 	LOG_INFO("");
 
 	// BAL - Embedded Types and Numeric Primitives
-	if (!DoubleTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!StringTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
+	RUN_TEST_SUITE(allPassed, DoubleTests);
+	RUN_TEST_SUITE(allPassed, StringTests);
 
 	// BAL - Data Structures, String Utilities, and Algorithms
-	if (!ArrayStorageTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!StringFormatterTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!Djb2Tests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!Base64Tests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
+	RUN_TEST_SUITE(allPassed, ArrayStorageTests);
+	RUN_TEST_SUITE(allPassed, StringFormatterTests);
+	RUN_TEST_SUITE(allPassed, Djb2Tests);
+	RUN_TEST_SUITE(allPassed, Base64Tests);
 
 	// PAL - Memory and System
-	if (!MemoryTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!RandomTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
+	RUN_TEST_SUITE(allPassed, MemoryTests);
+	RUN_TEST_SUITE(allPassed, RandomTests);
 
 	// RAL - Cryptography
-	if (!ShaTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!EccTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
+	RUN_TEST_SUITE(allPassed, ShaTests);
+	RUN_TEST_SUITE(allPassed, EccTests);
 
 	// RAL - Network
-	if (!SocketTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
+	RUN_TEST_SUITE(allPassed, SocketTests);
+	RUN_TEST_SUITE(allPassed, TlsTests);
+	RUN_TEST_SUITE(allPassed, DnsTests);
+	RUN_TEST_SUITE(allPassed, WebSocketTests);
+	RUN_TEST_SUITE(allPassed, FileSystemTests);
 
-	if (!TlsTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!DnsTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if (!WebSocketTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-
-	if(!FileSystemTests::RunAll())
-		allPassed = FALSE;
-	LOG_INFO("");
-	
 	// Final summary
 	LOG_INFO("=== Test Suite Complete ===");
 	if (allPassed)
-	{
 		LOG_INFO("ALL TESTS PASSED!");
-	}
 	else
-	{
 		LOG_ERROR("SOME TESTS FAILED!");
-	}
 
 	return allPassed;
 }

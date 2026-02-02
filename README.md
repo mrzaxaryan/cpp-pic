@@ -2,32 +2,32 @@
 
 <table>
 <tr>
-<th>Platform</th>
-<th>i386</th>
-<th>x86_64</th>
-<th>armv7a</th>
-<th>aarch64</th>
+<th><img width="170" height="1" alt=""><br>Platform</th>
+<th><img width="170" height="1" alt=""><br>i386</th>
+<th><img width="170" height="1" alt=""><br>x86_64</th>
+<th><img width="170" height="1" alt=""><br>armv7a</th>
+<th><img width="170" height="1" alt=""><br>aarch64</th>
 </tr>
 <tr>
 <td>Windows</td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-i386.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-i386.yml?label=" alt="Status"></a></td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-x86_64.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-x86_64.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-i386.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-x86_64.yml?label=" alt="Status"></a></td>
 <td>-</td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-aarch64.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-aarch64.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-aarch64.yml?label=" alt="Status"></a></td>
 </tr>
 <tr>
 <td>Linux</td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-i386.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-i386.yml?label=" alt="Status"></a></td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-x86_64.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-x86_64.yml?label=" alt="Status"></a></td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-armv7a.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-armv7a.yml?label=" alt="Status"></a></td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-aarch64.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-aarch64.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-i386.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-x86_64.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-armv7a.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-armv7a.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-aarch64.yml?label=" alt="Status"></a></td>
 </tr>
 <tr>
 <td>UEFI</td>
 <td>-</td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-x86_64.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-x86_64.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-x86_64.yml?label=" alt="Status"></a></td>
 <td>-</td>
-<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-aarch64.yml"><img width="170" height="20" src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-aarch64.yml?label=" alt="Status"></a></td>
+<td><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-aarch64.yml?label=" alt="Status"></a></td>
 </tr>
 </table>
 

@@ -135,13 +135,6 @@ public:
 	 */
 	template <TCHAR TChar, typename... Args>
 	static VOID Debug(const TChar *format, Args &&...args);
-
-	/**
-	 * Clear - Clear console output
-	 *
-	 * Clears the console screen.
-	 */
-	static VOID Clear();
 };
 
 // ============================================================================

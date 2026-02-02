@@ -313,13 +313,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create orphan build-sizes branch or switch to it
-          git fetch origin build-sizes:build-sizes 2>/dev/null || git checkout --orphan build-sizes
-          git checkout build-sizes 2>/dev/null || git checkout --orphan build-sizes
+          # Save sizes.json before branch switch (avoids conflict with tracked file)
+          mv sizes.json /tmp/sizes.json
 
-          # Remove all files except sizes.json
+          # Checkout build-sizes branch, or create orphan if it doesn't exist
+          git fetch origin build-sizes 2>/dev/null || true
+          git branch -D build-sizes 2>/dev/null || true
+          if git rev-parse --verify origin/build-sizes >/dev/null 2>&1; then
+            git checkout -b build-sizes origin/build-sizes
+          else
+            git checkout --orphan build-sizes
+          fi
+
+          # Clean working tree and restore sizes.json
           git rm -rf . 2>/dev/null || true
-          mv sizes.json . 2>/dev/null || true
+          git clean -fd 2>/dev/null || true
+          mv /tmp/sizes.json sizes.json
 
           # Commit and push
           git add sizes.json

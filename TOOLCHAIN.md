@@ -1,7 +1,6 @@
 # Toolchain Installation Guide
 
-| [README](README.md) | [TOOLCHAIN](TOOLCHAIN.md) |
-|---------------------|---------------------------|
+**[README](README.md)** | **[TOOLCHAIN](TOOLCHAIN.md)**
 
 This guide provides step-by-step instructions for installing the required build toolchain (LLVM/Clang, CMake, Ninja) for NOSTDLIB-RUNTIME on Windows and Linux.
 

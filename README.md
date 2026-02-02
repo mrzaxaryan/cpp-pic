@@ -1,7 +1,6 @@
 # NOSTDLIB-RUNTIME: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
-| [README](README.md) | [TOOLCHAIN](TOOLCHAIN.md) |
-|---------------------|---------------------------|
+**[README](README.md)** | **[TOOLCHAIN](TOOLCHAIN.md)**
 
 ## Introduction
 

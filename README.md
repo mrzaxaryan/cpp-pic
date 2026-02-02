@@ -1,6 +1,9 @@
 # NOSTDLIB-RUNTIME: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
 [![Build and Test](https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build.yml/badge.svg)](https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build.yml)
+![Windows](https://img.shields.io/badge/Windows-i386%20%7C%20x86__64%20%7C%20aarch64-blue?logo=windows)
+![Linux](https://img.shields.io/badge/Linux-i386%20%7C%20x86__64%20%7C%20armv7a%20%7C%20aarch64-orange?logo=linux&logoColor=white)
+![UEFI](https://img.shields.io/badge/UEFI-x86__64%20%7C%20aarch64-green)
 
 ## Introduction
 

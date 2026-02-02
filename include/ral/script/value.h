@@ -10,7 +10,6 @@
 #pragma once
 
 #include "ast.h"
-#include "bal/types/embedded/embedded_string.h"
 
 namespace script
 {
@@ -211,18 +210,39 @@ struct Value
 };
 
 // ============================================================================
-// ENVIRONMENT (Variable Scope)
+// ENVIRONMENT (Variable Scope) - Hash-optimized
 // ============================================================================
 
 constexpr USIZE MAX_VARIABLES = 64;
 constexpr USIZE MAX_SCOPE_DEPTH = 32;
 
+// DJB2 hash for fast variable lookup
+FORCE_INLINE UINT32 HashName(const CHAR* name, USIZE len) noexcept
+{
+    UINT32 hash = 5381;
+    for (USIZE i = 0; i < len; i++)
+    {
+        hash = ((hash << 5) + hash) + (UINT8)name[i];
+    }
+    return hash;
+}
+
+// String comparison helper (reduces code duplication)
+FORCE_INLINE BOOL StrEquals(const CHAR* a, const CHAR* b, USIZE len) noexcept
+{
+    for (USIZE i = 0; i < len; i++)
+    {
+        if (a[i] != b[i]) return FALSE;
+    }
+    return TRUE;
+}
+
 struct Variable
 {
-    CHAR name[MAX_IDENTIFIER_LENGTH];
+    UINT32 hash;                        // Pre-computed hash for O(1) lookup
     USIZE nameLength;
+    CHAR name[MAX_IDENTIFIER_LENGTH];
     Value value;
-    BOOL defined;
 };
 
 struct Scope
@@ -239,140 +259,107 @@ private:
     Scope m_scopes[MAX_SCOPE_DEPTH];
     USIZE m_depth;
 
-public:
-    Environment() noexcept : m_depth(0)
+    // Find variable in scope by hash (fast path)
+    FORCE_INLINE Variable* FindInScope(Scope& scope, UINT32 hash, const CHAR* name, USIZE nameLen) noexcept
     {
-        // Start with global scope
-        m_depth = 1;
+        for (USIZE i = 0; i < scope.count; i++)
+        {
+            if (scope.variables[i].hash == hash &&
+                scope.variables[i].nameLength == nameLen &&
+                StrEquals(scope.variables[i].name, name, nameLen))
+            {
+                return &scope.variables[i];
+            }
+        }
+        return nullptr;
     }
 
-    // Push a new scope
-    NOINLINE BOOL PushScope() noexcept
+    FORCE_INLINE const Variable* FindInScope(const Scope& scope, UINT32 hash, const CHAR* name, USIZE nameLen) const noexcept
+    {
+        for (USIZE i = 0; i < scope.count; i++)
+        {
+            if (scope.variables[i].hash == hash &&
+                scope.variables[i].nameLength == nameLen &&
+                StrEquals(scope.variables[i].name, name, nameLen))
+            {
+                return &scope.variables[i];
+            }
+        }
+        return nullptr;
+    }
+
+public:
+    Environment() noexcept : m_depth(1) {}
+
+    FORCE_INLINE BOOL PushScope() noexcept
     {
         if (m_depth >= MAX_SCOPE_DEPTH) return FALSE;
-        m_scopes[m_depth].count = 0;
-        m_depth++;
+        m_scopes[m_depth++].count = 0;
         return TRUE;
     }
 
-    // Pop the current scope
-    NOINLINE void PopScope() noexcept
+    FORCE_INLINE void PopScope() noexcept
     {
-        if (m_depth > 1)
-        {
-            m_depth--;
-        }
+        if (m_depth > 1) m_depth--;
     }
 
-    // Define a variable in current scope
     NOINLINE BOOL Define(const CHAR* name, USIZE nameLen, const Value& value) noexcept
     {
         if (m_depth == 0) return FALSE;
 
         Scope& scope = m_scopes[m_depth - 1];
-        if (scope.count >= MAX_VARIABLES) return FALSE;
+        UINT32 hash = HashName(name, nameLen);
 
-        // Check if already defined in current scope
-        for (USIZE i = 0; i < scope.count; i++)
+        // Check if already defined
+        if (Variable* var = FindInScope(scope, hash, name, nameLen))
         {
-            if (scope.variables[i].nameLength == nameLen)
-            {
-                BOOL match = TRUE;
-                for (USIZE j = 0; j < nameLen; j++)
-                {
-                    if (scope.variables[i].name[j] != name[j])
-                    {
-                        match = FALSE;
-                        break;
-                    }
-                }
-                if (match)
-                {
-                    // Update existing variable
-                    scope.variables[i].value = value;
-                    return TRUE;
-                }
-            }
+            var->value = value;
+            return TRUE;
         }
+
+        if (scope.count >= MAX_VARIABLES) return FALSE;
 
         // Add new variable
         Variable& var = scope.variables[scope.count++];
-        USIZE copyLen = nameLen < MAX_IDENTIFIER_LENGTH - 1 ? nameLen : MAX_IDENTIFIER_LENGTH - 1;
-        for (USIZE i = 0; i < copyLen; i++)
+        var.hash = hash;
+        var.nameLength = nameLen < MAX_IDENTIFIER_LENGTH - 1 ? nameLen : MAX_IDENTIFIER_LENGTH - 1;
+        for (USIZE i = 0; i < var.nameLength; i++)
         {
             var.name[i] = name[i];
         }
-        var.name[copyLen] = '\0';
-        var.nameLength = copyLen;
+        var.name[var.nameLength] = '\0';
         var.value = value;
-        var.defined = TRUE;
-
         return TRUE;
     }
 
-    // Assign to an existing variable
     NOINLINE BOOL Assign(const CHAR* name, USIZE nameLen, const Value& value) noexcept
     {
-        // Search from innermost to outermost scope
+        UINT32 hash = HashName(name, nameLen);
         for (SSIZE d = (SSIZE)m_depth - 1; d >= 0; d--)
         {
-            Scope& scope = m_scopes[d];
-            for (USIZE i = 0; i < scope.count; i++)
+            if (Variable* var = FindInScope(m_scopes[d], hash, name, nameLen))
             {
-                if (scope.variables[i].nameLength == nameLen)
-                {
-                    BOOL match = TRUE;
-                    for (USIZE j = 0; j < nameLen; j++)
-                    {
-                        if (scope.variables[i].name[j] != name[j])
-                        {
-                            match = FALSE;
-                            break;
-                        }
-                    }
-                    if (match)
-                    {
-                        scope.variables[i].value = value;
-                        return TRUE;
-                    }
-                }
+                var->value = value;
+                return TRUE;
             }
         }
         return FALSE;
     }
 
-    // Get a variable's value
     NOINLINE BOOL Get(const CHAR* name, USIZE nameLen, Value& outValue) const noexcept
     {
-        // Search from innermost to outermost scope
+        UINT32 hash = HashName(name, nameLen);
         for (SSIZE d = (SSIZE)m_depth - 1; d >= 0; d--)
         {
-            const Scope& scope = m_scopes[d];
-            for (USIZE i = 0; i < scope.count; i++)
+            if (const Variable* var = FindInScope(m_scopes[d], hash, name, nameLen))
             {
-                if (scope.variables[i].nameLength == nameLen)
-                {
-                    BOOL match = TRUE;
-                    for (USIZE j = 0; j < nameLen; j++)
-                    {
-                        if (scope.variables[i].name[j] != name[j])
-                        {
-                            match = FALSE;
-                            break;
-                        }
-                    }
-                    if (match)
-                    {
-                        outValue = scope.variables[i].value;
-                        return TRUE;
-                    }
-                }
+                outValue = var->value;
+                return TRUE;
             }
         }
         return FALSE;
     }
 
-    // Get current scope depth
     FORCE_INLINE USIZE GetDepth() const noexcept { return m_depth; }
 };
 

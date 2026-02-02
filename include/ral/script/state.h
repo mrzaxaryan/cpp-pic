@@ -18,8 +18,6 @@
 #pragma once
 
 #include "interpreter.h"
-#include "parser.h"
-#include "bal/types/embedded/embedded_string.h"
 
 namespace script
 {

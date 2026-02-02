@@ -5,10 +5,8 @@
  */
 
 #include "ral.h"
-#include "tests.h"
-
-// Forward declaration for script examples
-extern void RunAllScriptTests();
+#include "script/script_tests.h"
+#include "runtime/runtime_tests.h"
 
 /**
  * _start - Entry point for all platforms
@@ -30,10 +28,7 @@ ENTRYPOINT INT32 _start(VOID)
 	SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 #endif
 
-	// Run script examples
-	RunAllScriptTests();
-
-	// Run tests and exit
-	BOOL allPassed = RunAllTests();
+	// Run runtime and unit tests
+	BOOL allPassed = RunRuntimeTests() && RunAllTests();
 	ExitProcess(allPassed ? 0 : 1);
 }

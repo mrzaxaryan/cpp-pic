@@ -11,7 +11,6 @@
 
 #include "parser.h"
 #include "value.h"
-#include "bal/types/embedded/embedded_string.h"
 
 namespace script
 {
@@ -295,120 +294,54 @@ private:
     {
         Value left = Evaluate(expr->binary.left);
         Value right = Evaluate(expr->binary.right);
+        TokenType op = expr->binary.op;
 
-        switch (expr->binary.op)
+        // Fast path: both operands are numbers (most common case)
+        if (left.IsNumber() && right.IsNumber())
         {
-            // Arithmetic
-            case TokenType::PLUS:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Number(left.numberValue + right.numberValue);
-                }
-                if (left.IsString() && right.IsString())
-                {
-                    // String concatenation
-                    CHAR buffer[MAX_STRING_VALUE];
-                    USIZE pos = 0;
-                    for (USIZE i = 0; i < left.strLength && pos < MAX_STRING_VALUE - 1; i++)
-                    {
-                        buffer[pos++] = left.strValue[i];
-                    }
-                    for (USIZE i = 0; i < right.strLength && pos < MAX_STRING_VALUE - 1; i++)
-                    {
-                        buffer[pos++] = right.strValue[i];
-                    }
-                    buffer[pos] = '\0';
-                    return Value::String(buffer, pos);
-                }
-                RuntimeError("Operands must be numbers or strings"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::MINUS:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Number(left.numberValue - right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::STAR:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Number(left.numberValue * right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::SLASH:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    if (right.numberValue == 0)
-                    {
-                        RuntimeError("Division by zero"_embed, expr->line);
-                        return Value::Nil();
-                    }
-                    return Value::Number(left.numberValue / right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::PERCENT:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    if (right.numberValue == 0)
-                    {
-                        RuntimeError("Modulo by zero"_embed, expr->line);
-                        return Value::Nil();
-                    }
-                    return Value::Number(left.numberValue % right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            // Comparison
-            case TokenType::LESS:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Bool(left.numberValue < right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::GREATER:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Bool(left.numberValue > right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::LESS_EQUAL:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Bool(left.numberValue <= right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            case TokenType::GREATER_EQUAL:
-                if (left.IsNumber() && right.IsNumber())
-                {
-                    return Value::Bool(left.numberValue >= right.numberValue);
-                }
-                RuntimeError("Operands must be numbers"_embed, expr->line);
-                return Value::Nil();
-
-            // Equality
-            case TokenType::EQUAL_EQUAL:
-                return Value::Bool(left.Equals(right));
-
-            case TokenType::BANG_EQUAL:
-                return Value::Bool(!left.Equals(right));
-
-            default:
-                RuntimeError("Unknown binary operator"_embed, expr->line);
-                return Value::Nil();
+            INT64 l = left.numberValue;
+            INT64 r = right.numberValue;
+            switch (op)
+            {
+                case TokenType::PLUS:          return Value::Number(l + r);
+                case TokenType::MINUS:         return Value::Number(l - r);
+                case TokenType::STAR:          return Value::Number(l * r);
+                case TokenType::SLASH:
+                    if (r == 0) { RuntimeError("Division by zero"_embed, expr->line); return Value::Nil(); }
+                    return Value::Number(l / r);
+                case TokenType::PERCENT:
+                    if (r == 0) { RuntimeError("Division by zero"_embed, expr->line); return Value::Nil(); }
+                    return Value::Number(l % r);
+                case TokenType::LESS:          return Value::Bool(l < r);
+                case TokenType::GREATER:       return Value::Bool(l > r);
+                case TokenType::LESS_EQUAL:    return Value::Bool(l <= r);
+                case TokenType::GREATER_EQUAL: return Value::Bool(l >= r);
+                case TokenType::EQUAL_EQUAL:   return Value::Bool(l == r);
+                case TokenType::BANG_EQUAL:    return Value::Bool(l != r);
+                default: break;
+            }
         }
+
+        // String concatenation
+        if (op == TokenType::PLUS && left.IsString() && right.IsString())
+        {
+            CHAR buffer[MAX_STRING_VALUE];
+            USIZE pos = 0;
+            for (USIZE i = 0; i < left.strLength && pos < MAX_STRING_VALUE - 1; i++)
+                buffer[pos++] = left.strValue[i];
+            for (USIZE i = 0; i < right.strLength && pos < MAX_STRING_VALUE - 1; i++)
+                buffer[pos++] = right.strValue[i];
+            buffer[pos] = '\0';
+            return Value::String(buffer, pos);
+        }
+
+        // Equality (works for all types)
+        if (op == TokenType::EQUAL_EQUAL) return Value::Bool(left.Equals(right));
+        if (op == TokenType::BANG_EQUAL)  return Value::Bool(!left.Equals(right));
+
+        // Type error for numeric operations
+        RuntimeError("Type error"_embed, expr->line);
+        return Value::Nil();
     }
 
     NOINLINE Value EvaluateUnary(Expr* expr) noexcept
@@ -446,41 +379,35 @@ private:
             args[i] = Evaluate(expr->call.args[i]);
         }
 
-        if (callee.IsNativeFunction())
+        // Dispatch by callable type
+        switch (callee.type)
         {
-            return callee.nativeFn(args, argCount, m_env);
-        }
+            case ValueType::NATIVE_FUNCTION:
+                return callee.nativeFn(args, argCount, m_env);
 
-        if (callee.IsCFunction())
-        {
-            return CallCFunction(callee, args, argCount, expr->line);
-        }
+            case ValueType::CFUNCTION:
+            {
+                FunctionContext ctx = { callee.cfunction.state, args, argCount };
+                return callee.cfunction.func(ctx);
+            }
 
-        if (callee.IsFunction())
-        {
-            return CallFunction(callee, args, argCount, expr->line);
-        }
+            case ValueType::FUNCTION:
+                return CallFunction(callee.function.declaration, args, argCount, expr->line);
 
-        RuntimeError("Can only call functions"_embed, expr->line);
-        return Value::Nil();
+            default:
+                RuntimeError("Not callable"_embed, expr->line);
+                return Value::Nil();
+        }
     }
 
-    NOINLINE Value CallFunction(const Value& fn, Value* args, UINT8 argCount, UINT32 line) noexcept
+    NOINLINE Value CallFunction(const FunctionStmt* decl, Value* args, UINT8 argCount, UINT32 line) noexcept
     {
-        const FunctionStmt* decl = fn.function.declaration;
-
         if (argCount != decl->paramCount)
         {
-            RuntimeError("Wrong number of arguments"_embed, line);
+            RuntimeError("Argument count"_embed, line);
             return Value::Nil();
         }
 
-        // Save current environment
-        Environment* previous = m_env;
-
-        // Create new environment for function
-        // Note: In a real implementation, we'd use the closure environment
-        // For simplicity, we just push a new scope
         m_env->PushScope();
 
         // Bind parameters
@@ -492,64 +419,35 @@ private:
         // Execute function body
         m_returnValue.hasReturn = FALSE;
         ExecuteStmt(decl->body);
-
-        // Pop function scope
         m_env->PopScope();
 
-        // Restore environment
-        m_env = previous;
-
         // Get return value
-        Value result = Value::Nil();
         if (m_returnValue.hasReturn)
         {
-            result = m_returnValue.value;
+            Value result = m_returnValue.value;
             m_returnValue.hasReturn = FALSE;
+            return result;
         }
-
-        return result;
-    }
-
-    // Call a CFunction (Lua-like C++ function)
-    NOINLINE Value CallCFunction(const Value& fn, Value* args, UINT8 argCount, UINT32 line) noexcept
-    {
-        (VOID)line;  // Reserved for future error reporting
-        FunctionContext ctx;
-        ctx.state = fn.cfunction.state;
-        ctx.args = args;
-        ctx.argCount = argCount;
-
-        return fn.cfunction.func(ctx);
+        return Value::Nil();
     }
 
     NOINLINE Value EvaluateAssign(Expr* expr) noexcept
     {
         Value value = Evaluate(expr->assign.value);
-
         if (!m_env->Assign(expr->assign.name, expr->assign.nameLength, value))
         {
-            RuntimeError("Undefined variable in assignment"_embed, expr->line);
+            RuntimeError("Undefined"_embed, expr->line);
             return Value::Nil();
         }
-
         return value;
     }
 
     NOINLINE Value EvaluateLogical(Expr* expr) noexcept
     {
         Value left = Evaluate(expr->logical.left);
-
-        // Short-circuit evaluation
-        if (expr->logical.op == TokenType::OR_OR)
-        {
-            if (left.IsTruthy()) return left;
-        }
-        else // AND_AND
-        {
-            if (!left.IsTruthy()) return left;
-        }
-
-        return Evaluate(expr->logical.right);
+        // Short-circuit: || returns on truthy, && returns on falsy
+        BOOL shortCircuit = (expr->logical.op == TokenType::OR_OR) ? left.IsTruthy() : !left.IsTruthy();
+        return shortCircuit ? left : Evaluate(expr->logical.right);
     }
 };
 

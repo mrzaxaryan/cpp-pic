@@ -55,7 +55,7 @@
 #include "websocket_tests.h"
 #include "filesystem_tests.h"
 
-static BOOL RunAllTests()
+static BOOL RunRuntimeTests()
 {
 	BOOL allPassed = TRUE;
 

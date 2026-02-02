@@ -11,7 +11,6 @@
 
 #include "token.h"
 #include "bal/core/memory.h"
-#include "bal/types/embedded/embedded_string.h"
 
 namespace script
 {

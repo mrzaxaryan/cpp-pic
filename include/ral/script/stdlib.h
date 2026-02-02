@@ -17,7 +17,6 @@
 #pragma once
 
 #include "value.h"
-#include "bal/types/embedded/embedded_string.h"
 #include "pal/io/console.h"
 
 // Forward declaration - State is defined in state.h

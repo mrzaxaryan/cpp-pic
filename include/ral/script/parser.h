@@ -11,7 +11,6 @@
 
 #include "lexer.h"
 #include "ast.h"
-#include "bal/types/embedded/embedded_string.h"
 
 namespace script
 {

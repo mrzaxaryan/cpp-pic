@@ -1,22 +1,21 @@
 /**
- * script_example.cc - PICScript Usage Examples
+ * script_tests.h - PICScript Test Suite
  *
- * Demonstrates the Lua-like State API with manual function registration.
+ * Tests for the Lua-like State API with manual function registration.
  * NO functions are built-in - all must be registered from C++.
- * StdLib_Print outputs directly to Console (no callback needed).
  */
+
+#pragma once
 
 #include "ral/script/script.h"
 #include "pal/io/logger.h"
-#include "pal/io/console.h"
-#include "bal/types/embedded/embedded_string.h"
 
 // ============================================================================
 // CUSTOM C++ FUNCTIONS
 // ============================================================================
 
 // Custom function: double(n) - doubles a number
-script::Value Func_Double(script::FunctionContext& ctx)
+static script::Value ScriptTest_Func_Double(script::FunctionContext& ctx)
 {
     if (ctx.CheckArgs(1) && ctx.IsNumber(0))
     {
@@ -26,7 +25,7 @@ script::Value Func_Double(script::FunctionContext& ctx)
 }
 
 // Custom function: square(n) - squares a number
-script::Value Func_Square(script::FunctionContext& ctx)
+static script::Value ScriptTest_Func_Square(script::FunctionContext& ctx)
 {
     if (ctx.CheckArgs(1) && ctx.IsNumber(0))
     {
@@ -37,7 +36,7 @@ script::Value Func_Square(script::FunctionContext& ctx)
 }
 
 // Custom function: greet(name) - prints a greeting
-script::Value Func_Greet(script::FunctionContext& ctx)
+static script::Value ScriptTest_Func_Greet(script::FunctionContext& ctx)
 {
     Console::Write<CHAR>("Hello, "_embed);
     if (ctx.CheckArgs(1) && ctx.IsString(0))
@@ -54,7 +53,7 @@ script::Value Func_Greet(script::FunctionContext& ctx)
 }
 
 // Custom function: sum(...) - sums all numeric arguments
-script::Value Func_Sum(script::FunctionContext& ctx)
+static script::Value ScriptTest_Func_Sum(script::FunctionContext& ctx)
 {
     INT64 total = 0;
     for (UINT8 i = 0; i < ctx.GetArgCount(); i++)
@@ -71,10 +70,10 @@ script::Value Func_Sum(script::FunctionContext& ctx)
 // EXAMPLE 1: Using Standard Library
 // ============================================================================
 
-NOINLINE void Example_WithStdLib()
+NOINLINE static void ScriptTest_Example_WithStdLib()
 {
    LOG_INFO("=== Example 1: With Standard Library ===\n");
-   
+
 script::State* L = new script::State();
 
     // Register standard library (print, len, str, num, type, abs, min, max)
@@ -95,7 +94,7 @@ print("len(hello):", len("hello"));
 // EXAMPLE 2: Manual Function Registration (No StdLib)
 // ============================================================================
 
-NOINLINE void Example_ManualRegistration()
+NOINLINE static void ScriptTest_Example_ManualRegistration()
 {
     LOG_INFO("=== Example 2: Manual Registration Only ===");
 
@@ -103,8 +102,8 @@ NOINLINE void Example_ManualRegistration()
 
     // Register ONLY the functions we need - NO standard library
     L->Register("print"_embed, script::StdLib_Print);
-    L->Register("double"_embed, Func_Double);
-    L->Register("square"_embed, Func_Square);
+    L->Register("double"_embed, ScriptTest_Func_Double);
+    L->Register("square"_embed, ScriptTest_Func_Square);
 
     // Note: len, str, num, type are NOT available - not registered
     auto source = R"(print("Only print, double, square are available");
@@ -120,7 +119,7 @@ print("square(4) =", square(4));
 // EXAMPLE 3: Custom Functions
 // ============================================================================
 
-NOINLINE void Example_CustomFunctions()
+NOINLINE static void ScriptTest_Example_CustomFunctions()
 {
     LOG_INFO("=== Example 3: Custom Functions ===");
 
@@ -128,8 +127,8 @@ NOINLINE void Example_CustomFunctions()
     script::OpenStdLib(*L);
 
     // Register additional custom functions
-    L->Register("greet"_embed, Func_Greet);
-    L->Register("sum"_embed, Func_Sum);
+    L->Register("greet"_embed, ScriptTest_Func_Greet);
+    L->Register("sum"_embed, ScriptTest_Func_Sum);
 
     auto source = R"(greet("PICScript User");
 print("sum(1,2,3,4,5) =", sum(1,2,3,4,5));
@@ -143,7 +142,7 @@ print("sum(1,2,3,4,5) =", sum(1,2,3,4,5));
 // EXAMPLE 4: Setting Global Variables from C++
 // ============================================================================
 
-NOINLINE void Example_GlobalVariables()
+NOINLINE static void ScriptTest_Example_GlobalVariables()
 {
     LOG_INFO("=== Example 4: Global Variables ===");
 
@@ -169,7 +168,7 @@ if (debug) {
 // EXAMPLE 5: FizzBuzz
 // ============================================================================
 
-NOINLINE void Example_FizzBuzz()
+NOINLINE static void ScriptTest_Example_FizzBuzz()
 {
     LOG_INFO("=== Example 5: FizzBuzz ===");
 
@@ -199,7 +198,7 @@ fizzbuzz(15);
 // EXAMPLE 6: Recursive Functions
 // ============================================================================
 
-NOINLINE void Example_Recursion()
+NOINLINE static void ScriptTest_Example_Recursion()
 {
     LOG_INFO("=== Example 6: Recursive Functions ===");
 
@@ -224,7 +223,7 @@ for (var i = 1; i <= 10; i = i + 1) {
 // EXAMPLE 7: Error Handling
 // ============================================================================
 
-NOINLINE void Example_ErrorHandling()
+NOINLINE static void ScriptTest_Example_ErrorHandling()
 {
     LOG_INFO("=== Example 7: Error Handling ===");
 
@@ -248,7 +247,7 @@ print(x);
 // EXAMPLE 8: Minimal Setup (print only)
 // ============================================================================
 
-NOINLINE void Example_MinimalSetup()
+NOINLINE static void ScriptTest_Example_MinimalSetup()
 {
     LOG_INFO("=== Example 8: Minimal Setup (print only) ===");
 
@@ -270,23 +269,25 @@ print("x * y =", x * y);
 // MAIN TEST RUNNER
 // ============================================================================
 
-NOINLINE void RunAllScriptTests()
+NOINLINE static BOOL RunAllScriptTests()
 {
     LOG_INFO("\n");
     LOG_INFO("========================================\n");
     LOG_INFO("   PICScript Test Suite\n");
     LOG_INFO("   (No built-in functions)\n");
     LOG_INFO("========================================\n\n");
-    Example_WithStdLib();
-    Example_ManualRegistration();
-    Example_CustomFunctions();
-    Example_GlobalVariables();
-    Example_FizzBuzz();
-    Example_Recursion();
-    Example_ErrorHandling();
-    Example_MinimalSetup();
+    ScriptTest_Example_WithStdLib();
+    ScriptTest_Example_ManualRegistration();
+    ScriptTest_Example_CustomFunctions();
+    ScriptTest_Example_GlobalVariables();
+    ScriptTest_Example_FizzBuzz();
+    ScriptTest_Example_Recursion();
+    ScriptTest_Example_ErrorHandling();
+    ScriptTest_Example_MinimalSetup();
 
     LOG_INFO("========================================\n");
-    LOG_INFO("   All Tests Complete!\n");
+    LOG_INFO("   All Script Tests Complete!\n");
     LOG_INFO("========================================\n");
+
+    return TRUE;
 }

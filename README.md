@@ -1,11 +1,5 @@
 # NOSTDLIB-RUNTIME: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
-<style>
-table {
-    width: 100%;
-}
-</style>
-
 <table>
 <tr>
 <th>Platform</th>
@@ -34,6 +28,9 @@ table {
 <td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-x86_64.yml?label=" alt="Status"></a></td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-aarch64.yml?label=" alt="Status"></a></td>
+</tr>
+<tr>
+<td colspan="5"><img width="850" height="1" alt=""></td>
 </tr>
 </table>
 

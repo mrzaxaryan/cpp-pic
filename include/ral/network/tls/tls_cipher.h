@@ -13,6 +13,7 @@
 #define MAX_KEY_SIZE 32
 #define MAX_IV_SIZE 12
 #define CIPHER_KEY_SIZE 32
+#define CIPHER_HASH_SIZE 32
 #define CONTENT_APPLICATION_DATA 0x17
 
 // https://tools.ietf.org/html/rfc4492#section-5.1.1

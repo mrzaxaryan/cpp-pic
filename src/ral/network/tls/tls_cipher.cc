@@ -2,7 +2,7 @@
 #include "logger.h"
 #include "memory.h"
 #include "random.h"
-#include "tls_hmac.h"
+#include "sha2.h"
 #include "tls_hkdf.h"
 #include "math.h"
 
@@ -260,10 +260,11 @@ VOID TlsCipher::ComputeVerify(TlsBuffer *out, INT32 verifySize, INT32 localOrRem
     }
     out->SetSize(verifySize);
     LOG_DEBUG("tls_cipher_compute_verify: Calculating HMAC for verify, verify_size=%d", verifySize);
-    TlsHMAC hmac(CIPHER_HASH_SIZE, finished_key, hashLen);
+    HMAC_SHA256 hmac;
+    hmac.Init(finished_key, hashLen);
     hmac.Update((UINT8 *)hash, hashLen);
 
-    hmac.Done((UINT8 *)out->GetBuffer(), out->GetSize());
+    hmac.Final((UINT8 *)out->GetBuffer(), out->GetSize());
     LOG_DEBUG("tls_cipher_compute_verify: Finished verify computation");
 }
 

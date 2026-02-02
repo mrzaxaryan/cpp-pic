@@ -2,20 +2,9 @@
 #include "memory.h"
 #include "logger.h"
 
-INT32 TlsBuffer::GetSize()
-{
-    return this->size;
-}
-
-PCHAR TlsBuffer::GetBuffer()
-{
-    return this->buffer;
-}
-
-// Function definitions
+// Write operations
 INT32 TlsBuffer::Append(PCVOID data, INT32 size)
 {
-    // PMEMORY pMemory = GetMemory();
     CheckSize(size);
     Memory::Copy(buffer + this->size, (PVOID)data, size);
     this->size += size;
@@ -54,13 +43,14 @@ VOID TlsBuffer::SetSize(INT32 size)
 
 VOID TlsBuffer::Clear()
 {
-    if (this->buffer)
+    if (this->buffer && this->ownsMemory)
     {
         delete[] this->buffer;
         this->buffer = nullptr;
     }
     this->size = 0;
     this->capacity = 0;
+    this->readPos = 0;
 }
 
 VOID TlsBuffer::CheckSize(INT32 appendSize)
@@ -84,10 +74,44 @@ VOID TlsBuffer::CheckSize(INT32 appendSize)
         LOG_DEBUG("Resizing buffer from %d to %d bytes\n", this->capacity, newLen);
         Memory::Copy(buffer, oldBuffer, this->size);
     }
-    if (oldBuffer)
+    if (oldBuffer && this->ownsMemory)
     {
         delete[] oldBuffer;
         oldBuffer = nullptr;
     }
     this->capacity = newLen;
+    this->ownsMemory = true;
+}
+
+// Read operations
+template <typename T>
+T TlsBuffer::Read()
+{
+    T value = *(T *)(this->buffer + this->readPos);
+    this->readPos += sizeof(T);
+    return value;
+}
+
+template <>
+INT16 TlsBuffer::Read<INT16>()
+{
+    INT16 value;
+    Memory::Copy(&value, this->buffer + this->readPos, sizeof(INT16));
+    this->readPos += sizeof(INT16);
+    return value;
+}
+
+template <>
+INT8 TlsBuffer::Read<INT8>()
+{
+    INT8 value;
+    Memory::Copy(&value, this->buffer + this->readPos, sizeof(INT8));
+    this->readPos += sizeof(INT8);
+    return value;
+}
+
+VOID TlsBuffer::Read(PCHAR buf, INT32 size)
+{
+    Memory::Copy(buf, this->buffer + this->readPos, size);
+    this->readPos += size;
 }

@@ -1,7 +1,7 @@
 #include "tls_hkdf.h"
 #include "logger.h"
 #include "memory.h"
-#include "tls_hmac.h"
+#include "sha2.h"
 #include "tls_buffer.h"
 
 // TlsHKDF class implementation
@@ -30,25 +30,27 @@ INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR
 
 VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 saltLen, const UCHAR *ikm, UCHAR ikmLen)
 {
-    TlsHMAC hmac(32, salt, saltLen);
+    HMAC_SHA256 hmac;
+    hmac.Init(salt, saltLen);
 
     LOG_DEBUG("Extracting HKDF with output length: %d, salt length: %d, ikm length: %d", outlen, saltLen, ikmLen);
     LOG_DEBUG("Salt: %p, IKM: %p", salt, ikm);
     hmac.Update(ikm, ikmLen);
-    hmac.Done(output, outlen);
+    hmac.Final(output, outlen);
 }
 
 VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const UCHAR *info, UCHAR infoLen)
 {
-    UCHAR digestOut[MAX_HASH_LEN];
+    UCHAR digestOut[SHA256_DIGEST_SIZE];
     UINT32 idx = 0;
     UCHAR i2 = 0;
 
     LOG_DEBUG("Expanding HKDF with output length: %d, secret length: %d, info length: %d", outlen, secretLen, infoLen);
-    UINT32 hashLen = CIPHER_HASH_SIZE;
+    constexpr UINT32 hashLen = SHA256_DIGEST_SIZE;
     while (outlen)
     {
-        TlsHMAC hmac(hashLen, secret, secretLen);
+        HMAC_SHA256 hmac;
+        hmac.Init(secret, secretLen);
         if (i2)
         {
             LOG_DEBUG("Using previous digest for HKDF expansion, i2: %d", i2);
@@ -62,7 +64,7 @@ VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 s
         }
         i2++;
         hmac.Update(&i2, 1);
-        hmac.Done(digestOut, hashLen);
+        hmac.Final(digestOut, hashLen);
 
         UINT32 copylen = outlen;
         if (copylen > hashLen)

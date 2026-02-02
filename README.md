@@ -1,5 +1,7 @@
 # NOSTDLIB-RUNTIME: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
+[![Build and Test](https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build.yml/badge.svg)](https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build.yml)
+
 ## Introduction
 
 Shellcode, in security research and malware analysis, is a small, self-contained sequence of machine instructions that can be injected into memory and executed from an arbitrary location. It must operate without relying on external components such as DLLs, runtime initialization routines, or fixed stack layouts. Because of these strict constraints, shellcode is traditionally written in assembly language, which provides precise control over instructions, registers, and memory access.

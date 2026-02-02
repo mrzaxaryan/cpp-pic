@@ -38,7 +38,7 @@ if(NOT _start_first)
     message(FATAL_ERROR
         "CRITICAL: _start is not the first function in .text section!\n\n"
         "The entry point must be at the beginning of the code section.\n"
-        "Check that orderfile.txt contains '_start' and is being used.\n\n"
+        "Check that cmake/orderfile.txt contains '_start' and is being used.\n\n"
         "Map file: ${MAP_FILE}"
     )
 endif()

@@ -14,7 +14,7 @@ list(APPEND CPPPIC_BASE_FLAGS -target ${CPPPIC_TRIPLE})
 cpppic_add_link_flags(
     -e,_start
     --no-dynamic-linker
-    --symbol-ordering-file=${CMAKE_SOURCE_DIR}/orderfile.txt
+    --symbol-ordering-file=${CMAKE_SOURCE_DIR}/cmake/orderfile.txt
     --build-id=none
     -Map,${CPPPIC_MAP_FILE}
 )

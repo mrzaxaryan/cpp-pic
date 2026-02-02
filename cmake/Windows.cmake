@@ -24,7 +24,7 @@ endif()
 cpppic_add_link_flags(
     /Entry:_start
     /SUBSYSTEM:CONSOLE
-    /ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt
+    /ORDER:@${CMAKE_SOURCE_DIR}/cmake/orderfile.txt
     /MERGE:.rdata=.text
     /MAP:${CPPPIC_MAP_FILE}
 )

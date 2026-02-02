@@ -27,7 +27,7 @@ cpppic_add_link_flags(
     /Entry:_start
     /SUBSYSTEM:EFI_APPLICATION
     /NODEFAULTLIB
-    /ORDER:@${CMAKE_SOURCE_DIR}/orderfile.txt
+    /ORDER:@${CMAKE_SOURCE_DIR}/cmake/orderfile.txt
     /MAP:${CPPPIC_MAP_FILE}
 )
 

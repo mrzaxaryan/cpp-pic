@@ -58,7 +58,7 @@ path[10] = 'e';
 path[11] = '\0';
 ```
 
-**Option 3:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with link.exe. Function ordering is controlled via an [orderfile](orderfile.txt) across all platforms. During execution, relocation entries are processed explicitly to fix up absolute addresses:
+**Option 3:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with link.exe. Function ordering is controlled via an [orderfile](cmake/orderfile.txt) across all platforms. During execution, relocation entries are processed explicitly to fix up absolute addresses:
 ```cpp
 PCHAR GetInstructionAddress(VOID)
 {
@@ -388,7 +388,7 @@ For MSVC:
 /Entry:_start
 
 # Function ordering for MSVC
-/ORDER:@orderfile.txt
+/ORDER:@cmake/orderfile.txt
 ```
 
 For Clang, we used custom linker scripts with section ordering directives to achieve the same result.

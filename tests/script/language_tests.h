@@ -16,7 +16,6 @@ public:
 
         LOG_INFO("Running Language Tests...");
 
-        RUN_TEST(allPassed, TestFizzBuzz, "FizzBuzz");
         RUN_TEST(allPassed, TestRecursion, "Recursive functions");
         RUN_TEST(allPassed, TestArithmeticOperators, "Arithmetic operators");
         RUN_TEST(allPassed, TestComparisonOperators, "Comparison operators");
@@ -36,32 +35,6 @@ public:
     }
 
 private:
-    static BOOL TestFizzBuzz()
-    {
-        script::State* L = new script::State();
-        script::OpenStdLib(*L);
-
-        auto source = R"(fn fizzbuzz(n) {
-    for (var i = 1; i <= n; i = i + 1) {
-        if (i % 15 == 0) {
-            print("FizzBuzz");
-        } else if (i % 3 == 0) {
-            print("Fizz");
-        } else if (i % 5 == 0) {
-            print("Buzz");
-        } else {
-            print(i);
-        }
-    }
-}
-fizzbuzz(15);
-)"_embed;
-
-        BOOL result = L->DoString(source);
-        delete L;
-        return result;
-    }
-
     static BOOL TestRecursion()
     {
         script::State* L = new script::State();

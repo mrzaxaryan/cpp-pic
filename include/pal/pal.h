@@ -45,3 +45,4 @@ NO_RETURN VOID ExitProcess(USIZE code);
 
 // Network services
 #include "network/socket.h"
+#include "io/path.h"

@@ -2,51 +2,58 @@
 
 <table>
 <tr>
-<th>Platform</th>
-<th>i386</th>
-<th>x86_64</th>
-<th>armv7a</th>
-<th>aarch64</th>
+<th rowspan="2">Platform</th>
+<th colspan="3">i386</th>
+<th colspan="3">x86_64</th>
+<th colspan="3">armv7a</th>
+<th colspan="3">aarch64</th>
+</tr>
+<tr>
+<th>Build</th><th>Exe</th><th>Bin</th>
+<th>Build</th><th>Exe</th><th>Bin</th>
+<th>Build</th><th>Exe</th><th>Bin</th>
+<th>Build</th><th>Exe</th><th>Bin</th>
 </tr>
 <tr>
 <td>Windows</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-i386.yml?label=" alt="Status"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-x86_64.yml?label=" alt="Status"></a></td>
-<td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-aarch64.yml?label=" alt="Status"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-i386.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_i386_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_i386_bin&label=" alt="Bin"></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-x86_64.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_x86_64_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_x86_64_bin&label=" alt="Bin"></td>
+<td align="center">-</td><td align="center">-</td><td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-windows-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-windows-aarch64.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_aarch64_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_aarch64_bin&label=" alt="Bin"></td>
 </tr>
 <tr>
 <td>Linux</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-i386.yml?label=" alt="Status"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-x86_64.yml?label=" alt="Status"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-armv7a.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-armv7a.yml?label=" alt="Status"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-aarch64.yml?label=" alt="Status"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-i386.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_i386_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_i386_bin&label=" alt="Bin"></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-x86_64.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_x86_64_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_x86_64_bin&label=" alt="Bin"></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-armv7a.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-armv7a.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_armv7a_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_armv7a_bin&label=" alt="Bin"></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-linux-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-linux-aarch64.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_aarch64_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_aarch64_bin&label=" alt="Bin"></td>
 </tr>
 <tr>
 <td>UEFI</td>
-<td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-x86_64.yml?label=" alt="Status"></a></td>
-<td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-aarch64.yml?label=" alt="Status"></a></td>
-</tr>
-<tr>
-<td colspan="5"><img width="850" height="1" alt=""></td>
+<td align="center">-</td><td align="center">-</td><td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-x86_64.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_x86_64_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_x86_64_bin&label=" alt="Bin"></td>
+<td align="center">-</td><td align="center">-</td><td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/cpp-pic/actions/workflows/build-uefi-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/build-uefi-aarch64.yml?label=" alt="Build"></a></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_aarch64_exe&label=" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_aarch64_bin&label=" alt="Bin"></td>
 </tr>
 </table>
-
-## Binary Sizes (-Oz)
-
-| Platform | Architecture | Executable | Raw PIC (.bin) |
-|----------|--------------|------------|----------------|
-| Windows | i386 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_i386_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_i386_bin&label=) |
-| Windows | x86_64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_x86_64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_x86_64_bin&label=) |
-| Windows | aarch64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_aarch64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.windows_aarch64_bin&label=) |
-| Linux | i386 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_i386_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_i386_bin&label=) |
-| Linux | x86_64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_x86_64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_x86_64_bin&label=) |
-| Linux | armv7a | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_armv7a_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_armv7a_bin&label=) |
-| Linux | aarch64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_aarch64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.linux_aarch64_bin&label=) |
-| UEFI | x86_64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_x86_64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_x86_64_bin&label=) |
-| UEFI | aarch64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_aarch64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2Fcpp-pic%2Fmain%2Fsizes.json&query=%24.uefi_aarch64_bin&label=) |
 
 ## Introduction
 

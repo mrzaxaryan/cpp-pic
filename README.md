@@ -34,6 +34,20 @@
 </tr>
 </table>
 
+## Binary Sizes (-Oz)
+
+| Platform | Architecture | Executable | Raw PIC (.bin) |
+|----------|--------------|------------|----------------|
+| Windows | i386 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.windows_i386_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.windows_i386_bin&label=) |
+| Windows | x86_64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.windows_x86_64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.windows_x86_64_bin&label=) |
+| Windows | aarch64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.windows_aarch64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.windows_aarch64_bin&label=) |
+| Linux | i386 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_i386_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_i386_bin&label=) |
+| Linux | x86_64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_x86_64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_x86_64_bin&label=) |
+| Linux | armv7a | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_armv7a_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_armv7a_bin&label=) |
+| Linux | aarch64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_aarch64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.linux_aarch64_bin&label=) |
+| UEFI | x86_64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.uefi_x86_64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.uefi_x86_64_bin&label=) |
+| UEFI | aarch64 | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.uefi_aarch64_exe&label=) | ![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fmrzaxaryan.github.io%2Fcpp-pic%2Fsizes.json&query=%24.uefi_aarch64_bin&label=) |
+
 ## Introduction
 
 Shellcode, in security research and malware analysis, is a small, self-contained sequence of machine instructions that can be injected into memory and executed from an arbitrary location. It must operate without relying on external components such as DLLs, runtime initialization routines, or fixed stack layouts. Because of these strict constraints, shellcode is traditionally written in assembly language, which provides precise control over instructions, registers, and memory access.

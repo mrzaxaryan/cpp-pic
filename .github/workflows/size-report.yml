@@ -1,0 +1,325 @@
+name: Size Report
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: size-report-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LLVM_VERSION: "20.1.6"
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, aarch64]
+        exclude:
+          - arch: aarch64
+    outputs:
+      sizes: ${{ steps.sizes.outputs.result }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-windows-2022
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
+
+      - name: Build with -Oz
+        shell: pwsh
+        run: |
+          cmake --preset windows-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --build --preset windows-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1
+          $bin = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+          $exeSize = if ($exe) { $exe.Length } else { 0 }
+          $binSize = if ($bin) { $bin.Length } else { 0 }
+          $result = "windows-${{ matrix.arch }},$exeSize,$binSize"
+          echo "result=$result" >> $env:GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-windows-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.exe
+            build/**/output.bin
+
+  build-windows-aarch64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-windows-11-arm
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
+
+      - name: Build with -Oz
+        shell: pwsh
+        run: |
+          cmake --preset windows-aarch64-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --build --preset windows-aarch64-release
+
+      - name: Get sizes
+        id: sizes
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1
+          $bin = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+          $exeSize = if ($exe) { $exe.Length } else { 0 }
+          $binSize = if ($bin) { $bin.Length } else { 0 }
+          $result = "windows-aarch64,$exeSize,$binSize"
+          echo "result=$result" >> $env:GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-windows-aarch64
+          retention-days: 1
+          path: |
+            build/**/output.exe
+            build/**/output.bin
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, armv7a, aarch64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM and Ninja
+        run: |
+          set -e
+          LLVM_VER=$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1)
+          sudo apt-get update
+          sudo apt-get install -y ninja-build wget lsb-release ca-certificates gnupg cmake
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100
+          sudo update-alternatives --set clang /usr/bin/clang-${LLVM_VER}
+          sudo update-alternatives --set clang++ /usr/bin/clang++-${LLVM_VER}
+          sudo update-alternatives --set lld /usr/bin/lld-${LLVM_VER}
+          sudo update-alternatives --set ld.lld /usr/bin/ld.lld-${LLVM_VER}
+          sudo update-alternatives --set llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER}
+          sudo update-alternatives --set llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER}
+          sudo update-alternatives --set llvm-strings /usr/bin/llvm-strings-${LLVM_VER}
+
+      - name: Build with -Oz
+        run: |
+          cmake --preset linux-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --build --preset linux-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          ELF=$(find build -type f -name "output.elf" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          ELF_SIZE=$(stat -c%s "$ELF" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=linux-${{ matrix.arch }},$ELF_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-linux-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.elf
+            build/**/output.bin
+
+  build-uefi:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM and Ninja
+        run: |
+          set -e
+          LLVM_VER=$(echo "${{ env.LLVM_VERSION }}" | cut -d. -f1)
+          sudo apt-get update
+          sudo apt-get install -y ninja-build wget lsb-release ca-certificates gnupg cmake
+          sudo mkdir -p /etc/apt/keyrings
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update
+          sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER}
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100
+          sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100
+          sudo update-alternatives --set clang /usr/bin/clang-${LLVM_VER}
+          sudo update-alternatives --set clang++ /usr/bin/clang++-${LLVM_VER}
+          sudo update-alternatives --set lld /usr/bin/lld-${LLVM_VER}
+          sudo update-alternatives --set ld.lld /usr/bin/ld.lld-${LLVM_VER}
+          sudo update-alternatives --set llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER}
+          sudo update-alternatives --set llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER}
+          sudo update-alternatives --set llvm-strings /usr/bin/llvm-strings-${LLVM_VER}
+
+      - name: Build with -Oz
+        run: |
+          cmake --preset uefi-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --build --preset uefi-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          EFI=$(find build -type f -name "output.efi" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          EFI_SIZE=$(stat -c%s "$EFI" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=uefi-${{ matrix.arch }},$EFI_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-uefi-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.efi
+            build/**/output.bin
+
+  update-readme:
+    needs: [build-windows, build-windows-aarch64, build-linux, build-uefi]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all size artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate and deploy sizes.json
+        run: |
+          python3 << 'EOF'
+          import json
+          from pathlib import Path
+
+          def format_size(size):
+              if size is None or size == 0:
+                  return "-"
+              elif size < 1024:
+                  return f"{size} B"
+              else:
+                  return f"{size / 1024:.1f} KB"
+
+          sizes = {}
+          artifacts_dir = Path("artifacts")
+
+          for size_dir in artifacts_dir.glob("size-*"):
+              platform_arch = size_dir.name.replace("size-", "")
+              exe_file = None
+              for ext in ["output.exe", "output.elf", "output.efi"]:
+                  files = list(size_dir.rglob(ext))
+                  if files:
+                      exe_file = files[0]
+                      break
+              bin_files = list(size_dir.rglob("output.bin"))
+              bin_file = bin_files[0] if bin_files else None
+
+              exe_size = exe_file.stat().st_size if exe_file else None
+              bin_size = bin_file.stat().st_size if bin_file else None
+
+              key = platform_arch.replace("-", "_")
+              sizes[f"{key}_exe"] = format_size(exe_size)
+              sizes[f"{key}_bin"] = format_size(bin_size)
+
+          Path("sizes.json").write_text(json.dumps(sizes, indent=2))
+          print(Path("sizes.json").read_text())
+          EOF
+
+          # Deploy to gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p gh-pages-deploy
+          cp sizes.json gh-pages-deploy/
+
+          cd gh-pages-deploy
+          git init
+          git checkout -b gh-pages
+          git add sizes.json
+          git commit -m "Update binary sizes"
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git push origin gh-pages --force

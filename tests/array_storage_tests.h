@@ -9,81 +9,81 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running ArrayStorage Tests..."_embed);
+		LOG_INFO("Running ArrayStorage Tests...");
 
 		// Test 1: Wide char array storage
 		if (!TestWideCharArrayStorage())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Wide char array storage"_embed);
+			LOG_ERROR("  FAILED: Wide char array storage");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Wide char array storage"_embed);
+			LOG_INFO("  PASSED: Wide char array storage");
 		}
 
 		// Test 2: UINT32 array storage
 		if (!TestUInt32ArrayStorage())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: UINT32 array storage"_embed);
+			LOG_ERROR("  FAILED: UINT32 array storage");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: UINT32 array storage"_embed);
+			LOG_INFO("  PASSED: UINT32 array storage");
 		}
 
 		// Test 4: UINT64 array storage
 		if (!TestUInt64ArrayStorage())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: UINT64 array storage"_embed);
+			LOG_ERROR("  FAILED: UINT64 array storage");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: UINT64 array storage"_embed);
+			LOG_INFO("  PASSED: UINT64 array storage");
 		}
 
 		// Test 5: Array indexing operator
 		if (!TestArrayIndexing())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Array indexing"_embed);
+			LOG_ERROR("  FAILED: Array indexing");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Array indexing"_embed);
+			LOG_INFO("  PASSED: Array indexing");
 		}
 
 		// Test 6: Pointer conversion and memory copy
 		if (!TestPointerConversionAndCopy())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Pointer conversion and copy"_embed);
+			LOG_ERROR("  FAILED: Pointer conversion and copy");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Pointer conversion and copy"_embed);
+			LOG_INFO("  PASSED: Pointer conversion and copy");
 		}
 
 		// Test 7: Compile-time constants
 		if (!TestCompileTimeConstants())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Compile-time constants"_embed);
+			LOG_ERROR("  FAILED: Compile-time constants");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Compile-time constants"_embed);
+			LOG_INFO("  PASSED: Compile-time constants");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All ArrayStorage tests passed!"_embed);
+			LOG_INFO("All ArrayStorage tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some ArrayStorage tests failed!"_embed);
+			LOG_ERROR("Some ArrayStorage tests failed!");
 		}
 
 		return allPassed;
@@ -117,10 +117,10 @@ private:
 			return FALSE;
 
 		// Print values to console
-		Logger::Info<WCHAR>(L"    UINT32 values:"_embed);
+		LOG_INFO("    UINT32 values:");
 		for (USIZE i = 0; i < 4; i++)
 		{
-			Logger::Info<WCHAR>(L"      %u"_embed, storage[i]);
+			LOG_INFO("      %u", storage[i]);
 		}
 
 		// Verify data integrity using literals

@@ -58,80 +58,80 @@ static BOOL RunAllTests()
 {
 	BOOL allPassed = TRUE;
 
-	Logger::Info<WCHAR>(L"=== CPP-PIC Test Suite ==="_embed);
+	LOG_INFO("=== CPP-PIC Test Suite ===");
 
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	// BAL - Embedded Types and Numeric Primitives
 	if (!DoubleTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!StringTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	// BAL - Data Structures, String Utilities, and Algorithms
 	if (!ArrayStorageTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!StringFormatterTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!Djb2Tests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!Base64Tests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	// PAL - Memory and System
 	if (!MemoryTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!RandomTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	// RAL - Cryptography
 	if (!ShaTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!EccTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	// RAL - Network
 	if (!SocketTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!TlsTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!DnsTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	if (!WebSocketTests::RunAll())
 		allPassed = FALSE;
-	Logger::Info<WCHAR>(L""_embed);
+	LOG_INFO("");
 
 	// Final summary
-	Logger::Info<WCHAR>(L"=== Test Suite Complete ==="_embed);
+	LOG_INFO("=== Test Suite Complete ===");
 	if (allPassed)
 	{
-		Logger::Info<WCHAR>(L"ALL TESTS PASSED!"_embed);
+		LOG_INFO("ALL TESTS PASSED!");
 	}
 	else
 	{
-		Logger::Error<WCHAR>(L"SOME TESTS FAILED!"_embed);
+		LOG_ERROR("SOME TESTS FAILED!");
 	}
 
 	return allPassed;

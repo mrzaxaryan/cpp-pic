@@ -9,114 +9,114 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running DOUBLE Tests..."_embed);
+		LOG_INFO("Running DOUBLE Tests...");
 
 		// Test 1: Construction
 		if (!TestConstruction())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Construction"_embed);
+			LOG_ERROR("  FAILED: Construction");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Construction"_embed);
+			LOG_INFO("  PASSED: Construction");
 		}
 
 		// Test 2: Integer to DOUBLE conversion
 		if (!TestIntToDouble())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Integer to DOUBLE"_embed);
+			LOG_ERROR("  FAILED: Integer to DOUBLE");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Integer to DOUBLE"_embed);
+			LOG_INFO("  PASSED: Integer to DOUBLE");
 		}
 
 		// Test 3: DOUBLE to integer conversion
 		if (!TestDoubleToInt())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: DOUBLE to integer"_embed);
+			LOG_ERROR("  FAILED: DOUBLE to integer");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: DOUBLE to integer"_embed);
+			LOG_INFO("  PASSED: DOUBLE to integer");
 		}
 
 		// Test 4: Arithmetic operations
 		if (!TestArithmetic())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Arithmetic"_embed);
+			LOG_ERROR("  FAILED: Arithmetic");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Arithmetic"_embed);
+			LOG_INFO("  PASSED: Arithmetic");
 		}
 
 		// Test 5: Comparisons
 		if (!TestComparisons())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Comparisons"_embed);
+			LOG_ERROR("  FAILED: Comparisons");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Comparisons"_embed);
+			LOG_INFO("  PASSED: Comparisons");
 		}
 
 		// Test 6: Unary negation
 		if (!TestNegation())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Negation"_embed);
+			LOG_ERROR("  FAILED: Negation");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Negation"_embed);
+			LOG_INFO("  PASSED: Negation");
 		}
 
 		// Test 7: Embedded double literals
 		if (!TestEmbeddedLiterals())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Embedded literals"_embed);
+			LOG_ERROR("  FAILED: Embedded literals");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Embedded literals"_embed);
+			LOG_INFO("  PASSED: Embedded literals");
 		}
 
 		// Test 8: Edge cases (zero, small values)
 		if (!TestEdgeCases())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Edge cases"_embed);
+			LOG_ERROR("  FAILED: Edge cases");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Edge cases"_embed);
+			LOG_INFO("  PASSED: Edge cases");
 		}
 
 		// Test 9: Array initialization and formatting
 		if (!TestArrayFormatting())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Array formatting"_embed);
+			LOG_ERROR("  FAILED: Array formatting");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Array formatting"_embed);
+			LOG_INFO("  PASSED: Array formatting");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All DOUBLE tests passed!"_embed);
+			LOG_INFO("All DOUBLE tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some DOUBLE tests failed!"_embed);
+			LOG_ERROR("Some DOUBLE tests failed!");
 		}
 
 		return allPassed;
@@ -434,13 +434,22 @@ private:
 		}
 
 		// Test formatting output (this also tests that the values are properly passed through varargs)
-		for (INT32 i = 0; i < 10; i++)
+		if(testArray[0] == 1.1_embed &&
+		   testArray[1] == 2.2_embed &&
+		   testArray[2] == 3.3_embed &&
+		   testArray[3] == 4.4_embed &&
+		   testArray[4] == 5.5_embed &&
+		   testArray[5] == 6.6_embed &&
+		   testArray[6] == 7.7_embed &&
+		   testArray[7] == 8.8_embed &&
+		   testArray[8] == 9.9_embed &&
+		   testArray[9] == 10.1_embed)
 		{
-			// The Logger::Info call exercises the varargs casting with custom DOUBLE type
-			DOUBLE val = testArray[i];
-			Logger::Info<WCHAR>(L"    DOUBLE Array Value [%d]: %f"_embed, i, val);
+			return TRUE;
 		}
-
-		return TRUE;
+		else
+		{
+			return FALSE;
+		}
 	}
 };

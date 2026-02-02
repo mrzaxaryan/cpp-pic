@@ -9,103 +9,103 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running Memory Tests..."_embed);
+		LOG_INFO("Running Memory Tests...");
 
 		// Test 1: Memory Copy basic
 		if (!TestCopyBasic())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory copy basic"_embed);
+			LOG_ERROR("  FAILED: Memory copy basic");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory copy basic"_embed);
+			LOG_INFO("  PASSED: Memory copy basic");
 		}
 
 		// Test 2: Memory Copy overlap-safe
 		if (!TestCopyNonOverlapping())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory copy non-overlapping"_embed);
+			LOG_ERROR("  FAILED: Memory copy non-overlapping");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory copy non-overlapping"_embed);
+			LOG_INFO("  PASSED: Memory copy non-overlapping");
 		}
 
 		// Test 3: Memory Zero
 		if (!TestZero())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory zero"_embed);
+			LOG_ERROR("  FAILED: Memory zero");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory zero"_embed);
+			LOG_INFO("  PASSED: Memory zero");
 		}
 
 		// Test 4: Memory Set
 		if (!TestSet())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory set"_embed);
+			LOG_ERROR("  FAILED: Memory set");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory set"_embed);
+			LOG_INFO("  PASSED: Memory set");
 		}
 
 		// Test 5: Memory Compare equal
 		if (!TestCompareEqual())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory compare equal"_embed);
+			LOG_ERROR("  FAILED: Memory compare equal");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory compare equal"_embed);
+			LOG_INFO("  PASSED: Memory compare equal");
 		}
 
 		// Test 6: Memory Compare less than
 		if (!TestCompareLessThan())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory compare less than"_embed);
+			LOG_ERROR("  FAILED: Memory compare less than");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory compare less than"_embed);
+			LOG_INFO("  PASSED: Memory compare less than");
 		}
 
 		// Test 7: Memory Compare greater than
 		if (!TestCompareGreaterThan())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory compare greater than"_embed);
+			LOG_ERROR("  FAILED: Memory compare greater than");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory compare greater than"_embed);
+			LOG_INFO("  PASSED: Memory compare greater than");
 		}
 
 		// Test 8: Memory operations with zero size
 		if (!TestZeroSize())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Memory zero size operations"_embed);
+			LOG_ERROR("  FAILED: Memory zero size operations");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Memory zero size operations"_embed);
+			LOG_INFO("  PASSED: Memory zero size operations");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All Memory tests passed!"_embed);
+			LOG_INFO("All Memory tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some Memory tests failed!"_embed);
+			LOG_ERROR("Some Memory tests failed!");
 		}
 
 		return allPassed;

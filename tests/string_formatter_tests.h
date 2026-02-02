@@ -9,114 +9,114 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running StringFormatter Tests..."_embed);
+		LOG_INFO("Running StringFormatter Tests...");
 
 		// Test 1: Integer formatting
 		if (!TestIntegerFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Integer format"_embed);
+			LOG_ERROR("  FAILED: Integer format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Integer format"_embed);
+			LOG_INFO("  PASSED: Integer format");
 		}
 
 		// Test 2: Unsigned integer formatting
 		if (!TestUnsignedFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Unsigned format"_embed);
+			LOG_ERROR("  FAILED: Unsigned format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Unsigned format"_embed);
+			LOG_INFO("  PASSED: Unsigned format");
 		}
 
 		// Test 3: Hexadecimal formatting
 		if (!TestHexFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Hex format"_embed);
+			LOG_ERROR("  FAILED: Hex format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Hex format"_embed);
+			LOG_INFO("  PASSED: Hex format");
 		}
 
 		// Test 4: String formatting
 		if (!TestStringFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: String format"_embed);
+			LOG_ERROR("  FAILED: String format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: String format"_embed);
+			LOG_INFO("  PASSED: String format");
 		}
 
 		// Test 5: Character formatting
 		if (!TestCharFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Char format"_embed);
+			LOG_ERROR("  FAILED: Char format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Char format"_embed);
+			LOG_INFO("  PASSED: Char format");
 		}
 
 		// Test 6: Width and padding
 		if (!TestWidthPadding())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Width and padding"_embed);
+			LOG_ERROR("  FAILED: Width and padding");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Width and padding"_embed);
+			LOG_INFO("  PASSED: Width and padding");
 		}
 
 		// Test 7: Float formatting
 		if (!TestFloatFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Float format"_embed);
+			LOG_ERROR("  FAILED: Float format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Float format"_embed);
+			LOG_INFO("  PASSED: Float format");
 		}
 
 		// Test 8: Percent literal
 		if (!TestPercentLiteral())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Percent literal"_embed);
+			LOG_ERROR("  FAILED: Percent literal");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Percent literal"_embed);
+			LOG_INFO("  PASSED: Percent literal");
 		}
 
 		// // Test 9: USIZE and SSIZE formatting
 		// if (!TestSizeFormat())
 		// {
 		// 	allPassed = FALSE;
-		// 	Logger::Error<WCHAR>(L"  FAILED: Size format"_embed);
+		// 	LOG_ERROR("  FAILED: Size format");
 		// }
 		// else
 		// {
-		// 	Logger::Info<WCHAR>(L"  PASSED: Size format"_embed);
+		// 	LOG_INFO("  PASSED: Size format");
 		// }
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All StringFormatter tests passed!"_embed);
+			LOG_INFO("All StringFormatter tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some StringFormatter tests failed!"_embed);
+			LOG_ERROR("Some StringFormatter tests failed!");
 		}
 
 		return allPassed;

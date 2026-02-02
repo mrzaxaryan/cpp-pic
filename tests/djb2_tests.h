@@ -9,81 +9,81 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running DJB2 Hash Tests..."_embed);
+		LOG_INFO("Running DJB2 Hash Tests...");
 
 		// Test 1: Basic hash consistency
 		if (!TestBasicHashConsistency())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Basic hash consistency"_embed);
+			LOG_ERROR("  FAILED: Basic hash consistency");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Basic hash consistency"_embed);
+			LOG_INFO("  PASSED: Basic hash consistency");
 		}
 
 		// Test 2: Case insensitivity
 		if (!TestCaseInsensitivity())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Case insensitivity"_embed);
+			LOG_ERROR("  FAILED: Case insensitivity");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Case insensitivity"_embed);
+			LOG_INFO("  PASSED: Case insensitivity");
 		}
 
 		// Test 3: Empty string
 		if (!TestEmptyString())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Empty string"_embed);
+			LOG_ERROR("  FAILED: Empty string");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Empty string"_embed);
+			LOG_INFO("  PASSED: Empty string");
 		}
 
 		// Test 4: Compile-time hash matches runtime hash
 		if (!TestCompileTimeMatchesRuntime())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Compile-time matches runtime"_embed);
+			LOG_ERROR("  FAILED: Compile-time matches runtime");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Compile-time matches runtime"_embed);
+			LOG_INFO("  PASSED: Compile-time matches runtime");
 		}
 
 		// Test 5: Different strings produce different hashes
 		if (!TestDifferentStringsProduceDifferentHashes())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Different strings produce different hashes"_embed);
+			LOG_ERROR("  FAILED: Different strings produce different hashes");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Different strings produce different hashes"_embed);
+			LOG_INFO("  PASSED: Different strings produce different hashes");
 		}
 
 		// Test 6: Wide character support
 		if (!TestWideCharSupport())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Wide character support"_embed);
+			LOG_ERROR("  FAILED: Wide character support");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Wide character support"_embed);
+			LOG_INFO("  PASSED: Wide character support");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All DJB2 tests passed!"_embed);
+			LOG_INFO("All DJB2 tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some DJB2 tests failed!"_embed);
+			LOG_ERROR("Some DJB2 tests failed!");
 		}
 
 		return allPassed;

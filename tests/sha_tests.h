@@ -10,118 +10,118 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running SHA Tests..."_embed);
+		LOG_INFO("Running SHA Tests...");
 
 		// SHA-256 Tests
 		if (!TestSHA256_Empty())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-256 empty string"_embed);
+			LOG_ERROR("  FAILED: SHA-256 empty string");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-256 empty string"_embed);
+			LOG_INFO("  PASSED: SHA-256 empty string");
 		}
 
 		if (!TestSHA256_ABC())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-256 'abc'"_embed);
+			LOG_ERROR("  FAILED: SHA-256 'abc'");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-256 'abc'"_embed);
+			LOG_INFO("  PASSED: SHA-256 'abc'");
 		}
 
 		if (!TestSHA256_Long())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-256 long message"_embed);
+			LOG_ERROR("  FAILED: SHA-256 long message");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-256 long message"_embed);
+			LOG_INFO("  PASSED: SHA-256 long message");
 		}
 
 		if (!TestSHA256_Incremental())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-256 incremental update"_embed);
+			LOG_ERROR("  FAILED: SHA-256 incremental update");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-256 incremental update"_embed);
+			LOG_INFO("  PASSED: SHA-256 incremental update");
 		}
 
 		// SHA-384 Tests
 		if (!TestSHA384_Empty())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-384 empty string"_embed);
+			LOG_ERROR("  FAILED: SHA-384 empty string");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-384 empty string"_embed);
+			LOG_INFO("  PASSED: SHA-384 empty string");
 		}
 
 		if (!TestSHA384_ABC())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-384 'abc'"_embed);
+			LOG_ERROR("  FAILED: SHA-384 'abc'");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-384 'abc'"_embed);
+			LOG_INFO("  PASSED: SHA-384 'abc'");
 		}
 
 		if (!TestSHA384_Long())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-384 long message"_embed);
+			LOG_ERROR("  FAILED: SHA-384 long message");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-384 long message"_embed);
+			LOG_INFO("  PASSED: SHA-384 long message");
 		}
 
 		if (!TestSHA384_Incremental())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: SHA-384 incremental update"_embed);
+			LOG_ERROR("  FAILED: SHA-384 incremental update");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: SHA-384 incremental update"_embed);
+			LOG_INFO("  PASSED: SHA-384 incremental update");
 		}
 
 		// HMAC Tests
 		if (!TestHMAC_SHA256())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: HMAC-SHA256"_embed);
+			LOG_ERROR("  FAILED: HMAC-SHA256");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: HMAC-SHA256"_embed);
+			LOG_INFO("  PASSED: HMAC-SHA256");
 		}
 
 		if (!TestHMAC_SHA384())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: HMAC-SHA384"_embed);
+			LOG_ERROR("  FAILED: HMAC-SHA384");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: HMAC-SHA384"_embed);
+			LOG_INFO("  PASSED: HMAC-SHA384");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All SHA tests passed!"_embed);
+			LOG_INFO("All SHA tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some SHA tests failed!"_embed);
+			LOG_ERROR("Some SHA tests failed!");
 		}
 
 		return allPassed;

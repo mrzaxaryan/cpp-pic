@@ -9,179 +9,179 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running Base64 Tests..."_embed);
+		LOG_INFO("Running Base64 Tests...");
 
 		// Encoding Tests
 		if (!TestEncode_Empty())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode empty string"_embed);
+			LOG_ERROR("  FAILED: Base64 encode empty string");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode empty string"_embed);
+			LOG_INFO("  PASSED: Base64 encode empty string");
 		}
 
 		if (!TestEncode_SingleChar())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode single character"_embed);
+			LOG_ERROR("  FAILED: Base64 encode single character");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode single character"_embed);
+			LOG_INFO("  PASSED: Base64 encode single character");
 		}
 
 		if (!TestEncode_TwoChars())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode two characters"_embed);
+			LOG_ERROR("  FAILED: Base64 encode two characters");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode two characters"_embed);
+			LOG_INFO("  PASSED: Base64 encode two characters");
 		}
 
 		if (!TestEncode_ThreeChars())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode three characters"_embed);
+			LOG_ERROR("  FAILED: Base64 encode three characters");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode three characters"_embed);
+			LOG_INFO("  PASSED: Base64 encode three characters");
 		}
 
 		if (!TestEncode_StandardText())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode standard text"_embed);
+			LOG_ERROR("  FAILED: Base64 encode standard text");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode standard text"_embed);
+			LOG_INFO("  PASSED: Base64 encode standard text");
 		}
 
 		if (!TestEncode_BinaryData())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode binary data"_embed);
+			LOG_ERROR("  FAILED: Base64 encode binary data");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode binary data"_embed);
+			LOG_INFO("  PASSED: Base64 encode binary data");
 		}
 
 		if (!TestEncode_AllPaddingCases())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode all padding cases"_embed);
+			LOG_ERROR("  FAILED: Base64 encode all padding cases");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode all padding cases"_embed);
+			LOG_INFO("  PASSED: Base64 encode all padding cases");
 		}
 
 		// Decoding Tests
 		if (!TestDecode_Empty())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode empty string"_embed);
+			LOG_ERROR("  FAILED: Base64 decode empty string");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode empty string"_embed);
+			LOG_INFO("  PASSED: Base64 decode empty string");
 		}
 
 		if (!TestDecode_SingleChar())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode single character"_embed);
+			LOG_ERROR("  FAILED: Base64 decode single character");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode single character"_embed);
+			LOG_INFO("  PASSED: Base64 decode single character");
 		}
 
 		if (!TestDecode_TwoChars())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode two characters"_embed);
+			LOG_ERROR("  FAILED: Base64 decode two characters");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode two characters"_embed);
+			LOG_INFO("  PASSED: Base64 decode two characters");
 		}
 
 		if (!TestDecode_ThreeChars())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode three characters"_embed);
+			LOG_ERROR("  FAILED: Base64 decode three characters");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode three characters"_embed);
+			LOG_INFO("  PASSED: Base64 decode three characters");
 		}
 
 		if (!TestDecode_StandardText())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode standard text"_embed);
+			LOG_ERROR("  FAILED: Base64 decode standard text");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode standard text"_embed);
+			LOG_INFO("  PASSED: Base64 decode standard text");
 		}
 
 		if (!TestDecode_BinaryData())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode binary data"_embed);
+			LOG_ERROR("  FAILED: Base64 decode binary data");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode binary data"_embed);
+			LOG_INFO("  PASSED: Base64 decode binary data");
 		}
 
 		// Round-trip Tests
 		if (!TestRoundTrip_Various())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 round-trip test"_embed);
+			LOG_ERROR("  FAILED: Base64 round-trip test");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 round-trip test"_embed);
+			LOG_INFO("  PASSED: Base64 round-trip test");
 		}
 
 		// Size Calculation Tests
 		if (!TestEncodeOutSize())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 encode output size calculation"_embed);
+			LOG_ERROR("  FAILED: Base64 encode output size calculation");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 encode output size calculation"_embed);
+			LOG_INFO("  PASSED: Base64 encode output size calculation");
 		}
 
 		if (!TestDecodeOutSize())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Base64 decode output size calculation"_embed);
+			LOG_ERROR("  FAILED: Base64 decode output size calculation");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Base64 decode output size calculation"_embed);
+			LOG_INFO("  PASSED: Base64 decode output size calculation");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All Base64 tests passed!"_embed);
+			LOG_INFO("All Base64 tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some Base64 tests failed!"_embed);
+			LOG_ERROR("Some Base64 tests failed!");
 		}
 
 		return allPassed;

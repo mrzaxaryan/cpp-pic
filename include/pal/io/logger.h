@@ -22,8 +22,12 @@
 // Convenience macros that automatically embed wide strings
 #define LOG_INFO(format, ...) Logger::Info<WCHAR>(L##format##_embed, ##__VA_ARGS__)
 #define LOG_ERROR(format, ...) Logger::Error<WCHAR>(L##format##_embed, ##__VA_ARGS__)
-#define LOG_DEBUG(format, ...) Logger::Debug<WCHAR>(L##format##_embed, ##__VA_ARGS__)
 #define LOG_WARNING(format, ...) Logger::Warning<WCHAR>(L##format##_embed, ##__VA_ARGS__)
+#if defined(ENABLE_DEBUG_LOGGING)
+#define LOG_DEBUG(format, ...) Logger::Debug<WCHAR>(L##format##_embed, ##__VA_ARGS__)
+#else
+#define LOG_DEBUG(format, ...)
+#endif // ENABLE_DEBUG_LOGGING
 #else
 // Define empty macros when logging is disabled
 #define LOG_INFO(format, ...)
@@ -32,22 +36,6 @@
 #define LOG_WARNING(format, ...)
 #endif // ENABLE_LOGGING
 
-/**
- * LogLevels - Compile-time log filtering levels
- *
- * None:    Disable all logging (code eliminated by optimizer)
- * Default: Info, Error, Warning (production)
- * Debug:   All messages including Debug (development)
- */
-enum class LogLevels : UINT8
-{
-	None = 0,	 // No logging
-	Default = 1, // Info, Error, Warning
-	Debug = 2	 // All messages
-};
-
-// Global log level - modify this to control logging at compile-time
-inline constexpr LogLevels LogLevel = LogLevels::Default;
 /**
  * Logger - Static logging utility class
  *
@@ -171,15 +159,7 @@ public:
 template <TCHAR TChar, typename... Args>
 VOID Logger::Info(const TChar *format, Args &&...args)
 {
-	if constexpr (LogLevel != LogLevels::None)
-	{
-		TimestampedLogOutput<TChar>(L"\033[0;32m[INF] "_embed, format, static_cast<Args &&>(args)...);
-	}
-	else
-	{
-		(VOID) format;	   // Suppress unused parameter warning
-		((VOID)args, ...); // Suppress unused parameter warnings for all args
-	}
+	TimestampedLogOutput<TChar>(L"\033[0;32m[INF] "_embed, format, static_cast<Args &&>(args)...);
 }
 
 /**
@@ -192,15 +172,7 @@ VOID Logger::Info(const TChar *format, Args &&...args)
 template <TCHAR TChar, typename... Args>
 VOID Logger::Error(const TChar *format, Args &&...args)
 {
-	if constexpr (LogLevel != LogLevels::None)
-	{
-		TimestampedLogOutput<TChar>(L"\033[0;31m[ERR] "_embed, format, static_cast<Args &&>(args)...);
-	}
-	else
-	{
-		(VOID) format;	   // Suppress unused parameter warning
-		((VOID)args, ...); // Suppress unused parameter warnings for all args
-	}
+	TimestampedLogOutput<TChar>(L"\033[0;31m[ERR] "_embed, format, static_cast<Args &&>(args)...);
 }
 
 /**
@@ -213,15 +185,7 @@ VOID Logger::Error(const TChar *format, Args &&...args)
 template <TCHAR TChar, typename... Args>
 VOID Logger::Warning(const TChar *format, Args &&...args)
 {
-	if constexpr (LogLevel != LogLevels::None)
-	{
-		TimestampedLogOutput<TChar>(L"\033[0;33m[WRN] "_embed, format, static_cast<Args &&>(args)...);
-	}
-	else
-	{
-		(VOID) format;	   // Suppress unused parameter warning
-		((VOID)args, ...); // Suppress unused parameter warnings for all args
-	}
+	TimestampedLogOutput<TChar>(L"\033[0;33m[WRN] "_embed, format, static_cast<Args &&>(args)...);
 }
 
 /**
@@ -234,13 +198,5 @@ VOID Logger::Warning(const TChar *format, Args &&...args)
 template <TCHAR TChar, typename... Args>
 VOID Logger::Debug(const TChar *format, Args &&...args)
 {
-	if constexpr (LogLevel == LogLevels::Debug)
-	{
-		TimestampedLogOutput<TChar>(L"\033[0;33m[DBG] "_embed, format, static_cast<Args &&>(args)...);
-	}
-	else
-	{
-		(VOID) format;	   // Suppress unused parameter warning
-		((VOID)args, ...); // Suppress unused parameter warnings for all args
-	}
+	TimestampedLogOutput<TChar>(L"\033[0;33m[DBG] "_embed, format, static_cast<Args &&>(args)...);
 }

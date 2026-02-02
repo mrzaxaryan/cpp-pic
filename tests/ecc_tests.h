@@ -10,147 +10,147 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running ECC Tests..."_embed);
+		LOG_INFO("Running ECC Tests...");
 
 		// Test 1: Basic initialization
 		if (!TestEccInitialization())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ECC initialization"_embed);
+			LOG_ERROR("  FAILED: ECC initialization");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ECC initialization"_embed);
+			LOG_INFO("  PASSED: ECC initialization");
 		}
 
 		// Test 2: secp128r1 curve
 		if (!TestEccSecp128r1())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ECC secp128r1"_embed);
+			LOG_ERROR("  FAILED: ECC secp128r1");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ECC secp128r1"_embed);
+			LOG_INFO("  PASSED: ECC secp128r1");
 		}
 
 		// Test 3: secp192r1 curve
 		if (!TestEccSecp192r1())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ECC secp192r1"_embed);
+			LOG_ERROR("  FAILED: ECC secp192r1");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ECC secp192r1"_embed);
+			LOG_INFO("  PASSED: ECC secp192r1");
 		}
 
 		// Test 4: secp256r1 curve
 		if (!TestEccSecp256r1())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ECC secp256r1"_embed);
+			LOG_ERROR("  FAILED: ECC secp256r1");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ECC secp256r1"_embed);
+			LOG_INFO("  PASSED: ECC secp256r1");
 		}
 
 		// Test 5: secp384r1 curve
 		if (!TestEccSecp384r1())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ECC secp384r1"_embed);
+			LOG_ERROR("  FAILED: ECC secp384r1");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ECC secp384r1"_embed);
+			LOG_INFO("  PASSED: ECC secp384r1");
 		}
 
 		// Test 6: Public key export
 		if (!TestPublicKeyExport())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Public key export"_embed);
+			LOG_ERROR("  FAILED: Public key export");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Public key export"_embed);
+			LOG_INFO("  PASSED: Public key export");
 		}
 
 		// Test 7: Public key format
 		if (!TestPublicKeyFormat())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Public key format"_embed);
+			LOG_ERROR("  FAILED: Public key format");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Public key format"_embed);
+			LOG_INFO("  PASSED: Public key format");
 		}
 
 		// Test 8: Shared secret computation (ECDH)
 		if (!TestSharedSecretComputation())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Shared secret computation (ECDH)"_embed);
+			LOG_ERROR("  FAILED: Shared secret computation (ECDH)");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Shared secret computation (ECDH)"_embed);
+			LOG_INFO("  PASSED: Shared secret computation (ECDH)");
 		}
 
 		// Test 9: Invalid curve size handling
 		if (!TestInvalidCurveSize())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Invalid curve size handling"_embed);
+			LOG_ERROR("  FAILED: Invalid curve size handling");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Invalid curve size handling"_embed);
+			LOG_INFO("  PASSED: Invalid curve size handling");
 		}
 
 		// Test 10: Export buffer size validation
 		if (!TestExportBufferSizeValidation())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Export buffer size validation"_embed);
+			LOG_ERROR("  FAILED: Export buffer size validation");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Export buffer size validation"_embed);
+			LOG_INFO("  PASSED: Export buffer size validation");
 		}
 
 		// Test 11: Invalid public key handling
 		if (!TestInvalidPublicKey())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Invalid public key handling"_embed);
+			LOG_ERROR("  FAILED: Invalid public key handling");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Invalid public key handling"_embed);
+			LOG_INFO("  PASSED: Invalid public key handling");
 		}
 
 		// Test 12: Multiple key generation uniqueness
 		if (!TestMultipleKeyGeneration())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Multiple key generation uniqueness"_embed);
+			LOG_ERROR("  FAILED: Multiple key generation uniqueness");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Multiple key generation uniqueness"_embed);
+			LOG_INFO("  PASSED: Multiple key generation uniqueness");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All ECC tests passed!"_embed);
+			LOG_INFO("All ECC tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some ECC tests failed!"_embed);
+			LOG_ERROR("Some ECC tests failed!");
 		}
 
 		return allPassed;

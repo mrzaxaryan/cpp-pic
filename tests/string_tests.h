@@ -9,103 +9,103 @@ public:
 	{
 		BOOL allPassed = TRUE;
 
-		Logger::Info<WCHAR>(L"Running String Tests..."_embed);
+		LOG_INFO("Running String Tests...");
 
 		// Test 1: Length of narrow string
 		if (!TestLengthNarrow())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Narrow string length"_embed);
+			LOG_ERROR("  FAILED: Narrow string length");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Narrow string length"_embed);
+			LOG_INFO("  PASSED: Narrow string length");
 		}
 
 		// Test 2: Length of wide string
 		if (!TestLengthWide())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Wide string length"_embed);
+			LOG_ERROR("  FAILED: Wide string length");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Wide string length"_embed);
+			LOG_INFO("  PASSED: Wide string length");
 		}
 
 		// Test 3: Empty string length
 		if (!TestLengthEmpty())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Empty string length"_embed);
+			LOG_ERROR("  FAILED: Empty string length");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: Empty string length"_embed);
+			LOG_INFO("  PASSED: Empty string length");
 		}
 
 		// Test 4: ToLowerCase for ASCII
 		if (!TestToLowerCaseAscii())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ToLowerCase ASCII"_embed);
+			LOG_ERROR("  FAILED: ToLowerCase ASCII");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ToLowerCase ASCII"_embed);
+			LOG_INFO("  PASSED: ToLowerCase ASCII");
 		}
 
 		// Test 5: ToLowerCase preserves non-uppercase
 		if (!TestToLowerCasePreserves())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: ToLowerCase preserves non-uppercase"_embed);
+			LOG_ERROR("  FAILED: ToLowerCase preserves non-uppercase");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: ToLowerCase preserves non-uppercase"_embed);
+			LOG_INFO("  PASSED: ToLowerCase preserves non-uppercase");
 		}
 
 		// Test 6: WideToUtf8 basic ASCII
 		if (!TestWideToUtf8BasicAscii())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: WideToUtf8 basic ASCII"_embed);
+			LOG_ERROR("  FAILED: WideToUtf8 basic ASCII");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: WideToUtf8 basic ASCII"_embed);
+			LOG_INFO("  PASSED: WideToUtf8 basic ASCII");
 		}
 
 		// Test 7: WideToUtf8 empty string
 		if (!TestWideToUtf8Empty())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: WideToUtf8 empty string"_embed);
+			LOG_ERROR("  FAILED: WideToUtf8 empty string");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: WideToUtf8 empty string"_embed);
+			LOG_INFO("  PASSED: WideToUtf8 empty string");
 		}
 
 		// Test 8: WideToUtf8 null handling
 		if (!TestWideToUtf8NullHandling())
 		{
 			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: WideToUtf8 null handling"_embed);
+			LOG_ERROR("  FAILED: WideToUtf8 null handling");
 		}
 		else
 		{
-			Logger::Info<WCHAR>(L"  PASSED: WideToUtf8 null handling"_embed);
+			LOG_INFO("  PASSED: WideToUtf8 null handling");
 		}
 
 		if (allPassed)
 		{
-			Logger::Info<WCHAR>(L"All String tests passed!"_embed);
+			LOG_INFO("All String tests passed!");
 		}
 		else
 		{
-			Logger::Error<WCHAR>(L"Some String tests failed!"_embed);
+			LOG_ERROR("Some String tests failed!");
 		}
 
 		return allPassed;

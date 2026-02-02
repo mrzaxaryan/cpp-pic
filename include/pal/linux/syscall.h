@@ -155,7 +155,7 @@ constexpr USIZE SYS_UNLINK = 10;
 // Directory operations
 constexpr USIZE SYS_MKDIR = 39;
 constexpr USIZE SYS_RMDIR = 40;
-constexpr USIZE SYS_GETDENTS64 = 220;
+constexpr USIZE SYS_GETDENTS64 = 217;  // ARM EABI uses 217, not 220
 
 // Memory operations
 constexpr USIZE SYS_MMAP2 = 192;

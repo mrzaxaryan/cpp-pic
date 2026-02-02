@@ -126,8 +126,8 @@ static BOOL RunAllTests()
 
 	if(!FileSystemTests::RunAll())
 		allPassed = FALSE;
-	LOG_INFO(""_embed);
-
+	LOG_INFO("");
+	
 	// Final summary
 	LOG_INFO("=== Test Suite Complete ===");
 	if (allPassed)

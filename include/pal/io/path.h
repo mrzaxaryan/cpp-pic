@@ -3,7 +3,7 @@
 #include "string.h"
 #include "pal.h"
 
-#if defined(PLATFORM_WINDOWS)
+#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_UEFI)
 const char PATH_SEPARATOR = '\\';
 #elif defined(PLATFORM_LINUX)
 const char PATH_SEPARATOR = '/';

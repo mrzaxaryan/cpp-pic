@@ -43,6 +43,3 @@ public:
     VOID AppendReaded(INT32 sz) { readPos += sz; }
     VOID ResetReadPos() { readPos = 0; }
 };
-
-// Backwards compatibility alias
-using TlsBufferReader = TlsBuffer;

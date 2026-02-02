@@ -291,7 +291,7 @@ VOID TlsCipher::Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize,
     this->chacha20Context.Encode(sendbuf, packet, packetSize, aad, sizeof(aad));
 }
 
-BOOL TlsCipher::Decode(TlsBufferReader *inout, INT32 version)
+BOOL TlsCipher::Decode(TlsBuffer *inout, INT32 version)
 {
     if (!this->isEncoding || !this->chacha20Context.IsInitialized())
     {

@@ -236,7 +236,7 @@ BOOL TLSClient::SendChangeCipherSpec()
     return SendPacket(CONTENT_CHANGECIPHERSPEC, 0x303, &sendBuffer);
 }
 
-BOOL TLSClient::OnServerHello(TlsBufferReader *reader)
+BOOL TLSClient::OnServerHello(TlsBuffer *reader)
 {
     CHAR server_rand[RAND_SIZE];
 
@@ -351,7 +351,7 @@ BOOL TLSClient::OnServerHelloDone()
     return TRUE;
 }
 
-BOOL TLSClient::VerifyFinished(TlsBufferReader *reader)
+BOOL TLSClient::VerifyFinished(TlsBuffer *reader)
 {
     INT32 server_finished_size = UINT32SwapByteOrder(reader->Read<INT8>() << 8 | reader->Read<INT16>() << 16);
     LOG_DEBUG("Verifying Finished for client: %p, size: %d bytes", this, server_finished_size);
@@ -401,7 +401,7 @@ BOOL TLSClient::OnServerFinished()
     return TRUE;
 }
 
-BOOL TLSClient::OnPacket(INT32 packetType, INT32 version, TlsBufferReader *TlsReader)
+BOOL TLSClient::OnPacket(INT32 packetType, INT32 version, TlsBuffer *TlsReader)
 {
     BOOL ret = 0;
     if (packetType != CONTENT_CHANGECIPHERSPEC && packetType != CONTENT_ALERT)
@@ -427,7 +427,7 @@ BOOL TLSClient::OnPacket(INT32 packetType, INT32 version, TlsBufferReader *TlsRe
     while (TlsReader->GetReaded() < TlsReader->GetSize())
     {
         INT32 seg_size = packetType == CONTENT_HANDSHAKE ? 1 + 3 + UINT32SwapByteOrder(TlsReader->GetBuffer()[TlsReader->GetReaded() + 1] << 8 | *(PUINT16)(TlsReader->GetBuffer() + TlsReader->GetReaded() + 2) << 16) : TlsReader->GetSize();
-        TlsBufferReader reader_sig(TlsReader->GetBuffer() + TlsReader->GetReaded(), seg_size);
+        TlsBuffer reader_sig(TlsReader->GetBuffer() + TlsReader->GetReaded(), seg_size);
 
         tlsstate state_seq[6]{};
 
@@ -559,7 +559,7 @@ BOOL TLSClient::ProcessReceive()
 
         LOG_DEBUG("Processing packet for client: %p, current index: %d, packet size: %d", this, cur_index, packet_size);
 
-        TlsBufferReader unnamed(recvBuffer.GetBuffer() + cur_index + 5, packet_size);
+        TlsBuffer unnamed(recvBuffer.GetBuffer() + cur_index + 5, packet_size);
 
         BOOL ret = OnPacket(*(UINT8 *)(recvBuffer.GetBuffer() + cur_index), *(UINT16 *)(recvBuffer.GetBuffer() + cur_index + 1), &unnamed);
         if (!ret)

@@ -56,7 +56,7 @@ VOID ChaCha20Encoder::Encode(TlsBuffer *out, const CHAR *packet, INT32 packetSiz
 }
 
 // Decode data using ChaCha20 and Poly1305
-BOOL ChaCha20Encoder::Decode(TlsBufferReader *in, TlsBuffer *out, const UCHAR *aad, INT32 aadSize)
+BOOL ChaCha20Encoder::Decode(TlsBuffer *in, TlsBuffer *out, const UCHAR *aad, INT32 aadSize)
 {
     out->CheckSize(in->GetSize());
 

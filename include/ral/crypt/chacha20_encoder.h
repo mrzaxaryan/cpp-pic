@@ -25,7 +25,7 @@ public:
     BOOL Initialize(PUCHAR localKey, PUCHAR remoteKey, PUCHAR localIv, PUCHAR remoteIv, INT32 keyLength);
     // Encode and decode data
     VOID Encode(TlsBuffer *out, const CHAR *packet, INT32 packetSize, const UCHAR *aad, INT32 aadSize);
-    BOOL Decode(TlsBufferReader *in, TlsBuffer *out, const UCHAR *aad, INT32 aadSize);
+    BOOL Decode(TlsBuffer *in, TlsBuffer *out, const UCHAR *aad, INT32 aadSize);
     // Compute size for encoding or decoding
     static INT32 ComputeSize(INT32 size, INT32 encodeOrDecode);
     // Function to get IV length

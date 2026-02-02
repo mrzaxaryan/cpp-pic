@@ -72,7 +72,7 @@ public:
     BOOL ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash);
     VOID ComputeVerify(TlsBuffer *out, INT32 verifySize, INT32 localOrRemote);
     VOID Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal);
-    BOOL Decode(TlsBufferReader *inout, INT32 version);
+    BOOL Decode(TlsBuffer *inout, INT32 version);
     VOID SetEncoding(BOOL encoding);
     VOID ResetSequenceNumber();
     BOOL GetEncoding() { return isEncoding; };

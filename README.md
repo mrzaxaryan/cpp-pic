@@ -2,11 +2,11 @@
 
 <table>
 <tr>
-<th width="100">Platform</th>
-<th width="175">i386</th>
-<th width="175">x86_64</th>
-<th width="175">armv7a</th>
-<th width="175">aarch64</th>
+<th width="120">Platform</th>
+<th width="220">i386</th>
+<th width="220">x86_64</th>
+<th width="220">armv7a</th>
+<th width="220">aarch64</th>
 </tr>
 <tr>
 <td>Windows</td>
@@ -33,11 +33,11 @@
 
 <table>
 <tr>
-<th rowspan="2" width="100">Platform</th>
-<th colspan="2" width="175">i386</th>
-<th colspan="2" width="175">x86_64</th>
-<th colspan="2" width="175">armv7a</th>
-<th colspan="2" width="175">aarch64</th>
+<th rowspan="2" width="120">Platform</th>
+<th colspan="2" width="220">i386</th>
+<th colspan="2" width="220">x86_64</th>
+<th colspan="2" width="220">armv7a</th>
+<th colspan="2" width="220">aarch64</th>
 </tr>
 <tr>
 <th>Exe</th><th>Bin</th>

@@ -1,0 +1,105 @@
+name: Windows
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - "**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LLVM_VERSION: "20.1.6"
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, aarch64]
+        include:
+          - arch: i386
+            runner: windows-2022
+          - arch: x86_64
+            runner: windows-2022
+          - arch: aarch64
+            runner: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-${{ matrix.runner }}
+
+      - name: Install Ninja
+        shell: pwsh
+        run: |
+          choco install ninja -y
+          ninja --version
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+
+          Write-Host "Downloading LLVM $ver..."
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: |
+          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Build, Upload, and Test all optimization levels
+        shell: pwsh
+        run: |
+          $opts = @("O0", "O1", "O2", "O3", "Os", "Oz", "Og")
+          $failed = @()
+          foreach ($opt in $opts) {
+            Write-Host "========== Building -$opt ==========" -ForegroundColor Cyan
+            Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+            cmake --preset windows-${{ matrix.arch }}-release "-DOPTIMIZATION_LEVEL=$opt"
+            cmake --build --preset windows-${{ matrix.arch }}-release
+            if ($LASTEXITCODE -ne 0) { $failed += "$opt-build"; continue }
+
+            Write-Host "========== Uploading -$opt ==========" -ForegroundColor Cyan
+            $artifactDir = "artifacts/$opt"
+            New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+            Copy-Item -Path "build/*" -Destination $artifactDir -Recurse -Exclude "cmake"
+
+            Write-Host "========== Testing EXE -$opt ==========" -ForegroundColor Cyan
+            & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+            if ($LASTEXITCODE -ne 0) { $failed += "$opt-exe"; continue }
+
+            Write-Host "========== Testing PIC -$opt ==========" -ForegroundColor Cyan
+            python scripts/loader.py --arch ${{ matrix.arch }} (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
+            if ($LASTEXITCODE -ne 0) { $failed += "$opt-pic"; continue }
+
+            Write-Host "========== $opt passed ==========" -ForegroundColor Green
+          }
+          if ($failed.Count -gt 0) {
+            Write-Host "Failed: $($failed -join ', ')" -ForegroundColor Red
+            exit 1
+          }
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-windows-${{ matrix.arch }}
+          retention-days: 1
+          path: artifacts/

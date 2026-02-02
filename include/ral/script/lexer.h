@@ -335,97 +335,101 @@ private:
 
     NOINLINE TokenType CheckKeyword(USIZE start, USIZE length) const noexcept
     {
-        // Check keywords using first character dispatch (PIC-safe, no .rdata)
+        // Check keywords using first character dispatch and direct inline comparison
+        // IMPORTANT: Do NOT use local arrays like CHAR kw[] = {...} as they get
+        // optimized into .rodata by the compiler, breaking position-independence.
+        // Instead, compare characters directly inline.
         switch (m_source[start])
         {
             case 'e':
-                if (length == 4)
-                {
-                    CHAR kw[] = {'e','l','s','e'};
-                    if (MatchKeyword(start, kw, 4)) return TokenType::ELSE;
-                }
+                // else
+                if (length == 4 &&
+                    m_source[start + 1] == 'l' &&
+                    m_source[start + 2] == 's' &&
+                    m_source[start + 3] == 'e')
+                    return TokenType::ELSE;
                 break;
 
             case 'f':
                 if (length == 2)
                 {
-                    CHAR kw[] = {'f','n'};
-                    if (MatchKeyword(start, kw, 2)) return TokenType::FN;
+                    // fn
+                    if (m_source[start + 1] == 'n')
+                        return TokenType::FN;
                 }
-                if (length == 3)
+                else if (length == 3)
                 {
-                    CHAR kw[] = {'f','o','r'};
-                    if (MatchKeyword(start, kw, 3)) return TokenType::FOR;
+                    // for
+                    if (m_source[start + 1] == 'o' &&
+                        m_source[start + 2] == 'r')
+                        return TokenType::FOR;
                 }
-                if (length == 5)
+                else if (length == 5)
                 {
-                    CHAR kw[] = {'f','a','l','s','e'};
-                    if (MatchKeyword(start, kw, 5)) return TokenType::FALSE_;
+                    // false
+                    if (m_source[start + 1] == 'a' &&
+                        m_source[start + 2] == 'l' &&
+                        m_source[start + 3] == 's' &&
+                        m_source[start + 4] == 'e')
+                        return TokenType::FALSE_;
                 }
                 break;
 
             case 'i':
-                if (length == 2)
-                {
-                    CHAR kw[] = {'i','f'};
-                    if (MatchKeyword(start, kw, 2)) return TokenType::IF;
-                }
+                // if
+                if (length == 2 &&
+                    m_source[start + 1] == 'f')
+                    return TokenType::IF;
                 break;
 
             case 'n':
-                if (length == 3)
-                {
-                    CHAR kw[] = {'n','i','l'};
-                    if (MatchKeyword(start, kw, 3)) return TokenType::NIL;
-                }
+                // nil
+                if (length == 3 &&
+                    m_source[start + 1] == 'i' &&
+                    m_source[start + 2] == 'l')
+                    return TokenType::NIL;
                 break;
 
             case 'r':
-                if (length == 6)
-                {
-                    CHAR kw[] = {'r','e','t','u','r','n'};
-                    if (MatchKeyword(start, kw, 6)) return TokenType::RETURN;
-                }
+                // return
+                if (length == 6 &&
+                    m_source[start + 1] == 'e' &&
+                    m_source[start + 2] == 't' &&
+                    m_source[start + 3] == 'u' &&
+                    m_source[start + 4] == 'r' &&
+                    m_source[start + 5] == 'n')
+                    return TokenType::RETURN;
                 break;
 
             case 't':
-                if (length == 4)
-                {
-                    CHAR kw[] = {'t','r','u','e'};
-                    if (MatchKeyword(start, kw, 4)) return TokenType::TRUE_;
-                }
+                // true
+                if (length == 4 &&
+                    m_source[start + 1] == 'r' &&
+                    m_source[start + 2] == 'u' &&
+                    m_source[start + 3] == 'e')
+                    return TokenType::TRUE_;
                 break;
 
             case 'v':
-                if (length == 3)
-                {
-                    CHAR kw[] = {'v','a','r'};
-                    if (MatchKeyword(start, kw, 3)) return TokenType::VAR;
-                }
+                // var
+                if (length == 3 &&
+                    m_source[start + 1] == 'a' &&
+                    m_source[start + 2] == 'r')
+                    return TokenType::VAR;
                 break;
 
             case 'w':
-                if (length == 5)
-                {
-                    CHAR kw[] = {'w','h','i','l','e'};
-                    if (MatchKeyword(start, kw, 5)) return TokenType::WHILE;
-                }
+                // while
+                if (length == 5 &&
+                    m_source[start + 1] == 'h' &&
+                    m_source[start + 2] == 'i' &&
+                    m_source[start + 3] == 'l' &&
+                    m_source[start + 4] == 'e')
+                    return TokenType::WHILE;
                 break;
         }
 
         return TokenType::IDENTIFIER;
-    }
-
-    NOINLINE BOOL MatchKeyword(USIZE start, const CHAR* keyword, USIZE kwLength) const noexcept
-    {
-        for (USIZE i = 0; i < kwLength; i++)
-        {
-            if (m_source[start + i] != keyword[i])
-            {
-                return FALSE;
-            }
-        }
-        return TRUE;
     }
 
     NOINLINE Token ScanNumber() noexcept

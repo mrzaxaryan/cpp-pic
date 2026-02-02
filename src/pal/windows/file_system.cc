@@ -446,7 +446,7 @@ DirectoryIterator::DirectoryIterator(PCWCHAR path) : handle((PVOID)-1), first(TR
     }
 
     // Query the first entry
-    UINT8 buffer[sizeof(FILE_BOTH_DIR_INFORMATION) + 260 * sizeof(WCHAR)];
+    alignas(alignof(FILE_BOTH_DIR_INFORMATION)) UINT8 buffer[sizeof(FILE_BOTH_DIR_INFORMATION) + 260 * sizeof(WCHAR)];
     Memory::Zero(buffer, sizeof(buffer));
 
     status = NTDLL::NtQueryDirectoryFile(
@@ -557,7 +557,7 @@ BOOL DirectoryIterator::Next()
         return TRUE;
     }
 
-    UINT8 buffer[sizeof(FILE_BOTH_DIR_INFORMATION) + 260 * sizeof(WCHAR)];
+    alignas(alignof(FILE_BOTH_DIR_INFORMATION)) UINT8 buffer[sizeof(FILE_BOTH_DIR_INFORMATION) + 260 * sizeof(WCHAR)];
     Memory::Zero(buffer, sizeof(buffer));
 
     NTSTATUS status = NTDLL::NtQueryDirectoryFile(

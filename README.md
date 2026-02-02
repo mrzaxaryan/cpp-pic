@@ -1,5 +1,7 @@
 # NOSTDLIB-RUNTIME: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
+[![Size Regression](https://img.shields.io/github/actions/workflow/status/mrzaxaryan/cpp-pic/size-regression.yml?label=size%20check)](https://github.com/mrzaxaryan/cpp-pic/actions/workflows/size-regression.yml)
+
 <table>
 <tr>
 <th>Platform</th>

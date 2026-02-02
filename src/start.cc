@@ -23,7 +23,6 @@ ENTRYPOINT INT32 _start(VOID)
 	efiContext.ImageHandle = ImageHandle;
 	efiContext.SystemTable = SystemTable;
 	SetEfiContextRegister(&efiContext);
-	build error
 	// Disable watchdog timer (default is 5 minutes)
 	SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 #endif

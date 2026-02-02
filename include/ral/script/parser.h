@@ -265,8 +265,14 @@ private:
     {
         Consume(TokenType::IDENTIFIER, "Expected variable name"_embed);
 
-        const CHAR* name = m_previous.value.strValue;
-        USIZE nameLen = m_previous.length;
+        // Copy name to local buffer before advancing (m_previous will be overwritten)
+        CHAR name[MAX_IDENTIFIER_LENGTH];
+        USIZE nameLen = m_previous.length < MAX_IDENTIFIER_LENGTH - 1 ? m_previous.length : MAX_IDENTIFIER_LENGTH - 1;
+        for (USIZE i = 0; i < nameLen; i++)
+        {
+            name[i] = m_previous.value.strValue[i];
+        }
+        name[nameLen] = '\0';
         UINT32 line = m_previous.line;
         UINT32 col = m_previous.column;
 

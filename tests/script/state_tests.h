@@ -103,9 +103,9 @@ private:
         script::State* L = new script::State();
 
         // Register ONLY the functions we need - NO standard library
-        L->Register("print"_embed, script::StdLib_Print);
-        L->Register("double"_embed, StateTest_Func_Double);
-        L->Register("square"_embed, StateTest_Func_Square);
+        L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
+        L->Register("double"_embed, EMBED_FUNC(StateTest_Func_Double) );
+        L->Register("square"_embed, EMBED_FUNC(StateTest_Func_Square) );
 
         auto source = R"(print("Only print, double, square are available");
 print("double(5) =", double(5));
@@ -144,7 +144,7 @@ if (debug) {
         script::State* L = new script::State();
 
         // Register ONLY print - absolutely minimal
-        L->Register("print"_embed, script::StdLib_Print);
+        L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
 
         auto source = R"(var x = 10;
 var y = 20;
@@ -163,7 +163,7 @@ print("x * y =", x * y);
         for (INT32 i = 0; i < 3; i++)
         {
             script::State* L = new script::State();
-            L->Register("print"_embed, script::StdLib_Print);
+            L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
 
             auto source = R"(var x = 42;
 print("State test iteration");

@@ -408,14 +408,14 @@ NOINLINE Value StdLib_Max(FunctionContext& ctx) noexcept
 NOINLINE void OpenStdLib(State& L) noexcept
 {
     // Register standard library functions (PIC-safe with _embed)
-    L.Register("print"_embed, StdLib_Print);
-    L.Register("len"_embed, StdLib_Len);
-    L.Register("str"_embed, StdLib_Str);
-    L.Register("num"_embed, StdLib_Num);
-    L.Register("type"_embed, StdLib_Type);
-    L.Register("abs"_embed, StdLib_Abs);
-    L.Register("min"_embed, StdLib_Min);
-    L.Register("max"_embed, StdLib_Max);
+    L.Register("print"_embed, EMBED_FUNC(StdLib_Print));
+    L.Register("len"_embed, EMBED_FUNC(StdLib_Len));
+    L.Register("str"_embed, EMBED_FUNC(StdLib_Str));
+    L.Register("num"_embed, EMBED_FUNC(StdLib_Num));
+    L.Register("type"_embed, EMBED_FUNC(StdLib_Type));
+    L.Register("abs"_embed, EMBED_FUNC(StdLib_Abs));
+    L.Register("min"_embed, EMBED_FUNC(StdLib_Min));
+    L.Register("max"_embed, EMBED_FUNC(StdLib_Max));
 }
 
 } // namespace script

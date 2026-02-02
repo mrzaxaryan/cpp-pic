@@ -154,8 +154,8 @@ print("len(hello):", len("hello"));
         script::OpenStdLib(*L);
 
         // Register additional custom functions
-        L->Register("greet"_embed, StdLibTest_Func_Greet);
-        L->Register("sum"_embed, StdLibTest_Func_Sum);
+        L->Register("greet"_embed, EMBED_FUNC(StdLibTest_Func_Greet) );
+        L->Register("sum"_embed, EMBED_FUNC(StdLibTest_Func_Sum) );
 
         auto source = R"(greet("PICScript User");
 print("sum(1,2,3,4,5) =", sum(1,2,3,4,5));

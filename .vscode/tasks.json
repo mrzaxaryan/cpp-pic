@@ -34,7 +34,7 @@
   },
   "tasks": [
     {
-      "label": "i386-windows-debug",
+      "label": "windows-i386-debug",
       "type": "shell",
       "command": "cmake --preset windows-i386-debug && cmake --build --preset windows-i386-debug",
       "problemMatcher": [
@@ -43,7 +43,7 @@
       "group": "build"
     },
     {
-      "label": "i386-windows-release",
+      "label": "windows-i386-release",
       "type": "shell",
       "command": "cmake --preset windows-i386-release && cmake --build --preset windows-i386-release",
       "problemMatcher": [
@@ -52,7 +52,7 @@
       "group": "build"
     },
     {
-      "label": "x86_64-windows-debug",
+      "label": "windows-x86_64-debug",
       "type": "shell",
       "command": "cmake --preset windows-x86_64-debug && cmake --build --preset windows-x86_64-debug",
       "problemMatcher": [
@@ -61,7 +61,7 @@
       "group": "build"
     },
     {
-      "label": "x86_64-windows-release",
+      "label": "windows-x86_64-release",
       "type": "shell",
       "command": "cmake --preset windows-x86_64-release && cmake --build --preset windows-x86_64-release",
       "problemMatcher": [
@@ -70,7 +70,7 @@
       "group": "build"
     },
     {
-      "label": "aarch64-windows-debug",
+      "label": "windows-aarch64-debug",
       "type": "shell",
       "command": "cmake --preset windows-aarch64-debug && cmake --build --preset windows-aarch64-debug",
       "problemMatcher": [
@@ -79,7 +79,7 @@
       "group": "build"
     },
     {
-      "label": "aarch64-windows-release",
+      "label": "windows-aarch64-release",
       "type": "shell",
       "command": "cmake --preset windows-aarch64-release && cmake --build --preset windows-aarch64-release",
       "problemMatcher": [
@@ -88,7 +88,7 @@
       "group": "build"
     },
     {
-      "label": "i386-linux-debug",
+      "label": "linux-i386-debug",
       "type": "shell",
       "command": "cmake --preset linux-i386-debug && cmake --build --preset linux-i386-debug",
       "problemMatcher": [
@@ -97,7 +97,7 @@
       "group": "build"
     },
     {
-      "label": "i386-linux-release",
+      "label": "linux-i386-release",
       "type": "shell",
       "command": "cmake --preset linux-i386-release && cmake --build --preset linux-i386-release",
       "problemMatcher": [
@@ -106,7 +106,7 @@
       "group": "build"
     },
     {
-      "label": "x86_64-linux-debug",
+      "label": "linux-x86_64-debug",
       "type": "shell",
       "command": "cmake --preset linux-x86_64-debug && cmake --build --preset linux-x86_64-debug",
       "problemMatcher": [
@@ -115,7 +115,7 @@
       "group": "build"
     },
     {
-      "label": "x86_64-linux-release",
+      "label": "linux-x86_64-release",
       "type": "shell",
       "command": "cmake --preset linux-x86_64-release && cmake --build --preset linux-x86_64-release",
       "problemMatcher": [
@@ -124,7 +124,7 @@
       "group": "build"
     },
     {
-      "label": "armv7a-linux-debug",
+      "label": "linux-armv7a-debug",
       "type": "shell",
       "command": "cmake --preset linux-armv7a-debug && cmake --build --preset linux-armv7a-debug",
       "problemMatcher": [
@@ -133,7 +133,7 @@
       "group": "build"
     },
     {
-      "label": "armv7a-linux-release",
+      "label": "linux-armv7a-release",
       "type": "shell",
       "command": "cmake --preset linux-armv7a-release && cmake --build --preset linux-armv7a-release",
       "problemMatcher": [
@@ -142,7 +142,7 @@
       "group": "build"
     },
     {
-      "label": "aarch64-linux-debug",
+      "label": "linux-aarch64-debug",
       "type": "shell",
       "command": "cmake --preset linux-aarch64-debug && cmake --build --preset linux-aarch64-debug",
       "problemMatcher": [
@@ -151,7 +151,7 @@
       "group": "build"
     },
     {
-      "label": "aarch64-linux-release",
+      "label": "linux-aarch64-release",
       "type": "shell",
       "command": "cmake --preset linux-aarch64-release && cmake --build --preset linux-aarch64-release",
       "problemMatcher": [
@@ -160,7 +160,7 @@
       "group": "build"
     },
     {
-      "label": "x86_64-uefi-debug",
+      "label": "uefi-x86_64-debug",
       "type": "shell",
       "command": "cmake --preset uefi-x86_64-debug && cmake --build --preset uefi-x86_64-debug",
       "problemMatcher": [
@@ -169,7 +169,7 @@
       "group": "build"
     },
     {
-      "label": "x86_64-uefi-release",
+      "label": "uefi-x86_64-release",
       "type": "shell",
       "command": "cmake --preset uefi-x86_64-release && cmake --build --preset uefi-x86_64-release",
       "problemMatcher": [
@@ -178,7 +178,7 @@
       "group": "build"
     },
     {
-      "label": "aarch64-uefi-debug",
+      "label": "uefi-aarch64-debug",
       "type": "shell",
       "command": "cmake --preset uefi-aarch64-debug && cmake --build --preset uefi-aarch64-debug",
       "problemMatcher": [
@@ -187,7 +187,7 @@
       "group": "build"
     },
     {
-      "label": "aarch64-uefi-release",
+      "label": "uefi-aarch64-release",
       "type": "shell",
       "command": "cmake --preset uefi-aarch64-release && cmake --build --preset uefi-aarch64-release",
       "problemMatcher": [
@@ -199,9 +199,9 @@
       "label": "Build All Windows",
       "dependsOrder": "parallel",
       "dependsOn": [
-        "i386-windows-release",
-        "x86_64-windows-release",
-        "aarch64-windows-release"
+        "windows-i386-release",
+        "windows-x86_64-release",
+        "windows-aarch64-release"
       ],
       "group": "build",
       "problemMatcher": []
@@ -210,10 +210,10 @@
       "label": "Build All Linux",
       "dependsOrder": "parallel",
       "dependsOn": [
-        "i386-linux-release",
-        "x86_64-linux-release",
-        "armv7a-linux-release",
-        "aarch64-linux-release"
+        "linux-i386-release",
+        "linux-x86_64-release",
+        "linux-armv7a-release",
+        "linux-aarch64-release"
       ],
       "group": "build",
       "problemMatcher": []
@@ -222,8 +222,8 @@
       "label": "Build All UEFI",
       "dependsOrder": "parallel",
       "dependsOn": [
-        "x86_64-uefi-release",
-        "aarch64-uefi-release"
+        "uefi-x86_64-release",
+        "uefi-aarch64-release"
       ],
       "group": "build",
       "problemMatcher": []
@@ -232,7 +232,7 @@
       "label": "Run UEFI x86_64 (QEMU)",
       "type": "shell",
       "command": "qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -drive file=fat:rw:build/release/uefi/x86_64,format=raw,if=ide,index=0 -m 512 -nographic -nic user,model=e1000 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -no-reboot; ret=$?; if [ $ret -eq 1 ]; then exit 0; else exit $ret; fi",
-      "dependsOn": "x86_64-uefi-release",
+      "dependsOn": "uefi-x86_64-release",
       "problemMatcher": [],
       "group": "test"
     },
@@ -240,7 +240,7 @@
       "label": "Run UEFI aarch64 (QEMU)",
       "type": "shell",
       "command": "qemu-system-aarch64 -M virt -cpu cortex-a72 -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -drive file=fat:rw:build/release/uefi/aarch64,format=raw,if=virtio -m 512 -nographic -nic user,model=virtio -semihosting -no-reboot; ret=$?; if [ $ret -eq 0 ]; then exit 0; else exit $ret; fi",
-      "dependsOn": "aarch64-uefi-release",
+      "dependsOn": "uefi-aarch64-release",
       "problemMatcher": [],
       "group": "test"
     },

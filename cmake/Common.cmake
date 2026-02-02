@@ -122,6 +122,7 @@ if(CPPPIC_BUILD_TYPE STREQUAL "debug")
     )
 else()
     list(APPEND CPPPIC_BASE_FLAGS
+        -fomit-frame-pointer
         -fno-asynchronous-unwind-tables
         -fno-unwind-tables
         -flto=full
@@ -130,12 +131,6 @@ else()
         -fwhole-program-vtables
         -${CPPPIC_OPT_LEVEL}
     )
-    # i386 has limited registers (7 GPRs); omit frame pointer to avoid EBP conflicts
-    if(CPPPIC_ARCH STREQUAL "i386")
-        list(APPEND CPPPIC_BASE_FLAGS -fomit-frame-pointer)
-    else()
-        list(APPEND CPPPIC_BASE_FLAGS -fno-omit-frame-pointer)
-    endif()
 endif()
 
 # =============================================================================

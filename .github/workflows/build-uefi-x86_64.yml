@@ -58,7 +58,7 @@ jobs:
       - name: Install QEMU and OVMF
         run: |
           sudo apt-get update
-          sudo apt-get install -y qemu-system-x86 qemu-system-arm ovmf libslirp0 qemu-system-common
+          sudo apt-get install -y qemu-system-x86 qemu-system-arm ovmf libslirp0 qemu-system-common dosfstools mtools
 
       - name: Build, Upload, and Test all optimization levels
         run: |
@@ -81,10 +81,17 @@ jobs:
             done
 
             echo "========== Testing UEFI -$opt =========="
+            DISK_IMG="uefi-disk-${opt}.img"
+            dd if=/dev/zero of="$DISK_IMG" bs=1M count=64 2>/dev/null
+            mkfs.fat -F 32 -n UEFI "$DISK_IMG" >/dev/null
+            mmd -i "$DISK_IMG" ::/EFI
+            mmd -i "$DISK_IMG" ::/EFI/BOOT
+            mcopy -i "$DISK_IMG" build/release/uefi/x86_64/output.efi "::EFI/BOOT/BOOTX64.EFI"
+
             set +e
             timeout 180s qemu-system-x86_64 \
               -bios /usr/share/ovmf/OVMF.fd \
-              -drive file=fat:rw:build/release/uefi/x86_64,format=raw,if=ide,index=0 \
+              -drive file="$DISK_IMG",format=raw,if=ide,index=0 \
               -m 512 \
               -nographic \
               -serial mon:stdio \
@@ -93,6 +100,7 @@ jobs:
               -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
             ret=${PIPESTATUS[0]}
             set -e
+            rm -f "$DISK_IMG"
             echo "QEMU exit code: $ret (expected 1 for success)"
             if [ "$ret" -ne "1" ]; then
               FAILED="$FAILED $opt-uefi"

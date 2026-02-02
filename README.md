@@ -2,11 +2,11 @@
 
 <table>
 <tr>
-<th width="20%">Platform</th>
-<th width="20%">i386</th>
-<th width="20%">x86_64</th>
-<th width="20%">armv7a</th>
-<th width="20%">aarch64</th>
+<th align="center"><img width="200" height="1"><br>Platform</th>
+<th align="center"><img width="200" height="1"><br>i386</th>
+<th align="center"><img width="200" height="1"><br>x86_64</th>
+<th align="center"><img width="200" height="1"><br>armv7a</th>
+<th align="center"><img width="200" height="1"><br>aarch64</th>
 </tr>
 <tr>
 <td>Windows</td>

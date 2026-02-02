@@ -10,7 +10,6 @@
         "llvm-vs-code-extensions.lldb-dap",
         "ms-vscode-remote.remote-wsl",
         "ms-vscode-remote.vscode-remote-extensionpack",
-        "ms-python.debugpy"
     ],
     "unwantedRecommendations": []
 }

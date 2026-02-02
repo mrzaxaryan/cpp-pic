@@ -1,0 +1,349 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}/cmake",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "windows-i386-debug",
+      "displayName": "Windows i386 (Debug)",
+      "description": "Windows 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-i386-release",
+      "displayName": "Windows i386 (Release)",
+      "description": "Windows 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "windows-x86_64-debug",
+      "displayName": "Windows x86_64 (Debug)",
+      "description": "Windows 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-x86_64-release",
+      "displayName": "Windows x86_64 (Release)",
+      "description": "Windows 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "windows-aarch64-debug",
+      "displayName": "Windows AArch64 (Debug)",
+      "description": "Windows 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-aarch64-release",
+      "displayName": "Windows AArch64 (Release)",
+      "description": "Windows 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "linux-i386-debug",
+      "displayName": "Linux i386 (Debug)",
+      "description": "Linux 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-i386-release",
+      "displayName": "Linux i386 (Release)",
+      "description": "Linux 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "linux-x86_64-debug",
+      "displayName": "Linux x86_64 (Debug)",
+      "description": "Linux 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-x86_64-release",
+      "displayName": "Linux x86_64 (Release)",
+      "description": "Linux 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "linux-armv7a-debug",
+      "displayName": "Linux ARMv7-A (Debug)",
+      "description": "Linux 32-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-armv7a-release",
+      "displayName": "Linux ARMv7-A (Release)",
+      "description": "Linux 32-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "linux-aarch64-debug",
+      "displayName": "Linux AArch64 (Debug)",
+      "description": "Linux 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-aarch64-release",
+      "displayName": "Linux AArch64 (Release)",
+      "description": "Linux 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "uefi-x86_64-debug",
+      "displayName": "UEFI x86_64 (Debug)",
+      "description": "UEFI 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/uefi/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "uefi-x86_64-release",
+      "displayName": "UEFI x86_64 (Release)",
+      "description": "UEFI 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/uefi/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    },
+    {
+      "name": "uefi-aarch64-debug",
+      "displayName": "UEFI AArch64 (Debug)",
+      "description": "UEFI 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/uefi/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "uefi-aarch64-release",
+      "displayName": "UEFI AArch64 (Release)",
+      "description": "UEFI 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/uefi/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "O3"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-i386-debug",
+      "configurePreset": "windows-i386-debug"
+    },
+    {
+      "name": "windows-i386-release",
+      "configurePreset": "windows-i386-release"
+    },
+    {
+      "name": "windows-x86_64-debug",
+      "configurePreset": "windows-x86_64-debug"
+    },
+    {
+      "name": "windows-x86_64-release",
+      "configurePreset": "windows-x86_64-release"
+    },
+    {
+      "name": "windows-aarch64-debug",
+      "configurePreset": "windows-aarch64-debug"
+    },
+    {
+      "name": "windows-aarch64-release",
+      "configurePreset": "windows-aarch64-release"
+    },
+    {
+      "name": "linux-i386-debug",
+      "configurePreset": "linux-i386-debug"
+    },
+    {
+      "name": "linux-i386-release",
+      "configurePreset": "linux-i386-release"
+    },
+    {
+      "name": "linux-x86_64-debug",
+      "configurePreset": "linux-x86_64-debug"
+    },
+    {
+      "name": "linux-x86_64-release",
+      "configurePreset": "linux-x86_64-release"
+    },
+    {
+      "name": "linux-armv7a-debug",
+      "configurePreset": "linux-armv7a-debug"
+    },
+    {
+      "name": "linux-armv7a-release",
+      "configurePreset": "linux-armv7a-release"
+    },
+    {
+      "name": "linux-aarch64-debug",
+      "configurePreset": "linux-aarch64-debug"
+    },
+    {
+      "name": "linux-aarch64-release",
+      "configurePreset": "linux-aarch64-release"
+    },
+    {
+      "name": "uefi-x86_64-debug",
+      "configurePreset": "uefi-x86_64-debug"
+    },
+    {
+      "name": "uefi-x86_64-release",
+      "configurePreset": "uefi-x86_64-release"
+    },
+    {
+      "name": "uefi-aarch64-debug",
+      "configurePreset": "uefi-aarch64-debug"
+    },
+    {
+      "name": "uefi-aarch64-release",
+      "configurePreset": "uefi-aarch64-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "uefi-x86_64-qemu",
+      "displayName": "UEFI x86_64 QEMU Test",
+      "description": "Run UEFI x86_64 build in QEMU",
+      "configurePreset": "uefi-x86_64-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "uefi-aarch64-qemu",
+      "displayName": "UEFI AArch64 QEMU Test",
+      "description": "Run UEFI AArch64 build in QEMU",
+      "configurePreset": "uefi-aarch64-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

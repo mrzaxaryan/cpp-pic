@@ -80,7 +80,20 @@ DateTime DateTime::Now()
     }
 
     // Days in each month (non-leap year)
-    UINT32 daysInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    UINT32 daysInMonth[12];
+    daysInMonth[0] = 31;  // January
+    daysInMonth[1] = 28;  // February
+    daysInMonth[2] = 31;  // March
+    daysInMonth[3] = 30;  // April
+    daysInMonth[4] = 31;  // May
+    daysInMonth[5] = 30;  // June
+    daysInMonth[6] = 31;  // July
+    daysInMonth[7] = 31;  // August
+    daysInMonth[8] = 30;  // September
+    daysInMonth[9] = 31;  // October
+    daysInMonth[10] = 30; // November
+    daysInMonth[11] = 31; // December
+    
 
     // Adjust February for leap year
     if (DateTime::IsLeapYear(year))

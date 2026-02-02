@@ -1,5 +1,5 @@
 # =============================================================================
-# VerifyPICMode.cmake - Verify no data sections exist (run via cmake -P)
+# VerifyPICMode.cmake - Verify PIC requirements (run via cmake -P)
 # =============================================================================
 # Usage: cmake -DMAP_FILE=<path> -P VerifyPICMode.cmake
 # =============================================================================
@@ -17,7 +17,35 @@ endif()
 
 file(READ "${MAP_FILE}" _content)
 
-# Forbidden sections: .rdata (PE), .rodata (ELF), .data, .bss
+# =============================================================================
+# Verify _start is first function in .text section
+# =============================================================================
+set(_start_first FALSE)
+
+# Windows/UEFI (PE format): Check .text$_start is at offset 0
+# Format: "0001:00000000 <size>H .text$_start"
+if(_content MATCHES "0001:00000000[ \t]+[0-9a-fA-F]+H[ \t]+\\.text\\$_start")
+    set(_start_first TRUE)
+endif()
+
+# Linux (ELF format): Check _start is first symbol in .text section
+# Format: "VMA LMA Size Align Out In Symbol" with _start immediately after .text section
+if(_content MATCHES "\\.text\n[^\n]+\\(\\.text\\._start\\)")
+    set(_start_first TRUE)
+endif()
+
+if(NOT _start_first)
+    message(FATAL_ERROR
+        "CRITICAL: _start is not the first function in .text section!\n\n"
+        "The entry point must be at the beginning of the code section.\n"
+        "Check that orderfile.txt contains '_start' and is being used.\n\n"
+        "Map file: ${MAP_FILE}"
+    )
+endif()
+
+# =============================================================================
+# Verify no forbidden data sections
+# =============================================================================
 set(_sections rdata rodata data bss)
 set(_found)
 
@@ -42,4 +70,4 @@ if(_found)
     )
 endif()
 
-message(STATUS "PIC verification passed: no forbidden sections")
+message(STATUS "PIC verification passed")

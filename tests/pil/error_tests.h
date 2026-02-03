@@ -40,7 +40,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with syntax error (missing semicolon) - should return FALSE
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/missing_semicolon.pil");
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/missing_semicolon.pil"_embed);
 
         if (result)
         {
@@ -57,7 +57,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with undefined variable - should return FALSE
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_variable.pil");
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_variable.pil"_embed);
 
         if (result)
         {
@@ -74,7 +74,7 @@ private:
         // Note: NOT registering any functions, not even print
 
         // Script calling undefined function - should return FALSE
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_function.pil");
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_function.pil"_embed);
 
         if (result)
         {
@@ -91,7 +91,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with invalid expression - should return FALSE
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/syntax_error.pil");
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/syntax_error.pil"_embed);
 
         if (result)
         {
@@ -107,7 +107,7 @@ private:
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
         // Valid script should succeed and set result=true
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/error/valid_script.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/error/valid_script.pil"_embed);
         delete L;
         return result;
     }
@@ -118,7 +118,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with error
-        RunScriptFile(L, L"tests/pil/scripts/error/error_message.pil");
+        RunScriptFile(L, L"tests/pil/scripts/error/error_message.pil"_embed);
 
         // GetError should return a non-empty string
         const CHAR* error = L->GetError();
@@ -139,7 +139,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with break outside of loop - should return FALSE
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/break_outside_loop.pil");
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/break_outside_loop.pil"_embed);
 
         if (result)
         {
@@ -156,7 +156,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with continue outside of loop - should return FALSE
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/continue_outside_loop.pil");
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/continue_outside_loop.pil"_embed);
 
         if (result)
         {

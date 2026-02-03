@@ -45,7 +45,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_open_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_open_close.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -62,7 +62,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_write_read.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_write_read.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -79,7 +79,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_exists.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_exists.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -96,7 +96,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_delete.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_delete.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -113,7 +113,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_size_seek_tell.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_size_seek_tell.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -130,7 +130,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_append.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_append.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -147,7 +147,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_readline.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_readline.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -164,7 +164,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/directory_ops.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/directory_ops.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -181,7 +181,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_errors.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/file_errors.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
@@ -198,7 +198,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenFileIO(*L, &pool);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/multiple_files.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/fileio/multiple_files.pil"_embed);
         if (!result)
         {
             LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());

@@ -40,7 +40,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/float_literals.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/float_literals.pil"_embed);
         delete L;
         return result;
     }
@@ -49,7 +49,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/mixed_arithmetic.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/mixed_arithmetic.pil"_embed);
         delete L;
         return result;
     }
@@ -58,7 +58,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/float_comparisons.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/float_comparisons.pil"_embed);
         delete L;
         return result;
     }
@@ -67,7 +67,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/division.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/division.pil"_embed);
         delete L;
         return result;
     }
@@ -77,11 +77,11 @@ private:
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        // Test integer modulo
-        BOOL result1 = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/modulo_integers.pil");
+        // Test integer modulo - should succeed
+        BOOL result1 = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/modulo_integers.pil"_embed);
 
-        // Test float modulo
-        BOOL result2 = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/modulo_floats.pil");
+        // Test float modulo - should fail with runtime error (modulo restricted to integers)
+        BOOL result2 = !RunScriptFile(L, L"tests/pil/scripts/float/modulo_floats.pil"_embed);
 
         delete L;
         return result1 && result2;
@@ -91,7 +91,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/str_function.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/str_function.pil"_embed);
         delete L;
         return result;
     }
@@ -100,7 +100,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/num_function.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/num_function.pil"_embed);
         delete L;
         return result;
     }
@@ -109,7 +109,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/floor_ceil_int.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/floor_ceil_int.pil"_embed);
         delete L;
         return result;
     }
@@ -118,7 +118,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/min_max_abs.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/min_max_abs.pil"_embed);
         delete L;
         return result;
     }
@@ -127,7 +127,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/negation.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/float/negation.pil"_embed);
         delete L;
         return result;
     }

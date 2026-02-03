@@ -72,7 +72,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -86,7 +86,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve4.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve4.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -100,7 +100,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve6.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve6.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -114,7 +114,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve_invalid.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve_invalid.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -132,7 +132,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_connect.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_connect.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -146,7 +146,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_send_recv.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_send_recv.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -160,7 +160,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_close.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -174,7 +174,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_close.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -188,7 +188,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_send.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_send.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -202,7 +202,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_recv.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_recv.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -216,7 +216,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_port.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_port.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -234,7 +234,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_open.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_open.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -248,7 +248,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_get.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_get.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -262,7 +262,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_close.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -276,7 +276,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_close.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -290,7 +290,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_get.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_get.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -304,7 +304,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_post.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_post.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -318,7 +318,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_read.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_read.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -336,7 +336,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_sockets.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_sockets.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -350,7 +350,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_http.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_http.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -368,7 +368,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_connect.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_connect.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -382,7 +382,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_send_recv.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_send_recv.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -396,7 +396,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_close.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -410,7 +410,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_close.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_close.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -424,7 +424,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_send.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_send.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -438,7 +438,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_recv.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_recv.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -452,7 +452,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_ws.pil");
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_ws.pil"_embed);
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;

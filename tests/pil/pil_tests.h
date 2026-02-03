@@ -42,19 +42,15 @@
 // Maximum script file size
 static constexpr USIZE MAX_SCRIPT_SIZE = 8192;
 
-// Buffer for loading script content
-static CHAR g_scriptBuffer[MAX_SCRIPT_SIZE];
-
 /**
- * LoadScript - Load a PIL script from a file
+ * LoadScript - Load a PIL script from a file into a provided buffer
  *
  * @param path - Wide string path to the script file
- * @return Pointer to the script content in the global buffer, or nullptr on failure
- *
- * Note: The returned pointer is valid until the next call to LoadScript.
- * The caller should use the script immediately after loading.
+ * @param buffer - Stack-allocated buffer to store the script content
+ * @param bufferSize - Size of the buffer
+ * @return Pointer to the script content in the buffer, or nullptr on failure
  */
-static const CHAR* LoadScript(PCWCHAR path)
+static const CHAR* LoadScript(PCWCHAR path, CHAR* buffer, USIZE bufferSize)
 {
     File file = FileSystem::Open(path, FileSystem::FS_READ | FileSystem::FS_BINARY);
     if (!file.IsValid())
@@ -64,14 +60,14 @@ static const CHAR* LoadScript(PCWCHAR path)
     }
 
     USIZE size = file.GetSize();
-    if (size == 0 || size >= MAX_SCRIPT_SIZE)
+    if (size == 0 || size >= bufferSize)
     {
         LOG_ERROR("Script file too large or empty: %zu bytes", size);
         file.Close();
         return nullptr;
     }
 
-    UINT32 bytesRead = file.Read(g_scriptBuffer, (UINT32)size);
+    UINT32 bytesRead = file.Read(buffer, (UINT32)size);
     file.Close();
 
     if (bytesRead != size)
@@ -80,8 +76,8 @@ static const CHAR* LoadScript(PCWCHAR path)
         return nullptr;
     }
 
-    g_scriptBuffer[size] = '\0';
-    return g_scriptBuffer;
+    buffer[size] = '\0';
+    return buffer;
 }
 
 /**
@@ -93,7 +89,8 @@ static const CHAR* LoadScript(PCWCHAR path)
  */
 static BOOL RunScriptFile(script::State* L, PCWCHAR path)
 {
-    const CHAR* source = LoadScript(path);
+    CHAR scriptBuffer[MAX_SCRIPT_SIZE];
+    const CHAR* source = LoadScript(path, scriptBuffer, MAX_SCRIPT_SIZE);
     if (source == nullptr)
     {
         return FALSE;
@@ -146,6 +143,7 @@ static BOOL RunScriptAndCheckResult(script::State* L, PCWCHAR path)
  * @param expected - Expected numeric value
  * @return TRUE if script executed successfully AND 'result' equals expected
  */
+[[maybe_unused]]
 static BOOL RunScriptAndCheckNumber(script::State* L, PCWCHAR path, INT64 expected)
 {
     if (!RunScriptFile(L, path))

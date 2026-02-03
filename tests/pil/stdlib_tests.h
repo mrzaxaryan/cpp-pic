@@ -69,7 +69,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/stdlib_functions.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/stdlib_functions.pil"_embed);
         delete L;
         return result;
     }
@@ -80,7 +80,7 @@ private:
         script::OpenStdLib(*L);
         L->Register("greet"_embed, EMBED_FUNC(StdLibTest_Func_Greet));
         L->Register("sum"_embed, EMBED_FUNC(StdLibTest_Func_Sum));
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/custom_functions.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/custom_functions.pil"_embed);
         delete L;
         return result;
     }
@@ -89,7 +89,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/print_function.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/print_function.pil"_embed);
         delete L;
         return result;
     }
@@ -98,7 +98,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/type_function.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/type_function.pil"_embed);
         delete L;
         return result;
     }
@@ -107,7 +107,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/string_functions.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/string_functions.pil"_embed);
         delete L;
         return result;
     }
@@ -116,7 +116,7 @@ private:
     {
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/math_functions.pil");
+        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/math_functions.pil"_embed);
         delete L;
         return result;
     }

@@ -36,7 +36,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -78,7 +80,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -120,7 +124,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -162,7 +168,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -204,7 +212,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -246,7 +256,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -288,7 +300,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -330,7 +344,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
@@ -372,7 +388,9 @@
                 "${workspaceFolder}/include/ral/network",
                 "${workspaceFolder}/include/ral/network/tls",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [

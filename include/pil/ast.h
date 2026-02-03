@@ -392,13 +392,7 @@ FORCE_INLINE Expr* MakeStringExpr(ASTAllocator& alloc, const CHAR* value, USIZE 
     expr->type = ExprType::STRING_LITERAL;
     expr->line = line;
     expr->column = col;
-    USIZE copyLen = length < MAX_STRING_VALUE - 1 ? length : MAX_STRING_VALUE - 1;
-    for (USIZE i = 0; i < copyLen; i++)
-    {
-        expr->string.value[i] = value[i];
-    }
-    expr->string.value[copyLen] = '\0';
-    expr->string.length = copyLen;
+    expr->string.length = StrUtil::Copy(expr->string.value, MAX_STRING_VALUE, value, length);
     return expr;
 }
 
@@ -433,13 +427,7 @@ FORCE_INLINE Expr* MakeIdentifierExpr(ASTAllocator& alloc, const CHAR* name, USI
     expr->type = ExprType::IDENTIFIER;
     expr->line = line;
     expr->column = col;
-    USIZE copyLen = length < MAX_IDENTIFIER_LENGTH - 1 ? length : MAX_IDENTIFIER_LENGTH - 1;
-    for (USIZE i = 0; i < copyLen; i++)
-    {
-        expr->identifier.name[i] = name[i];
-    }
-    expr->identifier.name[copyLen] = '\0';
-    expr->identifier.length = copyLen;
+    expr->identifier.length = StrUtil::Copy(expr->identifier.name, MAX_IDENTIFIER_LENGTH, name, length);
     return expr;
 }
 
@@ -491,13 +479,7 @@ FORCE_INLINE Expr* MakeAssignExpr(ASTAllocator& alloc, const CHAR* name, USIZE l
     expr->type = ExprType::ASSIGN;
     expr->line = line;
     expr->column = col;
-    USIZE copyLen = length < MAX_IDENTIFIER_LENGTH - 1 ? length : MAX_IDENTIFIER_LENGTH - 1;
-    for (USIZE i = 0; i < copyLen; i++)
-    {
-        expr->assign.name[i] = name[i];
-    }
-    expr->assign.name[copyLen] = '\0';
-    expr->assign.nameLength = copyLen;
+    expr->assign.nameLength = StrUtil::Copy(expr->assign.name, MAX_IDENTIFIER_LENGTH, name, length);
     expr->assign.value = value;
     return expr;
 }
@@ -562,13 +544,7 @@ FORCE_INLINE Stmt* MakeVarDeclStmt(ASTAllocator& alloc, const CHAR* name, USIZE 
     stmt->type = StmtType::VAR_DECL;
     stmt->line = line;
     stmt->column = col;
-    USIZE copyLen = length < MAX_IDENTIFIER_LENGTH - 1 ? length : MAX_IDENTIFIER_LENGTH - 1;
-    for (USIZE i = 0; i < copyLen; i++)
-    {
-        stmt->varDecl.name[i] = name[i];
-    }
-    stmt->varDecl.name[copyLen] = '\0';
-    stmt->varDecl.nameLength = copyLen;
+    stmt->varDecl.nameLength = StrUtil::Copy(stmt->varDecl.name, MAX_IDENTIFIER_LENGTH, name, length);
     stmt->varDecl.initializer = init;
     return stmt;
 }
@@ -624,25 +600,13 @@ FORCE_INLINE Stmt* MakeForEachStmt(ASTAllocator& alloc, const CHAR* valueName, U
     stmt->column = col;
 
     // Copy value name
-    USIZE copyLen = valueLen < MAX_IDENTIFIER_LENGTH - 1 ? valueLen : MAX_IDENTIFIER_LENGTH - 1;
-    for (USIZE i = 0; i < copyLen; i++)
-    {
-        stmt->forEachStmt.valueName[i] = valueName[i];
-    }
-    stmt->forEachStmt.valueName[copyLen] = '\0';
-    stmt->forEachStmt.valueNameLength = copyLen;
+    stmt->forEachStmt.valueNameLength = StrUtil::Copy(stmt->forEachStmt.valueName, MAX_IDENTIFIER_LENGTH, valueName, valueLen);
 
     // Copy index name if present
     stmt->forEachStmt.hasIndex = hasIndex;
     if (hasIndex && indexName)
     {
-        USIZE idxLen = indexLen < MAX_IDENTIFIER_LENGTH - 1 ? indexLen : MAX_IDENTIFIER_LENGTH - 1;
-        for (USIZE i = 0; i < idxLen; i++)
-        {
-            stmt->forEachStmt.indexName[i] = indexName[i];
-        }
-        stmt->forEachStmt.indexName[idxLen] = '\0';
-        stmt->forEachStmt.indexNameLength = idxLen;
+        stmt->forEachStmt.indexNameLength = StrUtil::Copy(stmt->forEachStmt.indexName, MAX_IDENTIFIER_LENGTH, indexName, indexLen);
     }
     else
     {
@@ -663,13 +627,7 @@ FORCE_INLINE Stmt* MakeFunctionStmt(ASTAllocator& alloc, const CHAR* name, USIZE
     stmt->type = StmtType::FUNCTION;
     stmt->line = line;
     stmt->column = col;
-    USIZE copyLen = length < MAX_IDENTIFIER_LENGTH - 1 ? length : MAX_IDENTIFIER_LENGTH - 1;
-    for (USIZE i = 0; i < copyLen; i++)
-    {
-        stmt->function.name[i] = name[i];
-    }
-    stmt->function.name[copyLen] = '\0';
-    stmt->function.nameLength = copyLen;
+    stmt->function.nameLength = StrUtil::Copy(stmt->function.name, MAX_IDENTIFIER_LENGTH, name, length);
     stmt->function.paramCount = 0;
     stmt->function.body = nullptr;
     return stmt;

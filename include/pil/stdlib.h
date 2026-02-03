@@ -28,152 +28,42 @@ namespace script
 
 NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize) noexcept
 {
-    USIZE len = 0;
+    if (!buffer || bufferSize < 2) return 0;
 
     switch (value.type)
     {
         case ValueType::NIL:
-            if (bufferSize >= 4)
-            {
-                buffer[0] = 'n'; buffer[1] = 'i'; buffer[2] = 'l';
-                len = 3;
-            }
-            break;
+            return StrUtil::CopyEmbed("nil"_embed, buffer, bufferSize);
 
         case ValueType::BOOL:
-            if (value.boolValue)
-            {
-                if (bufferSize >= 5)
-                {
-                    buffer[0] = 't'; buffer[1] = 'r'; buffer[2] = 'u'; buffer[3] = 'e';
-                    len = 4;
-                }
-            }
-            else
-            {
-                if (bufferSize >= 6)
-                {
-                    buffer[0] = 'f'; buffer[1] = 'a'; buffer[2] = 'l';
-                    buffer[3] = 's'; buffer[4] = 'e';
-                    len = 5;
-                }
-            }
-            break;
+            return value.boolValue
+                ? StrUtil::CopyEmbed("true"_embed, buffer, bufferSize)
+                : StrUtil::CopyEmbed("false"_embed, buffer, bufferSize);
 
         case ValueType::NUMBER:
             {
                 DOUBLE d = value.numberValue;
-                DOUBLE zero = DOUBLE(INT32(0));
-
-                // Check if it's effectively an integer
                 INT64 intPart = (INT64)d;
                 DOUBLE reconstructed = DOUBLE(INT32(intPart));
 
                 if (d == reconstructed)
                 {
-                    // Format as integer
-                    INT64 n = intPart;
-                    BOOL negative = FALSE;
-                    if (n < 0)
-                    {
-                        negative = TRUE;
-                        n = -n;
-                    }
-
-                    // Build number string in reverse
-                    CHAR temp[32];
-                    USIZE tempLen = 0;
-                    if (n == 0)
-                    {
-                        temp[tempLen++] = '0';
-                    }
-                    else
-                    {
-                        while (n > 0 && tempLen < 31)
-                        {
-                            temp[tempLen++] = '0' + (n % 10);
-                            n /= 10;
-                        }
-                    }
-
-                    // Add sign and reverse
-                    if (negative && len < bufferSize - 1)
-                    {
-                        buffer[len++] = '-';
-                    }
-                    for (SSIZE i = (SSIZE)tempLen - 1; i >= 0 && len < bufferSize - 1; i--)
-                    {
-                        buffer[len++] = temp[i];
-                    }
+                    // Format as integer using StrUtil
+                    return StrUtil::IntToStr(intPart, buffer, bufferSize);
                 }
                 else
                 {
-                    // Format as float
-                    BOOL negative = d < zero;
-                    if (negative) d = -d;
-
-                    INT64 wholePart = (INT64)d;
-                    DOUBLE fracPart = d - DOUBLE(INT32(wholePart));
-
-                    // Format whole part
-                    CHAR temp[32];
-                    USIZE tempLen = 0;
-                    if (wholePart == 0)
-                    {
-                        temp[tempLen++] = '0';
-                    }
-                    else
-                    {
-                        INT64 w = wholePart;
-                        while (w > 0 && tempLen < 31)
-                        {
-                            temp[tempLen++] = '0' + (w % 10);
-                            w /= 10;
-                        }
-                    }
-
-                    if (negative && len < bufferSize - 1)
-                    {
-                        buffer[len++] = '-';
-                    }
-                    for (SSIZE i = (SSIZE)tempLen - 1; i >= 0 && len < bufferSize - 1; i--)
-                    {
-                        buffer[len++] = temp[i];
-                    }
-
-                    // Add decimal point
-                    if (len < bufferSize - 1) buffer[len++] = '.';
-
-                    // Get up to 6 decimal digits
-                    DOUBLE ten = DOUBLE(INT32(10));
-                    USIZE decStart = len;
-                    for (INT32 digit = 0; digit < 6 && len < bufferSize - 1; digit++)
-                    {
-                        fracPart = fracPart * ten;
-                        INT32 dig = (INT32)fracPart;
-                        buffer[len++] = '0' + dig;
-                        fracPart = fracPart - DOUBLE(dig);
-                    }
-
-                    // Remove trailing zeros (but keep at least one decimal digit)
-                    while (len > decStart + 1 && buffer[len - 1] == '0')
-                    {
-                        len--;
-                    }
+                    // Format as float using StrUtil
+                    return StrUtil::FloatToStr(d, buffer, bufferSize, 6);
                 }
             }
-            break;
 
         case ValueType::STRING:
-            for (USIZE i = 0; i < value.strLength && len < bufferSize - 1; i++)
-            {
-                buffer[len++] = value.strValue[i];
-            }
-            break;
+            return StrUtil::Copy(buffer, bufferSize, value.strValue, value.strLength);
 
         case ValueType::FUNCTION:
             {
-                // <fn name>
+                USIZE len = 0;
                 if (len < bufferSize - 1) buffer[len++] = '<';
                 if (len < bufferSize - 1) buffer[len++] = 'f';
                 if (len < bufferSize - 1) buffer[len++] = 'n';
@@ -187,23 +77,17 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
                     }
                 }
                 if (len < bufferSize - 1) buffer[len++] = '>';
+                buffer[len] = '\0';
+                return len;
             }
-            break;
 
         case ValueType::NATIVE_FUNCTION:
         case ValueType::CFUNCTION:
-            if (bufferSize >= 9)
-            {
-                buffer[0] = '<'; buffer[1] = 'n'; buffer[2] = 'a';
-                buffer[3] = 't'; buffer[4] = 'i'; buffer[5] = 'v';
-                buffer[6] = 'e'; buffer[7] = '>';
-                len = 8;
-            }
-            break;
+            return StrUtil::CopyEmbed("<native>"_embed, buffer, bufferSize);
 
         case ValueType::ARRAY:
             {
-                // Format as [elem1, elem2, ...]
+                USIZE len = 0;
                 if (len < bufferSize - 1) buffer[len++] = '[';
                 ArrayStorage* arr = value.array;
                 if (arr)
@@ -215,7 +99,6 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
                             if (len < bufferSize - 1) buffer[len++] = ',';
                             if (len < bufferSize - 1) buffer[len++] = ' ';
                         }
-                        // Recursively format element (with reduced buffer)
                         CHAR elemBuf[64];
                         USIZE elemLen = ValueToString(arr->elements[i], elemBuf, sizeof(elemBuf));
                         for (USIZE j = 0; j < elemLen && len < bufferSize - 2; j++)
@@ -225,18 +108,14 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
                     }
                 }
                 if (len < bufferSize - 1) buffer[len++] = ']';
+                buffer[len] = '\0';
+                return len;
             }
-            break;
 
         default:
-            break;
+            buffer[0] = '\0';
+            return 0;
     }
-
-    if (len < bufferSize)
-    {
-        buffer[len] = '\0';
-    }
-    return len;
 }
 
 // ============================================================================
@@ -610,43 +489,553 @@ NOINLINE Value StdLib_Pop(FunctionContext& ctx) noexcept
 }
 
 // ============================================================================
+// STRING MANIPULATION FUNCTIONS
+// ============================================================================
+
+/**
+ * substr(str, start [, length]) - Extract substring
+ *
+ * Usage:
+ *   var s = substr("hello", 1, 3);  // "ell"
+ *   var s = substr("hello", 2);     // "llo"
+ */
+NOINLINE Value StdLib_Substr(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgsMin(2) || !ctx.IsString(0) || !ctx.IsNumber(1))
+    {
+        return Value::String(""_embed, 0);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE strLen = ctx.ToStringLength(0);
+    INT64 start = ctx.ToNumber(1);
+
+    // Handle negative start (from end)
+    if (start < 0) start = (INT64)strLen + start;
+    if (start < 0) start = 0;
+    if ((USIZE)start >= strLen) return Value::String(""_embed, 0);
+
+    // Determine length
+    USIZE length = strLen - (USIZE)start;
+    if (ctx.GetArgCount() >= 3 && ctx.IsNumber(2))
+    {
+        INT64 reqLen = ctx.ToNumber(2);
+        if (reqLen <= 0) return Value::String(""_embed, 0);
+        if ((USIZE)reqLen < length) length = (USIZE)reqLen;
+    }
+
+    return Value::String(str + start, length);
+}
+
+/**
+ * indexOf(str, search [, start]) - Find substring position
+ *
+ * Usage:
+ *   var i = indexOf("hello", "ll");    // 2
+ *   var i = indexOf("hello", "x");     // -1
+ */
+NOINLINE Value StdLib_IndexOf(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgsMin(2) || !ctx.IsString(0) || !ctx.IsString(1))
+    {
+        return Value::Number(-1);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE strLen = ctx.ToStringLength(0);
+    const CHAR* search = ctx.ToString(1);
+    USIZE searchLen = ctx.ToStringLength(1);
+
+    USIZE start = 0;
+    if (ctx.GetArgCount() >= 3 && ctx.IsNumber(2))
+    {
+        INT64 s = ctx.ToNumber(2);
+        if (s > 0) start = (USIZE)s;
+    }
+
+    if (start >= strLen) return Value::Number(-1);
+
+    SSIZE result = StrUtil::IndexOf(str + start, strLen - start, search, searchLen);
+    if (result < 0) return Value::Number(-1);
+    return Value::Number((INT64)(start + (USIZE)result));
+}
+
+/**
+ * trim(str) - Remove leading and trailing whitespace
+ *
+ * Usage:
+ *   var s = trim("  hello  ");  // "hello"
+ */
+NOINLINE Value StdLib_Trim(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsString(0))
+    {
+        return Value::String(""_embed, 0);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE len = ctx.ToStringLength(0);
+
+    const CHAR* trimmed = StrUtil::Trim(str, len);
+    return Value::String(trimmed, len);
+}
+
+/**
+ * upper(str) - Convert string to uppercase
+ *
+ * Usage:
+ *   var s = upper("hello");  // "HELLO"
+ */
+NOINLINE Value StdLib_Upper(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsString(0))
+    {
+        return Value::String(""_embed, 0);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE len = ctx.ToStringLength(0);
+
+    CHAR buffer[MAX_STRING_VALUE];
+    USIZE copyLen = len < MAX_STRING_VALUE - 1 ? len : MAX_STRING_VALUE - 1;
+    for (USIZE i = 0; i < copyLen; i++)
+    {
+        buffer[i] = StrUtil::ToUpper(str[i]);
+    }
+    buffer[copyLen] = '\0';
+    return Value::String(buffer, copyLen);
+}
+
+/**
+ * lower(str) - Convert string to lowercase
+ *
+ * Usage:
+ *   var s = lower("HELLO");  // "hello"
+ */
+NOINLINE Value StdLib_Lower(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsString(0))
+    {
+        return Value::String(""_embed, 0);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE len = ctx.ToStringLength(0);
+
+    CHAR buffer[MAX_STRING_VALUE];
+    USIZE copyLen = len < MAX_STRING_VALUE - 1 ? len : MAX_STRING_VALUE - 1;
+    for (USIZE i = 0; i < copyLen; i++)
+    {
+        buffer[i] = StrUtil::ToLower(str[i]);
+    }
+    buffer[copyLen] = '\0';
+    return Value::String(buffer, copyLen);
+}
+
+/**
+ * startsWith(str, prefix) - Check if string starts with prefix
+ *
+ * Usage:
+ *   var b = startsWith("hello", "he");  // true
+ */
+NOINLINE Value StdLib_StartsWith(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(2) || !ctx.IsString(0) || !ctx.IsString(1))
+    {
+        return Value::Bool(FALSE);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE strLen = ctx.ToStringLength(0);
+    const CHAR* prefix = ctx.ToString(1);
+    USIZE prefixLen = ctx.ToStringLength(1);
+
+    return Value::Bool(StrUtil::StartsWith(str, strLen, prefix, prefixLen));
+}
+
+/**
+ * endsWith(str, suffix) - Check if string ends with suffix
+ *
+ * Usage:
+ *   var b = endsWith("hello", "lo");  // true
+ */
+NOINLINE Value StdLib_EndsWith(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(2) || !ctx.IsString(0) || !ctx.IsString(1))
+    {
+        return Value::Bool(FALSE);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE strLen = ctx.ToStringLength(0);
+    const CHAR* suffix = ctx.ToString(1);
+    USIZE suffixLen = ctx.ToStringLength(1);
+
+    return Value::Bool(StrUtil::EndsWith(str, strLen, suffix, suffixLen));
+}
+
+/**
+ * replace(str, search, replacement) - Replace first occurrence
+ *
+ * Usage:
+ *   var s = replace("hello", "l", "L");  // "heLlo"
+ */
+NOINLINE Value StdLib_Replace(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(3) || !ctx.IsString(0) || !ctx.IsString(1) || !ctx.IsString(2))
+    {
+        return Value::String(""_embed, 0);
+    }
+
+    const CHAR* str = ctx.ToString(0);
+    USIZE strLen = ctx.ToStringLength(0);
+    const CHAR* search = ctx.ToString(1);
+    USIZE searchLen = ctx.ToStringLength(1);
+    const CHAR* repl = ctx.ToString(2);
+    USIZE replLen = ctx.ToStringLength(2);
+
+    if (searchLen == 0) return Value::String(str, strLen);
+
+    SSIZE pos = StrUtil::IndexOf(str, strLen, search, searchLen);
+    if (pos < 0) return Value::String(str, strLen);
+
+    CHAR buffer[MAX_STRING_VALUE];
+    USIZE len = 0;
+
+    // Copy before match
+    for (SSIZE i = 0; i < pos && len < MAX_STRING_VALUE - 1; i++)
+    {
+        buffer[len++] = str[i];
+    }
+
+    // Copy replacement
+    for (USIZE i = 0; i < replLen && len < MAX_STRING_VALUE - 1; i++)
+    {
+        buffer[len++] = repl[i];
+    }
+
+    // Copy after match
+    for (USIZE i = (USIZE)pos + searchLen; i < strLen && len < MAX_STRING_VALUE - 1; i++)
+    {
+        buffer[len++] = str[i];
+    }
+
+    buffer[len] = '\0';
+    return Value::String(buffer, len);
+}
+
+/**
+ * char(code) - Get character from ASCII code
+ *
+ * Usage:
+ *   var c = char(65);  // "A"
+ */
+NOINLINE Value StdLib_Char(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsNumber(0))
+    {
+        return Value::String(""_embed, 0);
+    }
+
+    INT64 code = ctx.ToNumber(0);
+    if (code < 0 || code > 255) return Value::String(""_embed, 0);
+
+    CHAR buffer[2] = { (CHAR)code, '\0' };
+    return Value::String(buffer, 1);
+}
+
+/**
+ * ord(str) - Get ASCII code of first character
+ *
+ * Usage:
+ *   var n = ord("A");  // 65
+ */
+NOINLINE Value StdLib_Ord(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsString(0))
+    {
+        return Value::Number(-1);
+    }
+
+    USIZE len = ctx.ToStringLength(0);
+    if (len == 0) return Value::Number(-1);
+
+    return Value::Number((INT64)(UINT8)ctx.ToString(0)[0]);
+}
+
+// ============================================================================
+// ADDITIONAL MATH FUNCTIONS
+// ============================================================================
+
+/**
+ * round(x) - Round to nearest integer
+ *
+ * Usage:
+ *   var n = round(3.4);   // 3
+ *   var n = round(3.5);   // 4
+ *   var n = round(-3.5);  // -4
+ */
+NOINLINE Value StdLib_Round(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsNumber(0))
+    {
+        return Value::Number(0);
+    }
+
+    DOUBLE d = ctx.ToDouble(0);
+    DOUBLE half = DOUBLE(INT32(5)) / DOUBLE(INT32(10));  // 0.5
+    DOUBLE zero = DOUBLE(INT32(0));
+
+    if (d >= zero)
+    {
+        return Value::Number((INT64)(d + half));
+    }
+    else
+    {
+        return Value::Number((INT64)(d - half));
+    }
+}
+
+/**
+ * clamp(value, min, max) - Constrain value to range
+ *
+ * Usage:
+ *   var n = clamp(15, 0, 10);  // 10
+ *   var n = clamp(-5, 0, 10);  // 0
+ */
+NOINLINE Value StdLib_Clamp(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(3) || !ctx.IsNumber(0) || !ctx.IsNumber(1) || !ctx.IsNumber(2))
+    {
+        return Value::Number(0);
+    }
+
+    DOUBLE val = ctx.ToDouble(0);
+    DOUBLE minVal = ctx.ToDouble(1);
+    DOUBLE maxVal = ctx.ToDouble(2);
+
+    if (val < minVal) return Value::Float(minVal);
+    if (val > maxVal) return Value::Float(maxVal);
+    return Value::Float(val);
+}
+
+/**
+ * sign(x) - Get sign of number
+ *
+ * Usage:
+ *   var n = sign(-5);  // -1
+ *   var n = sign(0);   // 0
+ *   var n = sign(5);   // 1
+ */
+NOINLINE Value StdLib_Sign(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsNumber(0))
+    {
+        return Value::Number(0);
+    }
+
+    DOUBLE d = ctx.ToDouble(0);
+    DOUBLE zero = DOUBLE(INT32(0));
+
+    if (d < zero) return Value::Number(-1);
+    if (d > zero) return Value::Number(1);
+    return Value::Number(0);
+}
+
+/**
+ * pow(base, exp) - Power function (integer exponent only)
+ *
+ * Usage:
+ *   var n = pow(2, 10);   // 1024
+ *   var n = pow(3, 0);    // 1
+ */
+NOINLINE Value StdLib_Pow(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(2) || !ctx.IsNumber(0) || !ctx.IsNumber(1))
+    {
+        return Value::Number(0);
+    }
+
+    DOUBLE base = ctx.ToDouble(0);
+    INT64 exp = ctx.ToNumber(1);
+
+    if (exp == 0) return Value::Number(1);
+
+    BOOL negative = exp < 0;
+    if (negative) exp = -exp;
+
+    DOUBLE result = DOUBLE(INT32(1));
+    for (INT64 i = 0; i < exp; i++)
+    {
+        result = result * base;
+    }
+
+    if (negative)
+    {
+        // result = 1 / result (simple inverse)
+        DOUBLE one = DOUBLE(INT32(1));
+        result = one / result;
+    }
+
+    return Value::Float(result);
+}
+
+/**
+ * sqrt(x) - Square root using Newton-Raphson
+ *
+ * Usage:
+ *   var n = sqrt(16);   // 4
+ *   var n = sqrt(2);    // 1.414...
+ */
+NOINLINE Value StdLib_Sqrt(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsNumber(0))
+    {
+        return Value::Number(0);
+    }
+
+    DOUBLE x = ctx.ToDouble(0);
+    DOUBLE zero = DOUBLE(INT32(0));
+
+    if (x < zero) return Value::Float(zero);  // Negative -> return 0 (no NaN)
+    if (x == zero) return Value::Float(zero);
+
+    // Newton-Raphson: x_{n+1} = (x_n + S/x_n) / 2
+    DOUBLE two = DOUBLE(INT32(2));
+    DOUBLE guess = x / two;  // Initial guess
+    DOUBLE epsilon = DOUBLE(INT32(1)) / DOUBLE(INT32(1000000));  // 0.000001 precision
+
+    for (INT32 i = 0; i < 20; i++)  // Max 20 iterations
+    {
+        DOUBLE newGuess = (guess + x / guess) / two;
+        DOUBLE diff = newGuess - guess;
+        if (diff < zero) diff = -diff;
+        if (diff < epsilon) break;
+        guess = newGuess;
+    }
+
+    return Value::Float(guess);
+}
+
+// ============================================================================
+// ADDITIONAL ARRAY FUNCTIONS
+// ============================================================================
+
+/**
+ * contains(array, value) - Check if array contains value
+ *
+ * Usage:
+ *   var b = contains([1, 2, 3], 2);  // true
+ */
+NOINLINE Value StdLib_Contains(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(2) || !ctx.IsArray(0))
+    {
+        return Value::Bool(FALSE);
+    }
+
+    ArrayStorage* arr = ctx.ToArray(0);
+    if (!arr) return Value::Bool(FALSE);
+
+    const Value& search = ctx.Arg(1);
+    for (UINT8 i = 0; i < arr->count; i++)
+    {
+        if (arr->elements[i].Equals(search))
+        {
+            return Value::Bool(TRUE);
+        }
+    }
+    return Value::Bool(FALSE);
+}
+
+/**
+ * reverse(array) - Reverse array in place
+ *
+ * Usage:
+ *   var arr = [1, 2, 3];
+ *   reverse(arr);  // arr is now [3, 2, 1]
+ */
+NOINLINE Value StdLib_Reverse(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsArray(0))
+    {
+        return Value::Nil();
+    }
+
+    ArrayStorage* arr = ctx.ToArray(0);
+    if (!arr || arr->count < 2) return Value::Nil();
+
+    UINT8 left = 0;
+    UINT8 right = arr->count - 1;
+    while (left < right)
+    {
+        Value temp = arr->elements[left];
+        arr->elements[left] = arr->elements[right];
+        arr->elements[right] = temp;
+        left++;
+        right--;
+    }
+    return Value::Nil();
+}
+
+// ============================================================================
 // OPEN STANDARD LIBRARY
 // ============================================================================
 
 /**
  * Register all standard library functions with a State.
  *
- * Functions registered (in order):
- *   1. print  - Print values to output
- *   2. len    - Get string/array length
- *   3. str    - Convert to string
- *   4. num    - Convert to number
- *   5. type   - Get type name
- *   6. abs    - Absolute value
- *   7. min    - Minimum of two numbers
- *   8. max    - Maximum of two numbers
- *   9. floor  - Round down to nearest integer
- *  10. ceil   - Round up to nearest integer
- *  11. int    - Truncate to integer (toward zero)
- *  12. push   - Add element to end of array
- *  13. pop    - Remove and return last element of array
+ * Core functions:
+ *   print, len, str, num, type
+ *
+ * Math functions:
+ *   abs, min, max, floor, ceil, int, round, clamp, sign, pow, sqrt
+ *
+ * String functions:
+ *   substr, indexOf, trim, upper, lower, startsWith, endsWith, replace, char, ord
+ *
+ * Array functions:
+ *   push, pop, contains, reverse
  */
 NOINLINE void OpenStdLib(State& L) noexcept
 {
-    // Register standard library functions (PIC-safe with _embed)
+    // Core functions
     L.Register("print"_embed, EMBED_FUNC(StdLib_Print));
     L.Register("len"_embed, EMBED_FUNC(StdLib_Len));
     L.Register("str"_embed, EMBED_FUNC(StdLib_Str));
     L.Register("num"_embed, EMBED_FUNC(StdLib_Num));
     L.Register("type"_embed, EMBED_FUNC(StdLib_Type));
+
+    // Math functions
     L.Register("abs"_embed, EMBED_FUNC(StdLib_Abs));
     L.Register("min"_embed, EMBED_FUNC(StdLib_Min));
     L.Register("max"_embed, EMBED_FUNC(StdLib_Max));
     L.Register("floor"_embed, EMBED_FUNC(StdLib_Floor));
     L.Register("ceil"_embed, EMBED_FUNC(StdLib_Ceil));
     L.Register("int"_embed, EMBED_FUNC(StdLib_Int));
+    L.Register("round"_embed, EMBED_FUNC(StdLib_Round));
+    L.Register("clamp"_embed, EMBED_FUNC(StdLib_Clamp));
+    L.Register("sign"_embed, EMBED_FUNC(StdLib_Sign));
+    L.Register("pow"_embed, EMBED_FUNC(StdLib_Pow));
+    L.Register("sqrt"_embed, EMBED_FUNC(StdLib_Sqrt));
+
+    // String functions
+    L.Register("substr"_embed, EMBED_FUNC(StdLib_Substr));
+    L.Register("indexOf"_embed, EMBED_FUNC(StdLib_IndexOf));
+    L.Register("trim"_embed, EMBED_FUNC(StdLib_Trim));
+    L.Register("upper"_embed, EMBED_FUNC(StdLib_Upper));
+    L.Register("lower"_embed, EMBED_FUNC(StdLib_Lower));
+    L.Register("startsWith"_embed, EMBED_FUNC(StdLib_StartsWith));
+    L.Register("endsWith"_embed, EMBED_FUNC(StdLib_EndsWith));
+    L.Register("replace"_embed, EMBED_FUNC(StdLib_Replace));
+    L.Register("char"_embed, EMBED_FUNC(StdLib_Char));
+    L.Register("ord"_embed, EMBED_FUNC(StdLib_Ord));
+
+    // Array functions
     L.Register("push"_embed, EMBED_FUNC(StdLib_Push));
     L.Register("pop"_embed, EMBED_FUNC(StdLib_Pop));
+    L.Register("contains"_embed, EMBED_FUNC(StdLib_Contains));
+    L.Register("reverse"_embed, EMBED_FUNC(StdLib_Reverse));
 }
 
 } // namespace script

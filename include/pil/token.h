@@ -11,6 +11,7 @@
 
 #include "bal/types/primitives.h"
 #include "bal/types/embedded/embedded_string.h"
+#include "strutil.h"  // String utilities
 
 namespace script
 {
@@ -178,21 +179,6 @@ struct Token
 // TOKEN TYPE NAMES (for debugging)
 // ============================================================================
 
-// Helper to copy embedded string to buffer
-template<typename T>
-FORCE_INLINE USIZE CopyEmbedToBuffer(const T& src, CHAR* buffer, USIZE bufferSize) noexcept
-{
-    USIZE len = 0;
-    const CHAR* s = src;
-    while (s[len] != '\0' && len < bufferSize - 1)
-    {
-        buffer[len] = s[len];
-        len++;
-    }
-    buffer[len] = '\0';
-    return len;
-}
-
 // Writes the token type name to the provided buffer (PIC-safe, no .rdata)
 // Buffer should be at least 16 bytes
 // Returns the length of the string written
@@ -202,54 +188,54 @@ NOINLINE USIZE GetTokenTypeName(TokenType type, CHAR* buffer, USIZE bufferSize) 
 
     switch (type)
     {
-        case TokenType::NUMBER:        return CopyEmbedToBuffer("NUMBER"_embed, buffer, bufferSize);
-        case TokenType::STRING:        return CopyEmbedToBuffer("STRING"_embed, buffer, bufferSize);
-        case TokenType::IDENTIFIER:    return CopyEmbedToBuffer("IDENTIFIER"_embed, buffer, bufferSize);
-        case TokenType::VAR:           return CopyEmbedToBuffer("VAR"_embed, buffer, bufferSize);
-        case TokenType::FN:            return CopyEmbedToBuffer("FN"_embed, buffer, bufferSize);
-        case TokenType::IF:            return CopyEmbedToBuffer("IF"_embed, buffer, bufferSize);
-        case TokenType::ELSE:          return CopyEmbedToBuffer("ELSE"_embed, buffer, bufferSize);
-        case TokenType::WHILE:         return CopyEmbedToBuffer("WHILE"_embed, buffer, bufferSize);
-        case TokenType::FOR:           return CopyEmbedToBuffer("FOR"_embed, buffer, bufferSize);
-        case TokenType::IN:            return CopyEmbedToBuffer("IN"_embed, buffer, bufferSize);
-        case TokenType::RETURN:        return CopyEmbedToBuffer("RETURN"_embed, buffer, bufferSize);
-        case TokenType::BREAK:         return CopyEmbedToBuffer("BREAK"_embed, buffer, bufferSize);
-        case TokenType::CONTINUE:      return CopyEmbedToBuffer("CONTINUE"_embed, buffer, bufferSize);
-        case TokenType::TRUE_:         return CopyEmbedToBuffer("TRUE"_embed, buffer, bufferSize);
-        case TokenType::FALSE_:        return CopyEmbedToBuffer("FALSE"_embed, buffer, bufferSize);
-        case TokenType::NIL:           return CopyEmbedToBuffer("NIL"_embed, buffer, bufferSize);
-        case TokenType::LEFT_PAREN:    return CopyEmbedToBuffer("LEFT_PAREN"_embed, buffer, bufferSize);
-        case TokenType::RIGHT_PAREN:   return CopyEmbedToBuffer("RIGHT_PAREN"_embed, buffer, bufferSize);
-        case TokenType::LEFT_BRACE:    return CopyEmbedToBuffer("LEFT_BRACE"_embed, buffer, bufferSize);
-        case TokenType::RIGHT_BRACE:   return CopyEmbedToBuffer("RIGHT_BRACE"_embed, buffer, bufferSize);
-        case TokenType::LEFT_BRACKET:  return CopyEmbedToBuffer("LEFT_BRACKET"_embed, buffer, bufferSize);
-        case TokenType::RIGHT_BRACKET: return CopyEmbedToBuffer("RIGHT_BRACKET"_embed, buffer, bufferSize);
-        case TokenType::COMMA:         return CopyEmbedToBuffer("COMMA"_embed, buffer, bufferSize);
-        case TokenType::DOT:           return CopyEmbedToBuffer("DOT"_embed, buffer, bufferSize);
-        case TokenType::SEMICOLON:     return CopyEmbedToBuffer("SEMICOLON"_embed, buffer, bufferSize);
-        case TokenType::COLON:         return CopyEmbedToBuffer("COLON"_embed, buffer, bufferSize);
-        case TokenType::PLUS:          return CopyEmbedToBuffer("PLUS"_embed, buffer, bufferSize);
-        case TokenType::MINUS:         return CopyEmbedToBuffer("MINUS"_embed, buffer, bufferSize);
-        case TokenType::STAR:          return CopyEmbedToBuffer("STAR"_embed, buffer, bufferSize);
-        case TokenType::SLASH:         return CopyEmbedToBuffer("SLASH"_embed, buffer, bufferSize);
-        case TokenType::PERCENT:       return CopyEmbedToBuffer("PERCENT"_embed, buffer, bufferSize);
-        case TokenType::ASSIGN:        return CopyEmbedToBuffer("ASSIGN"_embed, buffer, bufferSize);
-        case TokenType::BANG:          return CopyEmbedToBuffer("BANG"_embed, buffer, bufferSize);
-        case TokenType::LESS:          return CopyEmbedToBuffer("LESS"_embed, buffer, bufferSize);
-        case TokenType::GREATER:       return CopyEmbedToBuffer("GREATER"_embed, buffer, bufferSize);
-        case TokenType::EQUAL_EQUAL:   return CopyEmbedToBuffer("EQUAL_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::BANG_EQUAL:    return CopyEmbedToBuffer("BANG_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::LESS_EQUAL:    return CopyEmbedToBuffer("LESS_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::GREATER_EQUAL: return CopyEmbedToBuffer("GREATER_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::AND_AND:       return CopyEmbedToBuffer("AND_AND"_embed, buffer, bufferSize);
-        case TokenType::OR_OR:         return CopyEmbedToBuffer("OR_OR"_embed, buffer, bufferSize);
-        case TokenType::PLUS_EQUAL:    return CopyEmbedToBuffer("PLUS_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::MINUS_EQUAL:   return CopyEmbedToBuffer("MINUS_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::STAR_EQUAL:    return CopyEmbedToBuffer("STAR_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::SLASH_EQUAL:   return CopyEmbedToBuffer("SLASH_EQUAL"_embed, buffer, bufferSize);
-        case TokenType::END_OF_FILE:   return CopyEmbedToBuffer("EOF"_embed, buffer, bufferSize);
-        case TokenType::ERROR:         return CopyEmbedToBuffer("ERROR"_embed, buffer, bufferSize);
-        default:                       return CopyEmbedToBuffer("UNKNOWN"_embed, buffer, bufferSize);
+        case TokenType::NUMBER:        return StrUtil::CopyEmbed("NUMBER"_embed, buffer, bufferSize);
+        case TokenType::STRING:        return StrUtil::CopyEmbed("STRING"_embed, buffer, bufferSize);
+        case TokenType::IDENTIFIER:    return StrUtil::CopyEmbed("IDENTIFIER"_embed, buffer, bufferSize);
+        case TokenType::VAR:           return StrUtil::CopyEmbed("VAR"_embed, buffer, bufferSize);
+        case TokenType::FN:            return StrUtil::CopyEmbed("FN"_embed, buffer, bufferSize);
+        case TokenType::IF:            return StrUtil::CopyEmbed("IF"_embed, buffer, bufferSize);
+        case TokenType::ELSE:          return StrUtil::CopyEmbed("ELSE"_embed, buffer, bufferSize);
+        case TokenType::WHILE:         return StrUtil::CopyEmbed("WHILE"_embed, buffer, bufferSize);
+        case TokenType::FOR:           return StrUtil::CopyEmbed("FOR"_embed, buffer, bufferSize);
+        case TokenType::IN:            return StrUtil::CopyEmbed("IN"_embed, buffer, bufferSize);
+        case TokenType::RETURN:        return StrUtil::CopyEmbed("RETURN"_embed, buffer, bufferSize);
+        case TokenType::BREAK:         return StrUtil::CopyEmbed("BREAK"_embed, buffer, bufferSize);
+        case TokenType::CONTINUE:      return StrUtil::CopyEmbed("CONTINUE"_embed, buffer, bufferSize);
+        case TokenType::TRUE_:         return StrUtil::CopyEmbed("TRUE"_embed, buffer, bufferSize);
+        case TokenType::FALSE_:        return StrUtil::CopyEmbed("FALSE"_embed, buffer, bufferSize);
+        case TokenType::NIL:           return StrUtil::CopyEmbed("NIL"_embed, buffer, bufferSize);
+        case TokenType::LEFT_PAREN:    return StrUtil::CopyEmbed("LEFT_PAREN"_embed, buffer, bufferSize);
+        case TokenType::RIGHT_PAREN:   return StrUtil::CopyEmbed("RIGHT_PAREN"_embed, buffer, bufferSize);
+        case TokenType::LEFT_BRACE:    return StrUtil::CopyEmbed("LEFT_BRACE"_embed, buffer, bufferSize);
+        case TokenType::RIGHT_BRACE:   return StrUtil::CopyEmbed("RIGHT_BRACE"_embed, buffer, bufferSize);
+        case TokenType::LEFT_BRACKET:  return StrUtil::CopyEmbed("LEFT_BRACKET"_embed, buffer, bufferSize);
+        case TokenType::RIGHT_BRACKET: return StrUtil::CopyEmbed("RIGHT_BRACKET"_embed, buffer, bufferSize);
+        case TokenType::COMMA:         return StrUtil::CopyEmbed("COMMA"_embed, buffer, bufferSize);
+        case TokenType::DOT:           return StrUtil::CopyEmbed("DOT"_embed, buffer, bufferSize);
+        case TokenType::SEMICOLON:     return StrUtil::CopyEmbed("SEMICOLON"_embed, buffer, bufferSize);
+        case TokenType::COLON:         return StrUtil::CopyEmbed("COLON"_embed, buffer, bufferSize);
+        case TokenType::PLUS:          return StrUtil::CopyEmbed("PLUS"_embed, buffer, bufferSize);
+        case TokenType::MINUS:         return StrUtil::CopyEmbed("MINUS"_embed, buffer, bufferSize);
+        case TokenType::STAR:          return StrUtil::CopyEmbed("STAR"_embed, buffer, bufferSize);
+        case TokenType::SLASH:         return StrUtil::CopyEmbed("SLASH"_embed, buffer, bufferSize);
+        case TokenType::PERCENT:       return StrUtil::CopyEmbed("PERCENT"_embed, buffer, bufferSize);
+        case TokenType::ASSIGN:        return StrUtil::CopyEmbed("ASSIGN"_embed, buffer, bufferSize);
+        case TokenType::BANG:          return StrUtil::CopyEmbed("BANG"_embed, buffer, bufferSize);
+        case TokenType::LESS:          return StrUtil::CopyEmbed("LESS"_embed, buffer, bufferSize);
+        case TokenType::GREATER:       return StrUtil::CopyEmbed("GREATER"_embed, buffer, bufferSize);
+        case TokenType::EQUAL_EQUAL:   return StrUtil::CopyEmbed("EQUAL_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::BANG_EQUAL:    return StrUtil::CopyEmbed("BANG_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::LESS_EQUAL:    return StrUtil::CopyEmbed("LESS_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::GREATER_EQUAL: return StrUtil::CopyEmbed("GREATER_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::AND_AND:       return StrUtil::CopyEmbed("AND_AND"_embed, buffer, bufferSize);
+        case TokenType::OR_OR:         return StrUtil::CopyEmbed("OR_OR"_embed, buffer, bufferSize);
+        case TokenType::PLUS_EQUAL:    return StrUtil::CopyEmbed("PLUS_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::MINUS_EQUAL:   return StrUtil::CopyEmbed("MINUS_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::STAR_EQUAL:    return StrUtil::CopyEmbed("STAR_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::SLASH_EQUAL:   return StrUtil::CopyEmbed("SLASH_EQUAL"_embed, buffer, bufferSize);
+        case TokenType::END_OF_FILE:   return StrUtil::CopyEmbed("EOF"_embed, buffer, bufferSize);
+        case TokenType::ERROR:         return StrUtil::CopyEmbed("ERROR"_embed, buffer, bufferSize);
+        default:                       return StrUtil::CopyEmbed("UNKNOWN"_embed, buffer, bufferSize);
     }
 }
 

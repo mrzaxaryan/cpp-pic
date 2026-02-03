@@ -38,7 +38,11 @@ namespace script
 // All functions must be registered manually from C++.
 //
 // Use OpenStdLib(L) to register the standard library:
-//   - print, len, str, num, type, abs, min, max
+//   Core:    print, len, str, num, type
+//   Math:    abs, min, max, floor, ceil, int, round, clamp, sign, pow, sqrt
+//   String:  substr, indexOf, trim, upper, lower, startsWith, endsWith,
+//            replace, char, ord
+//   Array:   push, pop, contains, reverse
 //
 // Or register functions individually:
 //   L.Register("print", StdLib_Print);

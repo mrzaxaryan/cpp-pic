@@ -9,7 +9,8 @@
 
 #pragma once
 
-#include "ast.h"  // includes bal/types/numeric/double.h
+#include "ast.h"      // includes bal/types/numeric/double.h
+#include "strutil.h"  // String utilities
 
 namespace script
 {
@@ -207,13 +208,7 @@ struct Value
     {
         Value v;
         v.type = ValueType::STRING;
-        USIZE copyLen = len < MAX_STRING_VALUE - 1 ? len : MAX_STRING_VALUE - 1;
-        for (USIZE i = 0; i < copyLen; i++)
-        {
-            v.strValue[i] = s[i];
-        }
-        v.strValue[copyLen] = '\0';
-        v.strLength = copyLen;
+        v.strLength = StrUtil::Copy(v.strValue, MAX_STRING_VALUE, s, len);
         return v;
     }
 
@@ -291,6 +286,57 @@ struct Value
     FORCE_INLINE DOUBLE AsDouble() const noexcept
     {
         return numberValue;
+    }
+
+    // Safe getters with default values
+    FORCE_INLINE DOUBLE AsDoubleOr(DOUBLE defaultVal) const noexcept
+    {
+        return type == ValueType::NUMBER ? numberValue : defaultVal;
+    }
+
+    FORCE_INLINE INT64 AsIntOr(INT64 defaultVal) const noexcept
+    {
+        return type == ValueType::NUMBER ? (INT64)numberValue : defaultVal;
+    }
+
+    FORCE_INLINE const CHAR* AsStringOr(const CHAR* defaultVal) const noexcept
+    {
+        return type == ValueType::STRING ? strValue : defaultVal;
+    }
+
+    FORCE_INLINE BOOL AsBoolOr(BOOL defaultVal) const noexcept
+    {
+        return type == ValueType::BOOL ? boolValue : defaultVal;
+    }
+
+    // TryGet methods (returns TRUE if successful)
+    FORCE_INLINE BOOL TryGetNumber(DOUBLE& out) const noexcept
+    {
+        if (type != ValueType::NUMBER) return FALSE;
+        out = numberValue;
+        return TRUE;
+    }
+
+    FORCE_INLINE BOOL TryGetInt(INT64& out) const noexcept
+    {
+        if (type != ValueType::NUMBER) return FALSE;
+        out = (INT64)numberValue;
+        return TRUE;
+    }
+
+    FORCE_INLINE BOOL TryGetString(const CHAR*& out, USIZE& len) const noexcept
+    {
+        if (type != ValueType::STRING) return FALSE;
+        out = strValue;
+        len = strLength;
+        return TRUE;
+    }
+
+    FORCE_INLINE BOOL TryGetBool(BOOL& out) const noexcept
+    {
+        if (type != ValueType::BOOL) return FALSE;
+        out = boolValue;
+        return TRUE;
     }
 
     // Truthiness: nil and false are falsy, everything else is truthy
@@ -530,12 +576,7 @@ public:
         // Add new variable
         Variable& var = scope.variables[scope.count++];
         var.hash = hash;
-        var.nameLength = nameLen < MAX_IDENTIFIER_LENGTH - 1 ? nameLen : MAX_IDENTIFIER_LENGTH - 1;
-        for (USIZE i = 0; i < var.nameLength; i++)
-        {
-            var.name[i] = name[i];
-        }
-        var.name[var.nameLength] = '\0';
+        var.nameLength = StrUtil::Copy(var.name, MAX_IDENTIFIER_LENGTH, name, nameLen);
         var.value = value;
         return TRUE;
     }
@@ -575,21 +616,6 @@ public:
 // VALUE HELPERS
 // ============================================================================
 
-// Helper to copy embedded string to buffer
-template<typename T>
-FORCE_INLINE USIZE CopyValueTypeToBuffer(const T& src, CHAR* buffer, USIZE bufferSize) noexcept
-{
-    USIZE len = 0;
-    const CHAR* s = src;
-    while (s[len] != '\0' && len < bufferSize - 1)
-    {
-        buffer[len] = s[len];
-        len++;
-    }
-    buffer[len] = '\0';
-    return len;
-}
-
 // Get type name as string (PIC-safe, writes to buffer)
 // Buffer should be at least 16 bytes
 // Returns the length of the string written
@@ -599,15 +625,15 @@ NOINLINE USIZE GetValueTypeName(ValueType type, CHAR* buffer, USIZE bufferSize) 
 
     switch (type)
     {
-        case ValueType::NIL:             return CopyValueTypeToBuffer("nil"_embed, buffer, bufferSize);
-        case ValueType::BOOL:            return CopyValueTypeToBuffer("bool"_embed, buffer, bufferSize);
-        case ValueType::NUMBER:          return CopyValueTypeToBuffer("number"_embed, buffer, bufferSize);
-        case ValueType::STRING:          return CopyValueTypeToBuffer("string"_embed, buffer, bufferSize);
-        case ValueType::ARRAY:           return CopyValueTypeToBuffer("array"_embed, buffer, bufferSize);
-        case ValueType::FUNCTION:        return CopyValueTypeToBuffer("function"_embed, buffer, bufferSize);
-        case ValueType::NATIVE_FUNCTION: return CopyValueTypeToBuffer("native"_embed, buffer, bufferSize);
-        case ValueType::CFUNCTION:       return CopyValueTypeToBuffer("cfunction"_embed, buffer, bufferSize);
-        default:                         return CopyValueTypeToBuffer("unknown"_embed, buffer, bufferSize);
+        case ValueType::NIL:             return StrUtil::CopyEmbed("nil"_embed, buffer, bufferSize);
+        case ValueType::BOOL:            return StrUtil::CopyEmbed("bool"_embed, buffer, bufferSize);
+        case ValueType::NUMBER:          return StrUtil::CopyEmbed("number"_embed, buffer, bufferSize);
+        case ValueType::STRING:          return StrUtil::CopyEmbed("string"_embed, buffer, bufferSize);
+        case ValueType::ARRAY:           return StrUtil::CopyEmbed("array"_embed, buffer, bufferSize);
+        case ValueType::FUNCTION:        return StrUtil::CopyEmbed("function"_embed, buffer, bufferSize);
+        case ValueType::NATIVE_FUNCTION: return StrUtil::CopyEmbed("native"_embed, buffer, bufferSize);
+        case ValueType::CFUNCTION:       return StrUtil::CopyEmbed("cfunction"_embed, buffer, bufferSize);
+        default:                         return StrUtil::CopyEmbed("unknown"_embed, buffer, bufferSize);
     }
 }
 

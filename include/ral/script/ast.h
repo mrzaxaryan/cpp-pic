@@ -52,6 +52,7 @@ enum class StmtType : UINT8
     IF,                 // if (cond) { } else { }
     WHILE,              // while (cond) { }
     FOR,                // for (init; cond; incr) { }
+    FOR_EACH,           // for (var x in collection) { }
     FUNCTION,           // fn name(params) { }
     RETURN,             // return expr;
 };
@@ -236,6 +237,18 @@ struct ForStmt
     Stmt* body;
 };
 
+// For-each statement: for (var x in collection) { } or for (var i, x in collection) { }
+struct ForEachStmt
+{
+    CHAR valueName[MAX_IDENTIFIER_LENGTH];  // Loop variable name (the value)
+    USIZE valueNameLength;
+    CHAR indexName[MAX_IDENTIFIER_LENGTH];  // Optional index variable name
+    USIZE indexNameLength;                  // 0 if no index variable
+    BOOL hasIndex;                          // TRUE if index variable is present
+    Expr* collection;                       // The collection to iterate over
+    Stmt* body;
+};
+
 // Function declaration: fn name(params) { }
 struct FunctionStmt
 {
@@ -271,6 +284,7 @@ struct Stmt
         IfStmt ifStmt;
         WhileStmt whileStmt;
         ForStmt forStmt;
+        ForEachStmt forEachStmt;
         FunctionStmt function;
         ReturnStmt returnStmt;
     };
@@ -600,6 +614,49 @@ FORCE_INLINE Stmt* MakeWhileStmt(ASTAllocator& alloc, Expr* cond, Stmt* body, UI
     stmt->column = col;
     stmt->whileStmt.condition = cond;
     stmt->whileStmt.body = body;
+    return stmt;
+}
+
+// Create for-each statement
+FORCE_INLINE Stmt* MakeForEachStmt(ASTAllocator& alloc, const CHAR* valueName, USIZE valueLen,
+                                    const CHAR* indexName, USIZE indexLen, BOOL hasIndex,
+                                    Expr* collection, Stmt* body, UINT32 line, UINT32 col) noexcept
+{
+    Stmt* stmt = alloc.AllocStmt();
+    if (!stmt) return nullptr;
+    stmt->type = StmtType::FOR_EACH;
+    stmt->line = line;
+    stmt->column = col;
+
+    // Copy value name
+    USIZE copyLen = valueLen < MAX_IDENTIFIER_LENGTH - 1 ? valueLen : MAX_IDENTIFIER_LENGTH - 1;
+    for (USIZE i = 0; i < copyLen; i++)
+    {
+        stmt->forEachStmt.valueName[i] = valueName[i];
+    }
+    stmt->forEachStmt.valueName[copyLen] = '\0';
+    stmt->forEachStmt.valueNameLength = copyLen;
+
+    // Copy index name if present
+    stmt->forEachStmt.hasIndex = hasIndex;
+    if (hasIndex && indexName)
+    {
+        USIZE idxLen = indexLen < MAX_IDENTIFIER_LENGTH - 1 ? indexLen : MAX_IDENTIFIER_LENGTH - 1;
+        for (USIZE i = 0; i < idxLen; i++)
+        {
+            stmt->forEachStmt.indexName[i] = indexName[i];
+        }
+        stmt->forEachStmt.indexName[idxLen] = '\0';
+        stmt->forEachStmt.indexNameLength = idxLen;
+    }
+    else
+    {
+        stmt->forEachStmt.indexName[0] = '\0';
+        stmt->forEachStmt.indexNameLength = 0;
+    }
+
+    stmt->forEachStmt.collection = collection;
+    stmt->forEachStmt.body = body;
     return stmt;
 }
 

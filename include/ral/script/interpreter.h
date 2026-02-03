@@ -152,6 +152,9 @@ private:
             case StmtType::WHILE:
                 ExecuteWhile(stmt);
                 break;
+            case StmtType::FOR_EACH:
+                ExecuteForEach(stmt);
+                break;
             case StmtType::FUNCTION:
                 ExecuteFunction(stmt);
                 break;
@@ -219,6 +222,71 @@ private:
 
             ExecuteStmt(stmt->whileStmt.body);
         }
+    }
+
+    NOINLINE void ExecuteForEach(Stmt* stmt) noexcept
+    {
+        Value collection = Evaluate(stmt->forEachStmt.collection);
+        if (m_hasError) return;
+
+        const CHAR* valueName = stmt->forEachStmt.valueName;
+        USIZE valueNameLen = stmt->forEachStmt.valueNameLength;
+        const CHAR* indexName = stmt->forEachStmt.indexName;
+        USIZE indexNameLen = stmt->forEachStmt.indexNameLength;
+        BOOL hasIndex = stmt->forEachStmt.hasIndex;
+
+        // Iterate over array
+        if (collection.IsArray())
+        {
+            ArrayStorage* arr = collection.array;
+            if (!arr)
+            {
+                RuntimeError("Cannot iterate over null array"_embed, stmt->line);
+                return;
+            }
+
+            for (UINT8 i = 0; i < arr->count && !m_hasError && !m_returnValue.hasReturn; i++)
+            {
+                m_env->PushScope();
+
+                // Define loop variables
+                if (hasIndex)
+                {
+                    m_env->Define(indexName, indexNameLen, Value::Number(i));
+                }
+                m_env->Define(valueName, valueNameLen, arr->Get(i));
+
+                ExecuteStmt(stmt->forEachStmt.body);
+
+                m_env->PopScope();
+            }
+            return;
+        }
+
+        // Iterate over string
+        if (collection.IsString())
+        {
+            for (USIZE i = 0; i < collection.strLength && !m_hasError && !m_returnValue.hasReturn; i++)
+            {
+                m_env->PushScope();
+
+                // Define loop variables
+                if (hasIndex)
+                {
+                    m_env->Define(indexName, indexNameLen, Value::Number((INT64)i));
+                }
+                // Create single character string
+                CHAR ch[2] = { collection.strValue[i], '\0' };
+                m_env->Define(valueName, valueNameLen, Value::String(ch, 1));
+
+                ExecuteStmt(stmt->forEachStmt.body);
+
+                m_env->PopScope();
+            }
+            return;
+        }
+
+        RuntimeError("Can only iterate over arrays and strings"_embed, stmt->line);
     }
 
     NOINLINE void ExecuteFunction(Stmt* stmt) noexcept

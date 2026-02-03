@@ -33,6 +33,7 @@ enum class TokenType : UINT8
     ELSE,           // else
     WHILE,          // while
     FOR,            // for
+    IN,             // in
     RETURN,         // return
     TRUE_,          // true
     FALSE_,         // false
@@ -208,6 +209,7 @@ NOINLINE USIZE GetTokenTypeName(TokenType type, CHAR* buffer, USIZE bufferSize) 
         case TokenType::ELSE:          return CopyEmbedToBuffer("ELSE"_embed, buffer, bufferSize);
         case TokenType::WHILE:         return CopyEmbedToBuffer("WHILE"_embed, buffer, bufferSize);
         case TokenType::FOR:           return CopyEmbedToBuffer("FOR"_embed, buffer, bufferSize);
+        case TokenType::IN:            return CopyEmbedToBuffer("IN"_embed, buffer, bufferSize);
         case TokenType::RETURN:        return CopyEmbedToBuffer("RETURN"_embed, buffer, bufferSize);
         case TokenType::TRUE_:         return CopyEmbedToBuffer("TRUE"_embed, buffer, bufferSize);
         case TokenType::FALSE_:        return CopyEmbedToBuffer("FALSE"_embed, buffer, bufferSize);

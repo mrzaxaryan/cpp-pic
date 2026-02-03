@@ -29,6 +29,9 @@ public:
         RUN_TEST(allPassed, TestArrayAccess, "Array access and assignment");
         RUN_TEST(allPassed, TestArrayPushPop, "Array push and pop");
         RUN_TEST(allPassed, TestStringIndexing, "String indexing");
+        RUN_TEST(allPassed, TestForEachArray, "For-each over arrays");
+        RUN_TEST(allPassed, TestForEachString, "For-each over strings");
+        RUN_TEST(allPassed, TestForEachWithIndex, "For-each with index");
 
         if (allPassed)
             LOG_INFO("All Language tests passed!");
@@ -320,6 +323,103 @@ print("s[4] =", s[4]);
 // Loop through string
 for (var i = 0; i < len(s); i = i + 1) {
     print("char", i, "=", s[i]);
+}
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestForEachArray()
+    {
+        script::State* L = new script::State();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var nums = [10, 20, 30, 40, 50];
+
+// For-each over array
+print("Iterating over nums:");
+for (var n in nums) {
+    print("  value:", n);
+}
+
+// Compute sum
+var sum = 0;
+for (var x in nums) {
+    sum = sum + x;
+}
+print("Sum:", sum);
+
+// Mixed types
+var mixed = [1, "two", true, nil];
+print("Mixed array:");
+for (var item in mixed) {
+    print("  item:", item, "type:", type(item));
+}
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestForEachString()
+    {
+        script::State* L = new script::State();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var s = "Hello";
+
+// For-each over string
+print("Characters in string:");
+for (var c in s) {
+    print("  char:", c);
+}
+
+// Count vowels
+var vowels = 0;
+var text = "Hello World";
+for (var ch in text) {
+    if (ch == "a" || ch == "e" || ch == "i" || ch == "o" || ch == "u" ||
+        ch == "A" || ch == "E" || ch == "I" || ch == "O" || ch == "U") {
+        vowels = vowels + 1;
+    }
+}
+print("Vowels in text:", vowels);
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestForEachWithIndex()
+    {
+        script::State* L = new script::State();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var arr = ["apple", "banana", "cherry"];
+
+// For-each with index
+print("Array with indices:");
+for (var i, item in arr) {
+    print("  index:", i, "item:", item);
+}
+
+// Sum with weighted indices
+var nums = [10, 20, 30];
+var weighted = 0;
+for (var idx, val in nums) {
+    weighted = weighted + (idx * val);
+}
+print("Weighted sum:", weighted);
+
+// String with index
+var s = "ABC";
+print("String chars with index:");
+for (var pos, ch in s) {
+    print("  pos:", pos, "char:", ch);
 }
 )"_embed;
 

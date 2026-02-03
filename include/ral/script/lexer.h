@@ -375,10 +375,15 @@ private:
                 break;
 
             case 'i':
-                // if
-                if (length == 2 &&
-                    m_source[start + 1] == 'f')
-                    return TokenType::IF;
+                if (length == 2)
+                {
+                    // if
+                    if (m_source[start + 1] == 'f')
+                        return TokenType::IF;
+                    // in
+                    if (m_source[start + 1] == 'n')
+                        return TokenType::IN;
+                }
                 break;
 
             case 'n':

@@ -292,7 +292,7 @@ void RunScript() {
   - `pop(array)` - remove and return last element
   - Max 16 elements per array (MAX_ARRAY_SIZE)
   - Max 64 arrays in pool (MAX_ARRAY_POOL)
-- [ ] For-each loops
+- [x] For-each loops - **COMPLETE**
   - Syntax: `for (var item in collection) { ... }`
   - Iterate over arrays: `for (var x in [1, 2, 3]) { print(x); }`
   - Iterate over strings: `for (var c in "hello") { print(c); }`

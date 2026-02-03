@@ -234,7 +234,7 @@ NOINLINE Value FileIO_Open(FunctionContext& ctx) noexcept
     }
     else if (hasAppend)
     {
-        flags = FileSystem::FS_WRITE | FileSystem::FS_CREATE | FileSystem::FS_APPEND;
+        flags = FileSystem::FS_CREATE | FileSystem::FS_APPEND;
     }
     else
     {

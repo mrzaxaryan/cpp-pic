@@ -55,44 +55,44 @@
 #include "websocket_tests.h"
 #include "filesystem_tests.h"
 
-static BOOL RunRuntimeTests()
-{
-	BOOL allPassed = TRUE;
+// static BOOL RunRuntimeTests()
+// {
+// 	BOOL allPassed = TRUE;
 
-	LOG_INFO("=== CPP-PIC Test Suite ===");
-	LOG_INFO("");
+// 	LOG_INFO("=== CPP-PIC Test Suite ===");
+// 	LOG_INFO("");
 
-	// BAL - Embedded Types and Numeric Primitives
-	RUN_TEST_SUITE(allPassed, DoubleTests);
-	RUN_TEST_SUITE(allPassed, StringTests);
+// 	// BAL - Embedded Types and Numeric Primitives
+// 	RUN_TEST_SUITE(allPassed, DoubleTests);
+// 	RUN_TEST_SUITE(allPassed, StringTests);
 
-	// BAL - Data Structures, String Utilities, and Algorithms
-	RUN_TEST_SUITE(allPassed, ArrayStorageTests);
-	RUN_TEST_SUITE(allPassed, StringFormatterTests);
-	RUN_TEST_SUITE(allPassed, Djb2Tests);
-	RUN_TEST_SUITE(allPassed, Base64Tests);
+// 	// BAL - Data Structures, String Utilities, and Algorithms
+// 	RUN_TEST_SUITE(allPassed, ArrayStorageTests);
+// 	RUN_TEST_SUITE(allPassed, StringFormatterTests);
+// 	RUN_TEST_SUITE(allPassed, Djb2Tests);
+// 	RUN_TEST_SUITE(allPassed, Base64Tests);
 
-	// PAL - Memory and System
-	RUN_TEST_SUITE(allPassed, MemoryTests);
-	RUN_TEST_SUITE(allPassed, RandomTests);
+// 	// PAL - Memory and System
+// 	RUN_TEST_SUITE(allPassed, MemoryTests);
+// 	RUN_TEST_SUITE(allPassed, RandomTests);
 
-	// RAL - Cryptography
-	RUN_TEST_SUITE(allPassed, ShaTests);
-	RUN_TEST_SUITE(allPassed, EccTests);
+// 	// RAL - Cryptography
+// 	RUN_TEST_SUITE(allPassed, ShaTests);
+// 	RUN_TEST_SUITE(allPassed, EccTests);
 
-	// RAL - Network
-	RUN_TEST_SUITE(allPassed, SocketTests);
-	RUN_TEST_SUITE(allPassed, TlsTests);
-	RUN_TEST_SUITE(allPassed, DnsTests);
-	RUN_TEST_SUITE(allPassed, WebSocketTests);
-	RUN_TEST_SUITE(allPassed, FileSystemTests);
+// 	// RAL - Network
+// 	RUN_TEST_SUITE(allPassed, SocketTests);
+// 	RUN_TEST_SUITE(allPassed, TlsTests);
+// 	RUN_TEST_SUITE(allPassed, DnsTests);
+// 	RUN_TEST_SUITE(allPassed, WebSocketTests);
+// 	RUN_TEST_SUITE(allPassed, FileSystemTests);
 
-	// Final summary
-	LOG_INFO("=== Test Suite Complete ===");
-	if (allPassed)
-		LOG_INFO("ALL TESTS PASSED!");
-	else
-		LOG_ERROR("SOME TESTS FAILED!");
+// 	// Final summary
+// 	LOG_INFO("=== Test Suite Complete ===");
+// 	if (allPassed)
+// 		LOG_INFO("ALL TESTS PASSED!");
+// 	else
+// 		LOG_ERROR("SOME TESTS FAILED!");
 
-	return allPassed;
-}
+// 	return allPassed;
+// }

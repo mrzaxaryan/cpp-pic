@@ -71,9 +71,21 @@ jobs:
 
             Write-Host "========== Testing EXE -$opt ==========" -ForegroundColor Cyan
             $exePath = (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
-            & $exePath 2>&1 | Write-Host
-            if ($LASTEXITCODE -ne 0) {
-              Write-Host "EXE test failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+            $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+            $pinfo.FileName = $exePath
+            $pinfo.RedirectStandardOutput = $true
+            $pinfo.RedirectStandardError = $true
+            $pinfo.UseShellExecute = $false
+            $p = New-Object System.Diagnostics.Process
+            $p.StartInfo = $pinfo
+            $p.Start() | Out-Null
+            $stdout = $p.StandardOutput.ReadToEnd()
+            $stderr = $p.StandardError.ReadToEnd()
+            $p.WaitForExit()
+            if ($stdout) { Write-Host $stdout }
+            if ($stderr) { Write-Host $stderr -ForegroundColor Yellow }
+            if ($p.ExitCode -ne 0) {
+              Write-Host "EXE test failed with exit code: $($p.ExitCode) (0x$($p.ExitCode.ToString('X')))" -ForegroundColor Red
               $failed += "$opt-exe"
               continue
             }

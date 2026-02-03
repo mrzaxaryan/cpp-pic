@@ -199,22 +199,22 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOO
     *secure = FALSE;
 
     UINT8 schemeLength = 0;
-    if (url[0] == 'w' && url[1] == 's' && url[2] == ':' && url[3] == '/' && url[4] == '/')
+    if (String::StartsWith<CHAR>(url, "ws://"_embed))
     {
         *secure = FALSE;
         schemeLength = 5; // ws://
     }
-    else if (url[0] == 'w' && url[1] == 's' && url[2] == 's' && url[3] == ':' && url[4] == '/' && url[5] == '/')
+    else if (String::StartsWith<CHAR>(url, "wss://"_embed))
     {
         *secure = TRUE;
         schemeLength = 6; // wss://
     }
-    else if (url[0] == 'h' && url[1] == 't' && url[2] == 't' && url[3] == 'p' && url[4] == ':' && url[5] == '/' && url[6] == '/')
+    else if (String::StartsWith<CHAR>(url, "http://"_embed))
     {
         *secure = FALSE;
         schemeLength = 7; // http://
     }
-    else if (url[0] == 'h' && url[1] == 't' && url[2] == 't' && url[3] == 'p' && url[4] == 's' && url[5] == ':' && url[6] == '/' && url[7] == '/')
+    else if (String::StartsWith<CHAR>(url, "https://"_embed))
     {
         *secure = TRUE;
         schemeLength = 8; // https://

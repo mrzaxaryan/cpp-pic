@@ -11,13 +11,11 @@
 // SCRIPT LOADING UTILITIES
 // ============================================================================
 
-static constexpr USIZE SCRIPT_BUFFER_SIZE = 65536;  // 64KB buffer for script files
-
 /**
- * LoadScript - Load a PIL script from a file into a provided buffer
- * Reads until EOF, allowing scripts of any size up to bufferSize-1
+ * LoadScript - Load a PIL script from a file with dynamic allocation
+ * Reads until EOF with no size limit. Caller must delete[] the returned buffer.
  */
-static inline const CHAR* LoadScript(PCWCHAR path, CHAR* buffer, USIZE bufferSize)
+static inline CHAR* LoadScript(PCWCHAR path)
 {
     File file = FileSystem::Open(path, FileSystem::FS_READ | FileSystem::FS_BINARY);
     if (!file.IsValid())
@@ -26,15 +24,25 @@ static inline const CHAR* LoadScript(PCWCHAR path, CHAR* buffer, USIZE bufferSiz
         return nullptr;
     }
 
-    // Read until EOF or buffer full (leave room for null terminator)
+    // Start with 4KB, grow as needed
+    USIZE capacity = 4096;
     USIZE totalRead = 0;
-    USIZE maxRead = bufferSize - 1;
+    CHAR* buffer = new CHAR[capacity];
 
-    while (totalRead < maxRead)
+    while (true)
     {
-        UINT32 chunkSize = (UINT32)((maxRead - totalRead > 4096) ? 4096 : (maxRead - totalRead));
-        UINT32 bytesRead = file.Read(buffer + totalRead, chunkSize);
+        // Grow buffer if needed
+        if (totalRead + 4096 >= capacity)
+        {
+            capacity *= 2;
+            CHAR* newBuffer = new CHAR[capacity];
+            for (USIZE i = 0; i < totalRead; i++)
+                newBuffer[i] = buffer[i];
+            delete[] buffer;
+            buffer = newBuffer;
+        }
 
+        UINT32 bytesRead = file.Read(buffer + totalRead, 4096);
         if (bytesRead == 0)
             break;  // EOF reached
 
@@ -46,6 +54,7 @@ static inline const CHAR* LoadScript(PCWCHAR path, CHAR* buffer, USIZE bufferSiz
     if (totalRead == 0)
     {
         LOG_ERROR("Script file is empty");
+        delete[] buffer;
         return nullptr;
     }
 
@@ -58,11 +67,12 @@ static inline const CHAR* LoadScript(PCWCHAR path, CHAR* buffer, USIZE bufferSiz
  */
 static inline BOOL RunScriptFile(script::State* L, PCWCHAR path)
 {
-    CHAR scriptBuffer[SCRIPT_BUFFER_SIZE];
-    const CHAR* source = LoadScript(path, scriptBuffer, SCRIPT_BUFFER_SIZE);
+    CHAR* source = LoadScript(path);
     if (source == nullptr)
         return FALSE;
-    return L->DoString(source);
+    BOOL result = L->DoString(source);
+    delete[] source;
+    return result;
 }
 
 /**
@@ -110,7 +120,7 @@ static inline void ScriptConsoleOutput(const CHAR* str, USIZE len)
 static inline script::State* CreateScriptState()
 {
     script::State* L = new script::State();
-    L->SetOutput(EMBED_FUNC(ScriptConsoleOutput));
+    L->SetOutput(NULL);
     return L;
 }
 

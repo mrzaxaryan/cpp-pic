@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class Djb2Tests
 {
@@ -11,80 +12,17 @@ public:
 
 		LOG_INFO("Running DJB2 Hash Tests...");
 
-		// Test 1: Basic hash consistency
-		if (!TestBasicHashConsistency())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Basic hash consistency");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Basic hash consistency");
-		}
-
-		// Test 2: Case insensitivity
-		if (!TestCaseInsensitivity())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Case insensitivity");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Case insensitivity");
-		}
-
-		// Test 3: Empty string
-		if (!TestEmptyString())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Empty string");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Empty string");
-		}
-
-		// Test 4: Compile-time hash matches runtime hash
-		if (!TestCompileTimeMatchesRuntime())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Compile-time matches runtime");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Compile-time matches runtime");
-		}
-
-		// Test 5: Different strings produce different hashes
-		if (!TestDifferentStringsProduceDifferentHashes())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Different strings produce different hashes");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Different strings produce different hashes");
-		}
-
-		// Test 6: Wide character support
-		if (!TestWideCharSupport())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Wide character support");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Wide character support");
-		}
+		RUN_TEST(allPassed, TestBasicHashConsistency, "Basic hash consistency");
+		RUN_TEST(allPassed, TestCaseInsensitivity, "Case insensitivity");
+		RUN_TEST(allPassed, TestEmptyString, "Empty string");
+		RUN_TEST(allPassed, TestCompileTimeMatchesRuntime, "Compile-time matches runtime");
+		RUN_TEST(allPassed, TestDifferentStringsProduceDifferentHashes, "Different strings produce different hashes");
+		RUN_TEST(allPassed, TestWideCharSupport, "Wide character support");
 
 		if (allPassed)
-		{
 			LOG_INFO("All DJB2 tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some DJB2 tests failed!");
-		}
 
 		return allPassed;
 	}

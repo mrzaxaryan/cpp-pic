@@ -2,6 +2,7 @@
 
 #include "ral.h"
 #include "sha2.h"
+#include "tests.h"
 
 class ShaTests
 {
@@ -13,116 +14,25 @@ public:
 		LOG_INFO("Running SHA Tests...");
 
 		// SHA-256 Tests
-		if (!TestSHA256_Empty())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-256 empty string");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-256 empty string");
-		}
-
-		if (!TestSHA256_ABC())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-256 'abc'");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-256 'abc'");
-		}
-
-		if (!TestSHA256_Long())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-256 long message");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-256 long message");
-		}
-
-		if (!TestSHA256_Incremental())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-256 incremental update");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-256 incremental update");
-		}
+		RUN_TEST(allPassed, TestSHA256_Empty, "SHA-256 empty string");
+		RUN_TEST(allPassed, TestSHA256_ABC, "SHA-256 'abc'");
+		RUN_TEST(allPassed, TestSHA256_Long, "SHA-256 long message");
+		RUN_TEST(allPassed, TestSHA256_Incremental, "SHA-256 incremental update");
 
 		// SHA-384 Tests
-		if (!TestSHA384_Empty())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-384 empty string");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-384 empty string");
-		}
-
-		if (!TestSHA384_ABC())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-384 'abc'");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-384 'abc'");
-		}
-
-		if (!TestSHA384_Long())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-384 long message");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-384 long message");
-		}
-
-		if (!TestSHA384_Incremental())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: SHA-384 incremental update");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: SHA-384 incremental update");
-		}
+		RUN_TEST(allPassed, TestSHA384_Empty, "SHA-384 empty string");
+		RUN_TEST(allPassed, TestSHA384_ABC, "SHA-384 'abc'");
+		RUN_TEST(allPassed, TestSHA384_Long, "SHA-384 long message");
+		RUN_TEST(allPassed, TestSHA384_Incremental, "SHA-384 incremental update");
 
 		// HMAC Tests
-		if (!TestHMAC_SHA256())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: HMAC-SHA256");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: HMAC-SHA256");
-		}
-
-		if (!TestHMAC_SHA384())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: HMAC-SHA384");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: HMAC-SHA384");
-		}
+		RUN_TEST(allPassed, TestHMAC_SHA256, "HMAC-SHA256");
+		RUN_TEST(allPassed, TestHMAC_SHA384, "HMAC-SHA384");
 
 		if (allPassed)
-		{
 			LOG_INFO("All SHA tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some SHA tests failed!");
-		}
 
 		return allPassed;
 	}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 // =============================================================================
 // Socket Tests - AFD Socket Implementation Validation
@@ -247,26 +248,23 @@ public:
 	// Run all socket tests
 	static BOOL RunAll()
 	{
-		LOG_INFO("=== Starting Socket Tests ===");
-		LOG_INFO("Test Server: one.one.one.one (1.1.1.1 / 2606:4700:4700::1111)");
+		BOOL allPassed = TRUE;
 
-		UINT32 passed = 0;
-		UINT32 total = 6;
+		LOG_INFO("Running Socket Tests...");
+		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1 / 2606:4700:4700::1111)");
 
-		if (TestSocketCreation())
-			passed++;
-		if (TestSocketConnection())
-			passed++;
-		if (TestHttpRequest())
-			passed++;
-		if (TestMultipleConnections())
-			passed++;
-		if (TestIpConversion())
-			passed++;
-		if (TestIPv6Connection())
-			passed++;
+		RUN_TEST(allPassed, TestSocketCreation, "Socket creation");
+		RUN_TEST(allPassed, TestSocketConnection, "Socket connection (HTTP:80)");
+		RUN_TEST(allPassed, TestHttpRequest, "HTTP GET request");
+		RUN_TEST(allPassed, TestMultipleConnections, "Multiple sequential connections");
+		RUN_TEST(allPassed, TestIpConversion, "IP address conversion");
+		RUN_TEST(allPassed, TestIPv6Connection, "IPv6 connection");
 
-		LOG_INFO("=== Socket Tests Complete: %d/%d passed ===", passed, total);
-		return (passed == total);
+		if (allPassed)
+			LOG_INFO("All Socket tests passed!");
+		else
+			LOG_ERROR("Some Socket tests failed!");
+
+		return allPassed;
 	}
 };

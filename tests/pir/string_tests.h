@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class StringTests
 {
@@ -11,102 +12,19 @@ public:
 
 		LOG_INFO("Running String Tests...");
 
-		// Test 1: Length of narrow string
-		if (!TestLengthNarrow())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Narrow string length");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Narrow string length");
-		}
-
-		// Test 2: Length of wide string
-		if (!TestLengthWide())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Wide string length");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Wide string length");
-		}
-
-		// Test 3: Empty string length
-		if (!TestLengthEmpty())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Empty string length");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Empty string length");
-		}
-
-		// Test 4: ToLowerCase for ASCII
-		if (!TestToLowerCaseAscii())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ToLowerCase ASCII");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ToLowerCase ASCII");
-		}
-
-		// Test 5: ToLowerCase preserves non-uppercase
-		if (!TestToLowerCasePreserves())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ToLowerCase preserves non-uppercase");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ToLowerCase preserves non-uppercase");
-		}
-
-		// Test 6: WideToUtf8 basic ASCII
-		if (!TestWideToUtf8BasicAscii())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: WideToUtf8 basic ASCII");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: WideToUtf8 basic ASCII");
-		}
-
-		// Test 7: WideToUtf8 empty string
-		if (!TestWideToUtf8Empty())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: WideToUtf8 empty string");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: WideToUtf8 empty string");
-		}
-
-		// Test 8: WideToUtf8 null handling
-		if (!TestWideToUtf8NullHandling())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: WideToUtf8 null handling");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: WideToUtf8 null handling");
-		}
+		RUN_TEST(allPassed, TestLengthNarrow, "Narrow string length");
+		RUN_TEST(allPassed, TestLengthWide, "Wide string length");
+		RUN_TEST(allPassed, TestLengthEmpty, "Empty string length");
+		RUN_TEST(allPassed, TestToLowerCaseAscii, "ToLowerCase ASCII");
+		RUN_TEST(allPassed, TestToLowerCasePreserves, "ToLowerCase preserves non-uppercase");
+		RUN_TEST(allPassed, TestWideToUtf8BasicAscii, "WideToUtf8 basic ASCII");
+		RUN_TEST(allPassed, TestWideToUtf8Empty, "WideToUtf8 empty string");
+		RUN_TEST(allPassed, TestWideToUtf8NullHandling, "WideToUtf8 null handling");
 
 		if (allPassed)
-		{
 			LOG_INFO("All String tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some String tests failed!");
-		}
 
 		return allPassed;
 	}

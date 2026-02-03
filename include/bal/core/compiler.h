@@ -21,11 +21,7 @@
 // OPTIMIZATION ATTRIBUTES
 // =============================================================================
 
-#if defined(DEBUG)
-#define FORCE_INLINE
-#else
 #define FORCE_INLINE __attribute__((always_inline)) inline
-#endif
 
 #define NOINLINE __attribute__((noinline))
 #define DISABLE_OPTIMIZATION __attribute__((optnone))

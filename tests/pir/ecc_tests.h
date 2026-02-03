@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 
 class EccTests
@@ -12,146 +13,23 @@ public:
 
 		LOG_INFO("Running ECC Tests...");
 
-		// Test 1: Basic initialization
-		if (!TestEccInitialization())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ECC initialization");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ECC initialization");
-		}
-
-		// Test 2: secp128r1 curve
-		if (!TestEccSecp128r1())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ECC secp128r1");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ECC secp128r1");
-		}
-
-		// Test 3: secp192r1 curve
-		if (!TestEccSecp192r1())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ECC secp192r1");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ECC secp192r1");
-		}
-
-		// Test 4: secp256r1 curve
-		if (!TestEccSecp256r1())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ECC secp256r1");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ECC secp256r1");
-		}
-
-		// Test 5: secp384r1 curve
-		if (!TestEccSecp384r1())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: ECC secp384r1");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: ECC secp384r1");
-		}
-
-		// Test 6: Public key export
-		if (!TestPublicKeyExport())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Public key export");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Public key export");
-		}
-
-		// Test 7: Public key format
-		if (!TestPublicKeyFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Public key format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Public key format");
-		}
-
-		// Test 8: Shared secret computation (ECDH)
-		if (!TestSharedSecretComputation())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Shared secret computation (ECDH)");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Shared secret computation (ECDH)");
-		}
-
-		// Test 9: Invalid curve size handling
-		if (!TestInvalidCurveSize())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Invalid curve size handling");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Invalid curve size handling");
-		}
-
-		// Test 10: Export buffer size validation
-		if (!TestExportBufferSizeValidation())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Export buffer size validation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Export buffer size validation");
-		}
-
-		// Test 11: Invalid public key handling
-		if (!TestInvalidPublicKey())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Invalid public key handling");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Invalid public key handling");
-		}
-
-		// Test 12: Multiple key generation uniqueness
-		if (!TestMultipleKeyGeneration())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Multiple key generation uniqueness");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Multiple key generation uniqueness");
-		}
+		RUN_TEST(allPassed, TestEccInitialization, "ECC initialization");
+		RUN_TEST(allPassed, TestEccSecp128r1, "ECC secp128r1");
+		RUN_TEST(allPassed, TestEccSecp192r1, "ECC secp192r1");
+		RUN_TEST(allPassed, TestEccSecp256r1, "ECC secp256r1");
+		RUN_TEST(allPassed, TestEccSecp384r1, "ECC secp384r1");
+		RUN_TEST(allPassed, TestPublicKeyExport, "Public key export");
+		RUN_TEST(allPassed, TestPublicKeyFormat, "Public key format");
+		RUN_TEST(allPassed, TestSharedSecretComputation, "Shared secret computation (ECDH)");
+		RUN_TEST(allPassed, TestInvalidCurveSize, "Invalid curve size handling");
+		RUN_TEST(allPassed, TestExportBufferSizeValidation, "Export buffer size validation");
+		RUN_TEST(allPassed, TestInvalidPublicKey, "Invalid public key handling");
+		RUN_TEST(allPassed, TestMultipleKeyGeneration, "Multiple key generation uniqueness");
 
 		if (allPassed)
-		{
 			LOG_INFO("All ECC tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some ECC tests failed!");
-		}
 
 		return allPassed;
 	}

@@ -1,4 +1,4 @@
-# NOSTDLIB-RUNTIME: A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
+# Position-Independent Runtime (PIR): A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
 <table>
 <tr>
@@ -91,7 +91,7 @@ With this work, we would like to add our two cents to that debate by arguing tha
 
 ## Common Problems and Solutions
 
-When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how NOSTDLIB-RUNTIME provides a robust solution.
+When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how Position-Independent Runtime provides a robust solution.
 
 ### Problem 1: String literals in .rdata and other relocation Dependencies
 
@@ -188,10 +188,10 @@ Similar to strings, constant arrays-such as lookup tables, binary blobs, are pla
 
 These approaches are not universal, as they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns; when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain.
 
-#### NOSTDLIB-RUNTIME Solution: No Relocations Needed
+#### Position-Independent Runtime Solution: No Relocations Needed
 
-By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, NOSTDLIB-RUNTIME produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
-To achieve this, NOSTDLIB-RUNTIME replaces conventional string literals with compile-time–decomposed representations. Leveraging C++23 features—such as user-defined literals, variadic templates, and fold expressions—string contents are expanded into individual character operations entirely at compile time:
+By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, Position-Independent Runtime produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
+To achieve this, Position-Independent Runtime replaces conventional string literals with compile-time–decomposed representations. Leveraging C++23 features—such as user-defined literals, variadic templates, and fold expressions—string contents are expanded into individual character operations entirely at compile time:
 
 
 
@@ -277,7 +277,7 @@ toDouble(1, 232342);
 
 While this avoids embedding floating-point literals, it increases code size and complexity, which is not suitable for this type of work.
 
-#### NOSTDLIB-RUNTIME Solution: Floating-Point Constant Embedding
+#### Position-Independent Runtime Solution: Floating-Point Constant Embedding
 
 We solve this issue for double values; applying the same technique to float values is straightforward. Floating-point values are converted at compile time into IEEE-754 bit patterns and injected directly into registers as immediate operands:
 
@@ -318,7 +318,7 @@ Perform manual relocation at runtime, as discussed above.
 
 The same issues remain: increased complexity, fragility, and sensitivity to compiler optimizations.
 
-#### NOSTDLIB-RUNTIME Solution: Function Pointer Embedding
+#### Position-Independent Runtime Solution: Function Pointer Embedding
 
 We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](include/bal/types/embedded/embedded_function_pointer.h).
 
@@ -334,7 +334,7 @@ Implement those helper routines manually.
 
 Manual implementations are error-prone and may not cover all edge cases the compiler expects.
 
-#### NOSTDLIB-RUNTIME Solution: 64-bit Arithmetic on 32-bit Systems
+#### Position-Independent Runtime Solution: 64-bit Arithmetic on 32-bit Systems
 
 We define custom `UINT64` and `INT64` classes that store values as two 32-bit words (high and low). All operations are decomposed into 32-bit arithmetic with manual carry handling:
 
@@ -365,11 +365,11 @@ Manually implement required CRT functions and avoid using features that depend o
 
 This is tedious, incomplete, and doesn't address the fundamental issue of static API imports remaining visible to analysis tools.
 
-#### NOSTDLIB-RUNTIME Solution: Runtime Independence
+#### Position-Independent Runtime Solution: Runtime Independence
 
-NOSTDLIB-RUNTIME achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Instead of relying on CRT startup code, NOSTDLIB-RUNTIME defines a custom entry point, enabling execution without loader-managed runtime setup.
+Position-Independent Runtime achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Instead of relying on CRT startup code, Position-Independent Runtime defines a custom entry point, enabling execution without loader-managed runtime setup.
 
-Interaction with Windows system functionality is performed through low-level native interfaces. The runtime traverses the Process Environment Block (PEB) to locate loaded modules and parses PE export tables to resolve function addresses using hash-based lookup. By avoiding import tables, string-based API resolution, and `GetProcAddress` calls, NOSTDLIB-RUNTIME minimizes static analysis visibility and enables execution in constrained or adversarial environments.
+Interaction with Windows system functionality is performed through low-level native interfaces. The runtime traverses the Process Environment Block (PEB) to locate loaded modules and parses PE export tables to resolve function addresses using hash-based lookup. By avoiding import tables, string-based API resolution, and `GetProcAddress` calls, Position-Independent Runtime minimizes static analysis visibility and enables execution in constrained or adversarial environments.
 
 ### Problem 6: Type Conversions
 
@@ -379,7 +379,7 @@ Type conversions between integers and floating-point values can cause the compil
 
 Avoid type conversions or implement manual conversion functions.
 
-#### NOSTDLIB-RUNTIME Solution: Pure Integer-Based Conversions
+#### Position-Independent Runtime Solution: Pure Integer-Based Conversions
 
 All type conversions are implemented using explicit bitwise and integer operations, preventing the compiler from emitting hidden constants or helper routines:
 
@@ -394,13 +394,13 @@ INT64 d_to_i64(const DOUBLE& d)
 }
 ```
 
-## NOSTDLIB-RUNTIME Architecture Overview
+## Position-Independent Runtime Architecture Overview
 
-Within this work, we present NOSTDLIB-RUNTIME, a C++23 runtime designed to achieve fully position-independent execution by eliminating dependencies on `.rdata`, the C runtime (CRT), and other loader-managed components. NOSTDLIB-RUNTIME provides full position-independence for shellcode, code injection, and embedded systems, enabling execution from arbitrary memory locations.
+Within this work, we present Position-Independent Runtime, a C++23 runtime designed to achieve fully position-independent execution by eliminating dependencies on `.rdata`, the C runtime (CRT), and other loader-managed components. Position-Independent Runtime provides full position-independence for shellcode, code injection, and embedded systems, enabling execution from arbitrary memory locations.
 
 ### Design Goals
 
-NOSTDLIB-RUNTIME is designed around the following goals:
+Position-Independent Runtime is designed around the following goals:
 
 1. **True position independence**
    Execution must not depend on fixed load addresses or loader-handled relocations.
@@ -425,7 +425,7 @@ NOSTDLIB-RUNTIME is designed around the following goals:
 
 ### Three-Layer Architecture
 
-NOSTDLIB-RUNTIME is built on a clean three-layer abstraction that separates concerns and enables multi-platform support:
+Position-Independent Runtime is built on a clean three-layer abstraction that separates concerns and enables multi-platform support:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -509,11 +509,11 @@ This verification runs after every build, ensuring that code changes don't accid
 
 ## Windows Implementation
 
-NOSTDLIB-RUNTIME integrates deeply with Windows internals to provide a fully functional, standalone execution environment while maintaining position independence.
+Position-Independent Runtime integrates deeply with Windows internals to provide a fully functional, standalone execution environment while maintaining position independence.
 
 ### Low-Level Native Interfaces
 
-By completely eliminating static import tables and bypassing loader-dependent API resolution mechanisms such as `GetProcAddress`, NOSTDLIB-RUNTIME removes all dependencies on the operating system's runtime initialization and dynamic linking processes. This ensures that all required function addresses are resolved internally at runtime, using hash-based lookups of exported symbols in loaded modules. As a result, the generated binaries are fully self-contained, do not rely on predefined memory locations, and can execute correctly from any arbitrary memory address without requiring relocation tables or loader-managed fixups.
+By completely eliminating static import tables and bypassing loader-dependent API resolution mechanisms such as `GetProcAddress`, Position-Independent Runtime removes all dependencies on the operating system's runtime initialization and dynamic linking processes. This ensures that all required function addresses are resolved internally at runtime, using hash-based lookups of exported symbols in loaded modules. As a result, the generated binaries are fully self-contained, do not rely on predefined memory locations, and can execute correctly from any arbitrary memory address without requiring relocation tables or loader-managed fixups.
 
 ### File System Support
 A complete abstraction over `NTAPI` enables file and directory operations:
@@ -527,7 +527,7 @@ All file system operations are executed without relying on CRT or standard libra
 Printf-style output is implemented natively within the runtime. This allows robust console output without runtime support.
 
 ### Cryptography and Networking
-NOSTDLIB-RUNTIME provides a complete cryptographic and networking stack:
+Position-Independent Runtime provides a complete cryptographic and networking stack:
 * Cryptography: SHA-256/512, HMAC, ChaCha20, ECC, Base64 encoding/decoding
 * Networking: DNS resolution, HTTP client, WebSocket connections, TLS 1.3 with certificate verification
 
@@ -551,8 +551,176 @@ This project is still a work in progress. Below is a list of remaining tasks and
 
 ## Conclusion
 
-NOSTDLIB-RUNTIME is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows or an ELF file on Linux, supporting i386, x86_64, armv7a, and aarch64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, NOSTDLIB-RUNTIME enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
+Position-Independent Runtime is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows or an ELF file on Linux, supporting i386, x86_64, armv7a, and aarch64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, Position-Independent Runtime enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
 
 The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, and Linux with its direct syscall approach—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
 
 This project is intended for researchers, systems programmers, and security engineers who are willing to work beneath high-level abstractions and take full control of the machine. Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project's design goals.
+
+## Appendix A: PIL - Position Independent Language
+
+The Position-Independent Runtime includes **PIL (Position Independent Language)**, a lightweight, position-independent scripting language designed for embedded and constrained environments. PIL provides a State API while maintaining full position-independence with no `.rdata` dependencies.
+
+### Design Philosophy
+
+- **No built-in functions**: All functions must be registered from C++, giving complete control over the runtime environment
+- **Position-independent**: Uses `_embed` strings throughout, ensuring no relocations are needed
+- **Minimal footprint**: Designed for shellcode and embedded contexts where size matters
+- **State-based API**: Familiar State-based interface for easy adoption
+
+### Language Syntax
+
+**Variables:**
+```
+var x = 10;
+var name = "hello";
+var flag = true;
+```
+
+**Functions:**
+```
+fn factorial(n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+```
+
+**Control Flow:**
+```
+if (condition) {
+    // ...
+} else if (other) {
+    // ...
+} else {
+    // ...
+}
+
+while (condition) {
+    // ...
+}
+
+for (var i = 0; i < 10; i = i + 1) {
+    // ...
+}
+```
+
+**Operators:**
+- Arithmetic: `+`, `-`, `*`, `/`, `%`
+- Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- Logical: `&&`, `||`, `!`
+- Assignment: `=`, `+=`, `-=`, `*=`, `/=`
+
+**Data Types:**
+- Numbers (integers): `42`, `-17`
+- Strings: `"hello world"`
+- Booleans: `true`, `false`
+- Nil: `nil`
+- Functions (first-class)
+
+### C++ Integration
+
+**Basic Usage:**
+```cpp
+#include "pil/pil.h"
+
+script::State* L = new script::State();
+
+// Option 1: Register standard library
+script::OpenStdLib(*L);  // Registers: print, len, str, num, type, abs, min, max
+
+// Option 2: Register only what you need
+L->Register("print"_embed, script::StdLib_Print);
+
+// Execute script
+L->DoString(R"(
+    print("Hello from PIL!");
+)"_embed);
+
+delete L;
+```
+
+**Custom C++ Functions:**
+```cpp
+script::Value MyFunction(script::FunctionContext& ctx)
+{
+    if (ctx.CheckArgs(1) && ctx.IsNumber(0))
+    {
+        INT64 n = ctx.ToNumber(0);
+        return script::Value::Number(n * 2);
+    }
+    return script::Value::Nil();
+}
+
+// Register custom function
+L->Register("double"_embed, MyFunction);
+```
+
+**Setting Global Variables:**
+```cpp
+L->SetGlobalNumber("PI"_embed, 2, 314);           // PI = 314 (scaled)
+L->SetGlobalString("version"_embed, 7, "1.0.0"_embed, 5);
+L->SetGlobalBool("debug"_embed, 5, TRUE);
+```
+
+### Standard Library Functions
+
+When `OpenStdLib()` is called, the following functions are registered:
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `print(...)` | Print values to console | `print("x =", x);` |
+| `len(s)` | Get string length | `len("hello")` → `5` |
+| `str(v)` | Convert to string | `str(42)` → `"42"` |
+| `num(v)` | Convert to number | `num("123")` → `123` |
+| `type(v)` | Get type name | `type(42)` → `"number"` |
+| `abs(n)` | Absolute value | `abs(-5)` → `5` |
+| `min(a, b)` | Minimum of two | `min(3, 5)` → `3` |
+| `max(a, b)` | Maximum of two | `max(3, 5)` → `5` |
+
+### Example: FizzBuzz
+
+```cpp
+script::State* L = new script::State();
+script::OpenStdLib(*L);
+
+L->DoString(R"(
+fn fizzbuzz(n) {
+    for (var i = 1; i <= n; i = i + 1) {
+        if (i % 15 == 0) {
+            print("FizzBuzz");
+        } else if (i % 3 == 0) {
+            print("Fizz");
+        } else if (i % 5 == 0) {
+            print("Buzz");
+        } else {
+            print(i);
+        }
+    }
+}
+fizzbuzz(15);
+)"_embed);
+
+delete L;
+```
+
+### Error Handling
+
+```cpp
+if (!L->DoString(source))
+{
+    Console::Write<CHAR>("Error: "_embed);
+    Console::Write<CHAR>(L->GetError());
+}
+```
+
+### Architecture
+
+PIL is implemented as a standalone module and consists of:
+
+- **Lexer** ([lexer.h](include/pil/lexer.h)): Tokenizes source code
+- **Parser** ([parser.h](include/pil/parser.h)): Builds AST from tokens
+- **Interpreter** ([interpreter.h](include/pil/interpreter.h)): Tree-walking interpreter
+- **State** ([state.h](include/pil/state.h)): State-based API wrapper
+- **StdLib** ([stdlib.h](include/pil/stdlib.h)): Standard library functions

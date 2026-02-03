@@ -5,7 +5,8 @@
  */
 
 #include "ral.h"
-#include "tests.h"
+#include "pil/pil_tests.h"
+#include "pir/pir_tests.h"
 
 /**
  * _start - Entry point for all platforms
@@ -27,7 +28,7 @@ ENTRYPOINT INT32 _start(VOID)
 	SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, NULL);
 #endif
 
-	// Run tests and exit
-	BOOL allPassed = RunAllTests();
+	// Run runtime and unit tests
+	BOOL allPassed = RunPIRTests() && RunPILTests();
 	ExitProcess(allPassed ? 0 : 1);
 }

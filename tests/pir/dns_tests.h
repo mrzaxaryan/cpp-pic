@@ -2,6 +2,7 @@
 
 #include "ral.h"
 #include "embedded_string.h"
+#include "tests.h"
 
 class DnsTests
 {
@@ -150,30 +151,24 @@ public:
 	// Run all DNS tests
 	static BOOL RunAll()
 	{
-		LOG_INFO("=== Starting DNS Tests ===");
-		LOG_INFO("Testing DNS resolution via DoT, DoH (JSON), and DoH (binary wireformat)");
+		BOOL allPassed = TRUE;
 
-		UINT32 passed = 0;
-		UINT32 total = 7;
+		LOG_INFO("Running DNS Tests...");
+		LOG_INFO("  Testing DNS resolution via DoT, DoH (JSON), and DoH (binary wireformat)");
 
-		// Run tests
-		if (TestLocalhostResolution())
-			passed++;
-		if (TestCloudflareResolve())
-			passed++;
-		if (TestGoogleResolve())
-			passed++;
-		if (TestDnsOverTls())
-			passed++;
-		if (TestDnsOverHttps())
-			passed++;
-		if (TestMainResolve())
-			passed++;
-		if (TestKnownIpResolution())
-			passed++;
+		RUN_TEST(allPassed, TestLocalhostResolution, "Localhost resolution");
+		RUN_TEST(allPassed, TestCloudflareResolve, "Cloudflare DNS resolution");
+		RUN_TEST(allPassed, TestGoogleResolve, "Google DNS resolution");
+		RUN_TEST(allPassed, TestDnsOverTls, "DNS over TLS resolution");
+		RUN_TEST(allPassed, TestDnsOverHttps, "DNS over HTTPS resolution");
+		RUN_TEST(allPassed, TestMainResolve, "Main DNS resolve function");
+		RUN_TEST(allPassed, TestKnownIpResolution, "Known IP resolution");
 
-		BOOL allPassed = (passed == total);
-		LOG_INFO("=== DNS Tests Complete: %d/%d passed ===", passed, total);
+		if (allPassed)
+			LOG_INFO("All DNS tests passed!");
+		else
+			LOG_ERROR("Some DNS tests failed!");
+
 		return allPassed;
 	}
 };

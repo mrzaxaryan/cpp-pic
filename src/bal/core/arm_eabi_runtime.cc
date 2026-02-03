@@ -444,6 +444,197 @@ extern "C"
         return value << shift;
     }
 
+    // =========================================================================
+    // ARM EABI: Floating-Point Conversion Functions
+    // =========================================================================
+
+    /**
+     * __aeabi_l2d - Convert signed 64-bit integer to double
+     *
+     * ARM EABI calling convention:
+     *   Input:  value in r0:r1 (little-endian)
+     *   Output: double in r0:r1 (IEEE-754 format)
+     *
+     * Called by compiler for: (double)int64_value
+     *
+     * Algorithm: Manual IEEE-754 double construction (no FPU required)
+     *   1. Handle zero case
+     *   2. Determine sign and get absolute value
+     *   3. Find MSB position to calculate exponent
+     *   4. Construct mantissa with proper alignment
+     *   5. Assemble IEEE-754 bit pattern
+     */
+    COMPILER_RUNTIME UINT64 __aeabi_l2d(INT64 val)
+    {
+        if (val == 0)
+            return 0ULL;
+
+        BOOL negative = val < 0;
+        UINT64 absVal;
+
+        // Handle INT64_MIN specially to avoid overflow in negation
+        if (val == (INT64)0x8000000000000000LL)
+        {
+            absVal = 0x8000000000000000ULL;
+        }
+        else
+        {
+            absVal = negative ? (UINT64)(-val) : (UINT64)val;
+        }
+
+        // Find MSB position (highest set bit)
+        INT32 msb = 63;
+        while (msb >= 0 && !((absVal >> msb) & 1))
+            msb--;
+
+        // IEEE-754 double: exponent = msb + 1023 (bias)
+        INT32 exponent = 1023 + msb;
+
+        // Shift mantissa to fit in 52 bits (may lose precision for large values)
+        UINT64 mantissa = absVal;
+        if (msb >= 52)
+            mantissa = mantissa >> (msb - 52);
+        else
+            mantissa = mantissa << (52 - msb);
+
+        // Clear implicit leading 1 bit
+        mantissa = mantissa & 0x000FFFFFFFFFFFFFULL;
+
+        // Assemble IEEE-754 bit pattern
+        UINT64 sign = negative ? 0x8000000000000000ULL : 0ULL;
+        UINT64 exp = (UINT64)exponent << 52;
+
+        return sign | exp | mantissa;
+    }
+
+    /**
+     * __aeabi_ul2d - Convert unsigned 64-bit integer to double
+     *
+     * ARM EABI calling convention:
+     *   Input:  value in r0:r1 (little-endian)
+     *   Output: double in r0:r1 (IEEE-754 format)
+     *
+     * Called by compiler for: (double)uint64_value
+     */
+    COMPILER_RUNTIME UINT64 __aeabi_ul2d(UINT64 val)
+    {
+        if (val == 0)
+            return 0ULL;
+
+        // Find MSB position (highest set bit)
+        INT32 msb = 63;
+        while (msb >= 0 && !((val >> msb) & 1))
+            msb--;
+
+        // IEEE-754 double: exponent = msb + 1023 (bias)
+        INT32 exponent = 1023 + msb;
+
+        // Shift mantissa to fit in 52 bits
+        UINT64 mantissa = val;
+        if (msb >= 52)
+            mantissa = mantissa >> (msb - 52);
+        else
+            mantissa = mantissa << (52 - msb);
+
+        // Clear implicit leading 1 bit
+        mantissa = mantissa & 0x000FFFFFFFFFFFFFULL;
+
+        // Assemble IEEE-754 bit pattern (no sign bit for unsigned)
+        UINT64 exp = (UINT64)exponent << 52;
+
+        return exp | mantissa;
+    }
+
+    /**
+     * __aeabi_d2lz - Convert double to signed 64-bit integer (truncate toward zero)
+     *
+     * ARM EABI calling convention:
+     *   Input:  double in r0:r1 (IEEE-754 format)
+     *   Output: value in r0:r1 (little-endian)
+     *
+     * Called by compiler for: (int64_t)double_value
+     */
+    COMPILER_RUNTIME INT64 __aeabi_d2lz(UINT64 bits)
+    {
+        UINT64 sign_bit = bits & 0x8000000000000000ULL;
+        UINT64 exp_bits = bits & 0x7FF0000000000000ULL;
+        UINT64 mantissa_bits = bits & 0x000FFFFFFFFFFFFFULL;
+
+        INT32 exponent = (INT32)(exp_bits >> 52) - 1023;
+
+        // If exponent < 0, result is 0 (value is between -1 and 1)
+        if (exponent < 0)
+            return 0LL;
+
+        // If exponent >= 63, overflow
+        if (exponent >= 63)
+        {
+            if (sign_bit)
+                return 0x8000000000000000LL; // INT64_MIN
+            else
+                return 0x7FFFFFFFFFFFFFFFLL; // INT64_MAX
+        }
+
+        // Add implicit leading 1 bit
+        UINT64 mantissa_with_one = mantissa_bits | 0x0010000000000000ULL;
+
+        // Shift to get integer value
+        UINT64 int_value;
+        if (exponent <= 52)
+            int_value = mantissa_with_one >> (52 - exponent);
+        else
+            int_value = mantissa_with_one << (exponent - 52);
+
+        // Apply sign
+        INT64 result = (INT64)int_value;
+        if (sign_bit)
+            result = -result;
+
+        return result;
+    }
+
+    /**
+     * __aeabi_d2ulz - Convert double to unsigned 64-bit integer (truncate toward zero)
+     *
+     * ARM EABI calling convention:
+     *   Input:  double in r0:r1 (IEEE-754 format)
+     *   Output: value in r0:r1 (little-endian)
+     *
+     * Called by compiler for: (uint64_t)double_value
+     */
+    COMPILER_RUNTIME UINT64 __aeabi_d2ulz(UINT64 bits)
+    {
+        UINT64 sign_bit = bits & 0x8000000000000000ULL;
+        UINT64 exp_bits = bits & 0x7FF0000000000000ULL;
+        UINT64 mantissa_bits = bits & 0x000FFFFFFFFFFFFFULL;
+
+        // Negative values return 0
+        if (sign_bit)
+            return 0ULL;
+
+        INT32 exponent = (INT32)(exp_bits >> 52) - 1023;
+
+        // If exponent < 0, result is 0
+        if (exponent < 0)
+            return 0ULL;
+
+        // If exponent >= 64, overflow
+        if (exponent >= 64)
+            return 0xFFFFFFFFFFFFFFFFULL; // UINT64_MAX
+
+        // Add implicit leading 1 bit
+        UINT64 mantissa_with_one = mantissa_bits | 0x0010000000000000ULL;
+
+        // Shift to get integer value
+        UINT64 int_value;
+        if (exponent <= 52)
+            int_value = mantissa_with_one >> (52 - exponent);
+        else
+            int_value = mantissa_with_one << (exponent - 52);
+
+        return int_value;
+    }
+
 } // extern "C"
 
 #endif // ARCHITECTURE_ARMV7A

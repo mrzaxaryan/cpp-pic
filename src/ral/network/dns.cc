@@ -74,7 +74,7 @@ static INT32 DNS_skipName(PUINT8 ptr)
         INT32 dotLen = *p; // Length of the next label
         if (dotLen < 0)
         { // Invalid length
-            LOG_ERROR("DNS_skipName failed, invalid length");
+            LOG_WARNING("DNS_skipName failed, invalid length");
             return -1;
         }
 
@@ -85,7 +85,7 @@ static INT32 DNS_skipName(PUINT8 ptr)
         }
         p += dotLen + 1; // Move to the next label
     }
-    LOG_ERROR("DNS_skipName failed, invalid pointer");
+    LOG_WARNING("DNS_skipName failed, invalid pointer");
     return -1; // Invalid name
 }
 
@@ -234,7 +234,7 @@ static INT32 DNS_parseQuery(PUINT8 ptr, INT32 cnt)
         // Check if the name length is valid
         if (nameLen <= 0)
         {
-            LOG_ERROR("DNS_parseQuery failed, invalid name length");
+            LOG_WARNING("DNS_parseQuery failed, invalid name length");
             return -1;
         }
         p += nameLen + sizeof(DNS_REQUEST_QUESTION); // Move the pointer to the next question
@@ -252,7 +252,7 @@ static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress *pIpAddress)
     // Validate the input parameters
     if (!buffer || !len || len < sizeof(DNS_REQUEST_HEADER))
     {
-        LOG_ERROR("Invalid parameters for DNS_parse");
+        LOG_WARNING("Invalid parameters for DNS_parse");
         return FALSE;
     }
 
@@ -266,14 +266,14 @@ static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress *pIpAddress)
 
     if (!(flags & 0x8000))
     {
-        LOG_ERROR("DNS_parse failed, flags indicate this is not a response");
+        LOG_WARNING("DNS_parse failed, flags indicate this is not a response");
         return FALSE; // this is not an answer
     }
     // should I check flags here before parsing data?
     if (pDNSRequestHeader->ansCount <= 0 || pDNSRequestHeader->ansCount > 20)
     {
         pDNSRequestHeader->ansCount = 0;
-        LOG_ERROR("DNS_parse failed, invalid answer count: %d", pDNSRequestHeader->ansCount);
+        LOG_WARNING("DNS_parse failed, invalid answer count: %d", pDNSRequestHeader->ansCount);
         return FALSE;
     }
 
@@ -285,7 +285,7 @@ static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress *pIpAddress)
         INT32 size = DNS_parseQuery(buffer + recordOffset, pDNSRequestHeader->qCount);
         if (size <= 0)
         {
-            LOG_ERROR("DNS_parse failed, invalid query size: %d", size);
+            LOG_WARNING("DNS_parse failed, invalid query size: %d", size);
             return FALSE;
         }
         recordOffset += size;
@@ -307,14 +307,14 @@ static VOID toDnsFormat(PUINT8 dns, PCCHAR host)
     LOG_DEBUG("toDnsFormat(dns: 0x%p, host: %s) called", dns, host);
     if (!dns || !host) // Check for NULL pointers
     {
-        LOG_ERROR("Invalid parameters for toDnsFormat");
+        LOG_WARNING("Invalid parameters for toDnsFormat");
         return;
     }
 
     // Validate the input parameters
     if (!host || !dns)
     {
-        LOG_ERROR("toDnsFormat failed, host or dns is NULL");
+        LOG_WARNING("toDnsFormat failed, host or dns is NULL");
         return;
     }
 
@@ -429,7 +429,7 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     // Attempt to connect to the DNS server using TLS
     if (!TLSClient.Open())
     {
-        LOG_ERROR("Failed to connect to DNS server");
+        LOG_WARNING("Failed to connect to DNS server");
         return IPAddress::Invalid();
     }
 
@@ -439,7 +439,7 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     // Attempt to write the DNS request to the TLS server
     if (!TLSClient.Write((PCHAR)buffer, bufferSize))
     {
-        LOG_ERROR("Failed to send DNS request");
+        LOG_WARNING("Failed to send DNS request");
         return IPAddress::Invalid();
     }
 
@@ -448,7 +448,7 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     // Check if the number of bytes read is 2, which indicates a valid DNS response header
     if (bytesRead != 2)
     {
-        LOG_ERROR("Failed to read DNS response");
+        LOG_WARNING("Failed to read DNS response");
         return IPAddress::Invalid();
     }
 
@@ -458,7 +458,7 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     // Check if the number of bytes read matches the expected buffer size
     if (bytesRead != bufferSize)
     {
-        LOG_ERROR("Failed to read DNS response");
+        LOG_WARNING("Failed to read DNS response");
         return IPAddress::Invalid();
     }
     // Checking if the DNS response is valid
@@ -467,7 +467,7 @@ IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
     {
         TLSClient.Close();
 
-        LOG_ERROR("Failed to parse DNS response");
+        LOG_WARNING("Failed to parse DNS response");
         return IPAddress::Invalid();
     }
 
@@ -500,7 +500,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
     // Attempt to connect to the DNS server using TLS
     if (!tlsClient.Open())
     {
-        LOG_ERROR("Failed to connect to DNS server");
+        LOG_WARNING("Failed to connect to DNS server");
         return IPAddress::Invalid();
     }
 
@@ -522,7 +522,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
         // Check if the total bytes read exceeds the buffer size
         if (totalBytesRead >= handshakeResponseBufferSize)
         {
-            LOG_ERROR("DNS response too large.");
+            LOG_WARNING("DNS response too large.");
             delete[] dnsResponseStart;
             return IPAddress::Invalid();
         }
@@ -535,7 +535,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
         // Check if no bytes were read, indicating an error
         if (bytesRead == 0)
         {
-            LOG_ERROR("Failed to read DNS response.");
+            LOG_WARNING("Failed to read DNS response.");
             delete[] dnsResponseStart;
             return IPAddress::Invalid();
         }
@@ -561,7 +561,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
                540028978)
     {
         delete[] dnsResponseStart;
-        LOG_ERROR("Invalid handshake response.");
+        LOG_WARNING("Invalid handshake response.");
         return IPAddress::Invalid();
     }
     auto contentLengthHeader = "Content-Length: "_embed; // Pointer to hold the content length header
@@ -608,7 +608,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
 
     if (searchIdx >= maxSearch)
     {
-        LOG_ERROR("Could not find 'data' field in DNS JSON response");
+        LOG_WARNING("Could not find 'data' field in DNS JSON response");
         tlsClient.Close();
         delete[] dnsResponseStart;
         return IPAddress::Invalid();
@@ -658,7 +658,7 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
     // Attempt to connect to the DNS server using TLS
     if (!tlsClient.Open())
     {
-        LOG_ERROR("Failed to connect to DNS server");
+        LOG_WARNING("Failed to connect to DNS server");
         return IPAddress::Invalid();
     }
 
@@ -687,7 +687,7 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
         // Check if the total bytes read exceeds the buffer size
         if (totalBytesRead >= handshakeResponseBufferSize)
         {
-            LOG_ERROR("DNS response too large.");
+            LOG_WARNING("DNS response too large.");
             delete[] dnsResponseStart;
             return IPAddress::Invalid();
         }
@@ -700,7 +700,7 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
         // Check if no bytes were read, indicating an error
         if (bytesRead == 0)
         {
-            LOG_ERROR("Failed to read DNS response.");
+            LOG_WARNING("Failed to read DNS response.");
             delete[] dnsResponseStart;
             return IPAddress::Invalid();
         }
@@ -724,7 +724,7 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
                540028978)
     {
         delete[] dnsResponseStart;
-        LOG_ERROR("Invalid handshake response.");
+        LOG_WARNING("Invalid handshake response.");
         return IPAddress::Invalid();
     }
     PCHAR contentLengthHeader = (PCHAR)(PCCHAR) "Content-Length: "_embed; // Pointer to hold the content length header
@@ -754,7 +754,7 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
     if (!DNS_parse((PUINT8)binaryResponse, (UINT16)contentLength, &ipAddress))
     {
         tlsClient.Close();
-        LOG_ERROR("Failed to parse DNS response");
+        LOG_WARNING("Failed to parse DNS response");
         return IPAddress::Invalid();
     }
 

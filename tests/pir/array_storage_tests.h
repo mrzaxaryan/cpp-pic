@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class ArrayStorageTests
 {
@@ -11,80 +12,17 @@ public:
 
 		LOG_INFO("Running ArrayStorage Tests...");
 
-		// Test 1: Wide char array storage
-		if (!TestWideCharArrayStorage())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Wide char array storage");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Wide char array storage");
-		}
-
-		// Test 2: UINT32 array storage
-		if (!TestUInt32ArrayStorage())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: UINT32 array storage");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: UINT32 array storage");
-		}
-
-		// Test 4: UINT64 array storage
-		if (!TestUInt64ArrayStorage())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: UINT64 array storage");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: UINT64 array storage");
-		}
-
-		// Test 5: Array indexing operator
-		if (!TestArrayIndexing())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Array indexing");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Array indexing");
-		}
-
-		// Test 6: Pointer conversion and memory copy
-		if (!TestPointerConversionAndCopy())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Pointer conversion and copy");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Pointer conversion and copy");
-		}
-
-		// Test 7: Compile-time constants
-		if (!TestCompileTimeConstants())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Compile-time constants");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Compile-time constants");
-		}
+		RUN_TEST(allPassed, TestWideCharArrayStorage, "Wide char array storage");
+		RUN_TEST(allPassed, TestUInt32ArrayStorage, "UINT32 array storage");
+		RUN_TEST(allPassed, TestUInt64ArrayStorage, "UINT64 array storage");
+		RUN_TEST(allPassed, TestArrayIndexing, "Array indexing");
+		RUN_TEST(allPassed, TestPointerConversionAndCopy, "Pointer conversion and copy");
+		RUN_TEST(allPassed, TestCompileTimeConstants, "Compile-time constants");
 
 		if (allPassed)
-		{
 			LOG_INFO("All ArrayStorage tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some ArrayStorage tests failed!");
-		}
 
 		return allPassed;
 	}

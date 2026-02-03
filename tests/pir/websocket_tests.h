@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 // =============================================================================
 // WebSocket Tests - WebSocketClient Implementation Validation
@@ -449,33 +450,25 @@ public:
 	// Run all WebSocket tests
 	static BOOL RunAll()
 	{
-		LOG_INFO("=== Starting WebSocket Tests ===");
-		LOG_INFO("Test Server: echo.websocket.org");
-		LOG_INFO("Protocol: Secure WebSocket Echo Service (wss://)");
+		BOOL allPassed = TRUE;
 
-		UINT32 passed = 0;
-		UINT32 total = 8;
+		LOG_INFO("Running WebSocket Tests...");
+		LOG_INFO("  Test Server: echo.websocket.org (wss://)");
 
-		// Basic functionality tests
-		if (TestWebSocketCreation())
-			passed++;
-		if (TestWebSocketConnectionWithDns())
-			passed++;
-		if (TestSecureWebSocketConnection())
-			passed++;
-		if (TestWebSocketTextEcho())
-			passed++;
-		if (TestWebSocketBinaryEcho())
-			passed++;
-		if (TestMultipleMessages())
-			passed++;
-		if (TestLargeMessage())
-			passed++;
-		if (TestWebSocketClose())
-			passed++;
+		RUN_TEST(allPassed, TestWebSocketCreation, "WebSocket client creation");
+		RUN_TEST(allPassed, TestWebSocketConnectionWithDns, "WebSocket connection with DNS");
+		RUN_TEST(allPassed, TestSecureWebSocketConnection, "Secure WebSocket connection");
+		RUN_TEST(allPassed, TestWebSocketTextEcho, "WebSocket text echo");
+		RUN_TEST(allPassed, TestWebSocketBinaryEcho, "WebSocket binary echo");
+		RUN_TEST(allPassed, TestMultipleMessages, "Multiple messages");
+		RUN_TEST(allPassed, TestLargeMessage, "Large message");
+		RUN_TEST(allPassed, TestWebSocketClose, "WebSocket close");
 
-		BOOL allPassed = (passed == total);
-		LOG_INFO("=== WebSocket Tests Complete: %d/%d passed ===", passed, total);
+		if (allPassed)
+			LOG_INFO("All WebSocket tests passed!");
+		else
+			LOG_ERROR("Some WebSocket tests failed!");
+
 		return allPassed;
 	}
 };

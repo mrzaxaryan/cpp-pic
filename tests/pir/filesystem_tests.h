@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class FileSystemTests
 {
@@ -8,91 +9,20 @@ public:
 	static BOOL RunAll()
 	{
 		BOOL allPassed = TRUE;
-        UINT32 passed = 0;
-		UINT32 total = 6;
 
-		Logger::Info<WCHAR>(L"=== Starting FileSystem Tests ==="_embed);
+		LOG_INFO("Running FileSystem Tests...");
 
-		// Test 1: Create nested directories
-		if (!TestCreateNestedDirectories())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Create nested directories"_embed);
-		}
-		else
-		{
-            passed++;
-			Logger::Info<WCHAR>(L"  PASSED: Create nested directories"_embed);
-		}
-
-		// Test 2: Create files in directories
-		if (!TestCreateFilesInDirectories())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Create files in directories"_embed);
-		}
-		else
-		{
-            passed++;
-			Logger::Info<WCHAR>(L"  PASSED: Create files in directories"_embed);
-		}
-
-		// Test 3: Write and read file content
-		if (!TestWriteReadContent())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Write and read file content"_embed);
-		}
-		else
-		{
-            passed++;
-			Logger::Info<WCHAR>(L"  PASSED: Write and read file content"_embed);
-		}
-
-		// Test 4: File existence checks
-		if (!TestFileExistence())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: File existence checks"_embed);
-		}
-		else
-		{
-            passed++;
-			Logger::Info<WCHAR>(L"  PASSED: File existence checks"_embed);
-		}
-
-		// Test 5: Directory iteration
-		if (!TestDirectoryIteration())
-		{
-			allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Directory iteration"_embed);
-		}
-		else
-		{
-            passed++;
-			Logger::Info<WCHAR>(L"  PASSED: Directory iteration"_embed);
-		}
-
-		// Test 6: Cleanup - delete all files and directories
-		if (!TestCleanup())
-		{
-            allPassed = FALSE;
-			Logger::Error<WCHAR>(L"  FAILED: Cleanup files and directories"_embed);
-		}
-		else
-		{
-            passed++;
-			Logger::Info<WCHAR>(L"  PASSED: Cleanup files and directories"_embed);
-		}
+		RUN_TEST(allPassed, TestCreateNestedDirectories, "Create nested directories");
+		RUN_TEST(allPassed, TestCreateFilesInDirectories, "Create files in directories");
+		RUN_TEST(allPassed, TestWriteReadContent, "Write and read file content");
+		RUN_TEST(allPassed, TestFileExistence, "File existence checks");
+		RUN_TEST(allPassed, TestDirectoryIteration, "Directory iteration");
+		RUN_TEST(allPassed, TestCleanup, "Cleanup files and directories");
 
 		if (allPassed)
-		{
-			Logger::Info<WCHAR>(L"=== Filesystem Tests Complete: %d/%d passed ==="_embed, passed, total);
-		}
+			LOG_INFO("All FileSystem tests passed!");
 		else
-		{
-			Logger::Error<WCHAR>(L"Some FileSystem tests failed!"_embed);
-		}
+			LOG_ERROR("Some FileSystem tests failed!");
 
 		return allPassed;
 	}

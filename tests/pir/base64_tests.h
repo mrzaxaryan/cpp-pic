@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class Base64Tests
 {
@@ -12,177 +13,33 @@ public:
 		LOG_INFO("Running Base64 Tests...");
 
 		// Encoding Tests
-		if (!TestEncode_Empty())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode empty string");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode empty string");
-		}
-
-		if (!TestEncode_SingleChar())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode single character");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode single character");
-		}
-
-		if (!TestEncode_TwoChars())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode two characters");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode two characters");
-		}
-
-		if (!TestEncode_ThreeChars())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode three characters");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode three characters");
-		}
-
-		if (!TestEncode_StandardText())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode standard text");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode standard text");
-		}
-
-		if (!TestEncode_BinaryData())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode binary data");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode binary data");
-		}
-
-		if (!TestEncode_AllPaddingCases())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode all padding cases");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode all padding cases");
-		}
+		RUN_TEST(allPassed, TestEncode_Empty, "Base64 encode empty string");
+		RUN_TEST(allPassed, TestEncode_SingleChar, "Base64 encode single character");
+		RUN_TEST(allPassed, TestEncode_TwoChars, "Base64 encode two characters");
+		RUN_TEST(allPassed, TestEncode_ThreeChars, "Base64 encode three characters");
+		RUN_TEST(allPassed, TestEncode_StandardText, "Base64 encode standard text");
+		RUN_TEST(allPassed, TestEncode_BinaryData, "Base64 encode binary data");
+		RUN_TEST(allPassed, TestEncode_AllPaddingCases, "Base64 encode all padding cases");
 
 		// Decoding Tests
-		if (!TestDecode_Empty())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode empty string");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode empty string");
-		}
-
-		if (!TestDecode_SingleChar())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode single character");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode single character");
-		}
-
-		if (!TestDecode_TwoChars())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode two characters");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode two characters");
-		}
-
-		if (!TestDecode_ThreeChars())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode three characters");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode three characters");
-		}
-
-		if (!TestDecode_StandardText())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode standard text");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode standard text");
-		}
-
-		if (!TestDecode_BinaryData())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode binary data");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode binary data");
-		}
+		RUN_TEST(allPassed, TestDecode_Empty, "Base64 decode empty string");
+		RUN_TEST(allPassed, TestDecode_SingleChar, "Base64 decode single character");
+		RUN_TEST(allPassed, TestDecode_TwoChars, "Base64 decode two characters");
+		RUN_TEST(allPassed, TestDecode_ThreeChars, "Base64 decode three characters");
+		RUN_TEST(allPassed, TestDecode_StandardText, "Base64 decode standard text");
+		RUN_TEST(allPassed, TestDecode_BinaryData, "Base64 decode binary data");
 
 		// Round-trip Tests
-		if (!TestRoundTrip_Various())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 round-trip test");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 round-trip test");
-		}
+		RUN_TEST(allPassed, TestRoundTrip_Various, "Base64 round-trip test");
 
 		// Size Calculation Tests
-		if (!TestEncodeOutSize())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 encode output size calculation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 encode output size calculation");
-		}
-
-		if (!TestDecodeOutSize())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Base64 decode output size calculation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Base64 decode output size calculation");
-		}
+		RUN_TEST(allPassed, TestEncodeOutSize, "Base64 encode output size calculation");
+		RUN_TEST(allPassed, TestDecodeOutSize, "Base64 decode output size calculation");
 
 		if (allPassed)
-		{
 			LOG_INFO("All Base64 tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some Base64 tests failed!");
-		}
 
 		return allPassed;
 	}

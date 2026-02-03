@@ -2,6 +2,16 @@
 #include "dns.h"
 #include "logger.h"
 
+// Helper to append an embedded string to a buffer
+static USIZE AppendStr(CHAR* buf, USIZE pos, USIZE maxPos, const CHAR* str) noexcept
+{
+    for (USIZE i = 0; str[i] != '\0' && pos < maxPos; i++)
+    {
+        buf[pos++] = str[i];
+    }
+    return pos;
+}
+
 HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 {
     // Attempt to parse the URL to extract the host name, path, port, and security setting
@@ -51,6 +61,132 @@ HttpClient::HttpClient(PCCHAR url)
 
 HttpClient::~HttpClient()
 {
+    Close();
+}
+
+BOOL HttpClient::Open()
+{
+    if (isSecure)
+    {
+        return tlsContext.Open();
+    }
+    else
+    {
+        return socketContext.Open();
+    }
+}
+
+BOOL HttpClient::Close()
+{
+    if (isSecure)
+    {
+        return tlsContext.Close();
+    }
+    else
+    {
+        return socketContext.Close();
+    }
+}
+
+SSIZE HttpClient::Read(PVOID buffer, UINT32 bufferLength)
+{
+    if (isSecure)
+    {
+        return tlsContext.Read(buffer, bufferLength);
+    }
+    else
+    {
+        return socketContext.Read(buffer, bufferLength);
+    }
+}
+
+UINT32 HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
+{
+    if (isSecure)
+    {
+        return tlsContext.Write(buffer, bufferLength);
+    }
+    else
+    {
+        return socketContext.Write(buffer, bufferLength);
+    }
+}
+
+BOOL HttpClient::SendGetRequest()
+{
+    // Build GET request: "GET <path> HTTP/1.1\r\nHost: <host>\r\nConnection: close\r\n\r\n"
+    CHAR request[2048];
+    USIZE pos = 0;
+
+    pos = AppendStr(request, pos, 2000, "GET "_embed);
+    pos = AppendStr(request, pos, 2000, path);
+    pos = AppendStr(request, pos, 2000, " HTTP/1.1\r\nHost: "_embed);
+    pos = AppendStr(request, pos, 2000, hostName);
+    pos = AppendStr(request, pos, 2000, "\r\nConnection: close\r\n\r\n"_embed);
+
+    request[pos] = '\0';
+
+    UINT32 written = Write(request, (UINT32)pos);
+    return written == pos;
+}
+
+BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
+{
+    // Build POST request with Content-Length
+    CHAR request[2048];
+    USIZE pos = 0;
+
+    pos = AppendStr(request, pos, 1900, "POST "_embed);
+    pos = AppendStr(request, pos, 1900, path);
+    pos = AppendStr(request, pos, 1900, " HTTP/1.1\r\nHost: "_embed);
+    pos = AppendStr(request, pos, 1900, hostName);
+    pos = AppendStr(request, pos, 1900, "\r\nContent-Length: "_embed);
+
+    // Convert dataLength to string
+    CHAR lenStr[16];
+    USIZE lenPos = 0;
+    UINT32 tempLen = dataLength;
+    if (tempLen == 0)
+    {
+        lenStr[lenPos++] = '0';
+    }
+    else
+    {
+        CHAR digits[16];
+        USIZE digitCount = 0;
+        while (tempLen > 0)
+        {
+            digits[digitCount++] = '0' + (tempLen % 10);
+            tempLen /= 10;
+        }
+        // Reverse digits
+        while (digitCount > 0)
+        {
+            lenStr[lenPos++] = digits[--digitCount];
+        }
+    }
+    lenStr[lenPos] = '\0';
+
+    pos = AppendStr(request, pos, 1900, lenStr);
+    pos = AppendStr(request, pos, 1900, "\r\nConnection: close\r\n\r\n"_embed);
+
+    request[pos] = '\0';
+
+    // Send headers
+    UINT32 written = Write(request, (UINT32)pos);
+    if (written != pos)
+    {
+        return FALSE;
+    }
+
+    // Send body
+    if (dataLength > 0)
+    {
+        written = Write(data, dataLength);
+        return written == dataLength;
+    }
+
+    return TRUE;
 }
 
 BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure)
@@ -63,22 +199,22 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOO
     *secure = FALSE;
 
     UINT8 schemeLength = 0;
-    if (url[0] == 'w' && url[1] == 's' && url[2] == ':' && url[3] == '/' && url[4] == '/')
+    if (String::StartsWith<CHAR>(url, "ws://"_embed))
     {
         *secure = FALSE;
         schemeLength = 5; // ws://
     }
-    else if (url[0] == 'w' && url[1] == 's' && url[2] == 's' && url[3] == ':' && url[4] == '/' && url[5] == '/')
+    else if (String::StartsWith<CHAR>(url, "wss://"_embed))
     {
         *secure = TRUE;
         schemeLength = 6; // wss://
     }
-    else if (url[0] == 'h' && url[1] == 't' && url[2] == 't' && url[3] == 'p' && url[4] == ':' && url[5] == '/' && url[6] == '/')
+    else if (String::StartsWith<CHAR>(url, "http://"_embed))
     {
         *secure = FALSE;
         schemeLength = 7; // http://
     }
-    else if (url[0] == 'h' && url[1] == 't' && url[2] == 't' && url[3] == 'p' && url[4] == 's' && url[5] == ':' && url[6] == '/' && url[7] == '/')
+    else if (String::StartsWith<CHAR>(url, "https://"_embed))
     {
         *secure = TRUE;
         schemeLength = 8; // https://

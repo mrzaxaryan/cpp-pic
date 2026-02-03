@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class DoubleTests
 {
@@ -11,113 +12,20 @@ public:
 
 		LOG_INFO("Running DOUBLE Tests...");
 
-		// Test 1: Construction
-		if (!TestConstruction())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Construction");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Construction");
-		}
-
-		// Test 2: Integer to DOUBLE conversion
-		if (!TestIntToDouble())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Integer to DOUBLE");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Integer to DOUBLE");
-		}
-
-		// Test 3: DOUBLE to integer conversion
-		if (!TestDoubleToInt())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: DOUBLE to integer");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: DOUBLE to integer");
-		}
-
-		// Test 4: Arithmetic operations
-		if (!TestArithmetic())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Arithmetic");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Arithmetic");
-		}
-
-		// Test 5: Comparisons
-		if (!TestComparisons())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Comparisons");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Comparisons");
-		}
-
-		// Test 6: Unary negation
-		if (!TestNegation())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Negation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Negation");
-		}
-
-		// Test 7: Embedded double literals
-		if (!TestEmbeddedLiterals())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Embedded literals");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Embedded literals");
-		}
-
-		// Test 8: Edge cases (zero, small values)
-		if (!TestEdgeCases())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Edge cases");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Edge cases");
-		}
-
-		// Test 9: Array initialization and formatting
-		if (!TestArrayFormatting())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Array formatting");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Array formatting");
-		}
+		RUN_TEST(allPassed, TestConstruction, "Construction");
+		RUN_TEST(allPassed, TestIntToDouble, "Integer to DOUBLE");
+		RUN_TEST(allPassed, TestDoubleToInt, "DOUBLE to integer");
+		RUN_TEST(allPassed, TestArithmetic, "Arithmetic");
+		RUN_TEST(allPassed, TestComparisons, "Comparisons");
+		RUN_TEST(allPassed, TestNegation, "Negation");
+		RUN_TEST(allPassed, TestEmbeddedLiterals, "Embedded literals");
+		RUN_TEST(allPassed, TestEdgeCases, "Edge cases");
+		RUN_TEST(allPassed, TestArrayFormatting, "Array formatting");
 
 		if (allPassed)
-		{
 			LOG_INFO("All DOUBLE tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some DOUBLE tests failed!");
-		}
 
 		return allPassed;
 	}

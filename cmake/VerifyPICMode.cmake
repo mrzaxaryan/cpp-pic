@@ -50,8 +50,11 @@ set(_sections rdata rodata data bss)
 set(_found)
 
 foreach(_sec ${_sections})
-    # Match both input sections (addr:offset sizeH) and output sections (vma size)
-    if(_content MATCHES "[ \t]+[0-9a-fA-F]+[:\t ]+[0-9a-fA-F]+[H\t ]+[0-9a-fA-F]*[ \t]+\\.${_sec}[ \t\n]")
+    # Windows/UEFI (PE format): "0001:offset sizeH .section"
+    if(_content MATCHES "[0-9a-fA-F]+:[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+H[ \t]+\\.${_sec}[ \t\n]")
+        list(APPEND _found ".${_sec}")
+    # Linux (ELF format): "VMA LMA Size Align .section"
+    elseif(_content MATCHES "[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9]+[ \t]+\\.${_sec}[ \t\n]")
         list(APPEND _found ".${_sec}")
     endif()
 endforeach()
@@ -70,4 +73,4 @@ if(_found)
     )
 endif()
 
-message(STATUS "PIC verification passed")
+message(STATUS "Position-Independent verification tests passed.")

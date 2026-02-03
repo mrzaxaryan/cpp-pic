@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class StringFormatterTests
 {
@@ -11,113 +12,20 @@ public:
 
 		LOG_INFO("Running StringFormatter Tests...");
 
-		// Test 1: Integer formatting
-		if (!TestIntegerFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Integer format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Integer format");
-		}
-
-		// Test 2: Unsigned integer formatting
-		if (!TestUnsignedFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Unsigned format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Unsigned format");
-		}
-
-		// Test 3: Hexadecimal formatting
-		if (!TestHexFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Hex format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Hex format");
-		}
-
-		// Test 4: String formatting
-		if (!TestStringFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: String format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: String format");
-		}
-
-		// Test 5: Character formatting
-		if (!TestCharFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Char format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Char format");
-		}
-
-		// Test 6: Width and padding
-		if (!TestWidthPadding())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Width and padding");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Width and padding");
-		}
-
-		// Test 7: Float formatting
-		if (!TestFloatFormat())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Float format");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Float format");
-		}
-
-		// Test 8: Percent literal
-		if (!TestPercentLiteral())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Percent literal");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Percent literal");
-		}
-
-		// // Test 9: USIZE and SSIZE formatting
-		// if (!TestSizeFormat())
-		// {
-		// 	allPassed = FALSE;
-		// 	LOG_ERROR("  FAILED: Size format");
-		// }
-		// else
-		// {
-		// 	LOG_INFO("  PASSED: Size format");
-		// }
+		RUN_TEST(allPassed, TestIntegerFormat, "Integer format");
+		RUN_TEST(allPassed, TestUnsignedFormat, "Unsigned format");
+		RUN_TEST(allPassed, TestHexFormat, "Hex format");
+		RUN_TEST(allPassed, TestStringFormat, "String format");
+		RUN_TEST(allPassed, TestCharFormat, "Char format");
+		RUN_TEST(allPassed, TestWidthPadding, "Width and padding");
+		RUN_TEST(allPassed, TestFloatFormat, "Float format");
+		RUN_TEST(allPassed, TestPercentLiteral, "Percent literal");
+		// RUN_TEST(allPassed, TestSizeFormat, "Size format");
 
 		if (allPassed)
-		{
 			LOG_INFO("All StringFormatter tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some StringFormatter tests failed!");
-		}
 
 		return allPassed;
 	}

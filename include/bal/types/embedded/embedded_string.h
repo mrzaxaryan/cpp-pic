@@ -8,45 +8,56 @@
  * Eliminates .rdata section usage by materializing string literals directly in code.
  * Essential for shellcode, injection payloads, and strict PIC environments.
  *
- * COMMON USE CASES:
- *   - Shellcode & Position-Independent Code (PIC): Eliminates .rdata relocations
- *   - Kernel-Mode Drivers: Satisfies strict non-paged memory requirements
- *   - OS Development: Embedded systems and microkernels without data sections
- *   - Malware Development (Red Team/Research): Evades static string extraction
- *   - Bootloaders & Firmware: Pre-MMU environments without .rdata support
+ * Characters are packed into UINT64 words (8 chars or 4 wchars per word) at compile
+ * time and written as immediate values, reducing instruction count by up to 8x
+ * compared to character-by-character writes.
  */
 
 // ============================================================================
-// COMPILER REQUIREMENTS
+// INDEX SEQUENCE (Binary-split for O(log n) template depth)
 // ============================================================================
 
-/**
- * COMPILER OPTIMIZATION SUPPORT
- *
- * Tested and working: -O0, -O1, -O2, -O3, -Og, -Os, -Oz
- *
- * Implementation:
- *   The EMBEDDED_STRING class uses NOINLINE and DISABLE_OPTIMIZATION attributes
- *   to force runtime stack construction of strings. Characters are materialized
- *   one-by-one at runtime using immediate values embedded in code, avoiding
- *   .rdata section dependencies.
- *
- * Build requirements:
- *   - i386: -mno-sse -mno-sse2 (disables SSE to prevent .rdata generation)
- *   - x86_64: -mno-sse4.1 -mno-sse4.2 -mno-avx -mno-avx2 (limits to SSE2)
- *   - -fno-vectorize -fno-slp-vectorize (prevents auto-vectorization)
- *
- * Verification:
- *   - No .rdata section in final binary
- *   - No string literals or floating-point constants in .rdata
- *   - All strings embedded as immediate values in .text section
- */
+template <USIZE... Is>
+struct IndexSeq
+{
+};
+
+template <typename, typename>
+struct ConcatSeq;
+
+template <USIZE... Is1, USIZE... Is2>
+struct ConcatSeq<IndexSeq<Is1...>, IndexSeq<Is2...>>
+{
+    using type = IndexSeq<Is1..., (sizeof...(Is1) + Is2)...>;
+};
+
+template <USIZE N>
+struct MakeIndexSeqImpl
+{
+    using type = typename ConcatSeq<
+        typename MakeIndexSeqImpl<N / 2>::type,
+        typename MakeIndexSeqImpl<N - N / 2>::type>::type;
+};
+
+template <>
+struct MakeIndexSeqImpl<0>
+{
+    using type = IndexSeq<>;
+};
+
+template <>
+struct MakeIndexSeqImpl<1>
+{
+    using type = IndexSeq<0>;
+};
+
+template <USIZE N>
+using MakeIndexSeq = typename MakeIndexSeqImpl<N>::type;
 
 // ============================================================================
 // CHARACTER TYPE CONSTRAINT
 // ============================================================================
 
-// Restricts template to char or wchar_t
 template <typename TChar>
 concept TCHAR = __is_same_as(TChar, CHAR) || __is_same_as(TChar, WCHAR);
 
@@ -58,68 +69,54 @@ template <TCHAR TChar, TChar... Cs>
 class EMBEDDED_STRING
 {
 private:
-    static constexpr USIZE N = sizeof...(Cs) + 1; // Includes null terminator
+    static constexpr USIZE N = sizeof...(Cs) + 1;
+    static constexpr USIZE CharsPerWord = sizeof(UINT64) / sizeof(TChar);
+    static constexpr USIZE NumWords = (N + CharsPerWord - 1) / CharsPerWord;
+    static constexpr USIZE AllocN = NumWords * CharsPerWord;
 
-    // NOT aligned - prevents SSE optimization
-    TChar data[N];
+    alignas(UINT64) TChar data[AllocN];
+
+    template <USIZE WordIndex>
+    static consteval UINT64 GetPackedWord() noexcept
+    {
+        constexpr TChar chars[N] = {Cs..., TChar(0)};
+        UINT64 result = 0;
+        constexpr USIZE base = WordIndex * CharsPerWord;
+        constexpr USIZE shift = sizeof(TChar) * 8;
+
+        for (USIZE i = 0; i < CharsPerWord; ++i)
+        {
+            USIZE idx = base + i;
+            TChar c = (idx < N) ? chars[idx] : TChar(0);
+            result |= static_cast<UINT64>(static_cast<UINT16>(c)) << (i * shift);
+        }
+        return result;
+    }
+
+    template <USIZE... Is>
+    NOINLINE DISABLE_OPTIMIZATION void WritePackedWords(IndexSeq<Is...>) noexcept
+    {
+        UINT64 *dst = reinterpret_cast<UINT64 *>(data);
+        ((dst[Is] = GetPackedWord<Is>()), ...);
+    }
 
 public:
-    static constexpr USIZE Length() noexcept { return N - 1; } // Excludes null terminator
+    static constexpr USIZE Length() noexcept { return N - 1; }
 
-    /**
-     * Runtime Constructor - Forces string materialization on stack
-     *
-     * Using NOINLINE and DISABLE_OPTIMIZATION to prevent:
-     * 1. Compile-time constant folding
-     * 2. SSE vectorization
-     * 3. Merging into .rdata section
-     *
-     * Characters are materialized one-by-one at runtime using immediate values.
-     */
     NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING() noexcept : data{}
     {
-        // Write characters one by one at runtime using fold expression
-        // The NOINLINE and DISABLE_OPTIMIZATION force this to execute at runtime
-        // Characters are embedded as immediate operands in the code
-        USIZE i = 0;
-        ((data[i++] = Cs), ...);
-        data[i] = (TChar)0;
+        WritePackedWords(MakeIndexSeq<NumWords>{});
     }
 
-    /**
-     * Implicit conversion to const pointer
-     *
-     * Zero-cost conversion with no relocations or runtime overhead.
-     */
-    constexpr operator const TChar *() const noexcept
-    {
-        return data;
-    }
+    constexpr operator const TChar *() const noexcept { return data; }
 
-    /**
-     * Array subscript operator for direct character access
-     */
-    constexpr const TChar &operator[](USIZE index) const noexcept
-    {
-        return data[index];
-    }
+    constexpr const TChar &operator[](USIZE index) const noexcept { return data[index]; }
 };
 
 // ============================================================================
 // USER-DEFINED LITERAL OPERATOR
 // ============================================================================
 
-/**
- * Literal suffix for compile-time string embedding
- *
- * Usage:
- *   auto str = "Hello"_embed;       // char version
- *   auto wstr = L"Hello"_embed;     // wchar_t version
- *
- * The compiler expands the string literal into a character parameter pack,
- * and the EMBEDDED_STRING constructor materializes it at runtime on the stack.
- * No longer consteval to allow runtime construction.
- */
 template <TCHAR TChar, TChar... Chars>
 FORCE_INLINE auto operator""_embed() noexcept
 {

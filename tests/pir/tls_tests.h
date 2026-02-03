@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class TlsTests
 {
@@ -161,23 +162,20 @@ public:
 	// Run all TLS tests
 	static BOOL RunAll()
 	{
-		LOG_INFO("=== Starting TLS Tests ===");
-		LOG_INFO("Test Server: one.one.one.one (1.1.1.1:443)");
-		LOG_INFO("Protocol: TCP+TLS 1.3 Echo Server");
+		BOOL allPassed = TRUE;
 
-		UINT32 passed = 0;
-		UINT32 total = 3;
+		LOG_INFO("Running TLS Tests...");
+		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1:443)");
 
-		// Basic functionality tests
-		if (TestTlsHandshake())
-			passed++;
-		if (TestTlsEchoSingle())
-			passed++;
-		if (TestTlsEchoMultiple())
-			passed++;
+		RUN_TEST(allPassed, TestTlsHandshake, "TLS handshake");
+		RUN_TEST(allPassed, TestTlsEchoSingle, "TLS echo - single message");
+		RUN_TEST(allPassed, TestTlsEchoMultiple, "TLS echo - multiple messages");
 
-		BOOL allPassed = (passed == total);
-		LOG_INFO("=== TLS Tests Complete: %d/%d passed ===", passed, total);
+		if (allPassed)
+			LOG_INFO("All TLS tests passed!");
+		else
+			LOG_ERROR("Some TLS tests failed!");
+
 		return allPassed;
 	}
 };

@@ -2,6 +2,7 @@
 
 #include "ral.h"
 #include "random.h"
+#include "tests.h"
 
 class RandomTests
 {
@@ -17,102 +18,19 @@ public:
 		Random rng;
 		LOG_INFO("  Random object created!");
 
-		// Test 2: Basic random number generation
-		if (!TestBasicGeneration())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Basic random number generation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Basic random number generation");
-		}
-
-		// Test 3: Random values within range
-		if (!TestValueRange())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Random values within range");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Random values within range");
-		}
-
-		// Test 4: Random sequence variability
-		if (!TestSequenceVariability())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Random sequence variability");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Random sequence variability");
-		}
-
-		// Test 5: Random character generation
-		if (!TestCharGeneration())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Random character generation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Random character generation");
-		}
-
-		// Test 6: Random string generation (narrow)
-		if (!TestStringGenerationNarrow())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Random string generation (narrow)");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Random string generation (narrow)");
-		}
-
-		// Test 7: Random string generation (wide)
-		if (!TestStringGenerationWide())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Random string generation (wide)");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Random string generation (wide)");
-		}
-
-		// Test 8: Random byte array generation
-		if (!TestByteArrayGeneration())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Random byte array generation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Random byte array generation");
-		}
-
-		// Test 9: Empty string generation
-		if (!TestEmptyString())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Empty string generation");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Empty string generation");
-		}
+		RUN_TEST(allPassed, TestBasicGeneration, "Basic random number generation");
+		RUN_TEST(allPassed, TestValueRange, "Random values within range");
+		RUN_TEST(allPassed, TestSequenceVariability, "Random sequence variability");
+		RUN_TEST(allPassed, TestCharGeneration, "Random character generation");
+		RUN_TEST(allPassed, TestStringGenerationNarrow, "Random string generation (narrow)");
+		RUN_TEST(allPassed, TestStringGenerationWide, "Random string generation (wide)");
+		RUN_TEST(allPassed, TestByteArrayGeneration, "Random byte array generation");
+		RUN_TEST(allPassed, TestEmptyString, "Empty string generation");
 
 		if (allPassed)
-		{
 			LOG_INFO("All Random tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some Random tests failed!");
-		}
 
 		return allPassed;
 	}

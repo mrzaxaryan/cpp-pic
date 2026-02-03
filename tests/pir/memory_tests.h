@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ral.h"
+#include "tests.h"
 
 class MemoryTests
 {
@@ -11,102 +12,19 @@ public:
 
 		LOG_INFO("Running Memory Tests...");
 
-		// Test 1: Memory Copy basic
-		if (!TestCopyBasic())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory copy basic");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory copy basic");
-		}
-
-		// Test 2: Memory Copy overlap-safe
-		if (!TestCopyNonOverlapping())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory copy non-overlapping");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory copy non-overlapping");
-		}
-
-		// Test 3: Memory Zero
-		if (!TestZero())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory zero");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory zero");
-		}
-
-		// Test 4: Memory Set
-		if (!TestSet())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory set");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory set");
-		}
-
-		// Test 5: Memory Compare equal
-		if (!TestCompareEqual())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory compare equal");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory compare equal");
-		}
-
-		// Test 6: Memory Compare less than
-		if (!TestCompareLessThan())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory compare less than");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory compare less than");
-		}
-
-		// Test 7: Memory Compare greater than
-		if (!TestCompareGreaterThan())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory compare greater than");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory compare greater than");
-		}
-
-		// Test 8: Memory operations with zero size
-		if (!TestZeroSize())
-		{
-			allPassed = FALSE;
-			LOG_ERROR("  FAILED: Memory zero size operations");
-		}
-		else
-		{
-			LOG_INFO("  PASSED: Memory zero size operations");
-		}
+		RUN_TEST(allPassed, TestCopyBasic, "Memory copy basic");
+		RUN_TEST(allPassed, TestCopyNonOverlapping, "Memory copy non-overlapping");
+		RUN_TEST(allPassed, TestZero, "Memory zero");
+		RUN_TEST(allPassed, TestSet, "Memory set");
+		RUN_TEST(allPassed, TestCompareEqual, "Memory compare equal");
+		RUN_TEST(allPassed, TestCompareLessThan, "Memory compare less than");
+		RUN_TEST(allPassed, TestCompareGreaterThan, "Memory compare greater than");
+		RUN_TEST(allPassed, TestZeroSize, "Memory zero size operations");
 
 		if (allPassed)
-		{
 			LOG_INFO("All Memory tests passed!");
-		}
 		else
-		{
 			LOG_ERROR("Some Memory tests failed!");
-		}
 
 		return allPassed;
 	}

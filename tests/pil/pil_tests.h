@@ -65,7 +65,7 @@ static script::State* CreateScriptState()
 #include "fileio_tests.h"
 #include "networkio_tests.h"
 
-static BOOL RunScriptTests()
+static BOOL RunPILTests()
 {
     BOOL allPassed = TRUE;
 

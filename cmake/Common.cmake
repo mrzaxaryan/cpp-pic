@@ -107,7 +107,7 @@ set(CPPPIC_BASE_FLAGS
     -std=c++23
     -Werror -Wall -Wextra
     -Wno-gnu-string-literal-operator-template
-    -fbracket-depth=2048
+    -fbracket-depth=1536
     -Qn
     -nostdlib
     -fno-ident

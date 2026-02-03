@@ -1,0 +1,15 @@
+var f = fopen("test_open.txt", "w");
+if (f < 0) {
+    print("ERROR: Failed to open file for writing");
+} else {
+    print("Opened file with handle:", f);
+    var closed = fclose(f);
+    if (closed) {
+        print("File closed successfully");
+    } else {
+        print("ERROR: Failed to close file");
+    }
+}
+
+// Clean up
+fdelete("test_open.txt");

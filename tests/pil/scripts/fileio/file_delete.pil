@@ -1,0 +1,19 @@
+// Create file
+var f = fopen("test_delete.txt", "w");
+fwrite(f, "delete me");
+fclose(f);
+
+// Delete file
+var deleted = fdelete("test_delete.txt");
+if (deleted) {
+    print("File deleted successfully - PASS");
+} else {
+    print("ERROR: Failed to delete file");
+}
+
+// Verify deletion
+if (!fexists("test_delete.txt")) {
+    print("File verified deleted - PASS");
+} else {
+    print("ERROR: File still exists after delete");
+}

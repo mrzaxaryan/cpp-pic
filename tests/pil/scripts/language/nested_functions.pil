@@ -1,0 +1,7 @@
+fn outer(x) {
+    fn inner(y) {
+        return y * 2;
+    }
+    return inner(x) + 1;
+}
+print("outer(5) =", outer(5));

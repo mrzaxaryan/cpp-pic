@@ -1,0 +1,19 @@
+var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var sum = 0;
+for (var x in arr) {
+    if (x % 2 == 0) {
+        continue;
+    }
+    sum = sum + x;
+}
+print("Sum of odd numbers:", sum);
+
+// Continue with index
+var result = 0;
+for (var i, val in [10, 20, 30, 40, 50]) {
+    if (i == 2) {
+        continue;
+    }
+    result = result + val;
+}
+print("Sum skipping index 2:", result);

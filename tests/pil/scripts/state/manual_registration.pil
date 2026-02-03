@@ -1,0 +1,3 @@
+print("Only print, double, square are available");
+print("double(5) =", double(5));
+print("square(4) =", square(4));

@@ -1,0 +1,5 @@
+print("PI (x100) =", PI);
+print("Version:", version);
+if (debug) {
+    print("Debug mode is ON");
+}

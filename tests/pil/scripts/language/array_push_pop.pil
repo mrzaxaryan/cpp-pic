@@ -1,0 +1,19 @@
+var arr = [1, 2, 3];
+print("Initial array:", arr);
+
+// Push elements
+push(arr, 4);
+push(arr, 5);
+print("After push 4, 5:", arr);
+print("Length:", len(arr));
+
+// Pop elements
+var last = pop(arr);
+print("Popped:", last);
+print("After pop:", arr);
+
+last = pop(arr);
+print("Popped:", last);
+print("After pop:", arr);
+
+print("Final length:", len(arr));

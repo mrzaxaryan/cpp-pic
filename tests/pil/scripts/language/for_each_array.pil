@@ -1,0 +1,21 @@
+var nums = [10, 20, 30, 40, 50];
+
+// For-each over array
+print("Iterating over nums:");
+for (var n in nums) {
+    print("  value:", n);
+}
+
+// Compute sum
+var sum = 0;
+for (var x in nums) {
+    sum = sum + x;
+}
+print("Sum:", sum);
+
+// Mixed types
+var mixed = [1, "two", true, nil];
+print("Mixed array:");
+for (var item in mixed) {
+    print("  item:", item, "type:", type(item));
+}

@@ -33,6 +33,73 @@
 
 #include "pil/pil.h"
 #include "pal/io/console.h"
+#include "pal/io/file_system.h"
+
+// ============================================================================
+// SCRIPT LOADING UTILITIES
+// ============================================================================
+
+// Maximum script file size
+static constexpr USIZE MAX_SCRIPT_SIZE = 8192;
+
+// Buffer for loading script content
+static CHAR g_scriptBuffer[MAX_SCRIPT_SIZE];
+
+/**
+ * LoadScript - Load a PIL script from a file
+ *
+ * @param path - Wide string path to the script file
+ * @return Pointer to the script content in the global buffer, or nullptr on failure
+ *
+ * Note: The returned pointer is valid until the next call to LoadScript.
+ * The caller should use the script immediately after loading.
+ */
+static const CHAR* LoadScript(PCWCHAR path)
+{
+    File file = FileSystem::Open(path, FileSystem::FS_READ | FileSystem::FS_BINARY);
+    if (!file.IsValid())
+    {
+        LOG_ERROR("Failed to open script file");
+        return nullptr;
+    }
+
+    USIZE size = file.GetSize();
+    if (size == 0 || size >= MAX_SCRIPT_SIZE)
+    {
+        LOG_ERROR("Script file too large or empty: %zu bytes", size);
+        file.Close();
+        return nullptr;
+    }
+
+    UINT32 bytesRead = file.Read(g_scriptBuffer, (UINT32)size);
+    file.Close();
+
+    if (bytesRead != size)
+    {
+        LOG_ERROR("Failed to read script file: read %u of %zu bytes", bytesRead, size);
+        return nullptr;
+    }
+
+    g_scriptBuffer[size] = '\0';
+    return g_scriptBuffer;
+}
+
+/**
+ * RunScriptFile - Load and execute a PIL script file
+ *
+ * @param L - Script state
+ * @param path - Wide string path to the script file
+ * @return TRUE if script loaded and executed successfully, FALSE otherwise
+ */
+static BOOL RunScriptFile(script::State* L, PCWCHAR path)
+{
+    const CHAR* source = LoadScript(path);
+    if (source == nullptr)
+    {
+        return FALSE;
+    }
+    return L->DoString(source);
+}
 
 // ============================================================================
 // CONSOLE OUTPUT CALLBACK FOR SCRIPT TESTS

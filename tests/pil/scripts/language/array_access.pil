@@ -1,0 +1,22 @@
+var arr = [10, 20, 30, 40, 50];
+
+// Access elements
+print("arr[0] =", arr[0]);
+print("arr[2] =", arr[2]);
+print("arr[4] =", arr[4]);
+
+// Modify elements
+arr[0] = 100;
+arr[2] = 300;
+print("After modification:", arr);
+
+// Compound assignment
+arr[1] += 5;
+print("arr[1] after += 5:", arr[1]);
+
+// Loop through array
+var sum = 0;
+for (var i = 0; i < len(arr); i = i + 1) {
+    sum = sum + arr[i];
+}
+print("Sum of array:", sum);

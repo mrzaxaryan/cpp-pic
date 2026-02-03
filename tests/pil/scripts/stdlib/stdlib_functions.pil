@@ -1,0 +1,4 @@
+print("Hello from PIL!");
+print("1 + 2 =", 1 + 2);
+print("Type of 42:", type(42));
+print("len(hello):", len("hello"));

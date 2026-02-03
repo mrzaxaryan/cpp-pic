@@ -1,0 +1,4 @@
+print("len(hello) =", len("hello"));
+print("len(empty) =", len(""));
+print("str(123) =", str(123));
+print("str(true) =", str(true));

@@ -1,0 +1,22 @@
+var arr = ["apple", "banana", "cherry"];
+
+// For-each with index
+print("Array with indices:");
+for (var i, item in arr) {
+    print("  index:", i, "item:", item);
+}
+
+// Sum with weighted indices
+var nums = [10, 20, 30];
+var weighted = 0;
+for (var idx, val in nums) {
+    weighted = weighted + (idx * val);
+}
+print("Weighted sum:", weighted);
+
+// String with index
+var s = "ABC";
+print("String chars with index:");
+for (var pos, ch in s) {
+    print("  pos:", pos, "char:", ch);
+}

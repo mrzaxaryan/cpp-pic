@@ -64,12 +64,7 @@ private:
         L->Register("double"_embed, EMBED_FUNC(StateTest_Func_Double) );
         L->Register("square"_embed, EMBED_FUNC(StateTest_Func_Square) );
 
-        auto source = R"(print("Only print, double, square are available");
-print("double(5) =", double(5));
-print("square(4) =", square(4));
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/state/manual_registration.pil");
         delete L;
         return result;
     }
@@ -84,14 +79,7 @@ print("square(4) =", square(4));
         L->SetGlobalString("version"_embed, 7, "1.0.0"_embed, 5);
         L->SetGlobalBool("debug"_embed, 5, TRUE);
 
-        auto source = R"(print("PI (x100) =", PI);
-print("Version:", version);
-if (debug) {
-    print("Debug mode is ON");
-}
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/state/global_variables.pil");
         delete L;
         return result;
     }
@@ -103,13 +91,7 @@ if (debug) {
         // Register ONLY print - absolutely minimal
         L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
 
-        auto source = R"(var x = 10;
-var y = 20;
-print("x + y =", x + y);
-print("x * y =", x * y);
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/state/minimal_setup.pil");
         delete L;
         return result;
     }
@@ -122,11 +104,7 @@ print("x * y =", x * y);
             script::State* L = CreateScriptState();
             L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
 
-            auto source = R"(var x = 42;
-print("State test iteration");
-)"_embed;
-
-            if (!L->DoString(source))
+            if (!RunScriptFile(L, L"tests/pil/scripts/state/lifecycle.pil"))
             {
                 delete L;
                 return FALSE;

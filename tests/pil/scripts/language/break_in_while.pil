@@ -1,0 +1,11 @@
+var i = 0;
+var sum = 0;
+while (i < 100) {
+    if (i == 5) {
+        break;
+    }
+    sum = sum + i;
+    i = i + 1;
+}
+print("Break at 5, sum of 0..4 =", sum);
+print("i after break =", i);

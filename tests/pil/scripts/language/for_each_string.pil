@@ -1,0 +1,18 @@
+var s = "Hello";
+
+// For-each over string
+print("Characters in string:");
+for (var c in s) {
+    print("  char:", c);
+}
+
+// Count vowels
+var vowels = 0;
+var text = "Hello World";
+for (var ch in text) {
+    if (ch == "a" || ch == "e" || ch == "i" || ch == "o" || ch == "u" ||
+        ch == "A" || ch == "E" || ch == "I" || ch == "O" || ch == "U") {
+        vowels = vowels + 1;
+    }
+}
+print("Vowels in text:", vowels);

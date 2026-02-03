@@ -1,0 +1,6 @@
+var pi = 3.14159;
+var half = 0.5;
+var big = 1234.5678;
+print("pi =", pi);
+print("half =", half);
+print("big =", big);

@@ -72,10 +72,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ip = dns_resolve(\"cloudflare.com\");"_embed);
-        result = result && L->DoString("print(\"Resolved:\", ip);"_embed);
-        result = result && L->DoString("if (len(ip) > 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -89,9 +86,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ip4 = dns_resolve4(\"cloudflare.com\");"_embed);
-        result = result && L->DoString("print(\"IPv4:\", ip4);"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve4.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -105,9 +100,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ip6 = dns_resolve6(\"cloudflare.com\");"_embed);
-        result = result && L->DoString("print(\"IPv6:\", ip6);"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve6.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -121,10 +114,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ip = dns_resolve(\"invalid.invalid\");"_embed);
-        result = result && L->DoString("print(\"Invalid result:\", ip);"_embed);
-        result = result && L->DoString("if (len(ip) == 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/dns_resolve_invalid.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -142,11 +132,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sock = sock_connect(\"httpbin.org\", 80);"_embed);
-        result = result && L->DoString("print(\"Socket handle:\", sock);"_embed);
-        result = result && L->DoString("if (sock >= 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (sock >= 0) { sock_close(sock); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_connect.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -160,15 +146,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sock = sock_connect(\"httpbin.org\", 80);"_embed);
-        result = result && L->DoString("var req = \"GET / HTTP/1.0\\r\\nHost: httpbin.org\\r\\n\\r\\n\";"_embed);
-        result = result && L->DoString("var sent = sock_send(sock, req);"_embed);
-        result = result && L->DoString("print(\"Sent:\", sent);"_embed);
-        result = result && L->DoString("var data = sock_recv(sock, 100);"_embed);
-        result = result && L->DoString("print(\"Received:\", len(data), \"bytes\");"_embed);
-        result = result && L->DoString("if (len(data) > 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("sock_close(sock);"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_send_recv.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -182,10 +160,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sock = sock_connect(\"httpbin.org\", 80);"_embed);
-        result = result && L->DoString("var closed = sock_close(sock);"_embed);
-        result = result && L->DoString("if (closed) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_close.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -199,9 +174,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var closed = sock_close(999);"_embed);
-        result = result && L->DoString("if (!closed) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_close.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -215,9 +188,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sent = sock_send(999, \"test\");"_embed);
-        result = result && L->DoString("if (sent < 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_send.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -231,9 +202,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var data = sock_recv(999);"_embed);
-        result = result && L->DoString("if (len(data) == 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_recv.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -247,10 +216,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sock = sock_connect(\"127.0.0.1\", 1);"_embed);
-        result = result && L->DoString("if (sock < 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (sock >= 0) { sock_close(sock); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/socket_invalid_port.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -268,11 +234,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var http = http_open(\"http://httpbin.org/get\");"_embed);
-        result = result && L->DoString("print(\"HTTP handle:\", http);"_embed);
-        result = result && L->DoString("if (http >= 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (http >= 0) { http_close(http); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_open.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -286,14 +248,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var http = http_open(\"http://httpbin.org/ip\");"_embed);
-        result = result && L->DoString("var sent = http_get(http);"_embed);
-        result = result && L->DoString("print(\"GET sent:\", sent);"_embed);
-        result = result && L->DoString("var resp = http_read(http, 255);"_embed);
-        result = result && L->DoString("print(\"Response:\", len(resp), \"bytes\");"_embed);
-        result = result && L->DoString("if (len(resp) > 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("http_close(http);"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_get.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -307,10 +262,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var http = http_open(\"http://httpbin.org/get\");"_embed);
-        result = result && L->DoString("var closed = http_close(http);"_embed);
-        result = result && L->DoString("if (closed) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_close.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -324,9 +276,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var closed = http_close(999);"_embed);
-        result = result && L->DoString("if (!closed) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_close.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -340,9 +290,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sent = http_get(999);"_embed);
-        result = result && L->DoString("if (!sent) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_get.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -356,9 +304,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var posted = http_post(999, \"test\");"_embed);
-        result = result && L->DoString("if (!posted) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_post.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -372,9 +318,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var data = http_read(999);"_embed);
-        result = result && L->DoString("if (len(data) == 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/http_invalid_read.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -392,13 +336,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var s1 = sock_connect(\"httpbin.org\", 80);"_embed);
-        result = result && L->DoString("var s2 = sock_connect(\"httpbin.org\", 80);"_embed);
-        result = result && L->DoString("print(\"Handles:\", s1, s2);"_embed);
-        result = result && L->DoString("if (s1 >= 0 && s2 >= 0 && s1 != s2) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (s1 >= 0) { sock_close(s1); }"_embed);
-        result = result && L->DoString("if (s2 >= 0) { sock_close(s2); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_sockets.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -412,13 +350,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var h1 = http_open(\"http://httpbin.org/get\");"_embed);
-        result = result && L->DoString("var h2 = http_open(\"http://httpbin.org/ip\");"_embed);
-        result = result && L->DoString("print(\"Handles:\", h1, h2);"_embed);
-        result = result && L->DoString("if (h1 >= 0 && h2 >= 0 && h1 != h2) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (h1 >= 0) { http_close(h1); }"_embed);
-        result = result && L->DoString("if (h2 >= 0) { http_close(h2); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_http.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -436,11 +368,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ws = ws_connect(\"wss://echo.websocket.org\");"_embed);
-        result = result && L->DoString("print(\"WebSocket handle:\", ws);"_embed);
-        result = result && L->DoString("if (ws >= 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (ws >= 0) { ws_close(ws); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_connect.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -454,14 +382,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ws = ws_connect(\"wss://echo.websocket.org\");"_embed);
-        result = result && L->DoString("var sent = ws_send_text(ws, \"Hello\");"_embed);
-        result = result && L->DoString("print(\"Sent:\", sent);"_embed);
-        result = result && L->DoString("var data = ws_recv(ws);"_embed);
-        result = result && L->DoString("print(\"Received:\", len(data), \"bytes\");"_embed);
-        result = result && L->DoString("if (len(data) > 0) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("ws_close(ws);"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_send_recv.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -475,10 +396,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ws = ws_connect(\"wss://echo.websocket.org\");"_embed);
-        result = result && L->DoString("var closed = ws_close(ws);"_embed);
-        result = result && L->DoString("if (closed) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_close.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -492,9 +410,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var closed = ws_close(999);"_embed);
-        result = result && L->DoString("if (!closed) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_close.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -508,9 +424,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var sent = ws_send(999, \"test\");"_embed);
-        result = result && L->DoString("if (sent < 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_send.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -524,9 +438,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var data = ws_recv(999);"_embed);
-        result = result && L->DoString("if (len(data) == 0) { print(\"PASS\"); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/ws_invalid_recv.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;
@@ -540,13 +452,7 @@ private:
         script::OpenStdLib(*L);
         script::OpenNetworkIO(*L, &netCtx);
 
-        BOOL result = L->DoString("var ws1 = ws_connect(\"wss://echo.websocket.org\");"_embed);
-        result = result && L->DoString("var ws2 = ws_connect(\"wss://echo.websocket.org\");"_embed);
-        result = result && L->DoString("print(\"Handles:\", ws1, ws2);"_embed);
-        result = result && L->DoString("if (ws1 >= 0 && ws2 >= 0 && ws1 != ws2) { print(\"PASS\"); }"_embed);
-        result = result && L->DoString("if (ws1 >= 0) { ws_close(ws1); }"_embed);
-        result = result && L->DoString("if (ws2 >= 0) { ws_close(ws2); }"_embed);
-
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/networkio/multiple_ws.pil");
         if (!result)
             LOG_ERROR("Script error: %s", L->GetError());
         delete L;

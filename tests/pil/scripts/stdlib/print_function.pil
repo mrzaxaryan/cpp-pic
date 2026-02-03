@@ -1,0 +1,6 @@
+print("Single string");
+print("Multiple", "arguments", "test");
+print(42);
+print(true);
+print(nil);
+print("Mixed:", 1, true, "end");

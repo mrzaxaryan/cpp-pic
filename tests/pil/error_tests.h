@@ -39,13 +39,8 @@ private:
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        // Script with syntax error (missing semicolon)
-        auto source = R"(var x = 10
-print(x);
-)"_embed;
-
-        // Should return FALSE due to error
-        BOOL result = !L->DoString(source);
+        // Script with syntax error (missing semicolon) - should return FALSE
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/missing_semicolon.pil");
 
         if (result)
         {
@@ -61,12 +56,8 @@ print(x);
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        // Script with undefined variable
-        auto source = R"(print(undefinedVar);
-)"_embed;
-
-        // Should return FALSE due to error
-        BOOL result = !L->DoString(source);
+        // Script with undefined variable - should return FALSE
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_variable.pil");
 
         if (result)
         {
@@ -82,12 +73,8 @@ print(x);
         script::State* L = CreateScriptState();
         // Note: NOT registering any functions, not even print
 
-        // Script calling undefined function
-        auto source = R"(undefinedFunc(42);
-)"_embed;
-
-        // Should return FALSE due to error
-        BOOL result = !L->DoString(source);
+        // Script calling undefined function - should return FALSE
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_function.pil");
 
         if (result)
         {
@@ -103,12 +90,8 @@ print(x);
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        // Script with invalid expression
-        auto source = R"(var x = 5 + + 3;
-)"_embed;
-
-        // Should return FALSE due to error
-        BOOL result = !L->DoString(source);
+        // Script with invalid expression - should return FALSE
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/syntax_error.pil");
 
         if (result)
         {
@@ -125,12 +108,7 @@ print(x);
         script::OpenStdLib(*L);
 
         // Valid script should succeed
-        auto source = R"(var x = 10;
-var y = 20;
-print("Valid script: x + y =", x + y);
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/error/valid_script.pil");
         delete L;
         return result;
     }
@@ -141,10 +119,7 @@ print("Valid script: x + y =", x + y);
         script::OpenStdLib(*L);
 
         // Script with error
-        auto source = R"(var x = 10
-)"_embed;
-
-        L->DoString(source);
+        RunScriptFile(L, L"tests/pil/scripts/error/error_message.pil");
 
         // GetError should return a non-empty string
         const CHAR* error = L->GetError();
@@ -164,14 +139,8 @@ print("Valid script: x + y =", x + y);
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        // Script with break outside of loop
-        auto source = R"(var x = 10;
-break;
-print(x);
-)"_embed;
-
-        // Should return FALSE due to error
-        BOOL result = !L->DoString(source);
+        // Script with break outside of loop - should return FALSE
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/break_outside_loop.pil");
 
         if (result)
         {
@@ -187,14 +156,8 @@ print(x);
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        // Script with continue outside of loop
-        auto source = R"(var x = 10;
-continue;
-print(x);
-)"_embed;
-
-        // Should return FALSE due to error
-        BOOL result = !L->DoString(source);
+        // Script with continue outside of loop - should return FALSE
+        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/continue_outside_loop.pil");
 
         if (result)
         {

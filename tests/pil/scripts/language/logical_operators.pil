@@ -1,0 +1,7 @@
+print("true && true:", true && true);
+print("true && false:", true && false);
+print("true || false:", true || false);
+print("false || false:", false || false);
+print("!true:", !true);
+print("!false:", !false);
+print("(5 > 3) && (2 < 4):", (5 > 3) && (2 < 4));

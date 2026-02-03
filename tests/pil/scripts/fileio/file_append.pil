@@ -1,0 +1,22 @@
+// Create initial file
+var f = fopen("test_append.txt", "w");
+fwrite(f, "Hello");
+fclose(f);
+
+// Append to file
+var f2 = fopen("test_append.txt", "a");
+fwrite(f2, " World");
+fclose(f2);
+
+// Read and verify
+var f3 = fopen("test_append.txt", "r");
+var content = fread(f3);
+print("Appended content:", content);
+if (content == "Hello World") {
+    print("Append mode - PASS");
+} else {
+    print("ERROR: Expected Hello World");
+}
+fclose(f3);
+
+fdelete("test_append.txt");

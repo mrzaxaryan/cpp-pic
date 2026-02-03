@@ -72,13 +72,7 @@ private:
         // Register standard library (print, len, str, num, type, abs, min, max)
         script::OpenStdLib(*L);
 
-        auto source = R"(print("Hello from PIL!");
-print("1 + 2 =", 1 + 2);
-print("Type of 42:", type(42));
-print("len(hello):", len("hello"));
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/stdlib/stdlib_functions.pil");
         delete L;
         return result;
     }
@@ -92,11 +86,7 @@ print("len(hello):", len("hello"));
         L->Register("greet"_embed, EMBED_FUNC(StdLibTest_Func_Greet) );
         L->Register("sum"_embed, EMBED_FUNC(StdLibTest_Func_Sum) );
 
-        auto source = R"(greet("PIL User");
-print("sum(1,2,3,4,5) =", sum(1,2,3,4,5));
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/stdlib/custom_functions.pil");
         delete L;
         return result;
     }
@@ -106,15 +96,7 @@ print("sum(1,2,3,4,5) =", sum(1,2,3,4,5));
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        auto source = R"(print("Single string");
-print("Multiple", "arguments", "test");
-print(42);
-print(true);
-print(nil);
-print("Mixed:", 1, true, "end");
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/stdlib/print_function.pil");
         delete L;
         return result;
     }
@@ -124,13 +106,7 @@ print("Mixed:", 1, true, "end");
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        auto source = R"(print("type(42) =", type(42));
-print("type(hello) =", type("hello"));
-print("type(true) =", type(true));
-print("type(nil) =", type(nil));
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/stdlib/type_function.pil");
         delete L;
         return result;
     }
@@ -140,13 +116,7 @@ print("type(nil) =", type(nil));
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        auto source = R"(print("len(hello) =", len("hello"));
-print("len(empty) =", len(""));
-print("str(123) =", str(123));
-print("str(true) =", str(true));
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/stdlib/string_functions.pil");
         delete L;
         return result;
     }
@@ -156,15 +126,7 @@ print("str(true) =", str(true));
         script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
-        auto source = R"(print("abs(-5) =", abs(-5));
-print("abs(5) =", abs(5));
-print("min(3, 7) =", min(3, 7));
-print("max(3, 7) =", max(3, 7));
-print("min(-1, 1) =", min(-1, 1));
-print("max(-1, 1) =", max(-1, 1));
-)"_embed;
-
-        BOOL result = L->DoString(source);
+        BOOL result = RunScriptFile(L, L"tests/pil/scripts/stdlib/math_functions.pil");
         delete L;
         return result;
     }

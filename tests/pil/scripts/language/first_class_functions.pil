@@ -1,0 +1,7 @@
+fn apply(f, x) {
+    return f(x);
+}
+fn double(n) {
+    return n * 2;
+}
+print("apply(double, 5) =", apply(double, 5));

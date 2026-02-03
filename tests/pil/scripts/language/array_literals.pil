@@ -1,0 +1,16 @@
+// Empty array
+var empty = [];
+print("Empty array:", empty);
+print("Empty length:", len(empty));
+
+// Array with elements
+var nums = [1, 2, 3, 4, 5];
+print("Numbers:", nums);
+print("Numbers length:", len(nums));
+
+// Mixed types
+var mixed = [1, "hello", true, nil];
+print("Mixed array:", mixed);
+
+// Array type
+print("Type of array:", type(nums));

@@ -1,0 +1,11 @@
+var s = "Hello";
+
+// Access individual characters
+print("s[0] =", s[0]);
+print("s[1] =", s[1]);
+print("s[4] =", s[4]);
+
+// Loop through string
+for (var i = 0; i < len(s); i = i + 1) {
+    print("char", i, "=", s[i]);
+}

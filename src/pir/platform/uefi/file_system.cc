@@ -9,6 +9,7 @@
 #include "efi_context.h"
 #include "efi_file_protocol.h"
 #include "memory.h"
+#include "path.h"
 
 // =============================================================================
 // Helper: Get Root Directory Handle
@@ -71,8 +72,15 @@ static EFI_FILE_PROTOCOL *OpenFileFromRoot(EFI_FILE_PROTOCOL *Root, PCWCHAR path
 	if (Root == NULL || path == NULL)
 		return NULL;
 
+	// Normalize path separators (convert '/' to '\' for UEFI)
+	PWCHAR normalizedPath = Path::NormalizePath(path);
+	if (normalizedPath == NULL)
+		return NULL;
+
 	EFI_FILE_PROTOCOL *FileHandle = NULL;
-	EFI_STATUS Status = Root->Open(Root, &FileHandle, (CHAR16 *)path, mode, attributes);
+	EFI_STATUS Status = Root->Open(Root, &FileHandle, (CHAR16 *)normalizedPath, mode, attributes);
+
+	delete[] normalizedPath;
 
 	if (EFI_ERROR_CHECK(Status))
 		return NULL;
@@ -197,10 +205,20 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 	if (Root == NULL)
 		return FALSE;
 
+	// Normalize path separators (convert '/' to '\' for UEFI)
+	PWCHAR normalizedPath = Path::NormalizePath(path);
+	if (normalizedPath == NULL)
+	{
+		Root->Close(Root);
+		return FALSE;
+	}
+
 	EFI_FILE_PROTOCOL *DirHandle = NULL;
-	EFI_STATUS Status = Root->Open(Root, &DirHandle, (CHAR16 *)path,
+	EFI_STATUS Status = Root->Open(Root, &DirHandle, (CHAR16 *)normalizedPath,
 		EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
 		EFI_FILE_DIRECTORY);
+
+	delete[] normalizedPath;
 	Root->Close(Root);
 
 	if (EFI_ERROR_CHECK(Status) || DirHandle == NULL)

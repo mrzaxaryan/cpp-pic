@@ -28,8 +28,9 @@
  * Implementation:
  *   The EMBEDDED_STRING class uses NOINLINE and DISABLE_OPTIMIZATION attributes
  *   to force runtime stack construction of strings. Characters are materialized
- *   one-by-one at runtime using immediate values embedded in code, avoiding
- *   .rdata section dependencies.
+ *   at runtime using immediate values embedded in code, avoiding .rdata section
+ *   dependencies. Uses binary-split recursion for O(log n) template depth,
+ *   enabling support for large strings without exceeding compiler limits.
  *
  * Build requirements:
  *   - i386: -mno-sse -mno-sse2 (disables SSE to prevent .rdata generation)
@@ -63,32 +64,30 @@ private:
     // NOT aligned - prevents SSE optimization
     TChar data[N];
 
-    // Compile-time character access - returns Nth character as immediate value
+    // Compile-time character access - index is constexpr so result becomes immediate
     template <USIZE I>
-    FORCE_INLINE static constexpr TChar get_char()
+    FORCE_INLINE static constexpr TChar get_char() noexcept
     {
         constexpr TChar chars[] = {Cs...};
         return chars[I];
     }
 
     // Binary-split initialization - O(log n) template depth instead of O(n)
-    // This avoids deep expression nesting that exceeds -fbracket-depth limits
     template <USIZE Start, USIZE End>
-    FORCE_INLINE void init_range()
+    FORCE_INLINE void init_range() noexcept
     {
-        if constexpr (End > Start) {
-            if constexpr (End - Start == 1) {
-                data[Start] = get_char<Start>();
-            } else {
-                constexpr USIZE Mid = Start + (End - Start) / 2;
-                init_range<Start, Mid>();
-                init_range<Mid, End>();
-            }
+        if constexpr (End - Start == 1) {
+            data[Start] = get_char<Start>();
+        } else if constexpr (End > Start) {
+            constexpr USIZE Mid = Start + (End - Start) / 2;
+            init_range<Start, Mid>();
+            init_range<Mid, End>();
         }
     }
 
 public:
-    static constexpr USIZE Length() noexcept { return N - 1; } // Excludes null terminator
+    static constexpr USIZE Length() noexcept { return N - 1; }  // Excludes null terminator
+    static constexpr USIZE Size() noexcept { return N; }        // Includes null terminator
 
     /**
      * Runtime Constructor - Forces string materialization on stack
@@ -140,7 +139,6 @@ public:
  *
  * The compiler expands the string literal into a character parameter pack,
  * and the EMBEDDED_STRING constructor materializes it at runtime on the stack.
- * No longer consteval to allow runtime construction.
  */
 template <TCHAR TChar, TChar... Chars>
 FORCE_INLINE auto operator""_embed() noexcept

@@ -70,8 +70,13 @@ jobs:
             Copy-Item -Path "build/*" -Destination $artifactDir -Recurse
 
             Write-Host "========== Testing EXE -$opt ==========" -ForegroundColor Cyan
-            & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
-            if ($LASTEXITCODE -ne 0) { $failed += "$opt-exe"; continue }
+            $exePath = (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+            & $exePath 2>&1 | Write-Host
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "EXE test failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+              $failed += "$opt-exe"
+              continue
+            }
 
             Write-Host "========== Testing PIC -$opt ==========" -ForegroundColor Cyan
             python scripts/loader.py --arch i386 (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName

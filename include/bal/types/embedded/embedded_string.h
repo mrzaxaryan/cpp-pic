@@ -63,6 +63,30 @@ private:
     // NOT aligned - prevents SSE optimization
     TChar data[N];
 
+    // Compile-time character access - returns Nth character as immediate value
+    template <USIZE I>
+    FORCE_INLINE static constexpr TChar get_char()
+    {
+        constexpr TChar chars[] = {Cs...};
+        return chars[I];
+    }
+
+    // Binary-split initialization - O(log n) template depth instead of O(n)
+    // This avoids deep expression nesting that exceeds -fbracket-depth limits
+    template <USIZE Start, USIZE End>
+    FORCE_INLINE void init_range()
+    {
+        if constexpr (End > Start) {
+            if constexpr (End - Start == 1) {
+                data[Start] = get_char<Start>();
+            } else {
+                constexpr USIZE Mid = Start + (End - Start) / 2;
+                init_range<Start, Mid>();
+                init_range<Mid, End>();
+            }
+        }
+    }
+
 public:
     static constexpr USIZE Length() noexcept { return N - 1; } // Excludes null terminator
 
@@ -75,15 +99,13 @@ public:
      * 3. Merging into .rdata section
      *
      * Characters are materialized one-by-one at runtime using immediate values.
+     * Uses binary-split recursion for O(log n) template depth.
      */
     NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING() noexcept : data{}
     {
-        // Write characters one by one at runtime using fold expression
-        // The NOINLINE and DISABLE_OPTIMIZATION force this to execute at runtime
-        // Characters are embedded as immediate operands in the code
-        USIZE i = 0;
-        ((data[i++] = Cs), ...);
-        data[i] = (TChar)0;
+        // Binary-split initialization avoids deep expression nesting
+        init_range<0, sizeof...(Cs)>();
+        data[N - 1] = (TChar)0;
     }
 
     /**

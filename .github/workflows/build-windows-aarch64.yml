@@ -67,7 +67,8 @@ jobs:
             Write-Host "========== Uploading -$opt ==========" -ForegroundColor Cyan
             $artifactDir = "artifacts/$opt"
             New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
-            Copy-Item -Path "build/*" -Destination $artifactDir -Recurse -Exclude "cmake"
+            Copy-Item -Path "build/*" -Destination $artifactDir -Recurse
+            Get-ChildItem -Path $artifactDir -Recurse -Directory -Filter "cmake" | Remove-Item -Recurse -Force
 
             Write-Host "========== Testing EXE -$opt ==========" -ForegroundColor Cyan
             & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName

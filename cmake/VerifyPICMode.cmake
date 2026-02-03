@@ -73,4 +73,4 @@ if(_found)
     )
 endif()
 
-message(STATUS "PIC verification passed")
+message(STATUS "Position-Independent verification tests passed.")

@@ -1,5 +1,5 @@
 /**
- * script_tests.h - Unified PIL Test Suite Header
+ * pil_tests.h - Unified PIL Test Suite Header
  *
  * This header exposes all test suite classes for the PIL language.
  * Include this single header to access all test functionality.
@@ -14,7 +14,7 @@
  *   NetworkIOTests - Network I/O function tests (sockets, DNS, HTTP)
  *
  * USAGE:
- *   #include "script_tests.h"
+ *   #include "pil_tests.h"
  *
  *   // Run all tests
  *   RunScriptTests();

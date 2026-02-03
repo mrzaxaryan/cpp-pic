@@ -5,8 +5,8 @@
  */
 
 #include "ral.h"
-#include "script/script_tests.h"
-#include "runtime/runtime_tests.h"
+#include "pil/pil_tests.h"
+#include "pir/pir_tests.h"
 
 /**
  * _start - Entry point for all platforms

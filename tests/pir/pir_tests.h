@@ -1,5 +1,5 @@
 /**
- * tests.h - Unified Test Suite Header
+ * pir_tests.h - Unified PIR Test Suite Header
  *
  * This header exposes all test suite classes for the CPP-PIC runtime.
  * Include this single header to access all test functionality.

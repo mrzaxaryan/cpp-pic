@@ -392,7 +392,7 @@ FORCE_INLINE Expr* MakeStringExpr(ASTAllocator& alloc, const CHAR* value, USIZE 
     expr->type = ExprType::STRING_LITERAL;
     expr->line = line;
     expr->column = col;
-    expr->string.length = StrUtil::Copy(expr->string.value, MAX_STRING_VALUE, value, length);
+    expr->string.length = String::Copy(expr->string.value, MAX_STRING_VALUE, value, length);
     return expr;
 }
 
@@ -427,7 +427,7 @@ FORCE_INLINE Expr* MakeIdentifierExpr(ASTAllocator& alloc, const CHAR* name, USI
     expr->type = ExprType::IDENTIFIER;
     expr->line = line;
     expr->column = col;
-    expr->identifier.length = StrUtil::Copy(expr->identifier.name, MAX_IDENTIFIER_LENGTH, name, length);
+    expr->identifier.length = String::Copy(expr->identifier.name, MAX_IDENTIFIER_LENGTH, name, length);
     return expr;
 }
 
@@ -479,7 +479,7 @@ FORCE_INLINE Expr* MakeAssignExpr(ASTAllocator& alloc, const CHAR* name, USIZE l
     expr->type = ExprType::ASSIGN;
     expr->line = line;
     expr->column = col;
-    expr->assign.nameLength = StrUtil::Copy(expr->assign.name, MAX_IDENTIFIER_LENGTH, name, length);
+    expr->assign.nameLength = String::Copy(expr->assign.name, MAX_IDENTIFIER_LENGTH, name, length);
     expr->assign.value = value;
     return expr;
 }
@@ -544,7 +544,7 @@ FORCE_INLINE Stmt* MakeVarDeclStmt(ASTAllocator& alloc, const CHAR* name, USIZE 
     stmt->type = StmtType::VAR_DECL;
     stmt->line = line;
     stmt->column = col;
-    stmt->varDecl.nameLength = StrUtil::Copy(stmt->varDecl.name, MAX_IDENTIFIER_LENGTH, name, length);
+    stmt->varDecl.nameLength = String::Copy(stmt->varDecl.name, MAX_IDENTIFIER_LENGTH, name, length);
     stmt->varDecl.initializer = init;
     return stmt;
 }
@@ -600,13 +600,13 @@ FORCE_INLINE Stmt* MakeForEachStmt(ASTAllocator& alloc, const CHAR* valueName, U
     stmt->column = col;
 
     // Copy value name
-    stmt->forEachStmt.valueNameLength = StrUtil::Copy(stmt->forEachStmt.valueName, MAX_IDENTIFIER_LENGTH, valueName, valueLen);
+    stmt->forEachStmt.valueNameLength = String::Copy(stmt->forEachStmt.valueName, MAX_IDENTIFIER_LENGTH, valueName, valueLen);
 
     // Copy index name if present
     stmt->forEachStmt.hasIndex = hasIndex;
     if (hasIndex && indexName)
     {
-        stmt->forEachStmt.indexNameLength = StrUtil::Copy(stmt->forEachStmt.indexName, MAX_IDENTIFIER_LENGTH, indexName, indexLen);
+        stmt->forEachStmt.indexNameLength = String::Copy(stmt->forEachStmt.indexName, MAX_IDENTIFIER_LENGTH, indexName, indexLen);
     }
     else
     {
@@ -627,7 +627,7 @@ FORCE_INLINE Stmt* MakeFunctionStmt(ASTAllocator& alloc, const CHAR* name, USIZE
     stmt->type = StmtType::FUNCTION;
     stmt->line = line;
     stmt->column = col;
-    stmt->function.nameLength = StrUtil::Copy(stmt->function.name, MAX_IDENTIFIER_LENGTH, name, length);
+    stmt->function.nameLength = String::Copy(stmt->function.name, MAX_IDENTIFIER_LENGTH, name, length);
     stmt->function.paramCount = 0;
     stmt->function.body = nullptr;
     return stmt;

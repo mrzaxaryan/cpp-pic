@@ -9,8 +9,7 @@
 
 #pragma once
 
-#include "ast.h"      // includes bal/types/numeric/double.h
-#include "strutil.h"  // String utilities
+#include "ast.h"      // includes bal/types/numeric/double.h and bal/string/string.h
 
 namespace script
 {
@@ -208,7 +207,7 @@ struct Value
     {
         Value v;
         v.type = ValueType::STRING;
-        v.strLength = StrUtil::Copy(v.strValue, MAX_STRING_VALUE, s, len);
+        v.strLength = String::Copy(v.strValue, MAX_STRING_VALUE, s, len);
         return v;
     }
 
@@ -576,7 +575,7 @@ public:
         // Add new variable
         Variable& var = scope.variables[scope.count++];
         var.hash = hash;
-        var.nameLength = StrUtil::Copy(var.name, MAX_IDENTIFIER_LENGTH, name, nameLen);
+        var.nameLength = String::Copy(var.name, MAX_IDENTIFIER_LENGTH, name, nameLen);
         var.value = value;
         return TRUE;
     }
@@ -625,15 +624,15 @@ NOINLINE USIZE GetValueTypeName(ValueType type, CHAR* buffer, USIZE bufferSize) 
 
     switch (type)
     {
-        case ValueType::NIL:             return StrUtil::CopyEmbed("nil"_embed, buffer, bufferSize);
-        case ValueType::BOOL:            return StrUtil::CopyEmbed("bool"_embed, buffer, bufferSize);
-        case ValueType::NUMBER:          return StrUtil::CopyEmbed("number"_embed, buffer, bufferSize);
-        case ValueType::STRING:          return StrUtil::CopyEmbed("string"_embed, buffer, bufferSize);
-        case ValueType::ARRAY:           return StrUtil::CopyEmbed("array"_embed, buffer, bufferSize);
-        case ValueType::FUNCTION:        return StrUtil::CopyEmbed("function"_embed, buffer, bufferSize);
-        case ValueType::NATIVE_FUNCTION: return StrUtil::CopyEmbed("native"_embed, buffer, bufferSize);
-        case ValueType::CFUNCTION:       return StrUtil::CopyEmbed("cfunction"_embed, buffer, bufferSize);
-        default:                         return StrUtil::CopyEmbed("unknown"_embed, buffer, bufferSize);
+        case ValueType::NIL:             return String::CopyEmbed("nil"_embed, buffer, bufferSize);
+        case ValueType::BOOL:            return String::CopyEmbed("bool"_embed, buffer, bufferSize);
+        case ValueType::NUMBER:          return String::CopyEmbed("number"_embed, buffer, bufferSize);
+        case ValueType::STRING:          return String::CopyEmbed("string"_embed, buffer, bufferSize);
+        case ValueType::ARRAY:           return String::CopyEmbed("array"_embed, buffer, bufferSize);
+        case ValueType::FUNCTION:        return String::CopyEmbed("function"_embed, buffer, bufferSize);
+        case ValueType::NATIVE_FUNCTION: return String::CopyEmbed("native"_embed, buffer, bufferSize);
+        case ValueType::CFUNCTION:       return String::CopyEmbed("cfunction"_embed, buffer, bufferSize);
+        default:                         return String::CopyEmbed("unknown"_embed, buffer, bufferSize);
     }
 }
 

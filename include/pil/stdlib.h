@@ -33,12 +33,12 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
     switch (value.type)
     {
         case ValueType::NIL:
-            return StrUtil::CopyEmbed("nil"_embed, buffer, bufferSize);
+            return String::CopyEmbed("nil"_embed, buffer, bufferSize);
 
         case ValueType::BOOL:
             return value.boolValue
-                ? StrUtil::CopyEmbed("true"_embed, buffer, bufferSize)
-                : StrUtil::CopyEmbed("false"_embed, buffer, bufferSize);
+                ? String::CopyEmbed("true"_embed, buffer, bufferSize)
+                : String::CopyEmbed("false"_embed, buffer, bufferSize);
 
         case ValueType::NUMBER:
             {
@@ -49,17 +49,17 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
                 if (d == reconstructed)
                 {
                     // Format as integer using StrUtil
-                    return StrUtil::IntToStr(intPart, buffer, bufferSize);
+                    return String::IntToStr(intPart, buffer, bufferSize);
                 }
                 else
                 {
                     // Format as float using StrUtil
-                    return StrUtil::FloatToStr(d, buffer, bufferSize, 6);
+                    return String::FloatToStr(d, buffer, bufferSize, 6);
                 }
             }
 
         case ValueType::STRING:
-            return StrUtil::Copy(buffer, bufferSize, value.strValue, value.strLength);
+            return String::Copy(buffer, bufferSize, value.strValue, value.strLength);
 
         case ValueType::FUNCTION:
             {
@@ -83,7 +83,7 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
 
         case ValueType::NATIVE_FUNCTION:
         case ValueType::CFUNCTION:
-            return StrUtil::CopyEmbed("<native>"_embed, buffer, bufferSize);
+            return String::CopyEmbed("<native>"_embed, buffer, bufferSize);
 
         case ValueType::ARRAY:
             {
@@ -555,7 +555,7 @@ NOINLINE Value StdLib_IndexOf(FunctionContext& ctx) noexcept
 
     if (start >= strLen) return Value::Number(-1);
 
-    SSIZE result = StrUtil::IndexOf(str + start, strLen - start, search, searchLen);
+    SSIZE result = String::IndexOf(str + start, strLen - start, search, searchLen);
     if (result < 0) return Value::Number(-1);
     return Value::Number((INT64)(start + (USIZE)result));
 }
@@ -576,7 +576,7 @@ NOINLINE Value StdLib_Trim(FunctionContext& ctx) noexcept
     const CHAR* str = ctx.ToString(0);
     USIZE len = ctx.ToStringLength(0);
 
-    const CHAR* trimmed = StrUtil::Trim(str, len);
+    const CHAR* trimmed = String::Trim(str, len);
     return Value::String(trimmed, len);
 }
 
@@ -600,7 +600,7 @@ NOINLINE Value StdLib_Upper(FunctionContext& ctx) noexcept
     USIZE copyLen = len < MAX_STRING_VALUE - 1 ? len : MAX_STRING_VALUE - 1;
     for (USIZE i = 0; i < copyLen; i++)
     {
-        buffer[i] = StrUtil::ToUpper(str[i]);
+        buffer[i] = String::ToUpperCase(str[i]);
     }
     buffer[copyLen] = '\0';
     return Value::String(buffer, copyLen);
@@ -626,7 +626,7 @@ NOINLINE Value StdLib_Lower(FunctionContext& ctx) noexcept
     USIZE copyLen = len < MAX_STRING_VALUE - 1 ? len : MAX_STRING_VALUE - 1;
     for (USIZE i = 0; i < copyLen; i++)
     {
-        buffer[i] = StrUtil::ToLower(str[i]);
+        buffer[i] = String::ToLowerCase(str[i]);
     }
     buffer[copyLen] = '\0';
     return Value::String(buffer, copyLen);
@@ -650,7 +650,7 @@ NOINLINE Value StdLib_StartsWith(FunctionContext& ctx) noexcept
     const CHAR* prefix = ctx.ToString(1);
     USIZE prefixLen = ctx.ToStringLength(1);
 
-    return Value::Bool(StrUtil::StartsWith(str, strLen, prefix, prefixLen));
+    return Value::Bool(String::StartsWith(str, strLen, prefix, prefixLen));
 }
 
 /**
@@ -671,7 +671,7 @@ NOINLINE Value StdLib_EndsWith(FunctionContext& ctx) noexcept
     const CHAR* suffix = ctx.ToString(1);
     USIZE suffixLen = ctx.ToStringLength(1);
 
-    return Value::Bool(StrUtil::EndsWith(str, strLen, suffix, suffixLen));
+    return Value::Bool(String::EndsWith(str, strLen, suffix, suffixLen));
 }
 
 /**
@@ -696,7 +696,7 @@ NOINLINE Value StdLib_Replace(FunctionContext& ctx) noexcept
 
     if (searchLen == 0) return Value::String(str, strLen);
 
-    SSIZE pos = StrUtil::IndexOf(str, strLen, search, searchLen);
+    SSIZE pos = String::IndexOf(str, strLen, search, searchLen);
     if (pos < 0) return Value::String(str, strLen);
 
     CHAR buffer[MAX_STRING_VALUE];

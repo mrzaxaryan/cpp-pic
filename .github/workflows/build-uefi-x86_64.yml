@@ -84,6 +84,15 @@ jobs:
             mmd -i "$DISK_IMG" ::/EFI/BOOT
             mcopy -i "$DISK_IMG" build/release/uefi/x86_64/output.efi "::EFI/BOOT/BOOTX64.EFI"
 
+            # Copy PIL script files for testing
+            mmd -i "$DISK_IMG" ::/tests
+            mmd -i "$DISK_IMG" ::/tests/pil
+            mmd -i "$DISK_IMG" ::/tests/pil/scripts
+            for dir in language stdlib state error float fileio networkio; do
+              mmd -i "$DISK_IMG" ::/tests/pil/scripts/$dir
+              mcopy -i "$DISK_IMG" tests/pil/scripts/$dir/*.pil "::tests/pil/scripts/$dir/"
+            done
+
             set +e
             timeout 180s qemu-system-x86_64 \
               -bios /usr/share/ovmf/OVMF.fd \

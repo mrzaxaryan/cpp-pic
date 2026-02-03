@@ -303,5 +303,18 @@ void RunScript() {
   - Works in `while`, `for`, and `for-each` loops
   - Error if used outside of a loop
 - [ ] More stdlib functions (substring, indexOf, etc.)
-- [ ] File I/O functions (via PAL)
+- [x] File I/O functions (via PAL) - **COMPLETE**
+  - `fopen(path, mode)` - Open file ("r", "w", "a", "rb", "wb", "ab")
+  - `fclose(handle)` - Close file
+  - `fread(handle [, size])` - Read from file (max 255 bytes per call)
+  - `freadline(handle)` - Read a line from file
+  - `fwrite(handle, data)` - Write to file
+  - `fexists(path)` - Check if file exists
+  - `fdelete(path)` - Delete file
+  - `fsize(handle)` - Get file size
+  - `fseek(handle, offset, origin)` - Set file position (0=start, 1=current, 2=end)
+  - `ftell(handle)` - Get current file position
+  - `mkdir(path)` - Create directory
+  - `rmdir(path)` - Remove directory
+  - Max 16 open files simultaneously (MAX_FILE_HANDLES)
 - [ ] Network functions (via PAL)

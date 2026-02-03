@@ -44,6 +44,9 @@ private:
     CHAR m_errorMessage[512];
     UINT32 m_errorLine;
 
+    // User data pointer (for extensions like FileIO)
+    PVOID m_userData;
+
 public:
     // ========================================================================
     // CONSTRUCTION
@@ -53,6 +56,7 @@ public:
         : m_outputFn(nullptr)
         , m_hasError(FALSE)
         , m_errorLine(0)
+        , m_userData(nullptr)
     {
         m_errorMessage[0] = '\0';
     }
@@ -286,6 +290,16 @@ public:
      * Get raw interpreter reference.
      */
     Interpreter& GetInterpreter() noexcept { return m_interpreter; }
+
+    /**
+     * Set user data pointer (for extensions like FileIO).
+     */
+    void SetUserData(PVOID data) noexcept { m_userData = data; }
+
+    /**
+     * Get user data pointer.
+     */
+    PVOID GetUserData() const noexcept { return m_userData; }
 
 private:
     // ========================================================================

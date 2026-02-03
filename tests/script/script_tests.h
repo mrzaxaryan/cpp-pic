@@ -10,6 +10,7 @@
  *   LanguageTests  - Language feature tests (control flow, recursion, operators, functions)
  *   ErrorTests     - Error handling and detection tests
  *   FloatTests     - Floating-point number tests
+ *   FileIOTests    - File I/O function tests (fopen, fclose, fread, fwrite, etc.)
  *
  * USAGE:
  *   #include "script_tests.h"
@@ -23,6 +24,7 @@
  *   LanguageTests::RunAll();
  *   ErrorTests::RunAll();
  *   FloatTests::RunAll();
+ *   FileIOTests::RunAll();
  */
 
 #pragma once
@@ -58,6 +60,7 @@ static script::State* CreateScriptState()
 #include "language_tests.h"
 #include "error_tests.h"
 #include "float_tests.h"
+#include "fileio_tests.h"
 
 static BOOL RunScriptTests()
 {
@@ -81,6 +84,9 @@ static BOOL RunScriptTests()
 
     // Floating-point tests
     RUN_TEST_SUITE(allPassed, FloatTests);
+
+    // File I/O tests
+    RUN_TEST_SUITE(allPassed, FileIOTests);
 
     // Final summary
     LOG_INFO("=== PICScript Test Suite Complete ===");

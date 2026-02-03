@@ -22,6 +22,8 @@ public:
         RUN_TEST(allPassed, TestSyntaxErrorInExpression, "Syntax error in expression detection");
         RUN_TEST(allPassed, TestValidScript, "Valid script execution");
         RUN_TEST(allPassed, TestErrorMessageRetrieval, "Error message retrieval");
+        RUN_TEST(allPassed, TestBreakOutsideLoop, "Break outside loop error");
+        RUN_TEST(allPassed, TestContinueOutsideLoop, "Continue outside loop error");
 
         if (allPassed)
             LOG_INFO("All Error tests passed!");
@@ -151,6 +153,52 @@ print("Valid script: x + y =", x + y);
         if (result)
         {
             LOG_INFO("    Retrieved error: %s", error);
+        }
+
+        delete L;
+        return result;
+    }
+
+    static BOOL TestBreakOutsideLoop()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        // Script with break outside of loop
+        auto source = R"(var x = 10;
+break;
+print(x);
+)"_embed;
+
+        // Should return FALSE due to error
+        BOOL result = !L->DoString(source);
+
+        if (result)
+        {
+            LOG_INFO("    Error detected: %s", L->GetError());
+        }
+
+        delete L;
+        return result;
+    }
+
+    static BOOL TestContinueOutsideLoop()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        // Script with continue outside of loop
+        auto source = R"(var x = 10;
+continue;
+print(x);
+)"_embed;
+
+        // Should return FALSE due to error
+        BOOL result = !L->DoString(source);
+
+        if (result)
+        {
+            LOG_INFO("    Error detected: %s", L->GetError());
         }
 
         delete L;

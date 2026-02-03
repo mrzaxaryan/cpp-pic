@@ -32,6 +32,11 @@ public:
         RUN_TEST(allPassed, TestForEachArray, "For-each over arrays");
         RUN_TEST(allPassed, TestForEachString, "For-each over strings");
         RUN_TEST(allPassed, TestForEachWithIndex, "For-each with index");
+        RUN_TEST(allPassed, TestBreakInWhile, "Break in while loop");
+        RUN_TEST(allPassed, TestContinueInWhile, "Continue in while loop");
+        RUN_TEST(allPassed, TestBreakInForEach, "Break in for-each loop");
+        RUN_TEST(allPassed, TestContinueInForEach, "Continue in for-each loop");
+        RUN_TEST(allPassed, TestNestedLoopBreak, "Break in nested loops");
 
         if (allPassed)
             LOG_INFO("All Language tests passed!");
@@ -421,6 +426,155 @@ print("String chars with index:");
 for (var pos, ch in s) {
     print("  pos:", pos, "char:", ch);
 }
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestBreakInWhile()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var i = 0;
+var sum = 0;
+while (i < 100) {
+    if (i == 5) {
+        break;
+    }
+    sum = sum + i;
+    i = i + 1;
+}
+print("Break at 5, sum of 0..4 =", sum);
+print("i after break =", i);
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestContinueInWhile()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var i = 0;
+var sum = 0;
+while (i < 10) {
+    i = i + 1;
+    if (i % 2 == 0) {
+        continue;
+    }
+    sum = sum + i;
+}
+print("Sum of odd 1..9 =", sum);
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestBreakInForEach()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var sum = 0;
+for (var x in arr) {
+    if (x > 5) {
+        break;
+    }
+    sum = sum + x;
+}
+print("Sum until > 5:", sum);
+
+// Break in string iteration
+var s = "Hello World";
+var chars = 0;
+for (var c in s) {
+    if (c == " ") {
+        break;
+    }
+    chars = chars + 1;
+}
+print("Chars before space:", chars);
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestContinueInForEach()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var sum = 0;
+for (var x in arr) {
+    if (x % 2 == 0) {
+        continue;
+    }
+    sum = sum + x;
+}
+print("Sum of odd numbers:", sum);
+
+// Continue with index
+var result = 0;
+for (var i, val in [10, 20, 30, 40, 50]) {
+    if (i == 2) {
+        continue;
+    }
+    result = result + val;
+}
+print("Sum skipping index 2:", result);
+)"_embed;
+
+        BOOL result = L->DoString(source);
+        delete L;
+        return result;
+    }
+
+    static BOOL TestNestedLoopBreak()
+    {
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+
+        auto source = R"(var count = 0;
+for (var i in [1, 2, 3]) {
+    for (var j in [1, 2, 3, 4, 5]) {
+        if (j > 2) {
+            break;
+        }
+        count = count + 1;
+    }
+}
+print("Nested loop count (3 outer * 2 inner):", count);
+
+// Break only affects innermost loop
+var outer = 0;
+var inner = 0;
+var x = 0;
+while (x < 3) {
+    outer = outer + 1;
+    var y = 0;
+    while (y < 10) {
+        if (y >= 2) {
+            break;
+        }
+        inner = inner + 1;
+        y = y + 1;
+    }
+    x = x + 1;
+}
+print("Outer iterations:", outer);
+print("Inner iterations:", inner);
 )"_embed;
 
         BOOL result = L->DoString(source);

@@ -340,6 +340,29 @@ private:
         // Instead, compare characters directly inline.
         switch (m_source[start])
         {
+            case 'b':
+                // break
+                if (length == 5 &&
+                    m_source[start + 1] == 'r' &&
+                    m_source[start + 2] == 'e' &&
+                    m_source[start + 3] == 'a' &&
+                    m_source[start + 4] == 'k')
+                    return TokenType::BREAK;
+                break;
+
+            case 'c':
+                // continue
+                if (length == 8 &&
+                    m_source[start + 1] == 'o' &&
+                    m_source[start + 2] == 'n' &&
+                    m_source[start + 3] == 't' &&
+                    m_source[start + 4] == 'i' &&
+                    m_source[start + 5] == 'n' &&
+                    m_source[start + 6] == 'u' &&
+                    m_source[start + 7] == 'e')
+                    return TokenType::CONTINUE;
+                break;
+
             case 'e':
                 // else
                 if (length == 4 &&

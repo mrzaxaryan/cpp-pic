@@ -42,6 +42,9 @@ private:
     CHAR m_errorMessage[256];
     UINT32 m_errorLine;
     ReturnValue m_returnValue;
+    BOOL m_breakFlag;        // Set when break is encountered
+    BOOL m_continueFlag;     // Set when continue is encountered
+    UINT32 m_loopDepth;      // Track loop nesting for break/continue validation
 
     // Output callback for print function
     typedef void (*OutputCallback)(const CHAR* str, USIZE len);
@@ -52,6 +55,9 @@ public:
         : m_env(&m_globals)
         , m_hasError(FALSE)
         , m_errorLine(0)
+        , m_breakFlag(FALSE)
+        , m_continueFlag(FALSE)
+        , m_loopDepth(0)
         , m_outputCallback(nullptr)
     {
         m_errorMessage[0] = '\0';
@@ -133,7 +139,7 @@ private:
 
     NOINLINE void ExecuteStmt(Stmt* stmt) noexcept
     {
-        if (!stmt || m_hasError || m_returnValue.hasReturn) return;
+        if (!stmt || m_hasError || m_returnValue.hasReturn || m_breakFlag || m_continueFlag) return;
 
         switch (stmt->type)
         {
@@ -160,6 +166,12 @@ private:
                 break;
             case StmtType::RETURN:
                 ExecuteReturn(stmt);
+                break;
+            case StmtType::BREAK:
+                ExecuteBreak(stmt);
+                break;
+            case StmtType::CONTINUE:
+                ExecuteContinue(stmt);
                 break;
             default:
                 RuntimeError("Unknown statement type"_embed, stmt->line);
@@ -215,13 +227,24 @@ private:
 
     NOINLINE void ExecuteWhile(Stmt* stmt) noexcept
     {
-        while (!m_hasError && !m_returnValue.hasReturn)
+        m_loopDepth++;
+
+        while (!m_hasError && !m_returnValue.hasReturn && !m_breakFlag)
         {
             Value condition = Evaluate(stmt->whileStmt.condition);
             if (!condition.IsTruthy()) break;
 
             ExecuteStmt(stmt->whileStmt.body);
+
+            // Reset continue flag at end of iteration (continue skips rest of body)
+            if (m_continueFlag)
+            {
+                m_continueFlag = FALSE;
+            }
         }
+
+        m_breakFlag = FALSE; // Reset break flag after exiting loop
+        m_loopDepth--;
     }
 
     NOINLINE void ExecuteForEach(Stmt* stmt) noexcept
@@ -235,17 +258,20 @@ private:
         USIZE indexNameLen = stmt->forEachStmt.indexNameLength;
         BOOL hasIndex = stmt->forEachStmt.hasIndex;
 
+        m_loopDepth++;
+
         // Iterate over array
         if (collection.IsArray())
         {
             ArrayStorage* arr = collection.array;
             if (!arr)
             {
+                m_loopDepth--;
                 RuntimeError("Cannot iterate over null array"_embed, stmt->line);
                 return;
             }
 
-            for (UINT8 i = 0; i < arr->count && !m_hasError && !m_returnValue.hasReturn; i++)
+            for (UINT8 i = 0; i < arr->count && !m_hasError && !m_returnValue.hasReturn && !m_breakFlag; i++)
             {
                 m_env->PushScope();
 
@@ -259,14 +285,23 @@ private:
                 ExecuteStmt(stmt->forEachStmt.body);
 
                 m_env->PopScope();
+
+                // Reset continue flag at end of iteration
+                if (m_continueFlag)
+                {
+                    m_continueFlag = FALSE;
+                }
             }
+
+            m_breakFlag = FALSE;
+            m_loopDepth--;
             return;
         }
 
         // Iterate over string
         if (collection.IsString())
         {
-            for (USIZE i = 0; i < collection.strLength && !m_hasError && !m_returnValue.hasReturn; i++)
+            for (USIZE i = 0; i < collection.strLength && !m_hasError && !m_returnValue.hasReturn && !m_breakFlag; i++)
             {
                 m_env->PushScope();
 
@@ -282,10 +317,20 @@ private:
                 ExecuteStmt(stmt->forEachStmt.body);
 
                 m_env->PopScope();
+
+                // Reset continue flag at end of iteration
+                if (m_continueFlag)
+                {
+                    m_continueFlag = FALSE;
+                }
             }
+
+            m_breakFlag = FALSE;
+            m_loopDepth--;
             return;
         }
 
+        m_loopDepth--;
         RuntimeError("Can only iterate over arrays and strings"_embed, stmt->line);
     }
 
@@ -303,6 +348,26 @@ private:
             value = Evaluate(stmt->returnStmt.value);
         }
         m_returnValue = ReturnValue(value);
+    }
+
+    NOINLINE void ExecuteBreak(Stmt* stmt) noexcept
+    {
+        if (m_loopDepth == 0)
+        {
+            RuntimeError("'break' outside of loop"_embed, stmt->line);
+            return;
+        }
+        m_breakFlag = TRUE;
+    }
+
+    NOINLINE void ExecuteContinue(Stmt* stmt) noexcept
+    {
+        if (m_loopDepth == 0)
+        {
+            RuntimeError("'continue' outside of loop"_embed, stmt->line);
+            return;
+        }
+        m_continueFlag = TRUE;
     }
 
     // ========================================================================

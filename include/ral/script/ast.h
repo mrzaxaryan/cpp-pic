@@ -55,6 +55,8 @@ enum class StmtType : UINT8
     FOR_EACH,           // for (var x in collection) { }
     FUNCTION,           // fn name(params) { }
     RETURN,             // return expr;
+    BREAK,              // break;
+    CONTINUE,           // continue;
 };
 
 // ============================================================================
@@ -682,6 +684,28 @@ FORCE_INLINE Stmt* MakeReturnStmt(ASTAllocator& alloc, Expr* value, UINT32 line,
     stmt->line = line;
     stmt->column = col;
     stmt->returnStmt.value = value;
+    return stmt;
+}
+
+// Create break statement
+FORCE_INLINE Stmt* MakeBreakStmt(ASTAllocator& alloc, UINT32 line, UINT32 col) noexcept
+{
+    Stmt* stmt = alloc.AllocStmt();
+    if (!stmt) return nullptr;
+    stmt->type = StmtType::BREAK;
+    stmt->line = line;
+    stmt->column = col;
+    return stmt;
+}
+
+// Create continue statement
+FORCE_INLINE Stmt* MakeContinueStmt(ASTAllocator& alloc, UINT32 line, UINT32 col) noexcept
+{
+    Stmt* stmt = alloc.AllocStmt();
+    if (!stmt) return nullptr;
+    stmt->type = StmtType::CONTINUE;
+    stmt->line = line;
+    stmt->column = col;
     return stmt;
 }
 

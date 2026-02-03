@@ -35,6 +35,8 @@ enum class TokenType : UINT8
     FOR,            // for
     IN,             // in
     RETURN,         // return
+    BREAK,          // break
+    CONTINUE,       // continue
     TRUE_,          // true
     FALSE_,         // false
     NIL,            // nil
@@ -211,6 +213,8 @@ NOINLINE USIZE GetTokenTypeName(TokenType type, CHAR* buffer, USIZE bufferSize) 
         case TokenType::FOR:           return CopyEmbedToBuffer("FOR"_embed, buffer, bufferSize);
         case TokenType::IN:            return CopyEmbedToBuffer("IN"_embed, buffer, bufferSize);
         case TokenType::RETURN:        return CopyEmbedToBuffer("RETURN"_embed, buffer, bufferSize);
+        case TokenType::BREAK:         return CopyEmbedToBuffer("BREAK"_embed, buffer, bufferSize);
+        case TokenType::CONTINUE:      return CopyEmbedToBuffer("CONTINUE"_embed, buffer, bufferSize);
         case TokenType::TRUE_:         return CopyEmbedToBuffer("TRUE"_embed, buffer, bufferSize);
         case TokenType::FALSE_:        return CopyEmbedToBuffer("FALSE"_embed, buffer, bufferSize);
         case TokenType::NIL:           return CopyEmbedToBuffer("NIL"_embed, buffer, bufferSize);

@@ -51,7 +51,7 @@ var sum = add(3, 4);
 - [x] Lexer class
   - [x] Single char tokens: `( ) { } [ ] ; , . : + - * / % = < > !`
   - [x] Two char tokens: `== != <= >= && || += -= *= /=`
-  - [x] Keywords: `var if else while for fn return true false nil`
+  - [x] Keywords: `var if else while for fn return break continue true false nil`
   - [x] Identifiers
   - [x] Numbers (integers)
   - [x] Strings with escape sequences
@@ -297,7 +297,11 @@ void RunScript() {
   - Iterate over arrays: `for (var x in [1, 2, 3]) { print(x); }`
   - Iterate over strings: `for (var c in "hello") { print(c); }`
   - Index variant: `for (var i, item in collection) { ... }`
-- [ ] Break/continue statements
+- [x] Break/continue statements - **COMPLETE**
+  - `break;` - exit the current loop immediately
+  - `continue;` - skip to the next iteration of the current loop
+  - Works in `while`, `for`, and `for-each` loops
+  - Error if used outside of a loop
 - [ ] More stdlib functions (substring, indexOf, etc.)
 - [ ] File I/O functions (via PAL)
 - [ ] Network functions (via PAL)

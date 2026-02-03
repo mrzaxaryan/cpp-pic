@@ -187,6 +187,8 @@ private:
                 case TokenType::IF:
                 case TokenType::WHILE:
                 case TokenType::RETURN:
+                case TokenType::BREAK:
+                case TokenType::CONTINUE:
                     return;
                 default:
                     break;
@@ -308,6 +310,14 @@ private:
         if (Match(TokenType::RETURN))
         {
             return ReturnStatement();
+        }
+        if (Match(TokenType::BREAK))
+        {
+            return BreakStatement();
+        }
+        if (Match(TokenType::CONTINUE))
+        {
+            return ContinueStatement();
         }
         if (Match(TokenType::LEFT_BRACE))
         {
@@ -519,6 +529,26 @@ private:
         Consume(TokenType::SEMICOLON, "Expected ';' after return value"_embed);
 
         return MakeReturnStmt(*m_alloc, value, line, col);
+    }
+
+    NOINLINE Stmt* BreakStatement() noexcept
+    {
+        UINT32 line = m_previous.line;
+        UINT32 col = m_previous.column;
+
+        Consume(TokenType::SEMICOLON, "Expected ';' after 'break'"_embed);
+
+        return MakeBreakStmt(*m_alloc, line, col);
+    }
+
+    NOINLINE Stmt* ContinueStatement() noexcept
+    {
+        UINT32 line = m_previous.line;
+        UINT32 col = m_previous.column;
+
+        Consume(TokenType::SEMICOLON, "Expected ';' after 'continue'"_embed);
+
+        return MakeContinueStmt(*m_alloc, line, col);
     }
 
     NOINLINE Stmt* BlockStatement() noexcept

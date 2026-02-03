@@ -36,11 +36,11 @@ public:
         BOOL allPassed = TRUE;
         LOG_INFO("Running StdLib Tests...");
 
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/stdlib/stdlib_functions.pil"_embed, "Standard library functions", CFG_STDLIB);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/stdlib/print_function.pil"_embed,   "Print function",             CFG_STDLIB);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/stdlib/type_function.pil"_embed,    "Type function",              CFG_STDLIB);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/stdlib/string_functions.pil"_embed, "String functions",           CFG_STDLIB);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/stdlib/math_functions.pil"_embed,   "Math functions",             CFG_STDLIB);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/stdlib/stdlib_functions.pil"_embed, "Standard library functions", CFG_STDLIB);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/stdlib/print_function.pil"_embed,   "Print function",             CFG_STDLIB);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/stdlib/type_function.pil"_embed,    "Type function",              CFG_STDLIB);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/stdlib/string_functions.pil"_embed, "String functions",           CFG_STDLIB);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/stdlib/math_functions.pil"_embed,   "Math functions",             CFG_STDLIB);
 
         // Custom test with registered C++ functions
         RUN_TEST(allPassed, TestCustomFunctionsWithStdLib, "Custom functions with StdLib");
@@ -60,7 +60,7 @@ private:
         script::OpenStdLib(*L);
         L->Register("greet"_embed, EMBED_FUNC(StdLibTest_Func_Greet));
         L->Register("sum"_embed, EMBED_FUNC(StdLibTest_Func_Sum));
-        BOOL result = RunScriptAndCheckResult(L, L"tests/pil/scripts/stdlib/custom_functions.pil"_embed);
+        BOOL result = RunScriptAndCheckResult(L, L"tests/language/scripts/stdlib/custom_functions.pil"_embed);
         delete L;
         return result;
     }

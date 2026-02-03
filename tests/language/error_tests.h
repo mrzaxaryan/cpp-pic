@@ -14,12 +14,12 @@ public:
         BOOL allPassed = TRUE;
         LOG_INFO("Running Error Tests...");
 
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/error/missing_semicolon.pil"_embed,     "Missing semicolon error detection",    CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/error/undefined_variable.pil"_embed,    "Undefined variable error detection",   CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/error/syntax_error.pil"_embed,          "Syntax error in expression detection", CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/error/valid_script.pil"_embed,          "Valid script execution",               CFG_STDLIB);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/error/break_outside_loop.pil"_embed,    "Break outside loop error",             CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/pil/scripts/error/continue_outside_loop.pil"_embed, "Continue outside loop error",          CFG_STDLIB_EXPECT_FAIL);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/missing_semicolon.pil"_embed,     "Missing semicolon error detection",    CFG_STDLIB_EXPECT_FAIL);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/undefined_variable.pil"_embed,    "Undefined variable error detection",   CFG_STDLIB_EXPECT_FAIL);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/syntax_error.pil"_embed,          "Syntax error in expression detection", CFG_STDLIB_EXPECT_FAIL);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/valid_script.pil"_embed,          "Valid script execution",               CFG_STDLIB);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/break_outside_loop.pil"_embed,    "Break outside loop error",             CFG_STDLIB_EXPECT_FAIL);
+        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/continue_outside_loop.pil"_embed, "Continue outside loop error",          CFG_STDLIB_EXPECT_FAIL);
 
         // Custom tests that need special setup
         RUN_TEST(allPassed, TestUndefinedFunction, "Undefined function error detection");
@@ -38,7 +38,7 @@ private:
     {
         script::State* L = CreateScriptState();
         // Note: NOT registering any functions, not even print
-        BOOL result = !RunScriptFile(L, L"tests/pil/scripts/error/undefined_function.pil"_embed);
+        BOOL result = !RunScriptFile(L, L"tests/language/scripts/error/undefined_function.pil"_embed);
         if (result)
             LOG_INFO("    Error detected: %s", L->GetError());
         delete L;
@@ -51,7 +51,7 @@ private:
         script::OpenStdLib(*L);
 
         // Script with error
-        RunScriptFile(L, L"tests/pil/scripts/error/error_message.pil"_embed);
+        RunScriptFile(L, L"tests/language/scripts/error/error_message.pil"_embed);
 
         // GetError should return a non-empty string
         const CHAR* error = L->GetError();

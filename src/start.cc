@@ -5,8 +5,8 @@
  */
 
 #include "runtime.h"
-#include "pil/pil_tests.h"
-#include "pir/pir_tests.h"
+#include "language/pil_tests.h"
+#include "runtime/pir_tests.h"
 
 /**
  * _start - Entry point for all platforms

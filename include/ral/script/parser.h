@@ -503,6 +503,12 @@ private:
                 return MakeAssignExpr(*m_alloc, expr->identifier.name, expr->identifier.length, value, line, col);
             }
 
+            // Array index assignment: arr[i] = value
+            if (expr->type == ExprType::INDEX)
+            {
+                return MakeIndexAssignExpr(*m_alloc, expr->index.object, expr->index.index, value, line, col);
+            }
+
             Error("Invalid assignment target"_embed);
         }
 
@@ -530,6 +536,24 @@ private:
 
                 Expr* binExpr = MakeBinaryExpr(*m_alloc, expr, binOp, value, line, col);
                 return MakeAssignExpr(*m_alloc, expr->identifier.name, expr->identifier.length, binExpr, line, col);
+            }
+
+            // Array compound assignment: arr[i] += value
+            if (expr->type == ExprType::INDEX)
+            {
+                TokenType binOp;
+                switch (op)
+                {
+                    case TokenType::PLUS_EQUAL:  binOp = TokenType::PLUS;  break;
+                    case TokenType::MINUS_EQUAL: binOp = TokenType::MINUS; break;
+                    case TokenType::STAR_EQUAL:  binOp = TokenType::STAR;  break;
+                    case TokenType::SLASH_EQUAL: binOp = TokenType::SLASH; break;
+                    default: binOp = TokenType::PLUS; break;
+                }
+
+                // Desugar: arr[i] += b -> arr[i] = arr[i] + b
+                Expr* binExpr = MakeBinaryExpr(*m_alloc, expr, binOp, value, line, col);
+                return MakeIndexAssignExpr(*m_alloc, expr->index.object, expr->index.index, binExpr, line, col);
             }
 
             Error("Invalid assignment target"_embed);
@@ -767,6 +791,30 @@ private:
             Expr* expr = Expression();
             Consume(TokenType::RIGHT_PAREN, "Expected ')' after expression"_embed);
             return expr;
+        }
+
+        // Array literal: [1, 2, 3]
+        if (Match(TokenType::LEFT_BRACKET))
+        {
+            Expr* arrayExpr = MakeArrayExpr(*m_alloc, line, col);
+            if (!arrayExpr) return nullptr;
+
+            // Parse elements
+            if (!Check(TokenType::RIGHT_BRACKET))
+            {
+                do
+                {
+                    if (arrayExpr->arrayLiteral.elementCount >= MAX_CALL_ARGS)
+                    {
+                        ErrorAtCurrent("Too many array elements"_embed);
+                        break;
+                    }
+                    arrayExpr->arrayLiteral.elements[arrayExpr->arrayLiteral.elementCount++] = Expression();
+                } while (Match(TokenType::COMMA));
+            }
+
+            Consume(TokenType::RIGHT_BRACKET, "Expected ']' after array elements"_embed);
+            return arrayExpr;
         }
 
         ErrorAtCurrent("Expected expression"_embed);

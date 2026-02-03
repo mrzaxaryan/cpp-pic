@@ -25,6 +25,7 @@ enum class ValueType : UINT8
     BOOL,
     NUMBER,
     STRING,
+    ARRAY,              // Fixed-size array
     FUNCTION,
     NATIVE_FUNCTION,
     CFUNCTION,          // C++ function with state (Lua-like)
@@ -38,6 +39,7 @@ struct Value;
 class Environment;
 struct FunctionContext;
 class State;
+struct ArrayStorage;  // Forward declaration for array storage
 
 // ============================================================================
 // NATIVE FUNCTION TYPES
@@ -89,6 +91,7 @@ struct Value
         FunctionValue function;
         NativeFn nativeFn;
         CFunctionValue cfunction;
+        ArrayStorage* array;     // Pointer to array storage (lives in pool)
     };
 
     // Default constructor - nil
@@ -121,6 +124,9 @@ struct Value
                 break;
             case ValueType::CFUNCTION:
                 cfunction = other.cfunction;
+                break;
+            case ValueType::ARRAY:
+                array = other.array;
                 break;
             default:
                 break;
@@ -157,6 +163,9 @@ struct Value
                     break;
                 case ValueType::CFUNCTION:
                     cfunction = other.cfunction;
+                    break;
+                case ValueType::ARRAY:
+                    array = other.array;
                     break;
                 default:
                     break;
@@ -247,6 +256,15 @@ struct Value
         return v;
     }
 
+    // Array constructor (takes pointer to ArrayStorage from pool)
+    static Value Array(ArrayStorage* storage) noexcept
+    {
+        Value v;
+        v.type = ValueType::ARRAY;
+        v.array = storage;
+        return v;
+    }
+
     // Nil constructor
     static Value Nil() noexcept
     {
@@ -261,6 +279,7 @@ struct Value
     FORCE_INLINE BOOL IsFunction() const noexcept { return type == ValueType::FUNCTION; }
     FORCE_INLINE BOOL IsNativeFunction() const noexcept { return type == ValueType::NATIVE_FUNCTION; }
     FORCE_INLINE BOOL IsCFunction() const noexcept { return type == ValueType::CFUNCTION; }
+    FORCE_INLINE BOOL IsArray() const noexcept { return type == ValueType::ARRAY; }
     FORCE_INLINE BOOL IsCallable() const noexcept { return IsFunction() || IsNativeFunction() || IsCFunction(); }
 
     // Check if number is effectively an integer (no fractional part)
@@ -316,10 +335,96 @@ struct Value
             case ValueType::CFUNCTION:
                 return cfunction.func == other.cfunction.func &&
                        cfunction.state == other.cfunction.state;
+            case ValueType::ARRAY:
+                // Arrays are equal if they point to same storage
+                // (deep equality would require forward declaration complexity)
+                return array == other.array;
             default:
                 return FALSE;
         }
     }
+};
+
+// ============================================================================
+// ARRAY STORAGE AND POOL
+// ============================================================================
+
+constexpr USIZE MAX_ARRAY_SIZE = 16;      // Max elements per array
+constexpr USIZE MAX_ARRAY_POOL = 64;      // Max arrays in pool
+
+/**
+ * ArrayStorage - Holds array elements
+ * Lives in ArrayPool, referenced by Value::array pointer
+ */
+struct ArrayStorage
+{
+    Value elements[MAX_ARRAY_SIZE];
+    UINT8 count;
+
+    ArrayStorage() noexcept : count(0) {}
+
+    // Get element by index (no bounds check - caller must verify)
+    FORCE_INLINE Value& Get(UINT8 index) noexcept
+    {
+        return elements[index];
+    }
+
+    FORCE_INLINE const Value& Get(UINT8 index) const noexcept
+    {
+        return elements[index];
+    }
+
+    // Set element by index (no bounds check - caller must verify)
+    FORCE_INLINE void Set(UINT8 index, const Value& value) noexcept
+    {
+        elements[index] = value;
+    }
+
+    // Deep equality comparison
+    NOINLINE BOOL DeepEquals(const ArrayStorage& other) const noexcept
+    {
+        if (count != other.count) return FALSE;
+        for (UINT8 i = 0; i < count; i++)
+        {
+            if (!elements[i].Equals(other.elements[i])) return FALSE;
+        }
+        return TRUE;
+    }
+};
+
+/**
+ * ArrayPool - Fixed-size pool for array storage
+ * Used by Interpreter to allocate arrays
+ */
+class ArrayPool
+{
+private:
+    ArrayStorage m_pool[MAX_ARRAY_POOL];
+    USIZE m_index;
+
+public:
+    ArrayPool() noexcept : m_index(0) {}
+
+    // Reset pool for reuse
+    void Reset() noexcept
+    {
+        m_index = 0;
+    }
+
+    // Allocate a new array storage
+    ArrayStorage* Alloc() noexcept
+    {
+        if (m_index >= MAX_ARRAY_POOL)
+        {
+            return nullptr;  // Pool exhausted
+        }
+        ArrayStorage* storage = &m_pool[m_index++];
+        storage->count = 0;
+        return storage;
+    }
+
+    // Get usage statistics
+    USIZE GetCount() const noexcept { return m_index; }
 };
 
 // ============================================================================
@@ -508,6 +613,7 @@ NOINLINE USIZE GetValueTypeName(ValueType type, CHAR* buffer, USIZE bufferSize) 
         case ValueType::BOOL:            return CopyValueTypeToBuffer("bool"_embed, buffer, bufferSize);
         case ValueType::NUMBER:          return CopyValueTypeToBuffer("number"_embed, buffer, bufferSize);
         case ValueType::STRING:          return CopyValueTypeToBuffer("string"_embed, buffer, bufferSize);
+        case ValueType::ARRAY:           return CopyValueTypeToBuffer("array"_embed, buffer, bufferSize);
         case ValueType::FUNCTION:        return CopyValueTypeToBuffer("function"_embed, buffer, bufferSize);
         case ValueType::NATIVE_FUNCTION: return CopyValueTypeToBuffer("native"_embed, buffer, bufferSize);
         case ValueType::CFUNCTION:       return CopyValueTypeToBuffer("cfunction"_embed, buffer, bufferSize);
@@ -575,6 +681,11 @@ struct FunctionContext
         return index < argCount && args[index].IsNil();
     }
 
+    FORCE_INLINE BOOL IsArray(UINT8 index) const noexcept
+    {
+        return index < argCount && args[index].IsArray();
+    }
+
     FORCE_INLINE INT64 ToNumber(UINT8 index) const noexcept
     {
         return index < argCount ? (INT64)args[index].numberValue : 0;
@@ -599,6 +710,17 @@ struct FunctionContext
     FORCE_INLINE BOOL ToBool(UINT8 index) const noexcept
     {
         return index < argCount ? args[index].IsTruthy() : FALSE;
+    }
+
+    FORCE_INLINE ArrayStorage* ToArray(UINT8 index) const noexcept
+    {
+        return index < argCount && args[index].IsArray() ? args[index].array : nullptr;
+    }
+
+    FORCE_INLINE UINT8 ToArrayLength(UINT8 index) const noexcept
+    {
+        return index < argCount && args[index].IsArray() && args[index].array
+            ? args[index].array->count : 0;
     }
 };
 

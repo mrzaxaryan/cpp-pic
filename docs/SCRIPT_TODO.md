@@ -281,8 +281,17 @@ void RunScript() {
 
 ## Future Enhancements
 
-- [ ] Floating-point numbers (using EMBEDDED_DOUBLE)
-- [ ] Arrays (fixed-size)
+- [x] Floating-point numbers (using EMBEDDED_DOUBLE) - **COMPLETE**
+- [x] Arrays (fixed-size) - **COMPLETE**
+  - Array literals: `[1, 2, 3]`, `[]`, mixed types
+  - Array access: `arr[i]`
+  - Array assignment: `arr[i] = value`
+  - String indexing: `str[i]` returns single character
+  - `len(array)` - get array length
+  - `push(array, value)` - add element to end
+  - `pop(array)` - remove and return last element
+  - Max 16 elements per array (MAX_ARRAY_SIZE)
+  - Max 64 arrays in pool (MAX_ARRAY_POOL)
 - [ ] For-each loops
 - [ ] Break/continue statements
 - [ ] More stdlib functions (substring, indexOf, etc.)

@@ -204,6 +204,33 @@ NOINLINE USIZE ValueToString(const Value& value, CHAR* buffer, USIZE bufferSize)
             }
             break;
 
+        case ValueType::ARRAY:
+            {
+                // Format as [elem1, elem2, ...]
+                if (len < bufferSize - 1) buffer[len++] = '[';
+                ArrayStorage* arr = value.array;
+                if (arr)
+                {
+                    for (UINT8 i = 0; i < arr->count && len < bufferSize - 10; i++)
+                    {
+                        if (i > 0)
+                        {
+                            if (len < bufferSize - 1) buffer[len++] = ',';
+                            if (len < bufferSize - 1) buffer[len++] = ' ';
+                        }
+                        // Recursively format element (with reduced buffer)
+                        CHAR elemBuf[64];
+                        USIZE elemLen = ValueToString(arr->elements[i], elemBuf, sizeof(elemBuf));
+                        for (USIZE j = 0; j < elemLen && len < bufferSize - 2; j++)
+                        {
+                            buffer[len++] = elemBuf[j];
+                        }
+                    }
+                }
+                if (len < bufferSize - 1) buffer[len++] = ']';
+            }
+            break;
+
         default:
             break;
     }
@@ -251,10 +278,11 @@ NOINLINE Value StdLib_Print(FunctionContext& ctx) noexcept
 // ============================================================================
 
 /**
- * len(string) - Get string length
+ * len(value) - Get length of string or array
  *
  * Usage:
  *   var n = len("hello");  // 5
+ *   var n = len([1,2,3]);  // 3
  */
 NOINLINE Value StdLib_Len(FunctionContext& ctx) noexcept
 {
@@ -266,6 +294,11 @@ NOINLINE Value StdLib_Len(FunctionContext& ctx) noexcept
     if (ctx.IsString(0))
     {
         return Value::Number((INT64)ctx.ToStringLength(0));
+    }
+
+    if (ctx.IsArray(0))
+    {
+        return Value::Number((INT64)ctx.ToArrayLength(0));
     }
 
     return Value::Number(-1);
@@ -524,6 +557,62 @@ NOINLINE Value StdLib_Int(FunctionContext& ctx) noexcept
 }
 
 // ============================================================================
+// ARRAY FUNCTIONS
+// ============================================================================
+
+/**
+ * push(array, value) - Add element to end of array
+ *
+ * Usage:
+ *   var arr = [1, 2];
+ *   push(arr, 3);  // arr is now [1, 2, 3]
+ *
+ * Returns: new array length, or -1 on error
+ */
+NOINLINE Value StdLib_Push(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(2) || !ctx.IsArray(0))
+    {
+        return Value::Number(-1);
+    }
+
+    ArrayStorage* arr = ctx.ToArray(0);
+    if (!arr || arr->count >= MAX_ARRAY_SIZE)
+    {
+        return Value::Number(-1);  // Array full
+    }
+
+    arr->elements[arr->count++] = ctx.Arg(1);
+    return Value::Number((INT64)arr->count);
+}
+
+/**
+ * pop(array) - Remove and return last element
+ *
+ * Usage:
+ *   var arr = [1, 2, 3];
+ *   var last = pop(arr);  // last = 3, arr is now [1, 2]
+ *
+ * Returns: removed element, or nil on empty array
+ */
+NOINLINE Value StdLib_Pop(FunctionContext& ctx) noexcept
+{
+    if (!ctx.CheckArgs(1) || !ctx.IsArray(0))
+    {
+        return Value::Nil();
+    }
+
+    ArrayStorage* arr = ctx.ToArray(0);
+    if (!arr || arr->count == 0)
+    {
+        return Value::Nil();  // Empty array
+    }
+
+    Value last = arr->elements[--arr->count];
+    return last;
+}
+
+// ============================================================================
 // OPEN STANDARD LIBRARY
 // ============================================================================
 
@@ -532,7 +621,7 @@ NOINLINE Value StdLib_Int(FunctionContext& ctx) noexcept
  *
  * Functions registered (in order):
  *   1. print  - Print values to output
- *   2. len    - Get string length
+ *   2. len    - Get string/array length
  *   3. str    - Convert to string
  *   4. num    - Convert to number
  *   5. type   - Get type name
@@ -542,6 +631,8 @@ NOINLINE Value StdLib_Int(FunctionContext& ctx) noexcept
  *   9. floor  - Round down to nearest integer
  *  10. ceil   - Round up to nearest integer
  *  11. int    - Truncate to integer (toward zero)
+ *  12. push   - Add element to end of array
+ *  13. pop    - Remove and return last element of array
  */
 NOINLINE void OpenStdLib(State& L) noexcept
 {
@@ -557,6 +648,8 @@ NOINLINE void OpenStdLib(State& L) noexcept
     L.Register("floor"_embed, EMBED_FUNC(StdLib_Floor));
     L.Register("ceil"_embed, EMBED_FUNC(StdLib_Ceil));
     L.Register("int"_embed, EMBED_FUNC(StdLib_Int));
+    L.Register("push"_embed, EMBED_FUNC(StdLib_Push));
+    L.Register("pop"_embed, EMBED_FUNC(StdLib_Pop));
 }
 
 } // namespace script

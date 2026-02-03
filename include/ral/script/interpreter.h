@@ -37,6 +37,7 @@ class Interpreter
 private:
     Environment m_globals;
     Environment* m_env;
+    ArrayPool m_arrayPool;   // Pool for array storage
     BOOL m_hasError;
     CHAR m_errorMessage[256];
     UINT32 m_errorLine;
@@ -55,6 +56,9 @@ public:
     {
         m_errorMessage[0] = '\0';
     }
+
+    // Get array pool for stdlib functions
+    ArrayPool& GetArrayPool() noexcept { return m_arrayPool; }
 
     // Set output callback
     void SetOutputCallback(OutputCallback cb) noexcept
@@ -273,6 +277,15 @@ private:
             case ExprType::LOGICAL:
                 return EvaluateLogical(expr);
 
+            case ExprType::ARRAY_LITERAL:
+                return EvaluateArrayLiteral(expr);
+
+            case ExprType::INDEX:
+                return EvaluateIndex(expr);
+
+            case ExprType::INDEX_ASSIGN:
+                return EvaluateIndexAssign(expr);
+
             default:
                 RuntimeError("Unknown expression type"_embed, expr->line);
                 return Value::Nil();
@@ -483,6 +496,118 @@ private:
         // Short-circuit: || returns on truthy, && returns on falsy
         BOOL shortCircuit = (expr->logical.op == TokenType::OR_OR) ? left.IsTruthy() : !left.IsTruthy();
         return shortCircuit ? left : Evaluate(expr->logical.right);
+    }
+
+    // ========================================================================
+    // ARRAY OPERATIONS
+    // ========================================================================
+
+    NOINLINE Value EvaluateArrayLiteral(Expr* expr) noexcept
+    {
+        // Allocate array storage from pool
+        ArrayStorage* storage = m_arrayPool.Alloc();
+        if (!storage)
+        {
+            RuntimeError("Array pool exhausted"_embed, expr->line);
+            return Value::Nil();
+        }
+
+        // Evaluate each element
+        UINT8 count = expr->arrayLiteral.elementCount;
+        if (count > MAX_ARRAY_SIZE)
+        {
+            count = MAX_ARRAY_SIZE;
+        }
+
+        for (UINT8 i = 0; i < count; i++)
+        {
+            storage->elements[i] = Evaluate(expr->arrayLiteral.elements[i]);
+            if (m_hasError) return Value::Nil();
+        }
+        storage->count = count;
+
+        return Value::Array(storage);
+    }
+
+    NOINLINE Value EvaluateIndex(Expr* expr) noexcept
+    {
+        Value object = Evaluate(expr->index.object);
+        Value indexVal = Evaluate(expr->index.index);
+
+        if (m_hasError) return Value::Nil();
+
+        // String indexing
+        if (object.IsString())
+        {
+            if (!indexVal.IsNumber())
+            {
+                RuntimeError("String index must be a number"_embed, expr->line);
+                return Value::Nil();
+            }
+            INT64 idx = indexVal.AsInt();
+            if (idx < 0 || (USIZE)idx >= object.strLength)
+            {
+                RuntimeError("String index out of bounds"_embed, expr->line);
+                return Value::Nil();
+            }
+            // Return single character as string
+            CHAR ch[2] = { object.strValue[idx], '\0' };
+            return Value::String(ch, 1);
+        }
+
+        // Array indexing
+        if (object.IsArray())
+        {
+            if (!indexVal.IsNumber())
+            {
+                RuntimeError("Array index must be a number"_embed, expr->line);
+                return Value::Nil();
+            }
+            INT64 idx = indexVal.AsInt();
+            ArrayStorage* arr = object.array;
+            if (!arr || idx < 0 || idx >= arr->count)
+            {
+                RuntimeError("Array index out of bounds"_embed, expr->line);
+                return Value::Nil();
+            }
+            return arr->Get((UINT8)idx);
+        }
+
+        RuntimeError("Cannot index this type"_embed, expr->line);
+        return Value::Nil();
+    }
+
+    NOINLINE Value EvaluateIndexAssign(Expr* expr) noexcept
+    {
+        Value object = Evaluate(expr->indexAssign.object);
+        Value indexVal = Evaluate(expr->indexAssign.index);
+        Value value = Evaluate(expr->indexAssign.value);
+
+        if (m_hasError) return Value::Nil();
+
+        // Only arrays can be assigned via index
+        if (!object.IsArray())
+        {
+            RuntimeError("Cannot assign to index of non-array"_embed, expr->line);
+            return Value::Nil();
+        }
+
+        if (!indexVal.IsNumber())
+        {
+            RuntimeError("Array index must be a number"_embed, expr->line);
+            return Value::Nil();
+        }
+
+        INT64 idx = indexVal.AsInt();
+        ArrayStorage* arr = object.array;
+        if (!arr || idx < 0 || idx >= arr->count)
+        {
+            RuntimeError("Array index out of bounds"_embed, expr->line);
+            return Value::Nil();
+        }
+
+        arr->Set((UINT8)idx, value);
+        return value;
     }
 };
 

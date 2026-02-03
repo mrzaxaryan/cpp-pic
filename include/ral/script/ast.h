@@ -33,12 +33,14 @@ enum class ExprType : UINT8
     STRING_LITERAL,     // "hello"
     BOOL_LITERAL,       // true, false
     NIL_LITERAL,        // nil
+    ARRAY_LITERAL,      // [1, 2, 3]
     IDENTIFIER,         // foo
     BINARY,             // a + b
     UNARY,              // -a, !b
     CALL,               // foo(a, b)
     ASSIGN,             // a = b
     INDEX,              // arr[i]
+    INDEX_ASSIGN,       // arr[i] = value
     LOGICAL,            // a && b, a || b
 };
 
@@ -141,6 +143,21 @@ struct LogicalExpr
     TokenType op; // AND_AND or OR_OR
 };
 
+// Array literal: [1, 2, 3]
+struct ArrayLiteralExpr
+{
+    Expr* elements[MAX_CALL_ARGS];  // Reuse MAX_CALL_ARGS for max elements
+    UINT8 elementCount;
+};
+
+// Index assignment: arr[i] = value
+struct IndexAssignExpr
+{
+    Expr* object;   // The array/string being indexed
+    Expr* index;    // The index expression
+    Expr* value;    // The value to assign
+};
+
 // ============================================================================
 // EXPRESSION UNION
 // ============================================================================
@@ -162,7 +179,9 @@ struct Expr
         CallExpr call;
         AssignExpr assign;
         IndexExpr index;
+        IndexAssignExpr indexAssign;
         LogicalExpr logical;
+        ArrayLiteralExpr arrayLiteral;
     };
 
     Expr() noexcept : type(ExprType::NIL_LITERAL), line(0), column(0) {}
@@ -485,6 +504,32 @@ FORCE_INLINE Expr* MakeLogicalExpr(ASTAllocator& alloc, Expr* left, TokenType op
     expr->logical.left = left;
     expr->logical.op = op;
     expr->logical.right = right;
+    return expr;
+}
+
+// Create array literal expression
+FORCE_INLINE Expr* MakeArrayExpr(ASTAllocator& alloc, UINT32 line, UINT32 col) noexcept
+{
+    Expr* expr = alloc.AllocExpr();
+    if (!expr) return nullptr;
+    expr->type = ExprType::ARRAY_LITERAL;
+    expr->line = line;
+    expr->column = col;
+    expr->arrayLiteral.elementCount = 0;
+    return expr;
+}
+
+// Create index assignment expression: arr[i] = value
+FORCE_INLINE Expr* MakeIndexAssignExpr(ASTAllocator& alloc, Expr* object, Expr* index, Expr* value, UINT32 line, UINT32 col) noexcept
+{
+    Expr* expr = alloc.AllocExpr();
+    if (!expr) return nullptr;
+    expr->type = ExprType::INDEX_ASSIGN;
+    expr->line = line;
+    expr->column = col;
+    expr->indexAssign.object = object;
+    expr->indexAssign.index = index;
+    expr->indexAssign.value = value;
     return expr;
 }
 

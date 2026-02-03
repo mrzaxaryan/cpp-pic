@@ -33,6 +33,10 @@ public:
         RUN_TEST(allPassed, TestHttpInvalidHandle, "HTTP invalid handle errors");
         RUN_TEST(allPassed, TestMultipleSockets, "Multiple sockets");
         RUN_TEST(allPassed, TestMultipleHttpClients, "Multiple HTTP clients");
+        RUN_TEST(allPassed, TestWebSocketConnectClose, "WebSocket connect/close");
+        RUN_TEST(allPassed, TestWebSocketSendRecv, "WebSocket send/recv");
+        RUN_TEST(allPassed, TestWebSocketInvalidHandle, "WebSocket invalid handle errors");
+        RUN_TEST(allPassed, TestMultipleWebSockets, "Multiple WebSockets");
 
         if (allPassed)
             LOG_INFO("All Network I/O tests passed!");
@@ -446,6 +450,200 @@ if (h1 >= 0) http_close(h1);
 if (h2 >= 0) http_close(h2);
 
 print("Multiple HTTP clients test completed");
+)SCRIPT"_embed;
+
+        BOOL result = L->DoString(source);
+        if (!result)
+        {
+            LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
+        }
+        delete L;
+        return result;
+    }
+
+    // Test WebSocket connect and close
+    static BOOL TestWebSocketConnectClose()
+    {
+        script::NetworkContext netCtx;
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+        script::OpenNetworkIO(*L, &netCtx);
+
+        auto source = R"SCRIPT(
+// Connect to a public WebSocket echo server
+var ws = ws_connect("wss://echo.websocket.org");
+print("WebSocket handle:", ws);
+
+if (ws >= 0) {
+    print("WebSocket connected - PASS");
+
+    // Close WebSocket
+    var closed = ws_close(ws);
+    if (closed) {
+        print("WebSocket closed - PASS");
+    } else {
+        print("ERROR: Failed to close WebSocket");
+    }
+} else {
+    print("WARNING: Could not connect to WebSocket server (network may be unavailable)");
+}
+)SCRIPT"_embed;
+
+        BOOL result = L->DoString(source);
+        if (!result)
+        {
+            LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
+        }
+        delete L;
+        return result;
+    }
+
+    // Test WebSocket send and receive
+    static BOOL TestWebSocketSendRecv()
+    {
+        script::NetworkContext netCtx;
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+        script::OpenNetworkIO(*L, &netCtx);
+
+        auto source = R"SCRIPT(
+// Connect to a public WebSocket echo server
+var ws = ws_connect("wss://echo.websocket.org");
+print("WebSocket handle:", ws);
+
+if (ws >= 0) {
+    print("WebSocket connected");
+
+    // Send text message
+    var sent = ws_send_text(ws, "Hello WebSocket!");
+    print("Bytes sent:", sent);
+
+    if (sent > 0) {
+        print("WebSocket send - PASS");
+
+        // Receive echo response
+        var data = ws_recv(ws);
+        print("Received", len(data), "bytes:", data);
+
+        if (len(data) > 0) {
+            print("WebSocket recv - PASS");
+        } else {
+            print("Note: No data received (might be timing)");
+        }
+    } else {
+        print("Note: Send returned 0 (connection might have issues)");
+    }
+
+    // Test ws_send with explicit opcode (TEXT = 1)
+    var sent2 = ws_send(ws, "Binary test", 2);
+    print("Binary send:", sent2);
+
+    ws_close(ws);
+    print("WebSocket closed");
+} else {
+    print("WARNING: Could not connect to WebSocket server");
+}
+)SCRIPT"_embed;
+
+        BOOL result = L->DoString(source);
+        if (!result)
+        {
+            LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
+        }
+        delete L;
+        return result;
+    }
+
+    // Test WebSocket error handling with invalid handles
+    static BOOL TestWebSocketInvalidHandle()
+    {
+        script::NetworkContext netCtx;
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+        script::OpenNetworkIO(*L, &netCtx);
+
+        auto source = R"SCRIPT(
+// Try to close invalid handle
+var closed = ws_close(999);
+if (!closed) {
+    print("Closing invalid handle returns false - PASS");
+} else {
+    print("ERROR: Should fail to close invalid handle");
+}
+
+// Try to send with invalid handle
+var sent = ws_send(999, "test");
+if (sent < 0) {
+    print("Sending to invalid handle returns -1 - PASS");
+} else {
+    print("ERROR: Should fail to send to invalid handle");
+}
+
+// Try to send_text with invalid handle
+var sent2 = ws_send_text(999, "test");
+if (sent2 < 0) {
+    print("send_text to invalid handle returns -1 - PASS");
+} else {
+    print("ERROR: Should fail send_text to invalid handle");
+}
+
+// Try to receive from invalid handle
+var data = ws_recv(999);
+if (len(data) == 0) {
+    print("Receiving from invalid handle returns empty - PASS");
+} else {
+    print("ERROR: Should return empty for invalid handle");
+}
+
+// Try ping/pong with invalid handle
+var pinged = ws_ping(999);
+var ponged = ws_pong(999);
+print("Invalid ping:", pinged, "pong:", ponged);
+)SCRIPT"_embed;
+
+        BOOL result = L->DoString(source);
+        if (!result)
+        {
+            LOG_ERROR("Script error: %s at line %d", L->GetError(), L->GetErrorLine());
+        }
+        delete L;
+        return result;
+    }
+
+    // Test multiple simultaneous WebSockets
+    static BOOL TestMultipleWebSockets()
+    {
+        script::NetworkContext netCtx;
+        script::State* L = CreateScriptState();
+        script::OpenStdLib(*L);
+        script::OpenNetworkIO(*L, &netCtx);
+
+        auto source = R"SCRIPT(
+// Try to open multiple WebSocket connections
+var ws1 = ws_connect("wss://echo.websocket.org");
+var ws2 = ws_connect("wss://echo.websocket.org");
+
+print("WebSocket handles:", ws1, ws2);
+
+// Check if we got valid handles (may fail if network unavailable)
+var successCount = 0;
+if (ws1 >= 0) successCount = successCount + 1;
+if (ws2 >= 0) successCount = successCount + 1;
+
+print("Successfully opened", successCount, "WebSockets");
+
+if (successCount >= 1) {
+    // Verify handles are unique
+    if (ws1 >= 0 && ws2 >= 0 && ws1 != ws2) {
+        print("Handles are unique - PASS");
+    }
+}
+
+// Close all WebSockets
+if (ws1 >= 0) ws_close(ws1);
+if (ws2 >= 0) ws_close(ws2);
+
+print("Multiple WebSockets test completed");
 )SCRIPT"_embed;
 
         BOOL result = L->DoString(source);

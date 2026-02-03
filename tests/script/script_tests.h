@@ -27,6 +27,32 @@
 
 #pragma once
 
+#include "ral/script/script.h"
+#include "pal/io/console.h"
+
+// ============================================================================
+// CONSOLE OUTPUT CALLBACK FOR SCRIPT TESTS
+// ============================================================================
+
+/**
+ * Console output callback for script State.
+ * Routes script output (print, etc.) directly to console.
+ */
+static void ScriptConsoleOutput(const CHAR* str, USIZE len)
+{
+    Console::Write(str, len);
+}
+
+/**
+ * Helper to create a State with console output attached.
+ */
+static script::State* CreateScriptState()
+{
+    script::State* L = new script::State();
+    L->SetOutput(EMBED_FUNC(ScriptConsoleOutput));
+    return L;
+}
+
 #include "state_tests.h"
 #include "stdlib_tests.h"
 #include "language_tests.h"

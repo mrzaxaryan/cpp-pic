@@ -130,6 +130,47 @@ public:
         bits = sign | exp | mantissa;
     }
 
+    constexpr DOUBLE(INT64 val) noexcept
+    {
+        if (val == 0)
+        {
+            bits = 0ULL;
+            return;
+        }
+
+        BOOL negative = val < 0;
+        // Handle INT64_MIN specially to avoid overflow in negation
+        UINT64 absVal;
+        if (val == (INT64)0x8000000000000000LL)
+        {
+            absVal = 0x8000000000000000ULL;
+        }
+        else
+        {
+            absVal = negative ? (UINT64)(-val) : (UINT64)val;
+        }
+
+        // Find the MSB position (highest set bit)
+        INT32 msb = 63;
+        while (msb >= 0 && !((absVal >> msb) & 1))
+            msb--;
+
+        INT32 exponent = 1023 + msb;
+
+        // Shift mantissa to fit in 52 bits (may lose precision for large values)
+        UINT64 mantissa = absVal;
+        if (msb >= 52)
+            mantissa = mantissa >> (msb - 52);
+        else
+            mantissa = mantissa << (52 - msb);
+
+        mantissa = mantissa & GetMantissaMask();
+
+        UINT64 sign = negative ? GetSignMask() : 0ULL;
+        UINT64 exp = (UINT64)exponent << 52;
+        bits = sign | exp | mantissa;
+    }
+
     constexpr UINT64 Bits() const noexcept { return bits; }
 
     NOINLINE DISABLE_OPTIMIZATION operator INT32() const noexcept

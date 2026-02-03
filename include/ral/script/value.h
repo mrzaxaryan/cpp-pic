@@ -188,18 +188,9 @@ struct Value
     {
         Value v;
         v.type = ValueType::NUMBER;
-        // For values that fit in INT32, use INT32 constructor (PIC-safe)
-        // For larger values, use double conversion
-        if (n >= -2147483647LL && n <= 2147483647LL)
-        {
-            v.numberValue = DOUBLE(INT32(n));
-        }
-        else
-        {
-            // Large INT64: convert via double (may lose precision for values > 2^53)
-            double d = (double)n;
-            v.numberValue = DOUBLE(d);
-        }
+        // Use INT64 constructor (PIC-safe, no native double)
+        // May lose precision for values > 2^53
+        v.numberValue = DOUBLE(n);
         return v;
     }
 
@@ -627,7 +618,6 @@ NOINLINE USIZE GetValueTypeName(ValueType type, CHAR* buffer, USIZE bufferSize) 
 
 /**
  * Context passed to C++ functions registered with State.
- * Similar to lua_State* in Lua.
  */
 struct FunctionContext
 {

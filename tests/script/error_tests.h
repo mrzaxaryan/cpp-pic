@@ -34,7 +34,7 @@ public:
 private:
     static BOOL TestMissingSemicolon()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Script with syntax error (missing semicolon)
@@ -56,7 +56,7 @@ print(x);
 
     static BOOL TestUndefinedVariable()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Script with undefined variable
@@ -77,7 +77,7 @@ print(x);
 
     static BOOL TestUndefinedFunction()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         // Note: NOT registering any functions, not even print
 
         // Script calling undefined function
@@ -98,7 +98,7 @@ print(x);
 
     static BOOL TestSyntaxErrorInExpression()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Script with invalid expression
@@ -119,7 +119,7 @@ print(x);
 
     static BOOL TestValidScript()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Valid script should succeed
@@ -135,7 +135,7 @@ print("Valid script: x + y =", x + y);
 
     static BOOL TestErrorMessageRetrieval()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Script with error

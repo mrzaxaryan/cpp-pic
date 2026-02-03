@@ -57,7 +57,7 @@ public:
 private:
     static BOOL TestManualRegistration()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
 
         // Register ONLY the functions we need - NO standard library
         L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
@@ -76,7 +76,7 @@ print("square(4) =", square(4));
 
     static BOOL TestGlobalVariables()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Set global variables from C++
@@ -98,7 +98,7 @@ if (debug) {
 
     static BOOL TestMinimalSetup()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
 
         // Register ONLY print - absolutely minimal
         L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
@@ -119,7 +119,7 @@ print("x * y =", x * y);
         // Create multiple states to verify proper lifecycle management
         for (INT32 i = 0; i < 3; i++)
         {
-            script::State* L = new script::State();
+            script::State* L = CreateScriptState();
             L->Register("print"_embed, EMBED_FUNC(script::StdLib_Print) );
 
             auto source = R"(var x = 42;

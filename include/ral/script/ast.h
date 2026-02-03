@@ -362,16 +362,9 @@ FORCE_INLINE Expr* MakeNumberExpr(ASTAllocator& alloc, INT64 value, UINT32 line,
     expr->type = ExprType::NUMBER_LITERAL;
     expr->line = line;
     expr->column = col;
-    // Convert INT64 to DOUBLE
-    if (value >= -2147483647LL && value <= 2147483647LL)
-    {
-        expr->number.value = DOUBLE(INT32(value));
-    }
-    else
-    {
-        double d = (double)value;
-        expr->number.value = DOUBLE(d);
-    }
+    // Convert INT64 to DOUBLE (PIC-safe, no native double)
+    // May lose precision for values > 2^53
+    expr->number.value = DOUBLE(value);
     expr->number.isFloat = FALSE;
     return expr;
 }

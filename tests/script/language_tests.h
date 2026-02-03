@@ -44,7 +44,7 @@ public:
 private:
     static BOOL TestRecursion()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(fn factorial(n) {
@@ -65,7 +65,7 @@ for (var i = 1; i <= 10; i = i + 1) {
 
     static BOOL TestArithmeticOperators()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("5 + 3 =", 5 + 3);
@@ -84,7 +84,7 @@ print("-(3 + 2) =", -(3 + 2));
 
     static BOOL TestComparisonOperators()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("5 == 5:", 5 == 5);
@@ -104,7 +104,7 @@ print("hello != world:", "hello" != "world");
 
     static BOOL TestLogicalOperators()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("true && true:", true && true);
@@ -123,7 +123,7 @@ print("(5 > 3) && (2 < 4):", (5 > 3) && (2 < 4));
 
     static BOOL TestWhileLoop()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var i = 0;
@@ -142,7 +142,7 @@ print("Sum of 0..4 =", sum);
 
     static BOOL TestAssignmentOperators()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var x = 10;
@@ -164,7 +164,7 @@ print("x /= 4:", x);
 
     static BOOL TestStringConcatenation()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var greeting = "Hello";
@@ -179,7 +179,7 @@ print(greeting + ", " + name + "!");
 
     static BOOL TestNestedFunctions()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(fn outer(x) {
@@ -198,7 +198,7 @@ print("outer(5) =", outer(5));
 
     static BOOL TestFirstClassFunctions()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(fn apply(f, x) {
@@ -217,7 +217,7 @@ print("apply(double, 5) =", apply(double, 5));
 
     static BOOL TestArrayLiterals()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(// Empty array
@@ -245,7 +245,7 @@ print("Type of array:", type(nums));
 
     static BOOL TestArrayAccess()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var arr = [10, 20, 30, 40, 50];
@@ -279,7 +279,7 @@ print("Sum of array:", sum);
 
     static BOOL TestArrayPushPop()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var arr = [1, 2, 3];
@@ -310,7 +310,7 @@ print("Final length:", len(arr));
 
     static BOOL TestStringIndexing()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var s = "Hello";
@@ -333,7 +333,7 @@ for (var i = 0; i < len(s); i = i + 1) {
 
     static BOOL TestForEachArray()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var nums = [10, 20, 30, 40, 50];
@@ -366,7 +366,7 @@ for (var item in mixed) {
 
     static BOOL TestForEachString()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var s = "Hello";
@@ -396,7 +396,7 @@ print("Vowels in text:", vowels);
 
     static BOOL TestForEachWithIndex()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(var arr = ["apple", "banana", "cherry"];

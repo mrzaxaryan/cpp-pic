@@ -38,7 +38,7 @@ public:
 private:
     static BOOL TestFloatLiterals()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -57,7 +57,7 @@ print("big =", big);
 
     static BOOL TestMixedArithmetic()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -74,7 +74,7 @@ print("100 / 2.5 =", 100 / 2.5);
 
     static BOOL TestFloatComparisons()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -93,7 +93,7 @@ print("2.4 <= 2.5 =", 2.4 <= 2.5);
 
     static BOOL TestDivision()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -110,7 +110,7 @@ print("22 / 7 =", 22 / 7);
 
     static BOOL TestModuloRestriction()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Modulo with integers should work
@@ -135,7 +135,7 @@ print("7.5 % 2 =", 7.5 % 2);
 
     static BOOL TestStrFunction()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -151,7 +151,7 @@ print("str(0.5) =", str(0.5));
 
     static BOOL TestNumFunction()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -167,7 +167,7 @@ print("num(\"-2.5\") =", num("-2.5"));
 
     static BOOL TestFloorCeilInt()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -186,7 +186,7 @@ print("int(-3.7) =", int(-3.7));
 
     static BOOL TestMinMaxAbs()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(
@@ -203,7 +203,7 @@ print("abs(2.71) =", abs(2.71));
 
     static BOOL TestNegation()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(

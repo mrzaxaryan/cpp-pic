@@ -67,7 +67,7 @@ public:
 private:
     static BOOL TestStdLibFunctions()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
 
         // Register standard library (print, len, str, num, type, abs, min, max)
         script::OpenStdLib(*L);
@@ -85,7 +85,7 @@ print("len(hello):", len("hello"));
 
     static BOOL TestCustomFunctionsWithStdLib()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         // Register additional custom functions
@@ -103,7 +103,7 @@ print("sum(1,2,3,4,5) =", sum(1,2,3,4,5));
 
     static BOOL TestPrintFunction()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("Single string");
@@ -121,7 +121,7 @@ print("Mixed:", 1, true, "end");
 
     static BOOL TestTypeFunction()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("type(42) =", type(42));
@@ -137,7 +137,7 @@ print("type(nil) =", type(nil));
 
     static BOOL TestStringFunctions()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("len(hello) =", len("hello"));
@@ -153,7 +153,7 @@ print("str(true) =", str(true));
 
     static BOOL TestMathFunctions()
     {
-        script::State* L = new script::State();
+        script::State* L = CreateScriptState();
         script::OpenStdLib(*L);
 
         auto source = R"(print("abs(-5) =", abs(-5));

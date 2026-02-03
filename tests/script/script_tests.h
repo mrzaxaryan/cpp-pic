@@ -31,7 +31,7 @@
 
 #pragma once
 
-#include "pil/script.h"
+#include "pil/pil.h"
 #include "pal/io/console.h"
 
 // ============================================================================

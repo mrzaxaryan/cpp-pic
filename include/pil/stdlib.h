@@ -17,10 +17,7 @@
 
 #pragma once
 
-#include "value.h"
-
-// Forward declaration - State is defined in state.h
-namespace script { class State; }
+#include "value.h"  // includes State forward declaration
 
 namespace script
 {

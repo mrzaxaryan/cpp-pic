@@ -1,5 +1,5 @@
 /**
- * script.h - PIL (Position Independent Language) Main Entry Point
+ * pil.h - PIL (Position Independent Language) Main Entry Point
  *
  * Provides a State-based API for script execution.
  * NO built-in functions - all functions must be registered from C++.
@@ -21,16 +21,10 @@
 
 #pragma once
 
-// Core components
-#include "token.h"
-#include "lexer.h"
-#include "ast.h"
-#include "parser.h"
-#include "value.h"
-#include "interpreter.h"
-
-// State-based API
+// State-based API (includes all core components: token, lexer, ast, parser, value, interpreter)
 #include "state.h"
+
+// Standard library
 #include "stdlib.h"
 
 namespace script

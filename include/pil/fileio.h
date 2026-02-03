@@ -31,11 +31,9 @@
 
 #pragma once
 
-#include "value.h"
+#include "value.h"  // includes State forward declaration
 #include "pal/io/file_system.h"
 #include "bal/types/embedded/embedded_function_pointer.h"
-
-namespace script { class State; }
 
 namespace script
 {

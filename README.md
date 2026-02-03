@@ -623,7 +623,7 @@ for (var i = 0; i < 10; i = i + 1) {
 
 **Basic Usage:**
 ```cpp
-#include "pil/script.h"
+#include "pil/pil.h"
 
 script::State* L = new script::State();
 

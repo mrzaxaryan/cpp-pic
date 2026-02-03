@@ -44,14 +44,12 @@
 
 #pragma once
 
-#include "value.h"
+#include "value.h"  // includes State forward declaration
 #include "pal/network/socket.h"
 #include "ral/network/dns.h"
 #include "ral/network/http.h"
 #include "ral/network/websocket.h"
 #include "bal/types/embedded/embedded_function_pointer.h"
-
-namespace script { class State; }
 
 // ============================================================================
 // PLACEMENT NEW OPERATOR (no <new> header in no-stdlib environment)

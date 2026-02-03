@@ -9,8 +9,7 @@
 
 #pragma once
 
-#include "ast.h"
-#include "bal/types/numeric/double.h"
+#include "ast.h"  // includes bal/types/numeric/double.h
 
 namespace script
 {

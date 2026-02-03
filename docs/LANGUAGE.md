@@ -668,7 +668,7 @@ if (ws >= 0) {
 ### Basic Usage
 
 ```cpp
-#include "pil/script.h"
+#include "pil/pil.h"
 
 script::State* L = new script::State();
 
@@ -951,5 +951,6 @@ include/pil/
 ├── stdlib.h         # Standard library functions
 ├── fileio.h         # File I/O functions
 ├── networkio.h      # Network I/O functions (socket, DNS, HTTP, WebSocket)
-└── state.h          # State-based API wrapper (script.h)
+├── state.h          # State-based API wrapper
+└── pil.h            # Main entry point (include this)
 ```

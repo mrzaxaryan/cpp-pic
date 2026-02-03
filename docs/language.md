@@ -14,6 +14,7 @@ PICScript is a lightweight, position-independent scripting language embedded in 
 - [Arrays](#arrays)
 - [Standard Library](#standard-library)
 - [File I/O](#file-io)
+- [Network I/O](#network-io)
 - [C++ Integration](#c-integration)
 - [Error Handling](#error-handling)
 - [Constraints](#constraints)
@@ -499,6 +500,162 @@ if (fexists("test.txt")) {
 
 ---
 
+## Network I/O
+
+Network operations are available through the network I/O library.
+
+### Setup
+
+```cpp
+script::NetworkContext netCtx;
+script::State L;
+script::OpenStdLib(L);
+script::OpenNetworkIO(L, &netCtx);
+```
+
+### Socket Functions
+
+| Function | Description |
+|----------|-------------|
+| `sock_connect(host, port)` | Connect to host:port, returns handle or -1 |
+| `sock_close(handle)` | Close socket, returns true/false |
+| `sock_send(handle, data)` | Send data, returns bytes sent or -1 |
+| `sock_recv(handle [, size])` | Receive data (max 255 bytes), returns string |
+
+Maximum 8 sockets simultaneously.
+
+#### Example
+
+```javascript
+var sock = sock_connect("httpbin.org", 80);
+if (sock >= 0) {
+    sock_send(sock, "GET / HTTP/1.0\r\nHost: httpbin.org\r\n\r\n");
+    var response = sock_recv(sock, 255);
+    print(response);
+    sock_close(sock);
+}
+```
+
+### DNS Functions
+
+| Function | Description |
+|----------|-------------|
+| `dns_resolve(hostname)` | Resolve hostname to IP string (IPv6 preferred) |
+| `dns_resolve4(hostname)` | Resolve hostname to IPv4 string |
+| `dns_resolve6(hostname)` | Resolve hostname to IPv6 string |
+
+#### Example
+
+```javascript
+var ip = dns_resolve("cloudflare.com");
+print("IP:", ip);
+
+var ipv4 = dns_resolve4("example.com");
+var ipv6 = dns_resolve6("example.com");
+```
+
+### HTTP Functions
+
+| Function | Description |
+|----------|-------------|
+| `http_open(url)` | Create HTTP client for URL, returns handle or -1 |
+| `http_get(handle)` | Send GET request, returns true/false |
+| `http_post(handle, data)` | Send POST request, returns true/false |
+| `http_read(handle [, size])` | Read response (max 255 bytes), returns string |
+| `http_close(handle)` | Close HTTP client, returns true/false |
+
+Maximum 4 HTTP clients simultaneously.
+
+#### Example
+
+```javascript
+var http = http_open("http://httpbin.org/ip");
+if (http >= 0) {
+    if (http_get(http)) {
+        var response = "";
+        var chunk = http_read(http, 255);
+        while (len(chunk) > 0) {
+            response = response + chunk;
+            chunk = http_read(http, 255);
+        }
+        print(response);
+    }
+    http_close(http);
+}
+```
+
+### WebSocket Functions
+
+| Function | Description |
+|----------|-------------|
+| `ws_connect(url)` | Connect to WebSocket server (ws:// or wss://), returns handle or -1 |
+| `ws_close(handle)` | Close WebSocket connection, returns true/false |
+| `ws_send(handle, data [, opcode])` | Send data with optional opcode, returns bytes sent or -1 |
+| `ws_send_text(handle, data)` | Send text data (opcode=1), returns bytes sent or -1 |
+| `ws_recv(handle [, size])` | Receive data (max 255 bytes), returns string |
+| `ws_ping(handle)` | Send ping frame, returns true/false |
+| `ws_pong(handle)` | Send pong frame, returns true/false |
+
+Maximum 4 WebSocket connections simultaneously.
+
+**Opcodes:**
+| Opcode | Description |
+|--------|-------------|
+| 0 | Continuation |
+| 1 | Text |
+| 2 | Binary (default) |
+| 8 | Close |
+| 9 | Ping |
+| 10 | Pong |
+
+#### Example
+
+```javascript
+// Connect to WebSocket echo server
+var ws = ws_connect("wss://echo.websocket.org");
+if (ws >= 0) {
+    // Send text message
+    ws_send_text(ws, "Hello WebSocket!");
+
+    // Receive echo response
+    var data = ws_recv(ws);
+    print("Received:", data);
+
+    // Send binary data with explicit opcode
+    ws_send(ws, "binary data", 2);
+
+    // Send ping
+    ws_ping(ws);
+
+    // Close connection
+    ws_close(ws);
+}
+```
+
+#### Real-time Communication Example
+
+```javascript
+var ws = ws_connect("wss://myserver.com/socket");
+if (ws >= 0) {
+    // Send JSON message
+    ws_send_text(ws, "{\"type\":\"subscribe\",\"channel\":\"updates\"}");
+
+    // Read messages in a loop
+    var running = true;
+    while (running) {
+        var msg = ws_recv(ws);
+        if (len(msg) > 0) {
+            print("Message:", msg);
+            // Process message...
+        }
+    }
+
+    ws_close(ws);
+}
+```
+
+---
+
 ## C++ Integration
 
 ### Basic Usage
@@ -616,6 +773,9 @@ Due to cpp-pic compatibility requirements:
 | Array elements | 16 per array |
 | Array pool | 64 arrays |
 | Open files | 16 handles |
+| Open sockets | 8 handles |
+| HTTP clients | 4 handles |
+| WebSocket clients | 4 handles |
 | String buffer | 256 characters |
 
 ---
@@ -695,6 +855,63 @@ var lines = countLines("myfile.txt");
 print("Lines:", lines);
 ```
 
+### HTTP Request
+
+```javascript
+// Fetch data from an API
+fn httpGet(url) {
+    var http = http_open(url);
+    if (http < 0) {
+        return nil;
+    }
+
+    if (!http_get(http)) {
+        http_close(http);
+        return nil;
+    }
+
+    var response = "";
+    var chunk = http_read(http, 255);
+    while (len(chunk) > 0) {
+        response = response + chunk;
+        chunk = http_read(http, 255);
+    }
+
+    http_close(http);
+    return response;
+}
+
+var data = httpGet("http://httpbin.org/ip");
+if (data != nil) {
+    print("Response:", data);
+}
+```
+
+### WebSocket Chat
+
+```javascript
+// Simple WebSocket echo client
+var ws = ws_connect("wss://echo.websocket.org");
+if (ws >= 0) {
+    print("Connected to echo server");
+
+    // Send messages
+    var messages = ["Hello", "World", "Test"];
+    for (var msg in messages) {
+        ws_send_text(ws, msg);
+        print("Sent:", msg);
+
+        var reply = ws_recv(ws);
+        print("Echo:", reply);
+    }
+
+    ws_close(ws);
+    print("Disconnected");
+} else {
+    print("Connection failed");
+}
+```
+
 ---
 
 ## Architecture
@@ -710,5 +927,7 @@ include/ral/script/
 ├── value.h          # Value type system + Environment
 ├── interpreter.h    # Tree-walking interpreter
 ├── stdlib.h         # Standard library functions
+├── fileio.h         # File I/O functions
+├── networkio.h      # Network I/O functions (socket, DNS, HTTP, WebSocket)
 └── state.h          # State-based API wrapper (script.h)
 ```

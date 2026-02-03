@@ -234,11 +234,16 @@ static inline BOOL RunScriptTestInline(PCWCHAR path, TestConfig config,
 
 /**
  * RUN_SCRIPT_TEST_NETWORKIO - Macro to run a script test with NetworkIO
+ *
+ * NOTE: NetworkContext is allocated on heap because it's very large (~32KB+)
+ * due to inline storage for HttpClient and WebSocketClient objects.
+ * Stack allocation causes overflow in -O0 builds.
  */
 #define RUN_SCRIPT_TEST_NETWORKIO(allPassedVar, scriptPath, description) \
     do { \
-        script::NetworkContext _netCtx; \
-        BOOL _passed = RunScriptTestInline(scriptPath, CFG_NETWORKIO, nullptr, &_netCtx); \
+        script::NetworkContext* _netCtx = new script::NetworkContext(); \
+        BOOL _passed = RunScriptTestInline(scriptPath, CFG_NETWORKIO, nullptr, _netCtx); \
+        delete _netCtx; \
         if (_passed) \
             LOG_INFO("  PASSED: " description); \
         else { \

@@ -1,0 +1,9 @@
+// Test float literals
+var pi = 3.14159;
+var half = 0.5;
+var big = 1234.5678;
+
+// Verify floats are parsed correctly (approximate comparisons)
+var result = (pi > 3.14) && (pi < 3.15) &&
+             (half == 0.5) &&
+             (big > 1234.56) && (big < 1234.57);

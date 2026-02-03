@@ -1,0 +1,24 @@
+// Test break in for-each loop
+var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var sum = 0;
+for (var x in arr) {
+    if (x > 5) {
+        break;
+    }
+    sum = sum + x;
+}
+// Sum of 1..5 = 1 + 2 + 3 + 4 + 5 = 15
+var ok1 = sum == 15;
+
+// Break in string iteration - "Hello World" has 5 chars before space
+var s = "Hello World";
+var chars = 0;
+for (var c in s) {
+    if (c == " ") {
+        break;
+    }
+    chars = chars + 1;
+}
+var ok2 = chars == 5;
+
+var result = ok1 && ok2;

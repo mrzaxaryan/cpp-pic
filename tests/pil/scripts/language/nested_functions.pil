@@ -1,0 +1,9 @@
+// Test nested functions
+fn outer(x) {
+    fn inner(y) {
+        return y * 2;
+    }
+    return inner(x) + 1;
+}
+// outer(5) = inner(5) + 1 = (5 * 2) + 1 = 11
+var result = outer(5) == 11;

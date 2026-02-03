@@ -1,0 +1,3 @@
+// Test state lifecycle - verify basic variable operations
+var x = 42;
+var result = x == 42;

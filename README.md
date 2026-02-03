@@ -320,7 +320,7 @@ The same issues remain: increased complexity, fragility, and sensitivity to comp
 
 #### Position-Independent Runtime Solution: Function Pointer Embedding
 
-We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](include/bal/types/embedded/embedded_function_pointer.h).
+We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](include/core/types/embedded/embedded_function_pointer.h).
 
 ### Problem 4: 64-bit Arithmetic on 32-bit Systems
 
@@ -429,29 +429,29 @@ Position-Independent Runtime is built on a clean three-layer abstraction that se
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  RAL (Runtime Abstraction Layer)                            │
+│  RUNTIME (Runtime Abstraction Layer)                        │
 │  High-level features: Cryptography, Networking, TLS 1.3     │
 ├─────────────────────────────────────────────────────────────┤
-│  PAL (Platform Abstraction Layer)                           │
+│  PLATFORM (Platform Abstraction Layer)                      │
 │  OS-specific: Windows PEB/NTAPI, Linux syscalls             │
 ├─────────────────────────────────────────────────────────────┤
-│  BAL (Base Abstraction Layer)                               │
+│  CORE (Core Abstraction Layer)                              │
 │  Platform-independent: Types, Memory, Strings, Algorithms   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**BAL (Base Abstraction Layer)** provides platform-independent primitives:
+**CORE (Core Abstraction Layer)** provides platform-independent primitives:
 - Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
 - Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
 - Memory operations, string utilities, and formatting
 - Algorithms (DJB2 hashing, Base64, random number generation)
 
-**PAL (Platform Abstraction Layer)** handles OS and hardware specifics:
+**PLATFORM (Platform Abstraction Layer)** handles OS and hardware specifics:
 - Windows: PEB walking, PE parsing, NTAPI-based operations
 - Linux: Direct syscall interface without libc
 - Console I/O, file system, networking, memory allocation
 
-**RAL (Runtime Abstraction Layer)** provides high-level application features:
+**RUNTIME (Runtime Abstraction Layer)** provides high-level application features:
 - Cryptography: SHA-256/384/512, HMAC, ChaCha20-Poly1305, ECC
 - Networking: DNS resolution, HTTP client, WebSocket, TLS 1.3
 

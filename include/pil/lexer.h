@@ -10,7 +10,7 @@
 #pragma once
 
 #include "token.h"
-#include "bal/core/memory.h"
+#include "pir/core/core/memory.h"
 
 namespace script
 {

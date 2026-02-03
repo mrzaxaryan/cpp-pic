@@ -62,17 +62,17 @@ static BOOL RunPIRTests()
 	LOG_INFO("=== CPP-PIC Test Suite ===");
 	LOG_INFO("");
 
-	// BAL - Embedded Types and Numeric Primitives
+	// CORE - Embedded Types and Numeric Primitives
 	RUN_TEST_SUITE(allPassed, DoubleTests);
 	RUN_TEST_SUITE(allPassed, StringTests);
 
-	// BAL - Data Structures, String Utilities, and Algorithms
+	// CORE - Data Structures, String Utilities, and Algorithms
 	RUN_TEST_SUITE(allPassed, ArrayStorageTests);
 	RUN_TEST_SUITE(allPassed, StringFormatterTests);
 	RUN_TEST_SUITE(allPassed, Djb2Tests);
 	RUN_TEST_SUITE(allPassed, Base64Tests);
 
-	// PAL - Memory and System
+	// PLATFORM - Memory and System
 	RUN_TEST_SUITE(allPassed, MemoryTests);
 	RUN_TEST_SUITE(allPassed, RandomTests);
 

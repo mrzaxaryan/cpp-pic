@@ -4,7 +4,7 @@
  * Unified _start() entry point for all platforms.
  */
 
-#include "ral.h"
+#include "runtime.h"
 #include "pil/pil_tests.h"
 #include "pir/pir_tests.h"
 

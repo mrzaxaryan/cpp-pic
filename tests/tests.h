@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "pal/io/logger.h"
+#include "pir/platform/io/logger.h"
 
 /**
  * RUN_TEST - Convenience macro for running tests with pass/fail logging

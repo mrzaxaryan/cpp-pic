@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ral.h"
+#include "runtime.h"
 #include "sha2.h"
 #include "tests.h"
 

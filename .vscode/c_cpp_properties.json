@@ -12,36 +12,40 @@
             "defines": [
                 "ARCHITECTURE_I386",
                 "PLATFORM_WINDOWS",
-                "PLATFORM_WINDOWS_I386"
+                "PLATFORM_WINDOWS_I386",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/windows",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/windows",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -54,36 +58,40 @@
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_WINDOWS",
-                "PLATFORM_WINDOWS_X86_64"
+                "PLATFORM_WINDOWS_X86_64",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/windows",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/windows",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -96,36 +104,40 @@
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_WINDOWS",
-                "PLATFORM_WINDOWS_AARCH64"
+                "PLATFORM_WINDOWS_AARCH64",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/windows",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/windows",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -138,36 +150,40 @@
             "defines": [
                 "ARCHITECTURE_I386",
                 "PLATFORM_LINUX",
-                "PLATFORM_LINUX_I386"
+                "PLATFORM_LINUX_I386",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/linux",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/linux",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -180,36 +196,40 @@
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_LINUX",
-                "PLATFORM_LINUX_X86_64"
+                "PLATFORM_LINUX_X86_64",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/linux",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/linux",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -222,36 +242,40 @@
             "defines": [
                 "ARCHITECTURE_ARMV7A",
                 "PLATFORM_LINUX",
-                "PLATFORM_LINUX_ARMV7A"
+                "PLATFORM_LINUX_ARMV7A",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/linux",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/linux",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -264,36 +288,40 @@
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_LINUX",
-                "PLATFORM_LINUX_AARCH64"
+                "PLATFORM_LINUX_AARCH64",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/linux",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/linux",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -306,36 +334,40 @@
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_UEFI",
-                "PLATFORM_UEFI_X86_64"
+                "PLATFORM_UEFI_X86_64",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/uefi",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/uefi",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         },
@@ -348,36 +380,40 @@
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_UEFI",
-                "PLATFORM_UEFI_AARCH64"
+                "PLATFORM_UEFI_AARCH64",
+                "ENABLE_LOGGING"
             ],
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/bal",
-                "${workspaceFolder}/include/bal/core",
-                "${workspaceFolder}/include/bal/algorithms",
-                "${workspaceFolder}/include/bal/string",
-                "${workspaceFolder}/include/bal/types",
-                "${workspaceFolder}/include/bal/types/embedded",
-                "${workspaceFolder}/include/bal/types/network",
-                "${workspaceFolder}/include/bal/types/numeric",
-                "${workspaceFolder}/include/pal",
-                "${workspaceFolder}/include/pal/memory",
-                "${workspaceFolder}/include/pal/io",
-                "${workspaceFolder}/include/pal/network",
-                "${workspaceFolder}/include/pal/system",
-                "${workspaceFolder}/include/pal/uefi",
-                "${workspaceFolder}/include/ral",
-                "${workspaceFolder}/include/ral/crypt",
-                "${workspaceFolder}/include/ral/network",
-                "${workspaceFolder}/include/ral/network/tls",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/pir/core",
+                "${workspaceFolder}/include/pir/core/algorithms",
+                "${workspaceFolder}/include/pir/core/core",
+                "${workspaceFolder}/include/pir/core/string",
+                "${workspaceFolder}/include/pir/core/types",
+                "${workspaceFolder}/include/pir/core/types/embedded",
+                "${workspaceFolder}/include/pir/core/types/network",
+                "${workspaceFolder}/include/pir/core/types/numeric",
+                "${workspaceFolder}/include/pir/platform",
+                "${workspaceFolder}/include/pir/platform/io",
+                "${workspaceFolder}/include/pir/platform/memory",
+                "${workspaceFolder}/include/pir/platform/network",
+                "${workspaceFolder}/include/pir/platform/system",
+                "${workspaceFolder}/include/pir/platform/uefi",
                 "${workspaceFolder}/include/pil",
-                "${workspaceFolder}/tests"
+                "${workspaceFolder}/include/pir/runtime",
+                "${workspaceFolder}/include/pir/runtime/crypt",
+                "${workspaceFolder}/include/pir/runtime/network",
+                "${workspaceFolder}/include/pir/runtime/network/tls",
+                "${workspaceFolder}/tests/pil",
+                "${workspaceFolder}/tests/pir"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/src",
-                    "${workspaceFolder}/include"
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
                 ]
             }
         }

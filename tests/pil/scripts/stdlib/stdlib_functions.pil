@@ -1,0 +1,4 @@
+// Test standard library functions
+var result = (1 + 2 == 3) &&
+             (type(42) == "number") &&
+             (len("hello") == 5);

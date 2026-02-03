@@ -1,5 +1,5 @@
 /**
- * fileio.h - File I/O Functions for PIL (via PAL)
+ * fileio.h - File I/O Functions for PIL (via PLATFORM)
  *
  * Provides file system access through the Platform Abstraction Layer.
  * Functions use handle-based file management with a fixed-size pool.
@@ -32,8 +32,8 @@
 #pragma once
 
 #include "value.h"  // includes State forward declaration
-#include "pal/io/file_system.h"
-#include "bal/types/embedded/embedded_function_pointer.h"
+#include "pir/platform/io/file_system.h"
+#include "pir/core/types/embedded/embedded_function_pointer.h"
 
 namespace script
 {

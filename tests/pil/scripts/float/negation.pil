@@ -1,0 +1,9 @@
+// Test float negation
+var x = 3.14;
+var neg = -x;
+var negNeg = -(-x);
+var negExpr = -(1.5 + 0.5);
+
+var result = (neg > -3.15) && (neg < -3.13) &&
+             (negNeg > 3.13) && (negNeg < 3.15) &&
+             (negExpr == -2);

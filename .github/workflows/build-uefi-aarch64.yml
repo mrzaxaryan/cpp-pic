@@ -84,6 +84,15 @@ jobs:
             mmd -i "$DISK_IMG" ::/EFI/BOOT
             mcopy -i "$DISK_IMG" build/release/uefi/aarch64/output.efi "::EFI/BOOT/BOOTAA64.EFI"
 
+            # Copy PIL script files for testing
+            mmd -i "$DISK_IMG" ::/tests
+            mmd -i "$DISK_IMG" ::/tests/pil
+            mmd -i "$DISK_IMG" ::/tests/pil/scripts
+            for dir in language stdlib state error float fileio networkio; do
+              mmd -i "$DISK_IMG" ::/tests/pil/scripts/$dir
+              mcopy -i "$DISK_IMG" tests/pil/scripts/$dir/*.pil "::tests/pil/scripts/$dir/"
+            done
+
             set +e
             timeout 180s qemu-system-aarch64 -M virt -cpu cortex-a72 \
               -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \

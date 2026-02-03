@@ -1,12 +1,12 @@
 /**
- * networkio.h - Network I/O Functions for PIL (via PAL/RAL)
+ * networkio.h - Network I/O Functions for PIL (via PLATFORM/RUNTIME)
  *
  * Provides network access through the Platform/Runtime Abstraction Layers.
  * Functions use handle-based resource management with fixed-size pools.
  *
  * Position-independent, no .rdata dependencies.
  *
- * Part of RAL (Runtime Abstraction Layer).
+ * Part of RUNTIME (Runtime Abstraction Layer).
  *
  * USAGE:
  *   script::NetworkContext netCtx;
@@ -45,11 +45,11 @@
 #pragma once
 
 #include "value.h"  // includes State forward declaration
-#include "pal/network/socket.h"
-#include "ral/network/dns.h"
-#include "ral/network/http.h"
-#include "ral/network/websocket.h"
-#include "bal/types/embedded/embedded_function_pointer.h"
+#include "pir/platform/network/socket.h"
+#include "pir/runtime/network/dns.h"
+#include "pir/runtime/network/http.h"
+#include "pir/runtime/network/websocket.h"
+#include "pir/core/types/embedded/embedded_function_pointer.h"
 
 // ============================================================================
 // PLACEMENT NEW OPERATOR (no <new> header in no-stdlib environment)

@@ -1,0 +1,4 @@
+// Test minimal setup (only print registered)
+var x = 10;
+var y = 20;
+var result = (x + y == 30) && (x * y == 200);

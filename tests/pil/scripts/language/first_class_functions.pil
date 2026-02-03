@@ -1,0 +1,9 @@
+// Test first-class functions
+fn apply(f, x) {
+    return f(x);
+}
+fn double(n) {
+    return n * 2;
+}
+// apply(double, 5) = double(5) = 5 * 2 = 10
+var result = apply(double, 5) == 10;

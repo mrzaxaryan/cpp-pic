@@ -1,0 +1,5 @@
+// Test HTTP open
+var http = http_open("http://httpbin.org/get");
+print("HTTP handle:", http);
+if (http >= 0) { print("PASS"); }
+if (http >= 0) { http_close(http); }

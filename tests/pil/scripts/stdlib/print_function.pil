@@ -1,0 +1,10 @@
+// Test print function (just verify it executes without error)
+print("Single string");
+print("Multiple", "arguments", "test");
+print(42);
+print(true);
+print(nil);
+print("Mixed:", 1, true, "end");
+
+// If we got here, print works
+var result = true;

@@ -1,0 +1,29 @@
+// Test for-each with index
+var arr = ["apple", "banana", "cherry"];
+
+// Verify indices are correct
+var ok1 = true;
+for (var i, item in arr) {
+    if (i == 0 && item != "apple") { ok1 = false; }
+    if (i == 1 && item != "banana") { ok1 = false; }
+    if (i == 2 && item != "cherry") { ok1 = false; }
+}
+
+// Weighted sum: 0*10 + 1*20 + 2*30 = 0 + 20 + 60 = 80
+var nums = [10, 20, 30];
+var weighted = 0;
+for (var idx, val in nums) {
+    weighted = weighted + (idx * val);
+}
+var ok2 = weighted == 80;
+
+// String with index
+var s = "ABC";
+var ok3 = true;
+for (var pos, ch in s) {
+    if (pos == 0 && ch != "A") { ok3 = false; }
+    if (pos == 1 && ch != "B") { ok3 = false; }
+    if (pos == 2 && ch != "C") { ok3 = false; }
+}
+
+var result = ok1 && ok2 && ok3;

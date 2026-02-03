@@ -7,7 +7,7 @@ include_guard(GLOBAL)
 cpppic_get_target_info()
 cpppic_filter_sources(linux uefi)
 
-list(APPEND CPPPIC_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/include/pal/windows")
+list(APPEND CPPPIC_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/include/platform/windows")
 list(APPEND CPPPIC_BASE_FLAGS -target ${CPPPIC_TRIPLE})
 
 # Debug-specific

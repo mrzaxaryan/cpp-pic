@@ -1,0 +1,3 @@
+// Test socket invalid send
+var sent = sock_send(999, "test");
+if (sent < 0) { print("PASS"); }

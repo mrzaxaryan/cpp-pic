@@ -1,0 +1,3 @@
+// Test HTTP invalid close
+var closed = http_close(999);
+if (!closed) { print("PASS"); }

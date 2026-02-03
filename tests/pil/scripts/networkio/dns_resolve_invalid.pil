@@ -1,0 +1,4 @@
+// Test DNS resolve invalid hostname
+var ip = dns_resolve("invalid.invalid");
+print("Invalid result:", ip);
+if (len(ip) == 0) { print("PASS"); }

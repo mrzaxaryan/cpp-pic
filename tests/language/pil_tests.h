@@ -48,25 +48,25 @@ static BOOL RunPILTests()
     LOG_INFO("");
 
     // State API tests
-    RUN_TEST_SUITE(allPassed, StateTests);
+    RunTestSuite<StateTests>(allPassed);
 
     // Standard library tests
-    RUN_TEST_SUITE(allPassed, StdLibTests);
+    RunTestSuite<StdLibTests>(allPassed);
 
     // Language feature tests
-    RUN_TEST_SUITE(allPassed, LanguageTests);
+    RunTestSuite<LanguageTests>(allPassed);
 
     // Error handling tests
-    RUN_TEST_SUITE(allPassed, ErrorTests);
+    RunTestSuite<ErrorTests>(allPassed);
 
     // Floating-point tests
-    RUN_TEST_SUITE(allPassed, FloatTests);
+    RunTestSuite<FloatTests>(allPassed);
 
     // File I/O tests
-    RUN_TEST_SUITE(allPassed, FileIOTests);
+    RunTestSuite<FileIOTests>(allPassed);
 
     // Network I/O tests
-    RUN_TEST_SUITE(allPassed, NetworkIOTests);
+    RunTestSuite<NetworkIOTests>(allPassed);
 
     // Final summary
     LOG_INFO("=== PIL Test Suite Complete ===");

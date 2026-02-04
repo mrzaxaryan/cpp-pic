@@ -11,7 +11,7 @@
 
 #include "ast.h"      // includes core/types/numeric/double.h and core/string/string.h
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -738,4 +738,4 @@ struct FunctionContext
     }
 };
 
-} // namespace script
+} // namespace PIL

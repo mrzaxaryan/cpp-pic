@@ -25,7 +25,7 @@ inline void* operator new(USIZE, void* ptr) noexcept { return ptr; }
 inline void operator delete(void*, void*) noexcept { }
 #endif
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -528,4 +528,4 @@ public:
     }
 };
 
-} // namespace script
+} // namespace PIL

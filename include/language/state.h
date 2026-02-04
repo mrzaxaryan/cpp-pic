@@ -9,7 +9,7 @@
  * Part of RAL (Runtime Abstraction Layer).
  *
  * USAGE:
- *   script::State L;
+ *   PIL::State L;
  *   L.SetOutput(MyOutputFunc);
  *   L.Register("print", MyPrintFunction);
  *   L.DoString("print(\"Hello!\");");
@@ -19,7 +19,7 @@
 
 #include "interpreter.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -319,4 +319,4 @@ private:
     }
 };
 
-} // namespace script
+} // namespace PIL

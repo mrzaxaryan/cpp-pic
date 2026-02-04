@@ -9,11 +9,11 @@
  * Part of RAL (Runtime Abstraction Layer).
  *
  * USAGE:
- *   script::State L;
+ *   PIL::State L;
  *   L.SetOutput(MyOutputFunc);
  *
  *   // Register functions manually
- *   script::OpenStdLib(L);  // OR register individual functions
+ *   PIL::OpenStdLib(L);  // OR register individual functions
  *   L.Register("myFunc", MyCustomFunction);
  *
  *   L.DoString("print(myFunc(42));");
@@ -27,7 +27,7 @@
 // Standard library
 #include "stdlib.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -50,4 +50,4 @@ namespace script
 //
 // ============================================================================
 
-} // namespace script
+} // namespace PIL

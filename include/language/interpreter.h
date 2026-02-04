@@ -12,7 +12,7 @@
 #include "parser.h"
 #include "value.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -744,4 +744,4 @@ private:
     }
 };
 
-} // namespace script
+} // namespace PIL

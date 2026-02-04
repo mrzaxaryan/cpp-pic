@@ -13,7 +13,7 @@
 #include "embedded_string.h"
 #include "string.h"  // String utilities
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -239,4 +239,4 @@ NOINLINE USIZE GetTokenTypeName(TokenType type, CHAR* buffer, USIZE bufferSize) 
     }
 }
 
-} // namespace script
+} // namespace PIL

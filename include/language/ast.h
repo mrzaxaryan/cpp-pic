@@ -13,7 +13,7 @@
 #include "memory.h"
 #include "double.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -667,4 +667,4 @@ FORCE_INLINE Stmt* MakeContinueStmt(ASTAllocator& alloc, UINT32 line, UINT32 col
     return stmt;
 }
 
-} // namespace script
+} // namespace PIL

@@ -9,9 +9,9 @@
  * Part of RAL (Runtime Abstraction Layer).
  *
  * USAGE:
- *   script::FilePool pool;
- *   script::State L;
- *   script::OpenFileIO(L, &pool);  // Registers file functions
+ *   PIL::FilePool pool;
+ *   PIL::State L;
+ *   PIL::OpenFileIO(L, &pool);  // Registers file functions
  *   L.DoString("var f = fopen(\"test.txt\", \"w\"); fwrite(f, \"Hello\"); fclose(f);");
  *
  * FUNCTIONS:
@@ -35,7 +35,7 @@
 #include "file_system.h"
 #include "embedded_function_pointer.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -688,4 +688,4 @@ NOINLINE void OpenFileIO(State& L, FilePool* pool) noexcept
     L.Register("rmdir"_embed, EMBED_FUNC(FileIO_RmDir));
 }
 
-} // namespace script
+} // namespace PIL

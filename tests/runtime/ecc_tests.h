@@ -13,18 +13,18 @@ public:
 
 		LOG_INFO("Running ECC Tests...");
 
-		RUN_TEST(allPassed, TestEccInitialization, "ECC initialization");
-		RUN_TEST(allPassed, TestEccSecp128r1, "ECC secp128r1");
-		RUN_TEST(allPassed, TestEccSecp192r1, "ECC secp192r1");
-		RUN_TEST(allPassed, TestEccSecp256r1, "ECC secp256r1");
-		RUN_TEST(allPassed, TestEccSecp384r1, "ECC secp384r1");
-		RUN_TEST(allPassed, TestPublicKeyExport, "Public key export");
-		RUN_TEST(allPassed, TestPublicKeyFormat, "Public key format");
-		RUN_TEST(allPassed, TestSharedSecretComputation, "Shared secret computation (ECDH)");
-		RUN_TEST(allPassed, TestInvalidCurveSize, "Invalid curve size handling");
-		RUN_TEST(allPassed, TestExportBufferSizeValidation, "Export buffer size validation");
-		RUN_TEST(allPassed, TestInvalidPublicKey, "Invalid public key handling");
-		RUN_TEST(allPassed, TestMultipleKeyGeneration, "Multiple key generation uniqueness");
+		RunTest(allPassed, EMBED_FUNC(TestEccInitialization), L"ECC initialization"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp128r1), L"ECC secp128r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp192r1), L"ECC secp192r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp256r1), L"ECC secp256r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp384r1), L"ECC secp384r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPublicKeyExport), L"Public key export"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPublicKeyFormat), L"Public key format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSharedSecretComputation), L"Shared secret computation (ECDH)"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestInvalidCurveSize), L"Invalid curve size handling"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestExportBufferSizeValidation), L"Export buffer size validation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestInvalidPublicKey), L"Invalid public key handling"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestMultipleKeyGeneration), L"Multiple key generation uniqueness"_embed);
 
 		if (allPassed)
 			LOG_INFO("All ECC tests passed!");

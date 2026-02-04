@@ -43,7 +43,7 @@ public:
         RunScriptTest(allPassed, L"tests/language/scripts/stdlib/math_functions.pil"_embed,   L"Math functions"_embed,             CFG_STDLIB);
 
         // Custom test with registered C++ functions
-        RunTest(allPassed, TestCustomFunctionsWithStdLib, L"Custom functions with StdLib"_embed);
+        RunTest(allPassed, EMBED_FUNC(TestCustomFunctionsWithStdLib), L"Custom functions with StdLib"_embed);
 
         if (allPassed)
             LOG_INFO("All StdLib Tests passed!");

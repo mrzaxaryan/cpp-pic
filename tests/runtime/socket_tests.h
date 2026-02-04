@@ -253,12 +253,12 @@ public:
 		LOG_INFO("Running Socket Tests...");
 		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1 / 2606:4700:4700::1111)");
 
-		RunTest(allPassed, TestSocketCreation, L"Socket creation"_embed);
-		RunTest(allPassed, TestSocketConnection, L"Socket connection (HTTP:80)"_embed);
-		RunTest(allPassed, TestHttpRequest, L"HTTP GET request"_embed);
-		RunTest(allPassed, TestMultipleConnections, L"Multiple sequential connections"_embed);
-		RunTest(allPassed, TestIpConversion, L"IP address conversion"_embed);
-		RunTest(allPassed, TestIPv6Connection, L"IPv6 connection"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSocketCreation), L"Socket creation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSocketConnection), L"Socket connection (HTTP:80)"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestHttpRequest), L"HTTP GET request"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestMultipleConnections), L"Multiple sequential connections"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestIpConversion), L"IP address conversion"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestIPv6Connection), L"IPv6 connection"_embed);
 
 		if (allPassed)
 			LOG_INFO("All Socket tests passed!");

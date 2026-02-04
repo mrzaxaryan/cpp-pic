@@ -22,8 +22,8 @@ public:
         RunScriptTest(allPassed, L"tests/language/scripts/error/continue_outside_loop.pil"_embed, L"Continue outside loop error"_embed,          CFG_STDLIB_EXPECT_FAIL);
 
         // Custom tests that need special setup
-        RunTest(allPassed, TestUndefinedFunction, L"Undefined function error detection"_embed);
-        RunTest(allPassed, TestErrorMessageRetrieval, L"Error message retrieval"_embed);
+        RunTest(allPassed, EMBED_FUNC(TestUndefinedFunction), L"Undefined function error detection"_embed);
+        RunTest(allPassed, EMBED_FUNC(TestErrorMessageRetrieval), L"Error message retrieval"_embed);
 
         if (allPassed)
             LOG_INFO("All Error Tests passed!");

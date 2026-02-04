@@ -156,13 +156,13 @@ public:
 		LOG_INFO("Running DNS Tests...");
 		LOG_INFO("  Testing DNS resolution via DoT, DoH (JSON), and DoH (binary wireformat)");
 
-		RunTest(allPassed, TestLocalhostResolution, L"Localhost resolution"_embed);
-		RunTest(allPassed, TestCloudflareResolve, L"Cloudflare DNS resolution"_embed);
-		RunTest(allPassed, TestGoogleResolve, L"Google DNS resolution"_embed);
-		RunTest(allPassed, TestDnsOverTls, L"DNS over TLS resolution"_embed);
-		RunTest(allPassed, TestDnsOverHttps, L"DNS over HTTPS resolution"_embed);
-		RunTest(allPassed, TestMainResolve, L"Main DNS resolve function"_embed);
-		RunTest(allPassed, TestKnownIpResolution, L"Known IP resolution"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestLocalhostResolution), L"Localhost resolution"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCloudflareResolve), L"Cloudflare DNS resolution"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestGoogleResolve), L"Google DNS resolution"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestDnsOverTls), L"DNS over TLS resolution"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestDnsOverHttps), L"DNS over HTTPS resolution"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestMainResolve), L"Main DNS resolve function"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestKnownIpResolution), L"Known IP resolution"_embed);
 
 		if (allPassed)
 			LOG_INFO("All DNS tests passed!");

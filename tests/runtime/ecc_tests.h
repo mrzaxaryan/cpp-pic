@@ -13,18 +13,18 @@ public:
 
 		LOG_INFO("Running ECC Tests...");
 
-		RunTest(allPassed, TestEccInitialization, L"ECC initialization"_embed);
-		RunTest(allPassed, TestEccSecp128r1, L"ECC secp128r1"_embed);
-		RunTest(allPassed, TestEccSecp192r1, L"ECC secp192r1"_embed);
-		RunTest(allPassed, TestEccSecp256r1, L"ECC secp256r1"_embed);
-		RunTest(allPassed, TestEccSecp384r1, L"ECC secp384r1"_embed);
-		RunTest(allPassed, TestPublicKeyExport, L"Public key export"_embed);
-		RunTest(allPassed, TestPublicKeyFormat, L"Public key format"_embed);
-		RunTest(allPassed, TestSharedSecretComputation, L"Shared secret computation (ECDH)"_embed);
-		RunTest(allPassed, TestInvalidCurveSize, L"Invalid curve size handling"_embed);
-		RunTest(allPassed, TestExportBufferSizeValidation, L"Export buffer size validation"_embed);
-		RunTest(allPassed, TestInvalidPublicKey, L"Invalid public key handling"_embed);
-		RunTest(allPassed, TestMultipleKeyGeneration, L"Multiple key generation uniqueness"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccInitialization), L"ECC initialization"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp128r1), L"ECC secp128r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp192r1), L"ECC secp192r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp256r1), L"ECC secp256r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEccSecp384r1), L"ECC secp384r1"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPublicKeyExport), L"Public key export"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPublicKeyFormat), L"Public key format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSharedSecretComputation), L"Shared secret computation (ECDH)"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestInvalidCurveSize), L"Invalid curve size handling"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestExportBufferSizeValidation), L"Export buffer size validation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestInvalidPublicKey), L"Invalid public key handling"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestMultipleKeyGeneration), L"Multiple key generation uniqueness"_embed);
 
 		if (allPassed)
 			LOG_INFO("All ECC tests passed!");

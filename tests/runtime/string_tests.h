@@ -12,14 +12,14 @@ public:
 
 		LOG_INFO("Running String Tests...");
 
-		RunTest(allPassed, TestLengthNarrow, L"Narrow string length"_embed);
-		RunTest(allPassed, TestLengthWide, L"Wide string length"_embed);
-		RunTest(allPassed, TestLengthEmpty, L"Empty string length"_embed);
-		RunTest(allPassed, TestToLowerCaseAscii, L"ToLowerCase ASCII"_embed);
-		RunTest(allPassed, TestToLowerCasePreserves, L"ToLowerCase preserves non-uppercase"_embed);
-		RunTest(allPassed, TestWideToUtf8BasicAscii, L"WideToUtf8 basic ASCII"_embed);
-		RunTest(allPassed, TestWideToUtf8Empty, L"WideToUtf8 empty string"_embed);
-		RunTest(allPassed, TestWideToUtf8NullHandling, L"WideToUtf8 null handling"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestLengthNarrow), L"Narrow string length"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestLengthWide), L"Wide string length"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestLengthEmpty), L"Empty string length"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestToLowerCaseAscii), L"ToLowerCase ASCII"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestToLowerCasePreserves), L"ToLowerCase preserves non-uppercase"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestWideToUtf8BasicAscii), L"WideToUtf8 basic ASCII"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestWideToUtf8Empty), L"WideToUtf8 empty string"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestWideToUtf8NullHandling), L"WideToUtf8 null handling"_embed);
 
 		if (allPassed)
 			LOG_INFO("All String tests passed!");

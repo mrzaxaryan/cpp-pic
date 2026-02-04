@@ -18,14 +18,14 @@ public:
 		Random rng;
 		LOG_INFO("  Random object created!");
 
-		RunTest(allPassed, TestBasicGeneration, L"Basic random number generation"_embed);
-		RunTest(allPassed, TestValueRange, L"Random values within range"_embed);
-		RunTest(allPassed, TestSequenceVariability, L"Random sequence variability"_embed);
-		RunTest(allPassed, TestCharGeneration, L"Random character generation"_embed);
-		RunTest(allPassed, TestStringGenerationNarrow, L"Random string generation (narrow)"_embed);
-		RunTest(allPassed, TestStringGenerationWide, L"Random string generation (wide)"_embed);
-		RunTest(allPassed, TestByteArrayGeneration, L"Random byte array generation"_embed);
-		RunTest(allPassed, TestEmptyString, L"Empty string generation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestBasicGeneration), L"Basic random number generation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestValueRange), L"Random values within range"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSequenceVariability), L"Random sequence variability"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCharGeneration), L"Random character generation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStringGenerationNarrow), L"Random string generation (narrow)"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStringGenerationWide), L"Random string generation (wide)"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestByteArrayGeneration), L"Random byte array generation"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestEmptyString), L"Empty string generation"_embed);
 
 		if (allPassed)
 			LOG_INFO("All Random tests passed!");

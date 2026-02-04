@@ -12,14 +12,14 @@ public:
 
 		LOG_INFO("Running Memory Tests...");
 
-		RunTest(allPassed, TestCopyBasic, L"Memory copy basic"_embed);
-		RunTest(allPassed, TestCopyNonOverlapping, L"Memory copy non-overlapping"_embed);
-		RunTest(allPassed, TestZero, L"Memory zero"_embed);
-		RunTest(allPassed, TestSet, L"Memory set"_embed);
-		RunTest(allPassed, TestCompareEqual, L"Memory compare equal"_embed);
-		RunTest(allPassed, TestCompareLessThan, L"Memory compare less than"_embed);
-		RunTest(allPassed, TestCompareGreaterThan, L"Memory compare greater than"_embed);
-		RunTest(allPassed, TestZeroSize, L"Memory zero size operations"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCopyBasic), L"Memory copy basic"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCopyNonOverlapping), L"Memory copy non-overlapping"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestZero), L"Memory zero"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSet), L"Memory set"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompareEqual), L"Memory compare equal"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompareLessThan), L"Memory compare less than"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompareGreaterThan), L"Memory compare greater than"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestZeroSize), L"Memory zero size operations"_embed);
 
 		if (allPassed)
 			LOG_INFO("All Memory tests passed!");

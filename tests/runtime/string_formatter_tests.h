@@ -12,14 +12,14 @@ public:
 
 		LOG_INFO("Running StringFormatter Tests...");
 
-		RunTest(allPassed, TestIntegerFormat, L"Integer format"_embed);
-		RunTest(allPassed, TestUnsignedFormat, L"Unsigned format"_embed);
-		RunTest(allPassed, TestHexFormat, L"Hex format"_embed);
-		RunTest(allPassed, TestStringFormat, L"String format"_embed);
-		RunTest(allPassed, TestCharFormat, L"Char format"_embed);
-		RunTest(allPassed, TestWidthPadding, L"Width and padding"_embed);
-		RunTest(allPassed, TestFloatFormat, L"Float format"_embed);
-		RunTest(allPassed, TestPercentLiteral, L"Percent literal"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestIntegerFormat), L"Integer format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestUnsignedFormat), L"Unsigned format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestHexFormat), L"Hex format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStringFormat), L"String format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCharFormat), L"Char format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestWidthPadding), L"Width and padding"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestFloatFormat), L"Float format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPercentLiteral), L"Percent literal"_embed);
 		// RunTest(allPassed, TestSizeFormat, L"Size format"_embed);
 
 		if (allPassed)

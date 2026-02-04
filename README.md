@@ -544,7 +544,6 @@ Position-Indepenedent Runtime is designed for execution environments where tradi
 
 ## To Do
 This project is still a work in progress. Below is a list of remaining tasks and planned improvements. Any help or contributions are greatly appreciated.
-- PIL - Position Independent Language
 - Support for additional platforms (macOS, FreeBSD)
 - Windows direct syscall implementations (bypassing ntdll)
 - Compile-time polymorphism

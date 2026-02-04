@@ -1,5 +1,5 @@
 /**
- * start.cc - CPP-PIC Runtime Entry Point
+ * entry_point.cc - CPP-PIC Runtime Entry Point
  *
  * Unified entry_point() entry point for all platforms.
  */

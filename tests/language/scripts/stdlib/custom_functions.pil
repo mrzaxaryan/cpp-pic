@@ -1,5 +1,0 @@
-// Test custom C++ functions
-// greet() just prints, doesn't return a value
-greet("PIL User");
-// sum(1,2,3,4,5) = 15
-var result = sum(1,2,3,4,5) == 15;

@@ -1,5 +1,0 @@
-// Test reading global variables set from C++
-// C++ sets: PI=314, version="1.0.0", debug=true
-var result = (PI == 314) &&
-             (version == "1.0.0") &&
-             (debug == true);

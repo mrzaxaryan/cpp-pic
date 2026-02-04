@@ -1,3 +1,0 @@
-// Test WebSocket invalid send
-var sent = ws_send(999, "test");
-if (sent < 0) { print("PASS"); }

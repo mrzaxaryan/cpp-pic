@@ -1,7 +1,0 @@
-// Test floor, ceil, int functions
-var result = (floor(3.7) == 3) &&
-             (floor(-3.2) == -4) &&
-             (ceil(3.2) == 4) &&
-             (ceil(-3.7) == -3) &&
-             (int(3.7) == 3) &&
-             (int(-3.7) == -3);

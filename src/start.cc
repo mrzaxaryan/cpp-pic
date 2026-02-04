@@ -5,8 +5,8 @@
  */
 
 #include "runtime.h"
-#include "language/pil_tests.h"
-#include "runtime/pir_tests.h"
+
+INT32 main();
 
 /**
  * _start - Entry point for all platforms
@@ -29,6 +29,6 @@ ENTRYPOINT INT32 _start(VOID)
 #endif
 
 	// Run runtime and unit tests
-	BOOL allPassed = RunPIRTests() && RunPILTests();
+	BOOL allPassed = main();
 	ExitProcess(allPassed ? 0 : 1);
 }

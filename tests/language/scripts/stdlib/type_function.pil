@@ -1,5 +1,0 @@
-// Test type function
-var result = (type(42) == "number") &&
-             (type("hello") == "string") &&
-             (type(true) == "bool") &&
-             (type(nil) == "nil");

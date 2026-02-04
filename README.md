@@ -556,33 +556,3 @@ Position-Independent Runtime is not merely a library—it is a proof of concept 
 The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, and Linux with its direct syscall approach—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
 
 This project is intended for researchers, systems programmers, and security engineers who are willing to work beneath high-level abstractions and take full control of the machine. Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project's design goals.
-
-## Appendix A: PIL - Position Independent Language
-
-The Position-Independent Runtime includes **PIL (Position Independent Language)**, a lightweight, position-independent scripting language designed for embedded and constrained environments. PIL provides a State API allowing programs to manage variables, call stacks, and other runtime state, all while maintaining full position-independence with no `.rdata` dependencies.
-
-### Design Philosophy
-
-- **No built-in functions**: All functions must be registered from C++, giving complete control over the runtime environment
-- **Position-independent**: Uses `_embed` strings and other techniques to eliminate relocations
-- **Minimal footprint**: Designed for shellcode and embedded contexts where binary size is critical
-- **State-based API**: Offers a familiar, state-oriented interface for easy integration and adoption
-
-### C++ Integration
-
-**Basic Usage:**
-
-```cpp
-PIL::Value MyFunction(PIL::FunctionContext& ctx)
-{
-    if (ctx.CheckArgs(1) && ctx.IsNumber(0))
-    {
-        INT64 n = ctx.ToNumber(0);
-        return PIL::Value::Number(n * 2);
-    }
-    return PIL::Value::Nil();
-}
-
-// Register custom function
-L->Register("double"_embed, MyFunction);
-```

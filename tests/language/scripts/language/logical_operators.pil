@@ -1,8 +1,0 @@
-// Test logical operators
-var result = (true && true) &&
-             !(true && false) &&
-             (true || false) &&
-             !(false || false) &&
-             (!true == false) &&
-             (!false == true) &&
-             ((5 > 3) && (2 < 4));

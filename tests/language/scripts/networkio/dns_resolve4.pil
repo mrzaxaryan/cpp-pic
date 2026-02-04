@@ -1,3 +1,0 @@
-// Test DNS resolve IPv4
-var ip4 = dns_resolve4("cloudflare.com");
-print("IPv4:", ip4);

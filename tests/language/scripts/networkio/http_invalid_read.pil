@@ -1,3 +1,0 @@
-// Test HTTP invalid read
-var data = http_read(999);
-if (len(data) == 0) { print("PASS"); }

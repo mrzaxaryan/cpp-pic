@@ -1,7 +1,0 @@
-// Test multiple WebSocket connections
-var ws1 = ws_connect("wss://echo.websocket.org");
-var ws2 = ws_connect("wss://echo.websocket.org");
-print("Handles:", ws1, ws2);
-if (ws1 >= 0 && ws2 >= 0 && ws1 != ws2) { print("PASS"); }
-if (ws1 >= 0) { ws_close(ws1); }
-if (ws2 >= 0) { ws_close(ws2); }

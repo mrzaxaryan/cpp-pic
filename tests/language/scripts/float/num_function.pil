@@ -1,8 +1,0 @@
-// Test num function parses floats from strings
-var n1 = num("3.14");
-var n2 = num("42");
-var n3 = num("-2.5");
-
-var result = (n1 > 3.13) && (n1 < 3.15) &&
-             (n2 == 42) &&
-             (n3 == -2.5);

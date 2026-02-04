@@ -1,4 +1,0 @@
-// Test HTTP close
-var http = http_open("http://httpbin.org/get");
-var closed = http_close(http);
-if (closed) { print("PASS"); }

@@ -1,7 +1,0 @@
-// Test multiple HTTP clients
-var h1 = http_open("http://httpbin.org/get");
-var h2 = http_open("http://httpbin.org/ip");
-print("Handles:", h1, h2);
-if (h1 >= 0 && h2 >= 0 && h1 != h2) { print("PASS"); }
-if (h1 >= 0) { http_close(h1); }
-if (h2 >= 0) { http_close(h2); }

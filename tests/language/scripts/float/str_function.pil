@@ -1,8 +1,0 @@
-// Test str function with floats
-var s1 = str(3.14159);
-var s2 = str(42);
-var s3 = str(0.5);
-var result = (type(s1) == "string") &&
-             (type(s2) == "string") &&
-             (type(s3) == "string") &&
-             (s2 == "42");

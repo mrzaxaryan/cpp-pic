@@ -171,7 +171,7 @@ foreach(_hdr ${_all_headers})
 endforeach()
 list(REMOVE_DUPLICATES CPPPIC_INCLUDE_PATHS)
 
-file(GLOB_RECURSE CPPPIC_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cc")
+file(GLOB_RECURSE CPPPIC_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cc" "${CMAKE_SOURCE_DIR}/tests/*.cc")
 file(GLOB_RECURSE CPPPIC_HEADERS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/*.h" "${CMAKE_SOURCE_DIR}/tests/*.h")
 
 # =============================================================================

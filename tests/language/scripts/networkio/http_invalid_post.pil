@@ -1,3 +1,0 @@
-// Test HTTP invalid POST
-var posted = http_post(999, "test");
-if (!posted) { print("PASS"); }

@@ -1,9 +1,0 @@
-// Test comparison operators
-var result = (5 == 5) &&
-             (5 != 3) &&
-             (5 < 10) &&
-             (5 > 3) &&
-             (5 <= 5) &&
-             (5 >= 5) &&
-             ("hello" == "hello") &&
-             ("hello" != "world");

@@ -1,4 +1,0 @@
-// Test WebSocket close
-var ws = ws_connect("wss://echo.websocket.org");
-var closed = ws_close(ws);
-if (closed) { print("PASS"); }

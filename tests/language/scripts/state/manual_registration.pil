@@ -1,3 +1,0 @@
-// Test manual function registration (only print, double, square available)
-var result = (double(5) == 10) &&
-             (square(4) == 16);

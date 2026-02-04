@@ -1,3 +1,0 @@
-// Test HTTP invalid GET
-var sent = http_get(999);
-if (!sent) { print("PASS"); }

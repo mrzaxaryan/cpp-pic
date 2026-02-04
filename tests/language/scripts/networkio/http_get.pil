@@ -1,8 +1,0 @@
-// Test HTTP GET
-var http = http_open("http://httpbin.org/ip");
-var sent = http_get(http);
-print("GET sent:", sent);
-var resp = http_read(http, 255);
-print("Response:", len(resp), "bytes");
-if (len(resp) > 0) { print("PASS"); }
-http_close(http);

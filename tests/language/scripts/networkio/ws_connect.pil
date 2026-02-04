@@ -1,5 +1,0 @@
-// Test WebSocket connect
-var ws = ws_connect("wss://echo.websocket.org");
-print("WebSocket handle:", ws);
-if (ws >= 0) { print("PASS"); }
-if (ws >= 0) { ws_close(ws); }

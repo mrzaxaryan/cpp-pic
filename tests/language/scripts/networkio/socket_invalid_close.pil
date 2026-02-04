@@ -1,3 +1,0 @@
-// Test socket invalid close
-var closed = sock_close(999);
-if (!closed) { print("PASS"); }

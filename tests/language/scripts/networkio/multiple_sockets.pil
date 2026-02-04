@@ -1,7 +1,0 @@
-// Test multiple sockets
-var s1 = sock_connect("httpbin.org", 80);
-var s2 = sock_connect("httpbin.org", 80);
-print("Handles:", s1, s2);
-if (s1 >= 0 && s2 >= 0 && s1 != s2) { print("PASS"); }
-if (s1 >= 0) { sock_close(s1); }
-if (s2 >= 0) { sock_close(s2); }

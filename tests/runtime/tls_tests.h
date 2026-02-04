@@ -167,9 +167,9 @@ public:
 		LOG_INFO("Running TLS Tests...");
 		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1:443)");
 
-		RUN_TEST(allPassed, TestTlsHandshake, "TLS handshake");
-		RUN_TEST(allPassed, TestTlsEchoSingle, "TLS echo - single message");
-		RUN_TEST(allPassed, TestTlsEchoMultiple, "TLS echo - multiple messages");
+		RunTest(allPassed, EMBED_FUNC(TestTlsHandshake), L"TLS handshake"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestTlsEchoSingle), L"TLS echo - single message"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestTlsEchoMultiple), L"TLS echo - multiple messages"_embed);
 
 		if (allPassed)
 			LOG_INFO("All TLS tests passed!");

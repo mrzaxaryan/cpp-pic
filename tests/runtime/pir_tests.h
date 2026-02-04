@@ -63,29 +63,29 @@ static BOOL RunPIRTests()
 	LOG_INFO("");
 
 	// CORE - Embedded Types and Numeric Primitives
-	RUN_TEST_SUITE(allPassed, DoubleTests);
-	RUN_TEST_SUITE(allPassed, StringTests);
+	RunTestSuite<DoubleTests>(allPassed);
+	RunTestSuite<StringTests>(allPassed);
 
 	// CORE - Data Structures, String Utilities, and Algorithms
-	RUN_TEST_SUITE(allPassed, ArrayStorageTests);
-	RUN_TEST_SUITE(allPassed, StringFormatterTests);
-	RUN_TEST_SUITE(allPassed, Djb2Tests);
-	RUN_TEST_SUITE(allPassed, Base64Tests);
+	RunTestSuite<ArrayStorageTests>(allPassed);
+	RunTestSuite<StringFormatterTests>(allPassed);
+	RunTestSuite<Djb2Tests>(allPassed);
+	RunTestSuite<Base64Tests>(allPassed);
 
 	// PLATFORM - Memory and System
-	RUN_TEST_SUITE(allPassed, MemoryTests);
-	RUN_TEST_SUITE(allPassed, RandomTests);
+	RunTestSuite<MemoryTests>(allPassed);
+	RunTestSuite<RandomTests>(allPassed);
 
 	// RAL - Cryptography
-	RUN_TEST_SUITE(allPassed, ShaTests);
-	RUN_TEST_SUITE(allPassed, EccTests);
+	RunTestSuite<ShaTests>(allPassed);
+	RunTestSuite<EccTests>(allPassed);
 
 	// RAL - Network
-	RUN_TEST_SUITE(allPassed, SocketTests);
-	RUN_TEST_SUITE(allPassed, TlsTests);
-	RUN_TEST_SUITE(allPassed, DnsTests);
-	RUN_TEST_SUITE(allPassed, WebSocketTests);
-	RUN_TEST_SUITE(allPassed, FileSystemTests);
+	RunTestSuite<SocketTests>(allPassed);
+	RunTestSuite<TlsTests>(allPassed);
+	RunTestSuite<DnsTests>(allPassed);
+	RunTestSuite<WebSocketTests>(allPassed);
+	RunTestSuite<FileSystemTests>(allPassed);
 
 	// Final summary
 	LOG_INFO("=== Test Suite Complete ===");

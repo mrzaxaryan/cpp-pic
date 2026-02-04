@@ -12,15 +12,15 @@ public:
 
 		LOG_INFO("Running StringFormatter Tests...");
 
-		RUN_TEST(allPassed, TestIntegerFormat, "Integer format");
-		RUN_TEST(allPassed, TestUnsignedFormat, "Unsigned format");
-		RUN_TEST(allPassed, TestHexFormat, "Hex format");
-		RUN_TEST(allPassed, TestStringFormat, "String format");
-		RUN_TEST(allPassed, TestCharFormat, "Char format");
-		RUN_TEST(allPassed, TestWidthPadding, "Width and padding");
-		RUN_TEST(allPassed, TestFloatFormat, "Float format");
-		RUN_TEST(allPassed, TestPercentLiteral, "Percent literal");
-		// RUN_TEST(allPassed, TestSizeFormat, "Size format");
+		RunTest(allPassed, EMBED_FUNC(TestIntegerFormat), L"Integer format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestUnsignedFormat), L"Unsigned format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestHexFormat), L"Hex format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStringFormat), L"String format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCharFormat), L"Char format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestWidthPadding), L"Width and padding"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestFloatFormat), L"Float format"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPercentLiteral), L"Percent literal"_embed);
+		// RunTest(allPassed, TestSizeFormat, L"Size format"_embed);
 
 		if (allPassed)
 			LOG_INFO("All StringFormatter tests passed!");

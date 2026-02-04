@@ -65,7 +65,7 @@ static inline CHAR* LoadScript(PCWCHAR path)
 /**
  * RunScriptFile - Load and execute a PIL script file
  */
-static inline BOOL RunScriptFile(script::State* L, PCWCHAR path)
+static inline BOOL RunScriptFile(PIL::State* L, PCWCHAR path)
 {
     CHAR* source = LoadScript(path);
     if (source == nullptr)
@@ -78,7 +78,7 @@ static inline BOOL RunScriptFile(script::State* L, PCWCHAR path)
 /**
  * RunScriptAndCheckResult - Execute a script and verify the 'result' global variable is TRUE
  */
-static inline BOOL RunScriptAndCheckResult(script::State* L, PCWCHAR path)
+static inline BOOL RunScriptAndCheckResult(PIL::State* L, PCWCHAR path)
 {
     if (!RunScriptFile(L, path))
     {
@@ -86,7 +86,7 @@ static inline BOOL RunScriptAndCheckResult(script::State* L, PCWCHAR path)
         return FALSE;
     }
 
-    script::Value resultValue;
+    PIL::Value resultValue;
     if (!L->GetGlobal("result"_embed, 6, resultValue))
     {
         LOG_ERROR("    Global 'result' variable not found");
@@ -117,9 +117,9 @@ static inline void ScriptConsoleOutput(const CHAR* str, USIZE len)
     Console::Write(str, len);
 }
 
-static inline script::State* CreateScriptState()
+static inline PIL::State* CreateScriptState()
 {
-    script::State* L = new script::State();
+    PIL::State* L = new PIL::State();
     L->SetOutput(NULL);
     return L;
 }
@@ -166,25 +166,25 @@ static constexpr TestConfig CFG_NETWORKIO = TestConfig::OPEN_STDLIB | TestConfig
  * RunScriptTestInline - Execute a script test with the given configuration
  */
 static inline BOOL RunScriptTestInline(PCWCHAR path, TestConfig config,
-                                        script::FilePool* filePool = nullptr,
-                                        script::NetworkContext* netCtx = nullptr)
+                                        PIL::FilePool* filePool = nullptr,
+                                        PIL::NetworkContext* netCtx = nullptr)
 {
-    script::State* L = CreateScriptState();
+    PIL::State* L = CreateScriptState();
 
     // Open libraries based on configuration
     if (config & TestConfig::OPEN_STDLIB)
-        script::OpenStdLib(*L);
+        PIL::OpenStdLib(*L);
 
     if (config & TestConfig::OPEN_FILEIO)
     {
         if (filePool)
-            script::OpenFileIO(*L, filePool);
+            PIL::OpenFileIO(*L, filePool);
     }
 
     if (config & TestConfig::OPEN_NETWORKIO)
     {
         if (netCtx)
-            script::OpenNetworkIO(*L, netCtx);
+            PIL::OpenNetworkIO(*L, netCtx);
     }
 
     // Execute the test
@@ -217,54 +217,76 @@ static inline BOOL RunScriptTestInline(PCWCHAR path, TestConfig config,
 }
 
 // ============================================================================
-// SCRIPT TEST MACROS
+// SCRIPT TEST FUNCTIONS
 // ============================================================================
 
 /**
- * RUN_SCRIPT_TEST - Macro to run a script test and log the result
+ * RunScriptTest - Run a script test and log the result
+ *
+ * @param allPassedVar - Boolean variable to track overall test status
+ * @param scriptPath   - Path to the script file (wide embedded string)
+ * @param description  - Human-readable description of the test (wide embedded string)
+ * @param config       - Test configuration flags
+ * @return TRUE if test passed, FALSE otherwise
  */
-#define RUN_SCRIPT_TEST(allPassedVar, scriptPath, description, config) \
-    do { \
-        BOOL _passed = RunScriptTestInline(scriptPath, config); \
-        if (_passed) \
-            LOG_INFO("  PASSED: " description); \
-        else { \
-            LOG_ERROR("  FAILED: " description); \
-            allPassedVar = FALSE; \
-        } \
-    } while (0)
+inline BOOL RunScriptTest(BOOL& allPassedVar, PCWCHAR scriptPath, PCWCHAR description, TestConfig config)
+{
+    BOOL passed = RunScriptTestInline(scriptPath, config);
+    if (passed)
+        LOG_INFO("  PASSED: %ls", description);
+    else
+    {
+        LOG_ERROR("  FAILED: %ls", description);
+        allPassedVar = FALSE;
+    }
+    return passed;
+}
 
 /**
- * RUN_SCRIPT_TEST_FILEIO - Macro to run a script test with FileIO
+ * RunScriptTestFileIO - Run a script test with FileIO
+ *
+ * @param allPassedVar - Boolean variable to track overall test status
+ * @param scriptPath   - Path to the script file (wide embedded string)
+ * @param description  - Human-readable description of the test (wide embedded string)
+ * @return TRUE if test passed, FALSE otherwise
  */
-#define RUN_SCRIPT_TEST_FILEIO(allPassedVar, scriptPath, description) \
-    do { \
-        script::FilePool _pool; \
-        BOOL _passed = RunScriptTestInline(scriptPath, CFG_FILEIO, &_pool, nullptr); \
-        if (_passed) \
-            LOG_INFO("  PASSED: " description); \
-        else { \
-            LOG_ERROR("  FAILED: " description); \
-            allPassedVar = FALSE; \
-        } \
-    } while (0)
+inline BOOL RunScriptTestFileIO(BOOL& allPassedVar, PCWCHAR scriptPath, PCWCHAR description)
+{
+    PIL::FilePool pool;
+    BOOL passed = RunScriptTestInline(scriptPath, CFG_FILEIO, &pool, nullptr);
+    if (passed)
+        LOG_INFO("  PASSED: %ls", description);
+    else
+    {
+        LOG_ERROR("  FAILED: %ls", description);
+        allPassedVar = FALSE;
+    }
+    return passed;
+}
 
 /**
- * RUN_SCRIPT_TEST_NETWORKIO - Macro to run a script test with NetworkIO
+ * RunScriptTestNetworkIO - Run a script test with NetworkIO
  *
  * NOTE: NetworkContext is allocated on heap because it's very large (~32KB+)
  * due to inline storage for HttpClient and WebSocketClient objects.
  * Stack allocation causes overflow in -O0 builds.
+ *
+ * @param allPassedVar - Boolean variable to track overall test status
+ * @param scriptPath   - Path to the script file (wide embedded string)
+ * @param description  - Human-readable description of the test (wide embedded string)
+ * @return TRUE if test passed, FALSE otherwise
  */
-#define RUN_SCRIPT_TEST_NETWORKIO(allPassedVar, scriptPath, description) \
-    do { \
-        script::NetworkContext* _netCtx = new script::NetworkContext(); \
-        BOOL _passed = RunScriptTestInline(scriptPath, CFG_NETWORKIO, nullptr, _netCtx); \
-        delete _netCtx; \
-        if (_passed) \
-            LOG_INFO("  PASSED: " description); \
-        else { \
-            LOG_ERROR("  FAILED: " description); \
-            allPassedVar = FALSE; \
-        } \
-    } while (0)
+inline BOOL RunScriptTestNetworkIO(BOOL& allPassedVar, PCWCHAR scriptPath, PCWCHAR description)
+{
+    PIL::NetworkContext* netCtx = new PIL::NetworkContext();
+    BOOL passed = RunScriptTestInline(scriptPath, CFG_NETWORKIO, nullptr, netCtx);
+    delete netCtx;
+    if (passed)
+        LOG_INFO("  PASSED: %ls", description);
+    else
+    {
+        LOG_ERROR("  FAILED: %ls", description);
+        allPassedVar = FALSE;
+    }
+    return passed;
+}

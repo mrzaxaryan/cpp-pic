@@ -9,9 +9,9 @@
  * Part of RUNTIME (Runtime Abstraction Layer).
  *
  * USAGE:
- *   script::NetworkContext netCtx;
- *   script::State L;
- *   script::OpenNetworkIO(L, &netCtx);  // Registers network functions
+ *   PIL::NetworkContext netCtx;
+ *   PIL::State L;
+ *   PIL::OpenNetworkIO(L, &netCtx);  // Registers network functions
  *   L.DoString("var ip = dns_resolve(\"example.com\"); print(ip);");
  *
  * SOCKET FUNCTIONS:
@@ -60,7 +60,7 @@
 inline void* operator new(USIZE, void* ptr) noexcept { return ptr; }
 inline void operator delete(void*, void*) noexcept { }
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -1261,4 +1261,4 @@ NOINLINE void OpenNetworkIO(State& L, NetworkContext* ctx) noexcept
     L.Register("ws_pong"_embed, EMBED_FUNC(NetIO_WsPong));
 }
 
-} // namespace script
+} // namespace PIL

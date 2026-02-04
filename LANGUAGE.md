@@ -430,8 +430,8 @@ var last = pop(arr);  // last = 4, arr is [1, 2, 3]
 
 Register the standard library:
 ```cpp
-script::State L;
-script::OpenStdLib(L);
+PIL::State L;
+PIL::OpenStdLib(L);
 ```
 
 ### Available Functions
@@ -514,10 +514,10 @@ Network operations are available through the network I/O library.
 ### Setup
 
 ```cpp
-script::NetworkContext netCtx;
-script::State L;
-script::OpenStdLib(L);
-script::OpenNetworkIO(L, &netCtx);
+PIL::NetworkContext netCtx;
+PIL::State L;
+PIL::OpenStdLib(L);
+PIL::OpenNetworkIO(L, &netCtx);
 ```
 
 ### Socket Functions
@@ -670,10 +670,10 @@ if (ws >= 0) {
 ```cpp
 #include "pil/pil.h"
 
-script::State* L = new script::State();
+PIL::State* L = new PIL::State();
 
 // Register standard library
-script::OpenStdLib(*L);
+PIL::OpenStdLib(*L);
 
 // Execute script
 L->DoString(R"(
@@ -686,14 +686,14 @@ delete L;
 ### Custom Functions
 
 ```cpp
-script::Value MyFunction(script::FunctionContext& ctx)
+PIL::Value MyFunction(PIL::FunctionContext& ctx)
 {
     if (ctx.CheckArgs(1) && ctx.IsNumber(0))
     {
         INT64 n = ctx.ToNumber(0);
-        return script::Value::Number(n * 2);
+        return PIL::Value::Number(n * 2);
     }
-    return script::Value::Nil();
+    return PIL::Value::Nil();
 }
 
 // Register custom function
@@ -727,10 +727,10 @@ L->SetGlobalBool("debug"_embed, 5, TRUE);
 ### Value Creation
 
 ```cpp
-script::Value::Nil()
-script::Value::Bool(true)
-script::Value::Number(42)
-script::Value::String("hello", 5)
+PIL::Value::Nil()
+PIL::Value::Bool(true)
+PIL::Value::Number(42)
+PIL::Value::String("hello", 5)
 ```
 
 ---

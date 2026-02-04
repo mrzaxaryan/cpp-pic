@@ -12,7 +12,7 @@
 #include "token.h"
 #include "memory.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -529,4 +529,4 @@ private:
     }
 };
 
-} // namespace script
+} // namespace PIL

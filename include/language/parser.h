@@ -12,7 +12,7 @@
 #include "lexer.h"
 #include "ast.h"
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -927,4 +927,4 @@ private:
     }
 };
 
-} // namespace script
+} // namespace PIL

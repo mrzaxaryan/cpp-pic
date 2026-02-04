@@ -14,20 +14,20 @@ public:
 		LOG_INFO("Running SHA Tests...");
 
 		// SHA-256 Tests
-		RUN_TEST(allPassed, TestSHA256_Empty, "SHA-256 empty string");
-		RUN_TEST(allPassed, TestSHA256_ABC, "SHA-256 'abc'");
-		RUN_TEST(allPassed, TestSHA256_Long, "SHA-256 long message");
-		RUN_TEST(allPassed, TestSHA256_Incremental, "SHA-256 incremental update");
+		RunTest(allPassed, EMBED_FUNC(TestSHA256_Empty), L"SHA-256 empty string"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSHA256_ABC), L"SHA-256 'abc'"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSHA256_Long), L"SHA-256 long message"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSHA256_Incremental), L"SHA-256 incremental update"_embed);
 
 		// SHA-384 Tests
-		RUN_TEST(allPassed, TestSHA384_Empty, "SHA-384 empty string");
-		RUN_TEST(allPassed, TestSHA384_ABC, "SHA-384 'abc'");
-		RUN_TEST(allPassed, TestSHA384_Long, "SHA-384 long message");
-		RUN_TEST(allPassed, TestSHA384_Incremental, "SHA-384 incremental update");
+		RunTest(allPassed, EMBED_FUNC(TestSHA384_Empty), L"SHA-384 empty string"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSHA384_ABC), L"SHA-384 'abc'"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSHA384_Long), L"SHA-384 long message"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestSHA384_Incremental), L"SHA-384 incremental update"_embed);
 
 		// HMAC Tests
-		RUN_TEST(allPassed, TestHMAC_SHA256, "HMAC-SHA256");
-		RUN_TEST(allPassed, TestHMAC_SHA384, "HMAC-SHA384");
+		RunTest(allPassed, EMBED_FUNC(TestHMAC_SHA256), L"HMAC-SHA256"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestHMAC_SHA384), L"HMAC-SHA384"_embed);
 
 		if (allPassed)
 			LOG_INFO("All SHA tests passed!");

@@ -22,41 +22,41 @@ public:
         LOG_INFO("NOTE: These tests require network connectivity");
 
         // DNS tests
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/dns_resolve.pil"_embed,         "DNS resolve");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/dns_resolve4.pil"_embed,        "DNS resolve IPv4");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/dns_resolve6.pil"_embed,        "DNS resolve IPv6");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/dns_resolve_invalid.pil"_embed, "DNS resolve invalid");
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/dns_resolve.pil"_embed,         L"DNS resolve"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/dns_resolve4.pil"_embed,        L"DNS resolve IPv4"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/dns_resolve6.pil"_embed,        L"DNS resolve IPv6"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/dns_resolve_invalid.pil"_embed, L"DNS resolve invalid"_embed);
 
         // Socket tests
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_connect.pil"_embed,      "Socket connect");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_send_recv.pil"_embed,    "Socket send/recv");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_close.pil"_embed,        "Socket close");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_close.pil"_embed,"Socket invalid close");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_send.pil"_embed, "Socket invalid send");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_recv.pil"_embed, "Socket invalid recv");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_port.pil"_embed, "Socket invalid port");
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_connect.pil"_embed,      L"Socket connect"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_send_recv.pil"_embed,    L"Socket send/recv"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_close.pil"_embed,        L"Socket close"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_close.pil"_embed,L"Socket invalid close"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_send.pil"_embed, L"Socket invalid send"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_recv.pil"_embed, L"Socket invalid recv"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/socket_invalid_port.pil"_embed, L"Socket invalid port"_embed);
 
         // HTTP tests
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_open.pil"_embed,           "HTTP open");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_get.pil"_embed,            "HTTP GET");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_close.pil"_embed,          "HTTP close");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_invalid_close.pil"_embed,  "HTTP invalid close");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_invalid_get.pil"_embed,    "HTTP invalid GET");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_invalid_post.pil"_embed,   "HTTP invalid POST");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/http_invalid_read.pil"_embed,   "HTTP invalid read");
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_open.pil"_embed,           L"HTTP open"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_get.pil"_embed,            L"HTTP GET"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_close.pil"_embed,          L"HTTP close"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_invalid_close.pil"_embed,  L"HTTP invalid close"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_invalid_get.pil"_embed,    L"HTTP invalid GET"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_invalid_post.pil"_embed,   L"HTTP invalid POST"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/http_invalid_read.pil"_embed,   L"HTTP invalid read"_embed);
 
         // Multiple handles tests
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/multiple_sockets.pil"_embed,    "Multiple sockets");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/multiple_http.pil"_embed,       "Multiple HTTP");
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/multiple_sockets.pil"_embed,    L"Multiple sockets"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/multiple_http.pil"_embed,       L"Multiple HTTP"_embed);
 
         // WebSocket tests
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/ws_connect.pil"_embed,          "WebSocket connect");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/ws_send_recv.pil"_embed,        "WebSocket send/recv");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/ws_close.pil"_embed,            "WebSocket close");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/ws_invalid_close.pil"_embed,    "WebSocket invalid close");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/ws_invalid_send.pil"_embed,     "WebSocket invalid send");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/ws_invalid_recv.pil"_embed,     "WebSocket invalid recv");
-        RUN_SCRIPT_TEST_NETWORKIO(allPassed, L"tests/language/scripts/networkio/multiple_ws.pil"_embed,         "Multiple WebSockets");
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/ws_connect.pil"_embed,          L"WebSocket connect"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/ws_send_recv.pil"_embed,        L"WebSocket send/recv"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/ws_close.pil"_embed,            L"WebSocket close"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/ws_invalid_close.pil"_embed,    L"WebSocket invalid close"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/ws_invalid_send.pil"_embed,     L"WebSocket invalid send"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/ws_invalid_recv.pil"_embed,     L"WebSocket invalid recv"_embed);
+        RunScriptTestNetworkIO(allPassed, L"tests/language/scripts/networkio/multiple_ws.pil"_embed,         L"Multiple WebSockets"_embed);
 
         if (allPassed)
             LOG_INFO("All Network I/O Tests passed!");

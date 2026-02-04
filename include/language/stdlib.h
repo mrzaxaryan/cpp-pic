@@ -9,9 +9,9 @@
  * Part of RAL (Runtime Abstraction Layer).
  *
  * USAGE:
- *   script::State L;
+ *   PIL::State L;
  *   L.SetOutput(MyOutputFunc);  // Set output callback
- *   script::OpenStdLib(L);      // Registers print, len, str, num, type
+ *   PIL::OpenStdLib(L);      // Registers print, len, str, num, type
  *   L.DoString("print(\"Hello!\");");
  */
 
@@ -19,7 +19,7 @@
 
 #include "value.h"  // includes State forward declaration
 
-namespace script
+namespace PIL
 {
 
 // ============================================================================
@@ -1038,4 +1038,4 @@ NOINLINE void OpenStdLib(State& L) noexcept
     L.Register("reverse"_embed, EMBED_FUNC(StdLib_Reverse));
 }
 
-} // namespace script
+} // namespace PIL

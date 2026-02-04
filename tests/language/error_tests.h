@@ -14,16 +14,16 @@ public:
         BOOL allPassed = TRUE;
         LOG_INFO("Running Error Tests...");
 
-        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/missing_semicolon.pil"_embed,     "Missing semicolon error detection",    CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/undefined_variable.pil"_embed,    "Undefined variable error detection",   CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/syntax_error.pil"_embed,          "Syntax error in expression detection", CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/valid_script.pil"_embed,          "Valid script execution",               CFG_STDLIB);
-        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/break_outside_loop.pil"_embed,    "Break outside loop error",             CFG_STDLIB_EXPECT_FAIL);
-        RUN_SCRIPT_TEST(allPassed, L"tests/language/scripts/error/continue_outside_loop.pil"_embed, "Continue outside loop error",          CFG_STDLIB_EXPECT_FAIL);
+        RunScriptTest(allPassed, L"tests/language/scripts/error/missing_semicolon.pil"_embed,     L"Missing semicolon error detection"_embed,    CFG_STDLIB_EXPECT_FAIL);
+        RunScriptTest(allPassed, L"tests/language/scripts/error/undefined_variable.pil"_embed,    L"Undefined variable error detection"_embed,   CFG_STDLIB_EXPECT_FAIL);
+        RunScriptTest(allPassed, L"tests/language/scripts/error/syntax_error.pil"_embed,          L"Syntax error in expression detection"_embed, CFG_STDLIB_EXPECT_FAIL);
+        RunScriptTest(allPassed, L"tests/language/scripts/error/valid_script.pil"_embed,          L"Valid script execution"_embed,               CFG_STDLIB);
+        RunScriptTest(allPassed, L"tests/language/scripts/error/break_outside_loop.pil"_embed,    L"Break outside loop error"_embed,             CFG_STDLIB_EXPECT_FAIL);
+        RunScriptTest(allPassed, L"tests/language/scripts/error/continue_outside_loop.pil"_embed, L"Continue outside loop error"_embed,          CFG_STDLIB_EXPECT_FAIL);
 
         // Custom tests that need special setup
-        RUN_TEST(allPassed, TestUndefinedFunction, "Undefined function error detection");
-        RUN_TEST(allPassed, TestErrorMessageRetrieval, "Error message retrieval");
+        RunTest(allPassed, EMBED_FUNC(TestUndefinedFunction), L"Undefined function error detection"_embed);
+        RunTest(allPassed, EMBED_FUNC(TestErrorMessageRetrieval), L"Error message retrieval"_embed);
 
         if (allPassed)
             LOG_INFO("All Error Tests passed!");
@@ -36,7 +36,7 @@ public:
 private:
     static BOOL TestUndefinedFunction()
     {
-        script::State* L = CreateScriptState();
+        PIL::State* L = CreateScriptState();
         // Note: NOT registering any functions, not even print
         BOOL result = !RunScriptFile(L, L"tests/language/scripts/error/undefined_function.pil"_embed);
         if (result)
@@ -47,8 +47,8 @@ private:
 
     static BOOL TestErrorMessageRetrieval()
     {
-        script::State* L = CreateScriptState();
-        script::OpenStdLib(*L);
+        PIL::State* L = CreateScriptState();
+        PIL::OpenStdLib(*L);
 
         // Script with error
         RunScriptFile(L, L"tests/language/scripts/error/error_message.pil"_embed);

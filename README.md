@@ -535,7 +535,7 @@ All functionality is implemented using low-level native interfaces to avoid exte
 
 ## Practical Use Cases
 
-NOSTDLIB‑RUNTIME is designed for execution environments where traditional runtime assumptions do not apply. Its architecture makes it particularly suitable for the following domains:
+Position-Indepenedent Runtime is designed for execution environments where traditional runtime assumptions do not apply. Its architecture makes it particularly suitable for the following domains:
 - Shellcode and loaderless code execution
 - Security research and malware analysis
 - Embedded and low-level system programming
@@ -544,7 +544,7 @@ NOSTDLIB‑RUNTIME is designed for execution environments where traditional runt
 
 ## To Do
 This project is still a work in progress. Below is a list of remaining tasks and planned improvements. Any help or contributions are greatly appreciated.
-- PIL
+- PIL - Position Independent Language
 - Support for additional platforms (macOS, FreeBSD)
 - Windows direct syscall implementations (bypassing ntdll)
 - Compile-time polymorphism
@@ -559,14 +559,14 @@ This project is intended for researchers, systems programmers, and security engi
 
 ## Appendix A: PIL - Position Independent Language
 
-The Position-Independent Runtime includes **PIL (Position Independent Language)**, a lightweight, position-independent scripting language designed for embedded and constrained environments. PIL provides a State API while maintaining full position-independence with no `.rdata` dependencies.
+The Position-Independent Runtime includes **PIL (Position Independent Language)**, a lightweight, position-independent scripting language designed for embedded and constrained environments. PIL provides a State API allowing programs to manage variables, call stacks, and other runtime state, all while maintaining full position-independence with no `.rdata` dependencies.
 
 ### Design Philosophy
 
 - **No built-in functions**: All functions must be registered from C++, giving complete control over the runtime environment
-- **Position-independent**: Uses `_embed` strings throughout, ensuring no relocations are needed
-- **Minimal footprint**: Designed for shellcode and embedded contexts where size matters
-- **State-based API**: Familiar State-based interface for easy adoption
+- **Position-independent**: Uses `_embed` strings and other techniques to eliminate relocations
+- **Minimal footprint**: Designed for shellcode and embedded contexts where binary size is critical
+- **State-based API**: Offers a familiar, state-oriented interface for easy integration and adoption
 
 ### C++ Integration
 
@@ -586,4 +586,3 @@ PIL::Value MyFunction(PIL::FunctionContext& ctx)
 // Register custom function
 L->Register("double"_embed, MyFunction);
 ```
-

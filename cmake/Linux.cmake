@@ -12,7 +12,7 @@ list(APPEND CPPPIC_BASE_FLAGS -target ${CPPPIC_TRIPLE})
 
 # Linker configuration
 cpppic_add_link_flags(
-    -e,_start
+    -e,entry_point
     --no-dynamic-linker
     --symbol-ordering-file=${CMAKE_SOURCE_DIR}/cmake/function.order
     --build-id=none

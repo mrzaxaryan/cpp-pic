@@ -1,20 +1,20 @@
 /**
  * start.cc - CPP-PIC Runtime Entry Point
  *
- * Unified _start() entry point for all platforms.
+ * Unified entry_point() entry point for all platforms.
  */
 
 #include "runtime.h"
 
-INT32 main();
+INT32 start();
 
 /**
- * _start - Entry point for all platforms
+ * entry_point - Entry point for all platforms
  */
 #if defined(PLATFORM_UEFI)
-ENTRYPOINT EFI_STATUS EFIAPI _start(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+ENTRYPOINT EFI_STATUS EFIAPI entry_point(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 #else
-ENTRYPOINT INT32 _start(VOID)
+ENTRYPOINT INT32 entry_point(VOID)
 #endif
 {
 #if defined(PLATFORM_UEFI)
@@ -29,6 +29,6 @@ ENTRYPOINT INT32 _start(VOID)
 #endif
 
 	// Run runtime and unit tests
-	BOOL allPassed = main();
+	BOOL allPassed = start();
 	ExitProcess(allPassed ? 0 : 1);
 }

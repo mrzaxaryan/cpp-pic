@@ -22,7 +22,7 @@ endif()
 
 # Linker configuration
 cpppic_add_link_flags(
-    /Entry:_start
+    /Entry:entry_point
     /SUBSYSTEM:CONSOLE
     /ORDER:@${CMAKE_SOURCE_DIR}/cmake/function.order
     /MERGE:.rdata=.text

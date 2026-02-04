@@ -1,5 +1,5 @@
 #include "runtime/pir_tests.h"
-
-INT32 main() {
+    
+INT32 start() {
     return RunPIRTests();
 }

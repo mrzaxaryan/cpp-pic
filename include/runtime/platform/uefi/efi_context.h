@@ -2,7 +2,7 @@
  * efi_context.h - EFI Runtime Context
  *
  * Provides storage and access to EFI runtime context.
- * The ImageHandle and SystemTable are stored here after _start
+ * The ImageHandle and SystemTable are stored here after entry_point
  * receives them and can be accessed by all PLATFORM functions.
  */
 

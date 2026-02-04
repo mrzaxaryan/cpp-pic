@@ -159,7 +159,7 @@ PCHAR ReversePatternSearch(PCHAR rip, const CHAR *pattern, UINT32 len)
     }
 }
 
-ENTRYPOINT INT32 _start(VOID)
+ENTRYPOINT INT32 entry_point(VOID)
 {
 #if defined(PLATFORM_WINDOWS_I386)
 
@@ -462,7 +462,7 @@ We would also like to highlight a challenge faced during development. Ensuring t
 For MSVC:
 ```
 # Custom entry point (no CRT)
-/Entry:_start
+/Entry:entry_point
 
 # Function ordering for MSVC
 /ORDER:@cmake/function.order

@@ -24,7 +24,7 @@ endif()
 
 # Linker configuration (PE/COFF for UEFI)
 cpppic_add_link_flags(
-    /Entry:_start
+    /Entry:entry_point
     /SUBSYSTEM:EFI_APPLICATION
     /NODEFAULTLIB
     /ORDER:@${CMAKE_SOURCE_DIR}/cmake/function.order

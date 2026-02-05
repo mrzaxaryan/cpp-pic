@@ -270,10 +270,13 @@ jobs:
         with:
           path: artifacts
 
-      - name: Generate sizes and history
+      - name: Collect sizes
+        env:
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           python3 << 'EOF'
           import json
+          import os
           from pathlib import Path
           from datetime import datetime
 
@@ -285,7 +288,7 @@ jobs:
               else:
                   return f"{size / 1024:.1f} KB"
 
-          # Collect current sizes (raw bytes for history, formatted for badges)
+          # Collect current sizes
           sizes_formatted = {}
           sizes_raw = {}
           artifacts_dir = Path("artifacts")
@@ -310,66 +313,75 @@ jobs:
               if bin_size:
                   sizes_raw[f"{key}_bin"] = bin_size
 
+          # Save formatted sizes for badges
           Path("sizes.json").write_text(json.dumps(sizes_formatted, indent=2))
-          Path("sizes_raw.json").write_text(json.dumps(sizes_raw, indent=2))
-          print("Current sizes:")
-          print(Path("sizes.json").read_text())
+
+          # Save this commit's data as individual file
+          date_str = datetime.utcnow().strftime("%Y-%m-%d")
+          commit_short = os.environ["COMMIT_SHA"][:7]
+          commit_data = {
+              "date": date_str,
+              "commit": commit_short,
+              "sizes": sizes_raw
+          }
+
+          Path("sizes").mkdir(exist_ok=True)
+          filename = f"sizes/{date_str}_{commit_short}.json"
+          Path(filename).write_text(json.dumps(commit_data, indent=2))
+
+          print(f"Saved: {filename}")
+          print(json.dumps(sizes_formatted, indent=2))
           EOF
 
-      - name: Fetch existing history
+      - name: Fetch existing history and generate chart
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin build-sizes 2>/dev/null || true
+
+          # Copy existing size files from build-sizes branch
           if git rev-parse --verify origin/build-sizes >/dev/null 2>&1; then
-            git show origin/build-sizes:sizes_history.json > /tmp/sizes_history.json 2>/dev/null || echo '{"entries":[]}' > /tmp/sizes_history.json
-          else
-            echo '{"entries":[]}' > /tmp/sizes_history.json
+            git archive origin/build-sizes -- sizes/ 2>/dev/null | tar -x 2>/dev/null || true
           fi
 
-      - name: Update history and generate chart
-        env:
-          COMMIT_SHA: ${{ github.sha }}
-        run: |
           python3 << 'EOF'
           import json
-          import os
           from pathlib import Path
-          from datetime import datetime
 
-          # Load existing history
-          history = json.loads(Path("/tmp/sizes_history.json").read_text())
-          sizes_raw = json.loads(Path("sizes_raw.json").read_text())
+          # Load all size entries from individual files
+          sizes_dir = Path("sizes")
+          entries = []
 
-          # Add new entry
-          new_entry = {
-              "date": datetime.utcnow().strftime("%Y-%m-%d"),
-              "commit": os.environ["COMMIT_SHA"][:7],
-              "sizes": sizes_raw
-          }
-          history["entries"].append(new_entry)
+          for f in sorted(sizes_dir.glob("*.json")):
+              try:
+                  data = json.loads(f.read_text())
+                  entries.append(data)
+              except:
+                  pass
 
-          # Keep last 50 entries max
-          history["entries"] = history["entries"][-50:]
+          # Keep last 50 entries
+          entries = entries[-50:]
 
-          Path("sizes_history.json").write_text(json.dumps(history, indent=2))
+          # Remove old files if we have more than 50
+          all_files = sorted(sizes_dir.glob("*.json"))
+          if len(all_files) > 50:
+              for f in all_files[:-50]:
+                  f.unlink()
+
+          print(f"Found {len(entries)} data points")
 
           # Generate SVG chart
-          entries = history["entries"]
           if len(entries) < 2:
-              # Need at least 2 points for a chart
               Path("size_chart.svg").write_text('''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
                 <rect width="800" height="400" fill="#0d1117"/>
                 <text x="400" y="200" fill="#8b949e" text-anchor="middle" font-family="monospace">Collecting data... (need 2+ builds)</text>
               </svg>''')
           else:
-              # Chart dimensions
               width, height = 800, 400
               margin = {"top": 40, "right": 150, "bottom": 60, "left": 70}
               chart_w = width - margin["left"] - margin["right"]
               chart_h = height - margin["top"] - margin["bottom"]
 
-              # Platforms to show (.bin only)
               platforms = [
                   ("windows_i386_bin", "#58a6ff", "Win i386"),
                   ("windows_x86_64_bin", "#1f6feb", "Win x64"),
@@ -382,7 +394,6 @@ jobs:
                   ("uefi_aarch64_bin", "#ffa657", "UEFI ARM64"),
               ]
 
-              # Find min/max for scaling
               all_sizes = []
               for e in entries:
                   for key, _, _ in platforms:
@@ -417,7 +428,6 @@ jobs:
                   f'<text x="{width/2}" y="25" class="title" text-anchor="middle">Binary Size Trend (.bin)</text>',
               ]
 
-              # Y-axis grid and labels
               num_ticks = 5
               for i in range(num_ticks + 1):
                   y = margin["top"] + (i / num_ticks) * chart_h
@@ -425,13 +435,11 @@ jobs:
                   svg_parts.append(f'<line x1="{margin["left"]}" y1="{y}" x2="{margin["left"] + chart_w}" y2="{y}" class="grid"/>')
                   svg_parts.append(f'<text x="{margin["left"] - 10}" y="{y + 4}" class="axis-text" text-anchor="end">{val/1024:.0f}KB</text>')
 
-              # X-axis labels (show some dates)
               step = max(1, len(entries) // 6)
               for i in range(0, len(entries), step):
                   x = scale_x(i)
                   svg_parts.append(f'<text x="{x}" y="{height - margin["bottom"] + 20}" class="axis-text" text-anchor="middle">{entries[i]["date"][5:]}</text>')
 
-              # Draw lines for each platform
               for key, color, label in platforms:
                   points = []
                   for i, e in enumerate(entries):
@@ -443,12 +451,9 @@ jobs:
                       for x, y in points[1:]:
                           path_d += f' L {x:.1f} {y:.1f}'
                       svg_parts.append(f'<path d="{path_d}" fill="none" stroke="{color}" stroke-width="2" opacity="0.8"/>')
-
-                      # Add dot at last point
                       last_x, last_y = points[-1]
                       svg_parts.append(f'<circle cx="{last_x:.1f}" cy="{last_y:.1f}" r="4" fill="{color}"/>')
 
-              # Legend
               legend_x = width - margin["right"] + 15
               for i, (key, color, label) in enumerate(platforms):
                   y = margin["top"] + 10 + i * 18
@@ -465,8 +470,11 @@ jobs:
         run: |
           # Save files before branch switch
           cp sizes.json /tmp/sizes.json
-          cp sizes_history.json /tmp/sizes_history.json
           cp size_chart.svg /tmp/size_chart.svg
+          cp -r sizes /tmp/sizes
+
+          # Remove files to avoid checkout conflict
+          rm -rf sizes sizes.json size_chart.svg
 
           # Checkout build-sizes branch, or create orphan if it doesn't exist
           git branch -D build-sizes 2>/dev/null || true
@@ -479,10 +487,11 @@ jobs:
 
           # Restore files
           mv /tmp/sizes.json sizes.json
-          mv /tmp/sizes_history.json sizes_history.json
           mv /tmp/size_chart.svg size_chart.svg
+          rm -rf sizes
+          mv /tmp/sizes sizes
 
           # Commit and push
-          git add sizes.json sizes_history.json size_chart.svg
+          git add sizes.json size_chart.svg sizes/
           git diff --staged --quiet || git commit -m "Update binary sizes [$(date -u +%Y-%m-%d)]"
           git push origin build-sizes --force

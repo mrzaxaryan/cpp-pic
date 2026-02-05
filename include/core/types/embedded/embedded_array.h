@@ -1,34 +1,51 @@
+/**
+ * @file embedded_array.h
+ * @brief Position-Independent Compile-Time Array Data Embedding
+ *
+ * @details Eliminates .rdata section usage by storing array elements as packed
+ * integer words. Essential for embedding lookup tables, binary data, and constant
+ * arrays in position-independent code without data section dependencies.
+ *
+ * Common Use Cases:
+ * - Shellcode & Position-Independent Code (PIC): Eliminates .rdata relocations
+ * - Kernel-Mode Drivers: Satisfies strict non-paged memory requirements
+ * - Lookup Tables: Embed constant arrays (hashes, opcodes, magic bytes)
+ * - Binary Data: Store small binary blobs without file resources
+ * - OS Development: Embedded systems and microkernels without data sections
+ *
+ * @ingroup core
+ *
+ * @defgroup embedded_array Embedded Array
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 
-/**
- * EMBEDDED_ARRAY - Position-independent compile-time array data embedding
- *
- * Eliminates .rdata section usage by storing array elements as packed integer words.
- * Essential for embedding lookup tables, binary data, and constant arrays in position-
- * independent code without data section dependencies.
- *
- * COMMON USE CASES:
- *   - Shellcode & Position-Independent Code (PIC): Eliminates .rdata relocations
- *   - Kernel-Mode Drivers: Satisfies strict non-paged memory requirements
- *   - Lookup Tables: Embed constant arrays (hashes, opcodes, magic bytes)
- *   - Binary Data: Store small binary blobs without file resources
- *   - OS Development: Embedded systems and microkernels without data sections
- */
-
-// ============================================================================
+// =============================================================================
 // TYPE SIZE MAPPING UTILITIES
-// ============================================================================
+// =============================================================================
 
 /**
- * UINT_OF_SIZE - Maps byte sizes to corresponding unsigned integer types
+ * @struct UINT_OF_SIZE
+ * @brief Maps byte sizes to corresponding unsigned integer types
  *
- * Used for type-safe element packing/unpacking during compile-time array
- * initialization and runtime element access.
+ * @tparam Bytes Number of bytes
+ *
+ * @details Used for type-safe element packing/unpacking during compile-time
+ * array initialization and runtime element access.
+ *
+ * Specializations:
+ * - 1 byte: UINT8
+ * - 2 bytes: UINT16
+ * - 4 bytes: UINT32
+ * - 8 bytes: UINT64
  */
 template <USIZE Bytes>
 struct UINT_OF_SIZE;
+
 template <>
 struct UINT_OF_SIZE<1>
 {
@@ -50,19 +67,45 @@ struct UINT_OF_SIZE<8>
     using type = UINT64;
 };
 
+/**
+ * @class EMBEDDED_ARRAY
+ * @brief Position-independent array that embeds elements as packed integer words
+ *
+ * @tparam TChar Element type
+ * @tparam N Number of elements
+ *
+ * @details Array elements are packed into machine-word-sized integers at compile
+ * time and stored in the .text section. Element access unpacks bytes at runtime.
+ *
+ * @par Memory Layout:
+ * Elements are packed byte-by-byte into USIZE words for efficient storage.
+ * Access operations unpack the bytes to reconstruct the original element.
+ *
+ * @par Example Usage:
+ * @code
+ * constexpr UINT32 lookup[] = {0x12345678, 0xABCDEF00, 0x11223344};
+ * auto embedded = MakeEmbedArray(lookup);
+ * UINT32 value = embedded[1];  // Access element (unpacked at runtime)
+ * @endcode
+ */
 template <typename TChar, USIZE N>
 class EMBEDDED_ARRAY
 {
 public:
-    static constexpr USIZE Count = N;
-    static constexpr USIZE SizeBytes = N * sizeof(TChar);
+    static constexpr USIZE Count = N;                    ///< Number of elements
+    static constexpr USIZE SizeBytes = N * sizeof(TChar);  ///< Total size in bytes
 
 private:
-    static constexpr USIZE WordBytes = sizeof(USIZE);
-    static constexpr USIZE WordCount = (SizeBytes + WordBytes - 1) / WordBytes;
+    static constexpr USIZE WordBytes = sizeof(USIZE);    ///< Bytes per word
+    static constexpr USIZE WordCount = (SizeBytes + WordBytes - 1) / WordBytes;  ///< Number of words
 
-    alignas(USIZE) USIZE words[WordCount]{};
+    alignas(USIZE) USIZE words[WordCount]{};             ///< Packed word storage
 
+    /**
+     * @brief Sets a byte in the packed word storage
+     * @param byteIndex Index of byte to set
+     * @param v Byte value
+     */
     consteval VOID SetByte(USIZE byteIndex, UINT8 v)
     {
         const USIZE wi = byteIndex / WordBytes;
@@ -72,6 +115,11 @@ private:
         words[wi] = (words[wi] & ~mask) | ((USIZE)v << sh);
     }
 
+    /**
+     * @brief Gets a byte from the packed word storage
+     * @param byteIndex Index of byte to get
+     * @return Byte value
+     */
     UINT8 GetByte(USIZE byteIndex) const
     {
         const USIZE wi = byteIndex / WordBytes;
@@ -80,6 +128,13 @@ private:
     }
 
 public:
+    /**
+     * @brief Compile-time constructor that packs array elements into words
+     * @param src Source array to embed
+     *
+     * @details Called at compile time (consteval) to pack array elements
+     * byte-by-byte into machine words.
+     */
     consteval EMBEDDED_ARRAY(const TChar (&src)[N]) : words{}
     {
         using U = typename UINT_OF_SIZE<sizeof(TChar)>::type;
@@ -96,6 +151,11 @@ public:
         }
     }
 
+    /**
+     * @brief Array subscript operator - unpacks element at runtime
+     * @param index Element index
+     * @return Element value (unpacked from words)
+     */
     TChar operator[](USIZE index) const
     {
         using U = typename UINT_OF_SIZE<sizeof(TChar)>::type;
@@ -112,29 +172,49 @@ public:
 
         return (TChar)v;
     }
+
+    /**
+     * @brief Implicit conversion to const void pointer
+     * @return Pointer to raw word storage
+     */
     constexpr operator const VOID *() const
     {
         return (const VOID *)words;
     }
+
+    /**
+     * @brief Access raw word storage
+     * @return Pointer to word array
+     */
     constexpr const USIZE *Words() const { return words; }
-    static constexpr USIZE WordsCount = WordCount;
+
+    static constexpr USIZE WordsCount = WordCount;  ///< Number of words in storage
 };
 
-// ============================================================================
+// =============================================================================
 // HELPER FUNCTION
-// ============================================================================
+// =============================================================================
 
 /**
- * MakeEmbedArray - Deduction helper for compile-time array embedding
+ * @brief Deduction helper for compile-time array embedding
  *
- * Usage:
- *   constexpr UINT32 data[] = {0x12345678, 0xABCDEF00};
- *   auto embedded = MakeEmbedArray(data);
+ * @tparam TElement Element type (deduced)
+ * @tparam N Array size (deduced)
+ * @param arr Source array to embed
+ * @return EMBEDDED_ARRAY instance
  *
- * Automatically deduces element type and array size from the source array.
+ * @details Automatically deduces element type and array size from the source array.
+ *
+ * @par Example:
+ * @code
+ * constexpr UINT32 data[] = {0x12345678, 0xABCDEF00};
+ * auto embedded = MakeEmbedArray(data);
+ * @endcode
  */
 template <typename TElement, USIZE N>
 consteval auto MakeEmbedArray(const TElement (&arr)[N]) noexcept
 {
     return EMBEDDED_ARRAY<TElement, N>(arr);
 }
+
+/** @} */ // end of embedded_array group

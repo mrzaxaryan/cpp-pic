@@ -1,15 +1,55 @@
+/**
+ * @file bitops.h
+ * @brief Bit Manipulation Operations
+ *
+ * @details Provides bit rotation operations essential for cryptographic algorithms.
+ * These templates offer consistent, efficient implementations that compile to
+ * single CPU instructions on most architectures (ROL/ROR on x86, ROR on ARM).
+ *
+ * Used by:
+ * - SHA-2 family (SHA-256, SHA-384, SHA-512)
+ * - ChaCha20 stream cipher
+ * - Other cryptographic primitives
+ *
+ * @ingroup core
+ *
+ * @defgroup bitops Bit Operations
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 #include "compiler.h"
 
-// Bit rotation operations for cryptographic algorithms
-// These templates provide consistent, efficient implementations
-// that can be shared across SHA-2, ChaCha20, and other crypto modules
-
+/**
+ * @namespace BitOps
+ * @brief Namespace containing bit manipulation operations
+ *
+ * @details Provides templated bit rotation functions that work with any
+ * unsigned integer type. The template implementations compile to optimal
+ * machine instructions for the target architecture.
+ */
 namespace BitOps
 {
-    // Rotate right (circular shift right)
+    /**
+     * @brief Rotate right (circular shift right)
+     * @tparam T Unsigned integer type (UINT32, UINT64, etc.)
+     * @param x Value to rotate
+     * @param n Number of bits to rotate by
+     * @return Value rotated right by n bits
+     *
+     * @details Performs a circular right shift where bits shifted out on the right
+     * are shifted back in on the left. Compiles to a single ROR instruction on
+     * x86/x64 and ARM architectures.
+     *
+     * @par Example:
+     * @code
+     * UINT32 val = 0x12345678;
+     * UINT32 rotated = BitOps::ROTR(val, 8);  // 0x78123456
+     * @endcode
+     */
     template<typename T>
     static FORCE_INLINE T ROTR(T x, UINT32 n)
     {
@@ -17,7 +57,23 @@ namespace BitOps
         return (x >> n) | (x << (bits - n));
     }
 
-    // Rotate left (circular shift left)
+    /**
+     * @brief Rotate left (circular shift left)
+     * @tparam T Unsigned integer type (UINT32, UINT64, etc.)
+     * @param x Value to rotate
+     * @param n Number of bits to rotate by
+     * @return Value rotated left by n bits
+     *
+     * @details Performs a circular left shift where bits shifted out on the left
+     * are shifted back in on the right. Compiles to a single ROL instruction on
+     * x86/x64 architectures.
+     *
+     * @par Example:
+     * @code
+     * UINT32 val = 0x12345678;
+     * UINT32 rotated = BitOps::ROTL(val, 8);  // 0x34567812
+     * @endcode
+     */
     template<typename T>
     static FORCE_INLINE T ROTL(T x, UINT32 n)
     {
@@ -25,9 +81,37 @@ namespace BitOps
         return (x << n) | (x >> (bits - n));
     }
 
-    // Convenience aliases - generic templates compile to identical code
+    /**
+     * @brief Rotate 32-bit value right
+     * @param x Value to rotate
+     * @param n Number of bits to rotate by
+     * @return Value rotated right by n bits
+     */
     static FORCE_INLINE UINT32 ROTR32(UINT32 x, UINT32 n) { return ROTR(x, n); }
+
+    /**
+     * @brief Rotate 32-bit value left
+     * @param x Value to rotate
+     * @param n Number of bits to rotate by
+     * @return Value rotated left by n bits
+     */
     static FORCE_INLINE UINT32 ROTL32(UINT32 x, UINT32 n) { return ROTL(x, n); }
+
+    /**
+     * @brief Rotate 64-bit value right
+     * @param x Value to rotate
+     * @param n Number of bits to rotate by
+     * @return Value rotated right by n bits
+     */
     static FORCE_INLINE UINT64 ROTR64(UINT64 x, UINT32 n) { return ROTR(x, n); }
+
+    /**
+     * @brief Rotate 64-bit value left
+     * @param x Value to rotate
+     * @param n Number of bits to rotate by
+     * @return Value rotated left by n bits
+     */
     static FORCE_INLINE UINT64 ROTL64(UINT64 x, UINT32 n) { return ROTL(x, n); }
 }
+
+/** @} */ // end of bitops group

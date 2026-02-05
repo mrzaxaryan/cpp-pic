@@ -1,56 +1,134 @@
+/**
+ * @file string_formatter.h
+ * @brief Printf-style String Formatting
+ *
+ * @details Provides printf-style string formatting without CRT dependencies.
+ * Uses a callback-based writer interface for flexible output destinations
+ * (console, buffer, file, network, etc.).
+ *
+ * Supported format specifiers:
+ * - %d, %D - Signed integer (INT32)
+ * - %u, %U - Unsigned integer (UINT32)
+ * - %x, %X - Hexadecimal (lowercase/uppercase)
+ * - %f, %F - Floating-point (DOUBLE)
+ * - %s, %S - String (CHAR*)
+ * - %ws, %ls - Wide string (WCHAR*)
+ * - %p, %P - Pointer
+ * - %c, %C - Character
+ * - %ld, %lu - Long integers
+ * - %lld, %llu - Long long integers
+ * - %lx, %llx - Long/long long hex
+ * - %zu, %zd - Size_t variants
+ * - %% - Literal percent sign
+ *
+ * Format flags:
+ * - Field width (e.g., %10d)
+ * - Zero padding (e.g., %08x)
+ * - Left alignment (e.g., %-10s)
+ * - Precision for floats (e.g., %.3f)
+ * - Alternate form prefix (e.g., %#x for 0x prefix)
+ *
+ * @note All formatting is position-independent with no .rdata dependencies.
+ *
+ * @ingroup core
+ *
+ * @defgroup formatter String Formatting
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 #include "string.h"
 
+/**
+ * @class StringFormatter
+ * @brief Printf-style string formatting with callback-based output
+ *
+ * @details Provides type-safe, variadic template-based string formatting.
+ * Output is written through a callback function, enabling flexible output
+ * destinations without buffer management concerns.
+ *
+ * @par Writer Callback:
+ * The writer callback has the signature: BOOL (*writer)(PVOID context, TChar ch)
+ * - Returns TRUE to continue formatting
+ * - Returns FALSE to stop formatting (e.g., buffer full)
+ *
+ * @par Example Usage:
+ * @code
+ * // Buffer writer callback
+ * struct BufferContext {
+ *     CHAR* buffer;
+ *     USIZE size;
+ *     USIZE pos;
+ * };
+ *
+ * BOOL BufferWriter(PVOID ctx, CHAR ch) {
+ *     BufferContext* c = (BufferContext*)ctx;
+ *     if (c->pos >= c->size - 1) return FALSE;
+ *     c->buffer[c->pos++] = ch;
+ *     return TRUE;
+ * }
+ *
+ * // Format string
+ * BufferContext ctx = { buffer, sizeof(buffer), 0 };
+ * StringFormatter::Format(BufferWriter, &ctx, "Value: %d, Hex: %08X", 42, 0xDEADBEEF);
+ * ctx.buffer[ctx.pos] = '\0';
+ * @endcode
+ */
 class StringFormatter
 {
 private:
-    // Type-erased argument holder using PIC-safe types from primitives.h
+    /**
+     * @brief Type-erased argument holder for variadic formatting
+     * @details Uses PIC-safe types from primitives.h. Supports automatic
+     * type conversion from common C++ types.
+     */
     struct Argument {
+        /** @brief Argument type enumeration */
         enum class Type { INT32, UINT32, INT64, UINT64, DOUBLE, CSTR, WSTR, PTR };
 
-        Type type;
+        Type type;                    ///< Type of stored value
         union {
-            INT32 i32;
-            UINT32 u32;
-            INT64 i64;
-            UINT64 u64;
-            DOUBLE dbl;
-            const CHAR* cstr;
-            const WCHAR* wstr;
-            PVOID ptr;
+            INT32 i32;                ///< Signed 32-bit integer
+            UINT32 u32;               ///< Unsigned 32-bit integer
+            INT64 i64;                ///< Signed 64-bit integer
+            UINT64 u64;               ///< Unsigned 64-bit integer
+            DOUBLE dbl;               ///< Floating-point value
+            const CHAR* cstr;         ///< Narrow string pointer
+            const WCHAR* wstr;        ///< Wide string pointer
+            PVOID ptr;                ///< Generic pointer
         };
 
-        // Default constructor
+        /// @name Constructors
+        /// @{
         Argument() : type(Type::INT32), i32(0) {}
-
-        // PIC-safe primitive type constructors
         Argument(INT32 v) : type(Type::INT32), i32(v) {}
         Argument(UINT32 v) : type(Type::UINT32), u32(v) {}
         Argument(DOUBLE v) : type(Type::DOUBLE), dbl(v) {}
-
-        // String and pointer constructors
         Argument(const CHAR* v) : type(Type::CSTR), cstr(v) {}
         Argument(CHAR* v) : type(Type::CSTR), cstr(v) {}
         Argument(const WCHAR* v) : type(Type::WSTR), wstr(v) {}
         Argument(WCHAR* v) : type(Type::WSTR), wstr(v) {}
         Argument(PVOID v) : type(Type::PTR), ptr(v) {}
         Argument(const void* v) : type(Type::PTR), ptr(const_cast<PVOID>(v)) {}
-
-        // Native C++ type compatibility (INT64/UINT64 are typedefs)
         Argument(INT64 v) : type(Type::INT64), i64(v) {}
         Argument(UINT64 v) : type(Type::UINT64), u64(v) {}
 #if defined(__LP64__) || defined(_LP64)
         Argument(signed long v) : type(Type::INT64), i64(INT64(v)) {}
         Argument(unsigned long v) : type(Type::UINT64), u64(UINT64(v)) {}
 #endif
+        /// @}
     };
 
+    /** @brief Internal format implementation with argument array */
     template <TCHAR TChar>
     static INT32 FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, const Argument* args, INT32 argCount);
 
 private:
+    /// @name Internal Formatting Functions
+    /// @{
     template <TCHAR TChar>
     static INT32 FormatInt64(BOOL (*writer)(PVOID, TChar), PVOID context, INT64 num, INT32 width = 0, INT32 zeroPad = 0, INT32 leftAlign = 0);
     template <TCHAR TChar>
@@ -65,9 +143,22 @@ private:
     static INT32 FormatUInt32AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT32 num, INT32 fieldWidth = 0, INT32 uppercase = 0, INT32 zeroPad = 0, BOOL addPrefix = FALSE);
     template <TCHAR TChar>
     static INT32 FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID context, const WCHAR* wstr);
+    /// @}
 
 public:
-    // C++11 variadic template version - supports custom types like DOUBLE
+    /**
+     * @brief Format string with variadic arguments
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @tparam Args Variadic argument types
+     * @param writer Callback function to write each character
+     * @param context User context passed to writer callback
+     * @param format Printf-style format string
+     * @param args Arguments to format
+     * @return Number of characters written
+     *
+     * @details Type-safe variadic template implementation. Arguments are
+     * automatically converted to the appropriate internal type.
+     */
     template <TCHAR TChar, typename... Args>
     static INT32 Format(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, Args&&... args);
 };
@@ -756,3 +847,5 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
     // j++;
     return j; // Return the length of the formatted string
 }
+
+/** @} */ // end of formatter group

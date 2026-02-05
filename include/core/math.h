@@ -1,12 +1,41 @@
+/**
+ * @file math.h
+ * @brief Mathematical Utilities
+ *
+ * @details Provides common mathematical operations and utilities as a static class
+ * with template methods for type safety. All operations are implemented without
+ * CRT dependencies and are fully position-independent.
+ *
+ * Supported operations:
+ * - Min/Max comparison
+ * - Absolute value
+ * - Value clamping
+ *
+ * @ingroup core
+ *
+ * @defgroup math Mathematical Operations
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 
 /**
- * Basic Abstraction Layer - Math Functions
+ * @class Math
+ * @brief Static class providing mathematical utility functions
  *
- * Provides common mathematical operations and utilities.
- * Uses a static class with template methods for type safety.
+ * @details All methods are template-based and force-inlined for maximum
+ * performance. The class uses common type deduction for mixed-type comparisons.
+ *
+ * @par Example Usage:
+ * @code
+ * INT32 maxVal = Math::Max(10, 20);         // Returns 20
+ * INT32 minVal = Math::Min(10, 20);         // Returns 10
+ * INT32 absVal = Math::Abs(-42);            // Returns 42
+ * INT32 clamped = Math::Clamp(150, 0, 100); // Returns 100
+ * @endcode
  */
 class Math
 {
@@ -65,3 +94,5 @@ public:
         return Min(Max(x, minVal), maxVal);
     }
 };
+
+/** @} */ // end of math group

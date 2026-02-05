@@ -1,13 +1,67 @@
+/**
+ * @file utf16.h
+ * @brief UTF-16 to UTF-8 Encoding Conversion
+ *
+ * @details Provides platform-independent UTF-16 to UTF-8 conversion utilities.
+ * Essential for handling Windows wide strings (WCHAR) in network protocols
+ * and text processing that requires UTF-8 encoding.
+ *
+ * Features:
+ * - UTF-16 surrogate pair handling for characters beyond BMP
+ * - Single codepoint conversion
+ * - Full string conversion
+ * - No CRT dependencies
+ *
+ * @note Windows uses UTF-16LE (Little Endian) for wide strings (WCHAR).
+ *
+ * @ingroup core
+ *
+ * @defgroup utf16 UTF-16 Encoding
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 
+/**
+ * @class UTF16
+ * @brief Static class for UTF-16 to UTF-8 conversion operations
+ *
+ * @details Provides position-independent UTF-16 to UTF-8 conversion without
+ * CRT dependencies. Properly handles UTF-16 surrogate pairs for characters
+ * outside the Basic Multilingual Plane (BMP).
+ *
+ * @par Unicode Encoding Overview:
+ * - UTF-16: Each code unit is 2 bytes. Characters outside BMP use surrogate pairs.
+ * - UTF-8: Variable length (1-4 bytes per character). ASCII compatible.
+ *
+ * @par Example Usage:
+ * @code
+ * WCHAR wide[] = L"Hello, World!";
+ * CHAR utf8[64];
+ * USIZE len = UTF16::ToUTF8(wide, String::Length(wide), utf8, sizeof(utf8));
+ * utf8[len] = '\0';  // Null-terminate
+ * @endcode
+ */
 class UTF16
 {
 public:
-    // Convert a single UTF-16 code unit (or surrogate pair) to UTF-8
-    // Returns the number of UTF-8 bytes written (1-4), or 0 if more input needed for surrogate
-    // inputIndex is advanced past the consumed code unit(s)
+    /**
+     * @brief Convert a single UTF-16 code unit (or surrogate pair) to UTF-8
+     * @param input Pointer to UTF-16 input string
+     * @param inputLength Total length of input string in code units
+     * @param inputIndex Current index into input (updated on return)
+     * @param output Buffer to receive UTF-8 bytes (must be at least 4 bytes)
+     * @return Number of UTF-8 bytes written (1-4), or 0 if no input available
+     *
+     * @details Processes one Unicode codepoint from the UTF-16 input. For characters
+     * in the BMP (U+0000 to U+FFFF), consumes one code unit. For characters
+     * outside the BMP (U+10000 to U+10FFFF), consumes a surrogate pair.
+     *
+     * @note The inputIndex parameter is advanced past the consumed code unit(s).
+     */
     static USIZE CodepointToUTF8(const WCHAR* input, USIZE inputLength, USIZE& inputIndex, CHAR* output)
     {
         if (inputIndex >= inputLength)
@@ -29,8 +83,18 @@ public:
         return CodepointToUTF8Bytes(codepoint, output);
     }
 
-    // Convert a Unicode codepoint to UTF-8 bytes
-    // Returns the number of bytes written (1-4)
+    /**
+     * @brief Convert a Unicode codepoint to UTF-8 bytes
+     * @param codepoint Unicode codepoint (U+0000 to U+10FFFF)
+     * @param output Buffer to receive UTF-8 bytes (must be at least 4 bytes)
+     * @return Number of UTF-8 bytes written (1-4), or 0 for invalid codepoint
+     *
+     * @details UTF-8 encoding scheme:
+     * - U+0000 to U+007F: 1 byte  (0xxxxxxx)
+     * - U+0080 to U+07FF: 2 bytes (110xxxxx 10xxxxxx)
+     * - U+0800 to U+FFFF: 3 bytes (1110xxxx 10xxxxxx 10xxxxxx)
+     * - U+10000 to U+10FFFF: 4 bytes (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
+     */
     static USIZE CodepointToUTF8Bytes(UINT32 codepoint, CHAR* output)
     {
         if (codepoint < 0x80)
@@ -68,9 +132,23 @@ public:
         return 0;
     }
 
-    // Convert UTF-16 string to UTF-8, writing to output buffer
-    // Returns total number of UTF-8 bytes written
-    // outputSize should be at least inputLength * 4 to guarantee no truncation
+    /**
+     * @brief Convert UTF-16 string to UTF-8
+     * @param input Pointer to UTF-16 input string
+     * @param inputLength Length of input string in code units (not bytes)
+     * @param output Buffer to receive UTF-8 output
+     * @param outputSize Size of output buffer in bytes
+     * @return Total number of UTF-8 bytes written (excluding null terminator)
+     *
+     * @details Converts an entire UTF-16 string to UTF-8. Properly handles
+     * surrogate pairs for characters outside the Basic Multilingual Plane.
+     *
+     * @note Output buffer should be at least inputLength * 4 bytes to guarantee
+     * no truncation (worst case: all 4-byte UTF-8 sequences).
+     *
+     * @warning Does not null-terminate the output. Caller must add null terminator
+     * if needed.
+     */
     static USIZE ToUTF8(const WCHAR* input, USIZE inputLength, CHAR* output, USIZE outputSize)
     {
         USIZE inputIndex = 0;
@@ -90,3 +168,5 @@ public:
         return outputIndex;
     }
 };
+
+/** @} */ // end of utf16 group

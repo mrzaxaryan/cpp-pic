@@ -1,67 +1,102 @@
+/**
+ * @file embedded_function_pointer.h
+ * @brief Universal Position-Independent Function Pointers
+ *
+ * @details Provides PC/RIP-relative function pointers that work at any memory address.
+ * Uses inline assembly to compute pure relative offsets with no absolute addresses.
+ *
+ * Design:
+ * - Unified implementation for all architectures (i386, x86_64, armv7a, aarch64)
+ * - Pure PC/RIP-relative addressing computed at runtime
+ * - No link-time absolute addresses
+ * - Works identically in PIC blob and normal EXE modes
+ * - Architecture detection via CMake-defined macros (PLATFORM_*)
+ *
+ * Advantages:
+ * - Compile-time offset calculation by assembler
+ * - No runtime architecture detection overhead
+ *
+ * Disassembly Examples:
+ * - i386:   call/pop %eax + leal offset(%eax), %eax
+ * - x86_64: leaq offset(%rip), %rax
+ * - armv7a: adr r0, offset
+ * - aarch64: adr x0, offset
+ *
+ * @ingroup core
+ *
+ * @defgroup embedded_func Embedded Function Pointer
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 
 /**
- * EMBEDDED_FUNCTION_POINTER - Universal position-independent function pointers
+ * @class EMBEDDED_FUNCTION_POINTER
+ * @brief Template class for position-independent function pointer embedding
  *
- * Provides PC/RIP-relative function pointers that work at any memory address.
- * Uses inline assembly to compute pure relative offsets with no absolute addresses.
+ * @tparam FuncPtr Function pointer type (e.g., BOOL (*)(PVOID, CHAR))
+ * @tparam Func The actual function to embed
  *
- * DESIGN:
- *   - Unified implementation for all architectures (i386, x86_64, armv7a, aarch64)
- *   - Pure PC/RIP-relative addressing computed at runtime
- *   - No link-time absolute addresses
- *   - Works identically in PIC blob and normal EXE modes
- *   - Architecture detection via CMake-defined macros (ARCHITECTURE_*)
+ * @details Computes PC-relative function addresses at runtime using inline assembly.
+ * This eliminates the need for relocation tables and allows function pointers to
+ * work correctly in position-independent shellcode.
  *
- * ADVANTAGES:
- *   - Compile-time offset calculation by assembler
- *   - No runtime architecture detection overhead
+ * @par Example Usage:
+ * @code
+ * // Define a callback function
+ * BOOL MyCallback(PVOID ctx, CHAR ch) {
+ *     return TRUE;
+ * }
  *
- * DISASSEMBLY EXAMPLES:
- *   i386:   call/pop %eax + leal offset(%eax), %eax
- *   x86_64: leaq offset(%rip), %rax
- *   armv7a: adr r0, offset
- *   aarch64: adr x0, offset
+ * // Get position-independent function pointer
+ * auto callback = EMBEDDED_FUNCTION_POINTER<BOOL (*)(PVOID, CHAR), MyCallback>::Get();
  *
- * USAGE:
- *   auto callback = EMBEDDED_FUNCTION_POINTER<BOOL (*)(PVOID, CHAR), MyCallback>::Get();
- *   // or use the helper macro:
- *   auto callback = EMBED_FUNC(MyCallback);
+ * // Or use the helper macro
+ * auto callback = EMBED_FUNC(MyCallback);
+ * @endcode
  */
-
 template<typename FuncPtr, FuncPtr Func>
 class EMBEDDED_FUNCTION_POINTER
 {
 public:
     /**
-     * Get() - Returns position-independent function pointer
+     * @brief Returns position-independent function pointer
+     * @return Function pointer computed using PC-relative addressing
      *
-     * Uses inline assembly to compute PC/RIP-relative addresses.
+     * @details Uses inline assembly to compute PC/RIP-relative addresses.
      * Architecture is selected at compile-time via CMake-defined macros.
      *
-     * i386 (ARCHITECTURE_I386):
-     *   - call 1f / pop %eax        - Get current EIP
-     *   - leal offset(%eax), %eax   - Add PC-relative offset
-     *   Example: leal 0x2757(%eax), %eax
+     * @par Architecture-Specific Implementation:
      *
-     * x86_64 (ARCHITECTURE_X86_64):
-     *   - leaq offset(%rip), %rax   - Direct RIP-relative addressing
-     *   Example: leaq 0x1234(%rip), %rax
+     * **i386 (PLATFORM_WINDOWS_I386):**
+     * @code{.asm}
+     * call 1f          ; Push return address onto stack
+     * 1:
+     * pop %eax         ; Get current EIP in eax
+     * leal offset(%eax), %eax  ; Compute: target - label_1b + eip
+     * @endcode
      *
-     * armv7a (ARCHITECTURE_ARMV7A):
-     *   - adr r0, target            - PC-relative address (±1KB range)
-     *   Example: adr r0, #0x1234
+     * **x86_64:**
+     * @code{.asm}
+     * leaq offset(%rip), %rax  ; Direct RIP-relative addressing
+     * @endcode
      *
-     * aarch64 (ARCHITECTURE_AARCH64):
-     *   - adr x0, target            - PC-relative address (±1MB range)
-     *   Example: adr x0, #0x1234
+     * **armv7a (PLATFORM_WINDOWS_ARMV7A):**
+     * @code{.asm}
+     * ldr r0, =target   ; Load via PC-relative literal pool
+     * @endcode
      *
+     * **aarch64:**
+     * @code{.asm}
+     * adr x0, target    ; PC-relative address (±1MB range)
+     * @endcode
+     *
+     * @note NOINLINE ensures stable addresses for PC-relative calculations.
      * The offset is calculated by the assembler as (Func - label), which is
      * a pure compile-time constant. No absolute addresses at runtime!
-     *
-     * NOINLINE ensures stable addresses for PC-relative calculations
      */
     NOINLINE static FuncPtr Get() noexcept
     {
@@ -97,10 +132,21 @@ public:
 };
 
 /**
- * Helper macro for cleaner syntax
+ * @def EMBED_FUNC
+ * @brief Helper macro for cleaner embedded function pointer syntax
+ * @param func_name Name of the function to embed
+ * @return Position-independent function pointer
  *
- * Usage:
- *   auto callback = EMBED_FUNC(MyCallback);
+ * @par Example:
+ * @code
+ * // Instead of:
+ * auto cb = EMBEDDED_FUNCTION_POINTER<decltype(&MyFunc), &MyFunc>::Get();
+ *
+ * // Use:
+ * auto cb = EMBED_FUNC(MyFunc);
+ * @endcode
  */
 #define EMBED_FUNC(func_name) \
     EMBEDDED_FUNCTION_POINTER<decltype(&func_name), &func_name>::Get()
+
+/** @} */ // end of embedded_func group

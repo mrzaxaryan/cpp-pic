@@ -1,39 +1,85 @@
 /**
- * core.h - Core Abstraction Layer
+ * @file core.h
+ * @brief Core Abstraction Layer - Main include header
  *
- * Platform-independent types and utilities.
+ * @details This is the main header file for the Position-Independent Runtime (PIR)
+ * Core Abstraction Layer. It provides platform-independent types, utilities, and
+ * abstractions that form the foundation of PIR.
+ *
+ * The Core layer includes:
+ * - Compiler-specific definitions and optimization attributes
+ * - Memory operations (copy, set, compare, zero)
+ * - Mathematical utilities (min, max, abs, clamp)
+ * - Byte order manipulation
+ * - Bit manipulation operations
+ * - Primitive type definitions
+ * - Numeric types with PIC guarantees (DOUBLE)
+ * - Embedded types for position-independent string/array/function pointer storage
+ * - String utilities and formatting
+ * - Hash algorithms (DJB2, Base64)
+ * - Encoding utilities (UTF-16)
+ * - Network types (IP address)
+ *
+ * @note All components in the Core layer are designed to be position-independent
+ * and do not generate .rdata section dependencies.
+ *
+ * @see compiler.h For compiler-specific macros
+ * @see memory.h For memory operations
+ * @see types/primitives.h For base type definitions
+ *
+ * @defgroup core Core Abstraction Layer
+ * @{
  */
 
 #pragma once
 
-// Core utilities
+/// @name Core Utilities
+/// @{
 #include "core/compiler.h"
 #include "core/memory.h"
 #include "core/math.h"
 #include "core/byteorder.h"
 #include "core/bitops.h"
+/// @}
 
-// Base types
+/// @name Base Types
+/// @{
 #include "types/primitives.h"
+/// @}
 
-// Numeric types
+/// @name Numeric Types
+/// @{
 #include "types/numeric/double.h"
+/// @}
 
-// Embedded types (EMBEDDED_DOUBLE is now in double.h)
+/// @name Embedded Types
+/// @brief Types for position-independent storage (strings, arrays, function pointers)
+/// @{
 #include "types/embedded/embedded_string.h"
 #include "types/embedded/embedded_function_pointer.h"
 #include "types/embedded/embedded_array.h"
+/// @}
 
-// String utilities
+/// @name String Utilities
+/// @{
 #include "string/string.h"
 #include "string/string_formatter.h"
+/// @}
 
-// Algorithms
+/// @name Algorithms
+/// @{
 #include "algorithms/djb2.h"
 #include "algorithms/base64.h"
+/// @}
 
-// Encoding utilities
+/// @name Encoding Utilities
+/// @{
 #include "encoding/utf16.h"
+/// @}
 
-// Network types
+/// @name Network Types
+/// @{
 #include "types/network/ip_address.h"
+/// @}
+
+/** @} */ // end of core group

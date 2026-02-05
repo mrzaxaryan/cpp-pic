@@ -1,185 +1,452 @@
+/**
+ * @file string.h
+ * @brief String Manipulation Utilities
+ *
+ * @details Provides comprehensive string manipulation functions without CRT dependencies.
+ * All operations are position-independent and work with both narrow (CHAR) and wide (WCHAR)
+ * character types through template specialization.
+ *
+ * Features:
+ * - Character classification (IsSpace, IsDigit, IsAlpha, IsAlphaNum)
+ * - Case conversion (ToLowerCase, ToUpperCase)
+ * - String comparison and searching
+ * - String copying and manipulation
+ * - Number to string conversion
+ * - String to number parsing
+ * - UTF-8 to UTF-16 conversion
+ *
+ * @note All functions are designed for position-independent code with no .rdata dependencies.
+ *
+ * @ingroup core
+ *
+ * @defgroup string String Utilities
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 #include "double.h"
 #include "embedded_string.h"
 
-// Class to handle string operations
-// Position-independent, no .rdata dependencies.
+/**
+ * @class String
+ * @brief Static class providing string manipulation utilities
+ *
+ * @details Provides a comprehensive set of string operations without CRT dependencies.
+ * All methods are template-based where appropriate, supporting both CHAR and WCHAR types.
+ * Methods are force-inlined for performance.
+ *
+ * @par Example Usage:
+ * @code
+ * // Character classification
+ * BOOL isDigit = String::IsDigit('5');           // TRUE
+ * BOOL isSpace = String::IsSpace('\t');          // TRUE
+ *
+ * // String operations
+ * USIZE len = String::Length("Hello");           // 5
+ * BOOL eq = String::Equals("foo", "foo");        // TRUE
+ *
+ * // Number conversion
+ * CHAR buf[32];
+ * String::IntToStr(-42, buf, sizeof(buf));       // "-42"
+ * INT64 num = String::ParseInt64("12345");       // 12345
+ * @endcode
+ */
 class String
 {
 public:
-    // ============================================================================
-    // CHARACTER CLASSIFICATION
-    // ============================================================================
+    /// @name Character Classification
+    /// @{
 
-    // Check if character is a whitespace
+    /**
+     * @brief Check if character is whitespace
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to check
+     * @return TRUE if whitespace (space, tab, newline, etc.), FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL IsSpace(TChar c) noexcept;
 
-    // Check if character is a digit
+    /**
+     * @brief Check if character is a decimal digit (0-9)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to check
+     * @return TRUE if digit, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL IsDigit(TChar c) noexcept;
 
-    // Check if character is alphabetic
+    /**
+     * @brief Check if character is alphabetic (a-z, A-Z)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to check
+     * @return TRUE if alphabetic, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL IsAlpha(TChar c) noexcept;
 
-    // Check if character is alphanumeric
+    /**
+     * @brief Check if character is alphanumeric (a-z, A-Z, 0-9)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to check
+     * @return TRUE if alphanumeric, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL IsAlphaNum(TChar c) noexcept;
 
-    // ============================================================================
-    // CHARACTER CONVERSION
-    // ============================================================================
+    /// @}
+    /// @name Character Conversion
+    /// @{
 
-    // Convert character to lowercase
+    /**
+     * @brief Convert character to lowercase
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to convert
+     * @return Lowercase character, or original if not uppercase
+     */
     template <TCHAR TChar>
     static constexpr FORCE_INLINE TChar ToLowerCase(TChar c) noexcept;
 
-    // Convert character to uppercase
+    /**
+     * @brief Convert character to uppercase
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to convert
+     * @return Uppercase character, or original if not lowercase
+     */
     template <TCHAR TChar>
     static constexpr FORCE_INLINE TChar ToUpperCase(TChar c) noexcept;
 
-    // ============================================================================
-    // STRING LENGTH AND COMPARISON
-    // ============================================================================
+    /// @}
+    /// @name String Length and Comparison
+    /// @{
 
-    // Getting the length of a string
+    /**
+     * @brief Get length of null-terminated string
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param pChar Pointer to null-terminated string
+     * @return Number of characters (excluding null terminator)
+     */
     template <TCHAR TChar>
     static constexpr FORCE_INLINE USIZE Length(const TChar *pChar) noexcept;
 
-    // Compare two null-terminated strings
+    /**
+     * @brief Compare two null-terminated strings
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param s1 First string
+     * @param s2 Second string
+     * @param ignoreCase If TRUE, comparison is case-insensitive
+     * @return TRUE if strings are equal, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase = FALSE) noexcept;
 
-    // Compare two strings with explicit lengths
+    /**
+     * @brief Compare two strings with explicit lengths
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param a First string
+     * @param aLen Length of first string
+     * @param b Second string
+     * @param bLen Length of second string
+     * @return TRUE if strings are equal, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL Equals(const TChar *a, USIZE aLen, const TChar *b, USIZE bLen) noexcept;
 
-    // Compare two null-terminated strings for equality
+    /**
+     * @brief Compare two null-terminated strings for equality
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param a First string
+     * @param b Second string
+     * @return TRUE if strings are equal, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL Equals(const TChar *a, const TChar *b) noexcept;
 
-    // Check if a string starts with a given substring (null-terminated)
+    /**
+     * @brief Check if string starts with a prefix (null-terminated)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param pChar String to check
+     * @param pSubString Prefix to look for
+     * @return TRUE if string starts with prefix, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL StartsWith(const TChar *pChar, const TChar *pSubString) noexcept;
 
-    // Check if string starts with prefix (with explicit lengths)
+    /**
+     * @brief Check if string starts with prefix (with explicit lengths)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to check
+     * @param strLen Length of string
+     * @param prefix Prefix to look for
+     * @param prefixLen Length of prefix
+     * @return TRUE if string starts with prefix, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL StartsWith(const TChar *str, USIZE strLen, const TChar *prefix, USIZE prefixLen) noexcept;
 
-    // Check if string ends with suffix
+    /**
+     * @brief Check if string ends with suffix
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to check
+     * @param strLen Length of string
+     * @param suffix Suffix to look for
+     * @param suffixLen Length of suffix
+     * @return TRUE if string ends with suffix, FALSE otherwise
+     */
     template <TCHAR TChar>
     static FORCE_INLINE BOOL EndsWith(const TChar *str, USIZE strLen, const TChar *suffix, USIZE suffixLen) noexcept;
 
-    // ============================================================================
-    // STRING SEARCH
-    // ============================================================================
+    /// @}
+    /// @name String Search
+    /// @{
 
-    // Find the address of a character in a string
+    /**
+     * @brief Find address of character in string
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param c Character to find
+     * @param pChar String to search
+     * @return Pointer to first occurrence, or NULL if not found
+     */
     template <TCHAR TChar>
     static FORCE_INLINE const TChar *AddressOf(TChar c, const TChar *pChar) noexcept;
 
-    // Find first occurrence of character, return index or -1
+    /**
+     * @brief Find index of character in string
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to search
+     * @param strLen Length of string
+     * @param ch Character to find
+     * @return Index of first occurrence, or -1 if not found
+     */
     template <TCHAR TChar>
     static FORCE_INLINE SSIZE IndexOfChar(const TChar *str, USIZE strLen, TChar ch) noexcept;
 
-    // Find first occurrence of substring, return index or -1
+    /**
+     * @brief Find index of substring in string
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to search
+     * @param strLen Length of string
+     * @param sub Substring to find
+     * @param subLen Length of substring
+     * @return Index of first occurrence, or -1 if not found
+     */
     template <TCHAR TChar>
     static FORCE_INLINE SSIZE IndexOf(const TChar *str, USIZE strLen, const TChar *sub, USIZE subLen) noexcept;
 
-    // ============================================================================
-    // STRING COPY OPERATIONS
-    // ============================================================================
+    /// @}
+    /// @name String Copy Operations
+    /// @{
 
-    // Copy a string from src to dest (no bounds checking)
+    /**
+     * @brief Copy string (no bounds checking)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param dest Destination buffer
+     * @param src Source string
+     * @return Pointer to destination buffer
+     * @warning No bounds checking - use safe version with buffer size
+     */
     template <TCHAR TChar>
     static FORCE_INLINE TChar *Copy(TChar *dest, const TChar *src) noexcept;
 
-    // Safe string copy with explicit buffer size
+    /**
+     * @brief Safe string copy with explicit buffer size
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param dest Destination buffer
+     * @param destSize Size of destination buffer
+     * @param src Source string
+     * @param srcLen Length of source string
+     * @return Number of characters copied (excluding null terminator)
+     */
     template <TCHAR TChar>
     static FORCE_INLINE USIZE Copy(TChar *dest, USIZE destSize, const TChar *src, USIZE srcLen) noexcept;
 
-    // Safe string copy with compile-time buffer size
+    /**
+     * @brief Safe string copy with compile-time buffer size
+     * @tparam MaxLen Buffer size (deduced from array)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param dest Destination array
+     * @param src Source string
+     * @param srcLen Length of source string
+     * @return Number of characters copied (excluding null terminator)
+     */
     template <USIZE MaxLen, TCHAR TChar>
     static FORCE_INLINE USIZE Copy(TChar (&dest)[MaxLen], const TChar *src, USIZE srcLen) noexcept;
 
-    // Copy embedded string to buffer
+    /**
+     * @brief Copy embedded string to buffer
+     * @tparam T Embedded string type
+     * @param src Source embedded string
+     * @param buffer Destination buffer
+     * @param bufSize Size of destination buffer
+     * @return Number of characters copied (excluding null terminator)
+     */
     template <typename T>
     static FORCE_INLINE USIZE CopyEmbed(const T &src, CHAR *buffer, USIZE bufSize) noexcept;
 
-    // ============================================================================
-    // STRING MANIPULATION
-    // ============================================================================
+    /// @}
+    /// @name String Manipulation
+    /// @{
 
-    // Trim whitespace from the end of a string (modifies in place)
+    /**
+     * @brief Trim whitespace from end of string (in-place)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to trim (modified in place)
+     * @return New length including null terminator
+     */
     template <TCHAR TChar>
     static FORCE_INLINE USIZE TrimEnd(TChar *str) noexcept;
 
-    // Trim whitespace from end (with explicit length)
+    /**
+     * @brief Trim whitespace from end (with explicit length)
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to trim
+     * @param len Length of string (updated on return)
+     */
     template <TCHAR TChar>
     static FORCE_INLINE void TrimEnd(const TChar *str, USIZE &len) noexcept;
 
-    // Trim whitespace from start (returns new pointer, updates length)
+    /**
+     * @brief Trim whitespace from start
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to trim
+     * @param len Length of string (updated on return)
+     * @return Pointer to first non-whitespace character
+     */
     template <TCHAR TChar>
     static FORCE_INLINE const TChar *TrimStart(const TChar *str, USIZE &len) noexcept;
 
-    // Trim whitespace from both ends
+    /**
+     * @brief Trim whitespace from both ends
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param str String to trim
+     * @param len Length of string (updated on return)
+     * @return Pointer to first non-whitespace character
+     */
     template <TCHAR TChar>
     static FORCE_INLINE const TChar *Trim(const TChar *str, USIZE &len) noexcept;
 
-    // Concatenate two strings into a buffer
+    /**
+     * @brief Concatenate two strings into a buffer
+     * @tparam TChar Character type (CHAR or WCHAR)
+     * @param buffer Destination buffer
+     * @param bufSize Size of destination buffer
+     * @param s1 First string
+     * @param len1 Length of first string
+     * @param s2 Second string
+     * @param len2 Length of second string
+     * @return Total number of characters written (excluding null terminator)
+     */
     template <TCHAR TChar>
     static FORCE_INLINE USIZE Concat(TChar *buffer, USIZE bufSize,
                                      const TChar *s1, USIZE len1,
                                      const TChar *s2, USIZE len2) noexcept;
 
-    // ============================================================================
-    // NUMBER CONVERSION
-    // ============================================================================
+    /// @}
+    /// @name Number Conversion
+    /// @{
 
-    // Convert integer to string
+    /**
+     * @brief Convert signed integer to string
+     * @param value Integer value to convert
+     * @param buffer Destination buffer
+     * @param bufSize Size of destination buffer
+     * @return Number of characters written (excluding null terminator)
+     */
     static FORCE_INLINE USIZE IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept;
 
-    // Convert unsigned integer to string
+    /**
+     * @brief Convert unsigned integer to string
+     * @param value Unsigned integer value to convert
+     * @param buffer Destination buffer
+     * @param bufSize Size of destination buffer
+     * @return Number of characters written (excluding null terminator)
+     */
     static FORCE_INLINE USIZE UIntToStr(UINT64 value, CHAR *buffer, USIZE bufSize) noexcept;
 
-    // Parse a hexadecimal string to UINT32
-    // Stops at first non-hex character
+    /**
+     * @brief Parse hexadecimal string to UINT32
+     * @param str Hexadecimal string (without 0x prefix)
+     * @return Parsed value (stops at first non-hex character)
+     */
     static FORCE_INLINE UINT32 ParseHex(PCCHAR str) noexcept;
 
-    // Write a decimal number to a buffer
-    // Returns pointer to the null terminator
+    /**
+     * @brief Write decimal number to buffer
+     * @param buffer Destination buffer
+     * @param num Number to write
+     * @return Pointer to null terminator
+     */
     static FORCE_INLINE PCHAR WriteDecimal(PCHAR buffer, UINT32 num) noexcept;
 
-    // Write a hexadecimal number to a buffer
-    // uppercase: FALSE for lowercase (a-f), TRUE for uppercase (A-F)
-    // Returns pointer to the null terminator
+    /**
+     * @brief Write hexadecimal number to buffer
+     * @param buffer Destination buffer
+     * @param num Number to write
+     * @param uppercase TRUE for A-F, FALSE for a-f
+     * @return Pointer to null terminator
+     */
     static FORCE_INLINE PCHAR WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase = FALSE) noexcept;
 
-    // Convert DOUBLE to string with configurable precision
+    /**
+     * @brief Convert DOUBLE to string
+     * @param value Floating-point value to convert
+     * @param buffer Destination buffer
+     * @param bufSize Size of destination buffer
+     * @param precision Number of decimal places (default 6)
+     * @return Number of characters written (excluding null terminator)
+     */
     static FORCE_INLINE USIZE FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize, UINT8 precision = 6) noexcept;
 
-    // Parse string to INT64 (with explicit length, returns success/failure)
+    /**
+     * @brief Parse string to INT64 (with explicit length)
+     * @param str String to parse
+     * @param len Length of string
+     * @param result Output parameter for parsed value
+     * @return TRUE on success, FALSE on failure
+     */
     static FORCE_INLINE BOOL ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept;
 
-    // Parse null-terminated string to INT64 (simple version)
+    /**
+     * @brief Parse null-terminated string to INT64
+     * @param str Null-terminated string to parse
+     * @return Parsed value (0 on failure)
+     */
     static FORCE_INLINE INT64 ParseInt64(PCCHAR str) noexcept;
 
-    // Convert string to DOUBLE
+    /**
+     * @brief Convert string to DOUBLE
+     * @param str String to parse
+     * @param len Length of string
+     * @param result Output parameter for parsed value
+     * @return TRUE on success, FALSE on failure
+     */
     static FORCE_INLINE BOOL StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept;
 
-    // Note: naming may be improved later
+    /**
+     * @brief Parse string to specified type
+     * @tparam T Target type
+     * @param str String to parse
+     * @return Parsed value
+     */
     template <typename T>
     static T ParseString(const CHAR *str);
 
-    // ============================================================================
-    // UTF CONVERSION
-    // ============================================================================
+    /// @}
+    /// @name UTF Conversion
+    /// @{
 
-    // UTF-8 (CHAR) -> UTF-16 (WCHAR) conversion
+    /**
+     * @brief Convert UTF-8 string to UTF-16 (wide string)
+     * @param utf8 Source UTF-8 string
+     * @param wide Destination wide string buffer
+     * @param wideBufferSize Size of destination buffer in characters
+     * @return Number of wide characters written
+     */
     static USIZE Utf8ToWide(PCCHAR utf8, PWCHAR wide, USIZE wideBufferSize);
+
+    /// @}
 };
 
 // ============================================================================
@@ -799,3 +1066,5 @@ FORCE_INLINE PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) no
     buffer[j] = '\0';
     return buffer + j;
 }
+
+/** @} */ // end of string group

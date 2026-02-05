@@ -270,11 +270,12 @@ jobs:
         with:
           path: artifacts
 
-      - name: Generate and deploy sizes.json
+      - name: Generate sizes and history
         run: |
           python3 << 'EOF'
           import json
           from pathlib import Path
+          from datetime import datetime
 
           def format_size(size):
               if size is None or size == 0:
@@ -284,7 +285,9 @@ jobs:
               else:
                   return f"{size / 1024:.1f} KB"
 
-          sizes = {}
+          # Collect current sizes (raw bytes for history, formatted for badges)
+          sizes_formatted = {}
+          sizes_raw = {}
           artifacts_dir = Path("artifacts")
 
           for size_dir in artifacts_dir.glob("size-*"):
@@ -302,35 +305,184 @@ jobs:
               bin_size = bin_file.stat().st_size if bin_file else None
 
               key = platform_arch.replace("-", "_")
-              sizes[f"{key}_exe"] = format_size(exe_size)
-              sizes[f"{key}_bin"] = format_size(bin_size)
+              sizes_formatted[f"{key}_exe"] = format_size(exe_size)
+              sizes_formatted[f"{key}_bin"] = format_size(bin_size)
+              if bin_size:
+                  sizes_raw[f"{key}_bin"] = bin_size
 
-          Path("sizes.json").write_text(json.dumps(sizes, indent=2))
+          Path("sizes.json").write_text(json.dumps(sizes_formatted, indent=2))
+          Path("sizes_raw.json").write_text(json.dumps(sizes_raw, indent=2))
+          print("Current sizes:")
           print(Path("sizes.json").read_text())
           EOF
 
-          # Push sizes.json to build-sizes branch
+      - name: Fetch existing history
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin build-sizes 2>/dev/null || true
+          if git rev-parse --verify origin/build-sizes >/dev/null 2>&1; then
+            git show origin/build-sizes:sizes_history.json > /tmp/sizes_history.json 2>/dev/null || echo '{"entries":[]}' > /tmp/sizes_history.json
+          else
+            echo '{"entries":[]}' > /tmp/sizes_history.json
+          fi
 
-          # Save sizes.json before branch switch (avoids conflict with tracked file)
-          mv sizes.json /tmp/sizes.json
+      - name: Update history and generate chart
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+          from datetime import datetime
+
+          # Load existing history
+          history = json.loads(Path("/tmp/sizes_history.json").read_text())
+          sizes_raw = json.loads(Path("sizes_raw.json").read_text())
+
+          # Add new entry
+          new_entry = {
+              "date": datetime.utcnow().strftime("%Y-%m-%d"),
+              "commit": os.environ["COMMIT_SHA"][:7],
+              "sizes": sizes_raw
+          }
+          history["entries"].append(new_entry)
+
+          # Keep last 50 entries max
+          history["entries"] = history["entries"][-50:]
+
+          Path("sizes_history.json").write_text(json.dumps(history, indent=2))
+
+          # Generate SVG chart
+          entries = history["entries"]
+          if len(entries) < 2:
+              # Need at least 2 points for a chart
+              Path("size_chart.svg").write_text('''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
+                <rect width="800" height="400" fill="#0d1117"/>
+                <text x="400" y="200" fill="#8b949e" text-anchor="middle" font-family="monospace">Collecting data... (need 2+ builds)</text>
+              </svg>''')
+          else:
+              # Chart dimensions
+              width, height = 800, 400
+              margin = {"top": 40, "right": 150, "bottom": 60, "left": 70}
+              chart_w = width - margin["left"] - margin["right"]
+              chart_h = height - margin["top"] - margin["bottom"]
+
+              # Platforms to show (.bin only)
+              platforms = [
+                  ("windows_i386_bin", "#58a6ff", "Win i386"),
+                  ("windows_x86_64_bin", "#1f6feb", "Win x64"),
+                  ("windows_aarch64_bin", "#388bfd", "Win ARM64"),
+                  ("linux_i386_bin", "#3fb950", "Linux i386"),
+                  ("linux_x86_64_bin", "#238636", "Linux x64"),
+                  ("linux_armv7a_bin", "#2ea043", "Linux ARM"),
+                  ("linux_aarch64_bin", "#56d364", "Linux ARM64"),
+                  ("uefi_x86_64_bin", "#f78166", "UEFI x64"),
+                  ("uefi_aarch64_bin", "#ffa657", "UEFI ARM64"),
+              ]
+
+              # Find min/max for scaling
+              all_sizes = []
+              for e in entries:
+                  for key, _, _ in platforms:
+                      if key in e["sizes"]:
+                          all_sizes.append(e["sizes"][key])
+
+              if not all_sizes:
+                  min_size, max_size = 0, 1
+              else:
+                  min_size = min(all_sizes) * 0.9
+                  max_size = max(all_sizes) * 1.1
+
+              def scale_x(i):
+                  return margin["left"] + (i / (len(entries) - 1)) * chart_w if len(entries) > 1 else margin["left"]
+
+              def scale_y(val):
+                  if max_size == min_size:
+                      return margin["top"] + chart_h / 2
+                  return margin["top"] + chart_h - ((val - min_size) / (max_size - min_size)) * chart_h
+
+              svg_parts = [
+                  f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
+                  '<defs>',
+                  '<style>',
+                  '.axis-text { fill: #8b949e; font-family: monospace; font-size: 11px; }',
+                  '.title { fill: #c9d1d9; font-family: monospace; font-size: 14px; font-weight: bold; }',
+                  '.legend { fill: #8b949e; font-family: monospace; font-size: 10px; }',
+                  '.grid { stroke: #21262d; stroke-width: 1; }',
+                  '</style>',
+                  '</defs>',
+                  f'<rect width="{width}" height="{height}" fill="#0d1117"/>',
+                  f'<text x="{width/2}" y="25" class="title" text-anchor="middle">Binary Size Trend (.bin)</text>',
+              ]
+
+              # Y-axis grid and labels
+              num_ticks = 5
+              for i in range(num_ticks + 1):
+                  y = margin["top"] + (i / num_ticks) * chart_h
+                  val = max_size - (i / num_ticks) * (max_size - min_size)
+                  svg_parts.append(f'<line x1="{margin["left"]}" y1="{y}" x2="{margin["left"] + chart_w}" y2="{y}" class="grid"/>')
+                  svg_parts.append(f'<text x="{margin["left"] - 10}" y="{y + 4}" class="axis-text" text-anchor="end">{val/1024:.0f}KB</text>')
+
+              # X-axis labels (show some dates)
+              step = max(1, len(entries) // 6)
+              for i in range(0, len(entries), step):
+                  x = scale_x(i)
+                  svg_parts.append(f'<text x="{x}" y="{height - margin["bottom"] + 20}" class="axis-text" text-anchor="middle">{entries[i]["date"][5:]}</text>')
+
+              # Draw lines for each platform
+              for key, color, label in platforms:
+                  points = []
+                  for i, e in enumerate(entries):
+                      if key in e["sizes"]:
+                          points.append((scale_x(i), scale_y(e["sizes"][key])))
+
+                  if len(points) >= 2:
+                      path_d = f'M {points[0][0]:.1f} {points[0][1]:.1f}'
+                      for x, y in points[1:]:
+                          path_d += f' L {x:.1f} {y:.1f}'
+                      svg_parts.append(f'<path d="{path_d}" fill="none" stroke="{color}" stroke-width="2" opacity="0.8"/>')
+
+                      # Add dot at last point
+                      last_x, last_y = points[-1]
+                      svg_parts.append(f'<circle cx="{last_x:.1f}" cy="{last_y:.1f}" r="4" fill="{color}"/>')
+
+              # Legend
+              legend_x = width - margin["right"] + 15
+              for i, (key, color, label) in enumerate(platforms):
+                  y = margin["top"] + 10 + i * 18
+                  svg_parts.append(f'<rect x="{legend_x}" y="{y - 6}" width="12" height="12" fill="{color}"/>')
+                  svg_parts.append(f'<text x="{legend_x + 18}" y="{y + 4}" class="legend">{label}</text>')
+
+              svg_parts.append('</svg>')
+              Path("size_chart.svg").write_text('\n'.join(svg_parts))
+
+          print(f"Generated chart with {len(entries)} data points")
+          EOF
+
+      - name: Deploy to build-sizes branch
+        run: |
+          # Save files before branch switch
+          cp sizes.json /tmp/sizes.json
+          cp sizes_history.json /tmp/sizes_history.json
+          cp size_chart.svg /tmp/size_chart.svg
 
           # Checkout build-sizes branch, or create orphan if it doesn't exist
-          git fetch origin build-sizes 2>/dev/null || true
           git branch -D build-sizes 2>/dev/null || true
           if git rev-parse --verify origin/build-sizes >/dev/null 2>&1; then
             git checkout -b build-sizes origin/build-sizes
           else
             git checkout --orphan build-sizes
+            git rm -rf . 2>/dev/null || true
           fi
 
-          # Clean working tree and restore sizes.json
-          git rm -rf . 2>/dev/null || true
-          git clean -fd 2>/dev/null || true
+          # Restore files
           mv /tmp/sizes.json sizes.json
+          mv /tmp/sizes_history.json sizes_history.json
+          mv /tmp/size_chart.svg size_chart.svg
 
           # Commit and push
-          git add sizes.json
-          git diff --staged --quiet || git commit -m "Update binary sizes"
+          git add sizes.json sizes_history.json size_chart.svg
+          git diff --staged --quiet || git commit -m "Update binary sizes [$(date -u +%Y-%m-%d)]"
           git push origin build-sizes --force

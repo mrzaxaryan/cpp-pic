@@ -23,16 +23,18 @@ class Process
 {
 public:
     /**
-     * BindSocketToShell - Fork a process and bind socket to its stdin/stdout/stderr
+     * BindSocketToShell - Spawn a process and redirect socket to its stdin/stdout/stderr
      *
-     * @param socketFd Socket file descriptor to bind
-     * @param cmd Command to execute (e.g., "/bin/sh" or "cmd.exe")
-     * @return Child PID on success (parent), 0 in child (never returns if exec succeeds), -1 on error
+     * @param socketFd Socket file descriptor to redirect
+     * @param processPath Full path to executable (e.g., "/bin/sh" or "C:\Windows\System32\cmd.exe")
+     * @return Child PID on success, -1 on error
      *
-     * In the parent process, this returns the child PID immediately.
-     * The child process replaces stdin/stdout/stderr with the socket and execs the command.
+     * NOTE: Caller must provide the full path to the executable.
+     *       Use environment variables to get correct paths:
+     *       - Linux: SHELL (e.g., "/bin/bash")
+     *       - Windows: COMSPEC (e.g., "C:\Windows\System32\cmd.exe")
      */
-    static SSIZE BindSocketToShell(SSIZE socketFd, const CHAR* cmd) noexcept;
+    static SSIZE BindSocketToShell(SSIZE socketFd, const CHAR* processPath) noexcept;
 
     /**
      * Fork - Create a child process

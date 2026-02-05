@@ -14,27 +14,6 @@
 
 #define EVEN(vli) (!(vli[0] & 1))
 
-/* Loop unrolling macros for common digit counts */
-#define VLI_UNROLL_2(op) \
-    op(0);               \
-    op(1)
-#define VLI_UNROLL_3(op) \
-    op(0);               \
-    op(1);               \
-    op(2)
-#define VLI_UNROLL_4(op) \
-    op(0);               \
-    op(1);               \
-    op(2);               \
-    op(3)
-#define VLI_UNROLL_6(op) \
-    op(0);               \
-    op(1);               \
-    op(2);               \
-    op(3);               \
-    op(4);               \
-    op(5)
-
 constexpr UINT64 Curve_P_16[] = {0xFFFFFFFFFFFFFFFF, 0xFFFFFFFDFFFFFFFF};
 constexpr UINT64 Curve_B_16[] = {0xD824993C2CEE5ED3, 0xE87579C11079F43D};
 constexpr EccPoint Curve_G_16 = {{0x0C28607CA52C5B86, 0x161FF7528B899B2D}, {0xC02DA292DDED7A83, 0xCF5AC8395BAFEB13}};
@@ -58,44 +37,17 @@ constexpr UINT64 Curve_N_48[] = {0xECEC196ACCC52973, 0x581A0DB248B0A77A, 0xC7634
 
 VOID Ecc::VliClear(UINT64 *pVli)
 {
-    switch (this->numEccDigits)
-    {
-    case 6:
-        pVli[5] = 0;
-        pVli[4] = 0; /* fall through */
-    case 4:
-        pVli[3] = 0; /* fall through */
-    case 3:
-        pVli[2] = 0; /* fall through */
-    case 2:
-        pVli[1] = 0;
-        pVli[0] = 0;
-        break;
-    default:
-        for (UINT32 i = 0; i < this->numEccDigits; ++i)
-            pVli[i] = 0;
-    }
+    for (UINT32 i = 0; i < this->numEccDigits; ++i)
+        pVli[i] = 0;
 }
 
 /* Returns 1 if vli == 0, 0 otherwise. */
 INT32 Ecc::VliIsZero(UINT64 *pVli)
 {
-    switch (this->numEccDigits)
-    {
-    case 2:
-        return (pVli[0] | pVli[1]) == 0;
-    case 3:
-        return (pVli[0] | pVli[1] | pVli[2]) == 0;
-    case 4:
-        return (pVli[0] | pVli[1] | pVli[2] | pVli[3]) == 0;
-    case 6:
-        return (pVli[0] | pVli[1] | pVli[2] | pVli[3] | pVli[4] | pVli[5]) == 0;
-    default:
-        for (UINT32 i = 0; i < this->numEccDigits; ++i)
-            if (pVli[i])
-                return 0;
-        return 1;
-    }
+    UINT64 acc = 0;
+    for (UINT32 i = 0; i < this->numEccDigits; ++i)
+        acc |= pVli[i];
+    return acc == 0;
 }
 
 /* Returns nonzero if bit bit of vli is set. */
@@ -133,23 +85,8 @@ UINT32 Ecc::VliNumBits(UINT64 *pVli)
 /* Sets dest = src. */
 VOID Ecc::VliSet(UINT64 *pDest, UINT64 *pSrc)
 {
-    switch (this->numEccDigits)
-    {
-    case 6:
-        pDest[5] = pSrc[5];
-        pDest[4] = pSrc[4]; /* fall through */
-    case 4:
-        pDest[3] = pSrc[3]; /* fall through */
-    case 3:
-        pDest[2] = pSrc[2]; /* fall through */
-    case 2:
-        pDest[1] = pSrc[1];
-        pDest[0] = pSrc[0];
-        break;
-    default:
-        for (UINT32 i = 0; i < this->numEccDigits; ++i)
-            pDest[i] = pSrc[i];
-    }
+    for (UINT32 i = 0; i < this->numEccDigits; ++i)
+        pDest[i] = pSrc[i];
 }
 
 /* Returns sign of left - right. */

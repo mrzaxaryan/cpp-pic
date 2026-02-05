@@ -46,6 +46,7 @@ public:
 	Socket() = default;
 	Socket(const IPAddress& ipAddress, UINT16 port);
 	BOOL IsValid() const { return m_socket != NULL && m_socket != (PVOID)(SSIZE)(-1); }
+	SSIZE GetFd() const { return (SSIZE)m_socket; }
 	BOOL Open();
 	BOOL Close();
 	SSIZE Read(PVOID buffer, UINT32 bufferLength);

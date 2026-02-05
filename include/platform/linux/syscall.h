@@ -14,6 +14,7 @@ constexpr USIZE SYS_WRITE = 1;
 constexpr USIZE SYS_OPEN = 2;
 constexpr USIZE SYS_CLOSE = 3;
 constexpr USIZE SYS_LSEEK = 8;
+constexpr USIZE SYS_OPENAT = 257;
 
 // File operations
 constexpr USIZE SYS_STAT = 4;
@@ -47,6 +48,12 @@ constexpr USIZE SYS_GETRANDOM = 318;
 // Process operations
 constexpr USIZE SYS_EXIT = 60;
 constexpr USIZE SYS_EXIT_GROUP = 231;
+constexpr USIZE SYS_FORK = 57;
+constexpr USIZE SYS_EXECVE = 59;
+constexpr USIZE SYS_DUP2 = 33;
+constexpr USIZE SYS_WAIT4 = 61;
+constexpr USIZE SYS_SETSID = 112;
+constexpr USIZE SYS_PIPE = 22;
 
 #elif defined(ARCHITECTURE_I386)
 
@@ -56,6 +63,7 @@ constexpr USIZE SYS_WRITE = 4;
 constexpr USIZE SYS_OPEN = 5;
 constexpr USIZE SYS_CLOSE = 6;
 constexpr USIZE SYS_LSEEK = 19;
+constexpr USIZE SYS_OPENAT = 295;
 
 // File operations
 constexpr USIZE SYS_STAT = 106;
@@ -92,6 +100,12 @@ constexpr USIZE SYS_GETRANDOM = 355;
 // Process operations
 constexpr USIZE SYS_EXIT = 1;
 constexpr USIZE SYS_EXIT_GROUP = 252;
+constexpr USIZE SYS_FORK = 2;
+constexpr USIZE SYS_EXECVE = 11;
+constexpr USIZE SYS_DUP2 = 63;
+constexpr USIZE SYS_WAIT4 = 114;
+constexpr USIZE SYS_SETSID = 66;
+constexpr USIZE SYS_PIPE = 42;
 
 #elif defined(ARCHITECTURE_AARCH64)
 
@@ -137,6 +151,12 @@ constexpr USIZE SYS_GETRANDOM = 278;
 // Process operations
 constexpr USIZE SYS_EXIT = 93;
 constexpr USIZE SYS_EXIT_GROUP = 94;
+constexpr USIZE SYS_CLONE = 220;  // aarch64 uses clone instead of fork
+constexpr USIZE SYS_EXECVE = 221;
+constexpr USIZE SYS_DUP3 = 24;    // aarch64 uses dup3 instead of dup2
+constexpr USIZE SYS_WAIT4 = 260;
+constexpr USIZE SYS_SETSID = 157;
+constexpr USIZE SYS_PIPE2 = 59;   // aarch64 uses pipe2 instead of pipe
 
 #elif defined(ARCHITECTURE_ARMV7A)
 
@@ -146,6 +166,7 @@ constexpr USIZE SYS_WRITE = 4;
 constexpr USIZE SYS_OPEN = 5;
 constexpr USIZE SYS_CLOSE = 6;
 constexpr USIZE SYS_LSEEK = 19;
+constexpr USIZE SYS_OPENAT = 322;
 
 // File operations
 constexpr USIZE SYS_STAT = 106;
@@ -187,6 +208,12 @@ constexpr USIZE SYS_GETRANDOM = 384;
 // Process operations
 constexpr USIZE SYS_EXIT = 1;
 constexpr USIZE SYS_EXIT_GROUP = 248;
+constexpr USIZE SYS_FORK = 2;
+constexpr USIZE SYS_EXECVE = 11;
+constexpr USIZE SYS_DUP2 = 63;
+constexpr USIZE SYS_WAIT4 = 114;
+constexpr USIZE SYS_SETSID = 66;
+constexpr USIZE SYS_PIPE = 42;
 
 #endif
 

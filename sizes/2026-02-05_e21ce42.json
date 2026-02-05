@@ -1,0 +1,15 @@
+{
+  "date": "2026-02-05",
+  "commit": "e21ce42",
+  "sizes": {
+    "windows_x86_64_bin": 118424,
+    "uefi_aarch64_bin": 116436,
+    "linux_aarch64_bin": 107720,
+    "linux_i386_bin": 121973,
+    "linux_armv7a_bin": 125484,
+    "linux_x86_64_bin": 106725,
+    "uefi_x86_64_bin": 118881,
+    "windows_i386_bin": 118644,
+    "windows_aarch64_bin": 115456
+  }
+}

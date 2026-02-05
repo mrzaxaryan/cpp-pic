@@ -56,6 +56,62 @@ typedef struct
 
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 
+// Helper: Check if host is localhost and return loopback address
+static inline BOOL IsLocalhost(PCCHAR host, IPAddress *pResult)
+{
+    auto localhost = "localhost"_embed;
+    if (String::Compare(host, (PCCHAR)localhost))
+    {
+        *pResult = IPAddress::FromIPv4(0x0100007F);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// Helper: Read HTTP response headers until \r\n\r\n
+static BOOL ReadHttpHeaders(TLSClient *client, PCHAR buffer, UINT16 bufferSize, PUINT32 pBytesRead)
+{
+    UINT32 totalBytesRead = 0;
+    for (;;)
+    {
+        if (totalBytesRead >= bufferSize)
+        {
+            LOG_WARNING("DNS response too large.");
+            return FALSE;
+        }
+        UINT32 bytesRead = client->Read(buffer + totalBytesRead, 1);
+        if (bytesRead == 0)
+        {
+            LOG_WARNING("Failed to read DNS response.");
+            return FALSE;
+        }
+        totalBytesRead += bytesRead;
+        // Check for \r\n\r\n (168626701 as UINT32)
+        if (totalBytesRead >= 4 && *(PUINT32)(buffer + totalBytesRead - 4) == 168626701)
+            break;
+    }
+    *pBytesRead = totalBytesRead;
+    return TRUE;
+}
+
+// Helper: Validate HTTP 200 response
+static inline BOOL ValidateHttp200(PCHAR response, UINT32 bytesRead)
+{
+    // Check for " 200" at offset 9 (540028978 as UINT32)
+    return bytesRead >= 12 && *(PUINT32)(response + 9) == 540028978;
+}
+
+// Helper: Parse Content-Length header value
+static INT64 ParseContentLength(PCHAR response)
+{
+    auto contentLengthHeader = "Content-Length: "_embed;
+    USIZE headerSize = String::Length((PCCHAR)contentLengthHeader);
+    USIZE offset = 0;
+    while (Memory::Compare(response + offset, contentLengthHeader, headerSize) != 0)
+        offset++;
+    return ParseINT64(response + offset + headerSize);
+}
+
 static inline UINT16 ReadU16BE(PCVOID buffer, USIZE index)
 {
     const UINT8 *p = (const UINT8 *)buffer;
@@ -405,257 +461,16 @@ static USIZE DNS_GenerateQuery(PCCHAR host, RequestType dnstype, PCHAR buffer, B
 BOOL DNS::FormatterCallback(PVOID context, CHAR ch)
 {
     TLSClient *tlsClient = (TLSClient *)context;
-    // Write the character to the TLS client
     return tlsClient->Write(&ch, 1);
 }
-// This function resolves a hostname to an IP address
-IPAddress DNS::ResolveOverTls(PCCHAR host, RequestType dnstype)
+
+IPAddress DNS::ResloveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
-    LOG_DEBUG("DNS_resolve(host: %s, dnstype: %d) called", host, dnstype);
+    IPAddress result;
+    if (IsLocalhost(host, &result))
+        return result;
 
-    // Check for localhost
-    auto localhost = "localhost"_embed;
-    // If the host is localhost, set the IP address to
-    if (String::Compare(host, (PCCHAR)localhost))
-    {
-        return IPAddress::FromIPv4(0x0100007F);
-    }
-    // Variables for DNS server address and port
-    auto dnsHostName = "one.one.one.one"_embed;
-    IPAddress dnsIPAddress = IPAddress::FromIPv4(0x01010101); // 1.1.1.1
-    UINT16 dnsPort = 853;
-
-    TLSClient TLSClient(dnsHostName, dnsIPAddress, dnsPort); // TLS client context structure
-    // Attempt to connect to the DNS server using TLS
-    if (!TLSClient.Open())
-    {
-        LOG_WARNING("Failed to connect to DNS server");
-        return IPAddress::Invalid();
-    }
-
-    UINT8 buffer[0xff];                                                  // Buffer to hold the DNS request
-    UINT16 bufferSize = DNS_GenerateQuery(host, dnstype, (PCHAR)buffer); // Initialize the DNS request buffer
-
-    // Attempt to write the DNS request to the TLS server
-    if (!TLSClient.Write((PCHAR)buffer, bufferSize))
-    {
-        LOG_WARNING("Failed to send DNS request");
-        return IPAddress::Invalid();
-    }
-
-    // Read the DNS response from the TLS server
-    SSIZE bytesRead = TLSClient.Read((PCHAR)buffer, 2);
-    // Check if the number of bytes read is 2, which indicates a valid DNS response header
-    if (bytesRead != 2)
-    {
-        LOG_WARNING("Failed to read DNS response");
-        return IPAddress::Invalid();
-    }
-
-    // Swap the byte order of the response header size
-    bufferSize = UINT16SwapByteOrder(*((PUINT16)buffer));
-    bytesRead = TLSClient.Read((PCHAR)buffer, bufferSize);
-    // Check if the number of bytes read matches the expected buffer size
-    if (bytesRead != bufferSize)
-    {
-        LOG_WARNING("Failed to read DNS response");
-        return IPAddress::Invalid();
-    }
-    // Checking if the DNS response is valid
-    IPAddress ipAddress;
-    if (!DNS_parse((PUINT8)buffer, bufferSize, &ipAddress))
-    {
-        TLSClient.Close();
-
-        LOG_WARNING("Failed to parse DNS response");
-        return IPAddress::Invalid();
-    }
-
-    // LOG_DEBUG("DNS resolved %s to %s", host, ipAddress);
-    //  Disconnect from the TLS server
-    TLSClient.Close();
-    return ipAddress;
-}
-
-IPAddress DNS::ResolveOverHttp(PCCHAR host, RequestType dnstype)
-{
-    LOG_DEBUG("DNS_OVER_HTTPS_resolve(host: %s, dnstype: %d) called", host, dnstype);
-
-    // Validate the input parameters
-
-    // Check for localhost
-    auto localhost = "localhost"_embed;
-    // If the host is localhost, set the IP address to
-    if (String::Compare(host, (PCCHAR)localhost))
-    {
-        return IPAddress::FromIPv4(0x0100007F);
-    }
-    // Variables for DNS server address and port
-    auto dnsHostName = "one.one.one.one"_embed;
-
-    IPAddress dnsIPAddress = IPAddress::FromIPv4(0x01010101); // 1.1.1.1
-    UINT16 dnsPort = 443;
-
-    TLSClient tlsClient(dnsHostName, dnsIPAddress, dnsPort); // TLS client context structure
-    // Attempt to connect to the DNS server using TLS
-    if (!tlsClient.Open())
-    {
-        LOG_WARNING("Failed to connect to DNS server");
-        return IPAddress::Invalid();
-    }
-
-    auto format = "GET /dns-query?name=%s&type=%d HTTP/1.1\r\n"_embed
-                  "Host: %s\r\n"_embed
-                  "accept: application"_embed
-                  "/dns-json\r\n\r\n"_embed;
-
-    auto fixed = EMBED_FUNC(FormatterCallback);
-    StringFormatter::Format<CHAR>(fixed, &tlsClient, (PCCHAR)format, host, (INT32)dnstype, (PCCHAR)dnsHostName); // Format the path with the hostname
-
-    UINT16 handshakeResponseBufferSize = 4096;                 // Buffer size for the handshake response
-    PCHAR dnsResponse = new CHAR[handshakeResponseBufferSize]; // Allocate memory for the handshake response
-    PCHAR dnsResponseStart = dnsResponse;                      // Pointer to the start of the handshake response
-    UINT32 totalBytesRead = 0;                                 // Total bytes read from the handshake response
-
-    for (;;)
-    {
-        // Check if the total bytes read exceeds the buffer size
-        if (totalBytesRead >= handshakeResponseBufferSize)
-        {
-            LOG_WARNING("DNS response too large.");
-            delete[] dnsResponseStart;
-            return IPAddress::Invalid();
-        }
-
-        UINT32 bytesRead; // Variable to hold the number of bytes read
-
-        // Read 1 byte at a time from the WebSocket client context depending on whether it is secure or not
-        bytesRead = tlsClient.Read(dnsResponse + totalBytesRead, 1);
-
-        // Check if no bytes were read, indicating an error
-        if (bytesRead == 0)
-        {
-            LOG_WARNING("Failed to read DNS response.");
-            delete[] dnsResponseStart;
-            return IPAddress::Invalid();
-        }
-
-        totalBytesRead += bytesRead; // Update the total bytes read
-
-        // Check if the handshake response ends with the HTTP response end sequence
-        if (totalBytesRead >= 4
-            //  { '\r', '\n', '\r', '\n } in UINT32 == 168626701
-            && *(PUINT32)(dnsResponse + totalBytesRead - 4) ==
-                   168626701)
-        {
-            break;
-        }
-    }
-
-    dnsResponse[totalBytesRead] = '\0'; // Null-terminate the handshake response string
-
-    LOG_DEBUG("DNS response received.\n\n%s", dnsResponse);
-    if (totalBytesRead < 12
-        // { ' ', '2','0','0' } as UINT32 = 540028978
-        || *(PUINT32)(dnsResponse + 9) !=
-               540028978)
-    {
-        delete[] dnsResponseStart;
-        LOG_WARNING("Invalid handshake response.");
-        return IPAddress::Invalid();
-    }
-    auto contentLengthHeader = "Content-Length: "_embed; // Pointer to hold the content length header
-    // Find content length header in the handshake response
-
-    USIZE contentLengthHeaderSize = String::Length((PCCHAR)contentLengthHeader); // Get the length of the content length header
-    totalBytesRead = 0;
-    while (Memory::Compare(dnsResponse + totalBytesRead, contentLengthHeader, contentLengthHeaderSize) != 0)
-    {
-        totalBytesRead++;
-    }
-
-    // Move the pointer to the start of the content length value
-    totalBytesRead += contentLengthHeaderSize;
-    dnsResponse += totalBytesRead; // Move the pointer to the start of the content length value
-
-    // Find the end of the content length digits
-    USIZE digitIdx = 0;
-    while (isdigit(dnsResponse[digitIdx]))
-    {
-        digitIdx++;
-    }
-
-    dnsResponse[digitIdx] = '\0';                  // Null-terminate the content length value
-    INT64 contentLength = ParseINT64(dnsResponse); // Convert the content length value to an integer
-    LOG_DEBUG("Content length: %d", contentLength);
-
-    // Read the DNS response from the TLS server
-    tlsClient.Read(dnsResponse, (UINT32)contentLength);
-    dnsResponse[contentLength] = '\0'; // Null-terminate the JSON response
-
-    LOG_DEBUG("DNS response header read successfully, \n%s", dnsResponse);
-
-    // Search for "data" field - handle both "data":"value" and "data": "value" (with space)
-    PCHAR dataField = (PCHAR)(PCCHAR) "\"data\":"_embed;
-    USIZE dataFieldSize = String::Length(dataField);
-    USIZE searchIdx = 0;
-    USIZE maxSearch = (USIZE)contentLength - dataFieldSize;
-
-    while (searchIdx < maxSearch && Memory::Compare(dnsResponse + searchIdx, dataField, dataFieldSize) != 0)
-    {
-        searchIdx++;
-    }
-
-    if (searchIdx >= maxSearch)
-    {
-        LOG_WARNING("Could not find 'data' field in DNS JSON response");
-        tlsClient.Close();
-        delete[] dnsResponseStart;
-        return IPAddress::Invalid();
-    }
-
-    // Move past "data": and skip any whitespace or opening quote
-    dnsResponse += searchIdx + dataFieldSize;
-    while (*dnsResponse == ' ' || *dnsResponse == '"')
-    {
-        dnsResponse++;
-    }
-
-    PCHAR ipAddressEnd = dnsResponse;
-
-    while (*ipAddressEnd && *ipAddressEnd != '"') // Find the end of the IP address value
-    {
-        ipAddressEnd++;
-    }
-
-    *ipAddressEnd = '\0';                                     // Null-terminate the IP address value
-    IPAddress ipAddress = IPAddress::FromString(dnsResponse); // Convert the IP address value to an IPv4 address
-
-    LOG_DEBUG("DNS resolved %s to %s", host, (PCCHAR)dnsResponse);
-
-    // LOG_DEBUG("DNS resolved %s to %s", host, ipAddress);
-    //  Disconnect from the TLS server
-    tlsClient.Close();
-    delete[] dnsResponseStart;
-    return ipAddress;
-}
-
-IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
-{
-    // Use DNS over HTTPS Post
-    // Check for localhost
-    auto localhost = "localhost"_embed;
-    // If the host is localhost, set the IP address to
-    if (String::Compare(host, (PCCHAR)localhost))
-    {
-        return IPAddress::FromIPv4(0x0100007F);
-    }
-    // Variables for DNS server address and port
-    IPAddress dnsIPAddress = DNSServerIp;
-    UINT16 dnsPort = 443;
-
-    TLSClient tlsClient(DNSServerName, dnsIPAddress, dnsPort); // TLS client context structure
-    // Attempt to connect to the DNS server using TLS
+    TLSClient tlsClient(DNSServerName, DNSServerIp, 443);
     if (!tlsClient.Open())
     {
         LOG_WARNING("Failed to connect to DNS server");
@@ -669,79 +484,32 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
                   "Content-Length: %d\r\n"_embed
                   "\r\n"_embed;
 
-    // format packet that will be sent in the body
-    UINT8 buffer[0xff];                                                         // Buffer to hold the DNS request
-    UINT16 bufferSize = DNS_GenerateQuery(host, dnstype, (PCHAR)buffer, false); // Initialize the DNS request buffer
+    UINT8 buffer[0xff];
+    UINT16 bufferSize = DNS_GenerateQuery(host, dnstype, (PCHAR)buffer, false);
     auto fixed = EMBED_FUNC(FormatterCallback);
     StringFormatter::Format<CHAR>(fixed, &tlsClient, (PCCHAR)format, DNSServerName, bufferSize);
 
-    tlsClient.Write(buffer, bufferSize); // Send the handshake request
+    tlsClient.Write(buffer, bufferSize);
 
-    UINT16 handshakeResponseBufferSize = 4096;                 // Buffer size for the handshake response
-    PCHAR dnsResponse = new CHAR[handshakeResponseBufferSize]; // Allocate memory for the handshake response
-    PCHAR dnsResponseStart = dnsResponse;                      // Pointer to the start of the handshake response
-    UINT32 totalBytesRead = 0;                                 // Total bytes read from the handshake response
+    UINT16 responseBufferSize = 4096;
+    PCHAR dnsResponse = new CHAR[responseBufferSize];
+    PCHAR dnsResponseStart = dnsResponse;
+    UINT32 totalBytesRead = 0;
 
-    for (;;)
+    if (!ReadHttpHeaders(&tlsClient, dnsResponse, responseBufferSize, &totalBytesRead))
     {
-        // Check if the total bytes read exceeds the buffer size
-        if (totalBytesRead >= handshakeResponseBufferSize)
-        {
-            LOG_WARNING("DNS response too large.");
-            delete[] dnsResponseStart;
-            return IPAddress::Invalid();
-        }
-
-        UINT32 bytesRead; // Variable to hold the number of bytes read
-
-        // Read 1 byte at a time from the WebSocket client context depending on whether it is secure or not
-        bytesRead = tlsClient.Read(dnsResponse + totalBytesRead, 1);
-
-        // Check if no bytes were read, indicating an error
-        if (bytesRead == 0)
-        {
-            LOG_WARNING("Failed to read DNS response.");
-            delete[] dnsResponseStart;
-            return IPAddress::Invalid();
-        }
-
-        totalBytesRead += bytesRead; // Update the total bytes read
-
-        // Check if the handshake response ends with the HTTP response end sequence
-        if (totalBytesRead >= 4
-            //  { '\r', '\n', '\r', '\n } in UINT32 == 168626701
-            && *(PUINT32)(dnsResponse + totalBytesRead - 4) ==
-                   168626701)
-        {
-            break;
-        }
+        delete[] dnsResponseStart;
+        return IPAddress::Invalid();
     }
 
     LOG_DEBUG("DNS response received.\n\n%s", dnsResponse);
-    if (totalBytesRead < 12
-        // { ' ', '2','0','0' } as UINT32 = 540028978
-        || *(PUINT32)(dnsResponse + 9) !=
-               540028978)
+    if (!ValidateHttp200(dnsResponse, totalBytesRead))
     {
         delete[] dnsResponseStart;
         LOG_WARNING("Invalid handshake response.");
         return IPAddress::Invalid();
     }
-    PCHAR contentLengthHeader = (PCHAR)(PCCHAR) "Content-Length: "_embed; // Pointer to hold the content length header
-    // Find content length header in the handshake response
-
-    USIZE contentLengthHeaderSize = String::Length(contentLengthHeader); // Get the length of the content length header
-    USIZE offsetOfContentLength = 0;
-    while (Memory::Compare(dnsResponse + offsetOfContentLength, contentLengthHeader, contentLengthHeaderSize) != 0)
-    {
-        offsetOfContentLength++;
-    }
-
-    // Move the pointer to the start of the content length value
-    offsetOfContentLength += contentLengthHeaderSize;
-
-    // dnsResponse[totalBytesRead] = '\0';                          // Null-terminate the content length value
-    INT64 contentLength = ParseINT64((PCHAR)dnsResponse + offsetOfContentLength); // Convert the content length value to an integer
+    INT64 contentLength = ParseContentLength(dnsResponse);
     LOG_DEBUG("Content length: %d", contentLength);
 
     delete[] dnsResponseStart;
@@ -764,21 +532,19 @@ IPAddress DNS::ResloveOverHttpPost(PCCHAR host, const IPAddress &DNSServerIp, PC
 
 IPAddress DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
 {
-    IPAddress ip = ResloveOverHttpPost(host, IPAddress::FromIPv4(0x01010101), (PCCHAR) "one.one.one.one"_embed, dnstype);
+    auto serverName = "one.one.one.one"_embed;
+    IPAddress ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x01010101), (PCCHAR)serverName, dnstype);
     if (!ip.IsValid())
-    {
-        return ResloveOverHttpPost(host, IPAddress::FromIPv4(0x01000001), (PCCHAR) "one.one.one.one"_embed, dnstype);
-    }
+        ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x01000001), (PCCHAR)serverName, dnstype);
     return ip;
 }
 
 IPAddress DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
 {
-    IPAddress ip = ResloveOverHttpPost(host, IPAddress::FromIPv4(0x08080808), (PCCHAR) "dns.google"_embed, dnstype);
+    auto serverName = "dns.google"_embed;
+    IPAddress ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x08080808), (PCCHAR)serverName, dnstype);
     if (!ip.IsValid())
-    {
-        return ResloveOverHttpPost(host, IPAddress::FromIPv4(0x04040808), (PCCHAR) "dns.google"_embed, dnstype);
-    }
+        ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x04040808), (PCCHAR)serverName, dnstype);
     return ip;
 }
 
@@ -786,56 +552,17 @@ IPAddress DNS::Resolve(PCCHAR host)
 {
     LOG_DEBUG("DNS_resolve(host: %s) called - trying IPv6 first", host);
 
-    // Try IPv6 (AAAA) first
-    LOG_DEBUG("Attempting IPv6 (AAAA) resolution for %s", host);
-    IPAddress ipAddress = DNS::CloudflareResolve(host, AAAA);
-    if (ipAddress.IsValid())
-    {
-        LOG_DEBUG("IPv6 resolution successful via Cloudflare");
-        return ipAddress;
-    }
+    // Try IPv6 (AAAA) first via Cloudflare, then Google
+    IPAddress ip = CloudflareResolve(host, AAAA);
+    if (ip.IsValid()) return ip;
 
-    ipAddress = DNS::GoogleResolve(host, AAAA);
-    if (ipAddress.IsValid())
-    {
-        LOG_DEBUG("IPv6 resolution successful via Google");
-        return ipAddress;
-    }
+    ip = GoogleResolve(host, AAAA);
+    if (ip.IsValid()) return ip;
 
-    ipAddress = DNS::ResolveOverHttp(host, AAAA);
-    if (ipAddress.IsValid())
-    {
-        LOG_DEBUG("IPv6 resolution successful via DoH");
-        return ipAddress;
-    }
-
-    ipAddress = DNS::ResolveOverTls(host, AAAA);
-    if (ipAddress.IsValid())
-    {
-        LOG_DEBUG("IPv6 resolution successful via DoT");
-        return ipAddress;
-    }
-
-    // Fall back to IPv4 (A) if IPv6 fails
+    // Fall back to IPv4 (A)
     LOG_DEBUG("IPv6 resolution failed, falling back to IPv4 (A) for %s", host);
-    ipAddress = DNS::CloudflareResolve(host, A);
-    if (ipAddress.IsValid())
-    {
-        return ipAddress;
-    }
+    ip = CloudflareResolve(host, A);
+    if (ip.IsValid()) return ip;
 
-    ipAddress = DNS::GoogleResolve(host, A);
-    if (ipAddress.IsValid())
-    {
-        return ipAddress;
-    }
-
-    ipAddress = DNS::ResolveOverHttp(host, A);
-    if (ipAddress.IsValid())
-    {
-        return ipAddress;
-    }
-
-    ipAddress = DNS::ResolveOverTls(host, A);
-    return ipAddress;
+    return GoogleResolve(host, A);
 }

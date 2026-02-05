@@ -12,7 +12,7 @@ private:
 	{
 		LOG_INFO("Test: Localhost Resolution");
 
-		IPAddress ip = DNS::ResolveOverTls("localhost"_embed, A);
+		IPAddress ip = DNS::CloudflareResolve("localhost"_embed, A);
 
 		// localhost should resolve to 127.0.0.1 = 0x7F000001 in network byte order = 0x0100007F
 		if (ip.ToIPv4() != 0x0100007F)
@@ -77,41 +77,7 @@ private:
 		return TRUE;
 	}
 
-	// Test 4: DNS over TLS resolution
-	static BOOL TestDnsOverTls()
-	{
-		LOG_INFO("Test: DNS over TLS Resolution");
-
-		IPAddress ip = DNS::ResolveOverTls("cloudflare.com"_embed, A);
-
-		if (ip .IsValid() == FALSE)
-		{
-			LOG_ERROR("DNS over TLS resolution failed");
-			return FALSE;
-		}
-
-		LOG_INFO("DNS over TLS resolved cloudflare.com to 0x%08X", ip.ToIPv4());
-		return TRUE;
-	}
-
-	// Test 5: DNS over HTTPS (JSON format) resolution
-	static BOOL TestDnsOverHttps()
-	{
-		LOG_INFO("Test: DNS over HTTPS (JSON) Resolution");
-
-		IPAddress ip = DNS::ResolveOverHttp("google.com"_embed, A);
-
-		if (ip .IsValid() == FALSE)
-		{
-			LOG_ERROR("DNS over HTTPS resolution failed");
-			return FALSE;
-		}
-
-		LOG_INFO("DNS over HTTPS resolved google.com to 0x%08X", ip.ToIPv4());
-		return TRUE;
-	}
-
-	// Test 6: Main DNS Resolve function (tries IPv6 first, falls back to IPv4)
+	// Test 4: Main DNS Resolve function (tries IPv6 first, falls back to IPv4)
 	static BOOL TestMainResolve()
 	{
 		LOG_INFO("Test: Main DNS Resolve Function");
@@ -154,13 +120,11 @@ public:
 		BOOL allPassed = TRUE;
 
 		LOG_INFO("Running DNS Tests...");
-		LOG_INFO("  Testing DNS resolution via DoT, DoH (JSON), and DoH (binary wireformat)");
+		LOG_INFO("  Testing DNS resolution via DoH (binary wireformat)");
 
 		RunTest(allPassed, EMBED_FUNC(TestLocalhostResolution), L"Localhost resolution"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestCloudflareResolve), L"Cloudflare DNS resolution"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestGoogleResolve), L"Google DNS resolution"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestDnsOverTls), L"DNS over TLS resolution"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestDnsOverHttps), L"DNS over HTTPS resolution"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestMainResolve), L"Main DNS resolve function"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestKnownIpResolution), L"Known IP resolution"_embed);
 

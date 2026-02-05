@@ -52,6 +52,50 @@ private:
     friend consteval DOUBLE operator""_embed(long double v);
     friend consteval DOUBLE operator""_embed(UINT64 value);
 
+    // Comparison operation enum for shared helper
+    enum CmpOp { CMP_EQ, CMP_LT, CMP_LE, CMP_GT, CMP_GE };
+
+    // Shared comparison helper to reduce code duplication
+    NOINLINE DISABLE_OPTIMIZATION BOOL Compare(const DOUBLE &other, CmpOp op) const noexcept
+    {
+        UINT64 ull_a = bits;
+        UINT64 ull_b = other.bits;
+        double a = __builtin_bit_cast(double, ull_a);
+        double b = __builtin_bit_cast(double, ull_b);
+        switch (op)
+        {
+            case CMP_EQ: return a == b;
+            case CMP_LT: return a < b;
+            case CMP_LE: return a <= b;
+            case CMP_GT: return a > b;
+            case CMP_GE: return a >= b;
+            default: return FALSE;
+        }
+    }
+
+    // Arithmetic operation enum for shared helper
+    enum ArithOp { OP_ADD, OP_SUB, OP_MUL, OP_DIV };
+
+    // Shared arithmetic helper to reduce code duplication
+    NOINLINE DISABLE_OPTIMIZATION DOUBLE Arithmetic(const DOUBLE &other, ArithOp op) const noexcept
+    {
+        UINT64 ull_a = bits;
+        UINT64 ull_b = other.bits;
+        double a = __builtin_bit_cast(double, ull_a);
+        double b = __builtin_bit_cast(double, ull_b);
+        double result;
+        switch (op)
+        {
+            case OP_ADD: result = a + b; break;
+            case OP_SUB: result = a - b; break;
+            case OP_MUL: result = a * b; break;
+            case OP_DIV: result = a / b; break;
+            default: result = 0.0; break;
+        }
+        UINT64 result_ull = __builtin_bit_cast(UINT64, result);
+        return DOUBLE(result_ull);
+    }
+
 public:
     /**
      * Parse a string to DOUBLE
@@ -266,99 +310,17 @@ public:
         return *this;
     }
 
-    NOINLINE DISABLE_OPTIMIZATION BOOL operator==(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        return a == b;
-    }
+    BOOL operator==(const DOUBLE &other) const noexcept { return Compare(other, CMP_EQ); }
+    BOOL operator!=(const DOUBLE &other) const noexcept { return !Compare(other, CMP_EQ); }
+    BOOL operator<(const DOUBLE &other) const noexcept { return Compare(other, CMP_LT); }
+    BOOL operator<=(const DOUBLE &other) const noexcept { return Compare(other, CMP_LE); }
+    BOOL operator>(const DOUBLE &other) const noexcept { return Compare(other, CMP_GT); }
+    BOOL operator>=(const DOUBLE &other) const noexcept { return Compare(other, CMP_GE); }
 
-    NOINLINE DISABLE_OPTIMIZATION BOOL operator!=(const DOUBLE &other) const noexcept
-    {
-        return !(*this == other);
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION BOOL operator<(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        return a < b;
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION BOOL operator<=(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        return a <= b;
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION BOOL operator>(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        return a > b;
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION BOOL operator>=(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        return a >= b;
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE operator+(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        double result = a + b;
-        UINT64 result_ull = __builtin_bit_cast(UINT64, result);
-        return DOUBLE(result_ull);
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE operator-(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        double result = a - b;
-        UINT64 result_ull = __builtin_bit_cast(UINT64, result);
-        return DOUBLE(result_ull);
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE operator*(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        double result = a * b;
-        UINT64 result_ull = __builtin_bit_cast(UINT64, result);
-        return DOUBLE(result_ull);
-    }
-
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE operator/(const DOUBLE &other) const noexcept
-    {
-        UINT64 ull_a = bits;
-        UINT64 ull_b = other.bits;
-        double a = __builtin_bit_cast(double, ull_a);
-        double b = __builtin_bit_cast(double, ull_b);
-        double result = a / b;
-        UINT64 result_ull = __builtin_bit_cast(UINT64, result);
-        return DOUBLE(result_ull);
-    }
+    DOUBLE operator+(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_ADD); }
+    DOUBLE operator-(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_SUB); }
+    DOUBLE operator*(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_MUL); }
+    DOUBLE operator/(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_DIV); }
 
     NOINLINE DISABLE_OPTIMIZATION DOUBLE operator-() const noexcept
     {

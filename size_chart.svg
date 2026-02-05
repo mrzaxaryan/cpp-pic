@@ -22,27 +22,37 @@
 <line x1="70" y1="340.0" x2="650" y2="340.0" class="grid"/>
 <text x="60" y="344.0" class="axis-text" text-anchor="end">93KB</text>
 <text x="70.0" y="360" class="axis-text" text-anchor="middle">02-05</text>
-<text x="263.3333333333333" y="360" class="axis-text" text-anchor="middle">02-05</text>
-<text x="456.66666666666663" y="360" class="axis-text" text-anchor="middle">02-05</text>
+<text x="215.0" y="360" class="axis-text" text-anchor="middle">02-05</text>
+<text x="360.0" y="360" class="axis-text" text-anchor="middle">02-05</text>
+<text x="505.0" y="360" class="axis-text" text-anchor="middle">02-05</text>
 <text x="650.0" y="360" class="axis-text" text-anchor="middle">02-05</text>
-<path d="M 70.0 190.6 L 263.3 190.7 L 456.7 168.7 L 650.0 175.0" fill="none" stroke="#58a6ff" stroke-width="2" opacity="0.8"/>
+<path d="M 70.0 190.6 L 215.0 190.7 L 360.0 168.7 L 505.0 190.7 L 650.0 175.0" fill="none" stroke="#58a6ff" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="175.0" r="4" fill="#58a6ff"/>
-<path d="M 70.0 191.1 L 263.3 191.2 L 456.7 168.9 L 650.0 173.9" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="179.0" fill="#58a6ff" font-family="monospace" font-size="9px">118.0KB</text>
+<path d="M 70.0 191.1 L 215.0 191.2 L 360.0 168.9 L 505.0 191.2 L 650.0 173.9" fill="none" stroke="#1f6feb" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="173.9" r="4" fill="#1f6feb"/>
-<path d="M 70.0 210.7 L 263.3 211.0 L 456.7 187.6 L 650.0 192.4" fill="none" stroke="#388bfd" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="177.9" fill="#1f6feb" font-family="monospace" font-size="9px">118.2KB</text>
+<path d="M 70.0 210.7 L 215.0 211.0 L 360.0 187.6 L 505.0 211.0 L 650.0 192.4" fill="none" stroke="#388bfd" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="192.4" r="4" fill="#388bfd"/>
-<path d="M 70.0 169.4 L 263.3 169.6 L 456.7 148.2 L 650.0 152.6" fill="none" stroke="#3fb950" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="196.4" fill="#388bfd" font-family="monospace" font-size="9px">115.4KB</text>
+<path d="M 70.0 169.4 L 215.0 169.6 L 360.0 148.2 L 505.0 169.6 L 650.0 152.6" fill="none" stroke="#3fb950" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="152.6" r="4" fill="#3fb950"/>
-<path d="M 70.0 270.0 L 263.3 270.1 L 456.7 247.2 L 650.0 252.5" fill="none" stroke="#238636" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="156.6" fill="#3fb950" font-family="monospace" font-size="9px">121.3KB</text>
+<path d="M 70.0 270.0 L 215.0 270.1 L 360.0 247.2 L 505.0 270.1 L 650.0 252.5" fill="none" stroke="#238636" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="252.5" r="4" fill="#238636"/>
-<path d="M 70.0 146.3 L 263.3 146.5 L 456.7 124.5 L 650.0 131.3" fill="none" stroke="#2ea043" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="256.5" fill="#238636" font-family="monospace" font-size="9px">106.5KB</text>
+<path d="M 70.0 146.3 L 215.0 146.5 L 360.0 124.5 L 505.0 146.5 L 650.0 131.3" fill="none" stroke="#2ea043" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="131.3" r="4" fill="#2ea043"/>
-<path d="M 70.0 263.1 L 263.3 263.3 L 456.7 241.3 L 650.0 245.9" fill="none" stroke="#56d364" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="135.3" fill="#2ea043" font-family="monospace" font-size="9px">124.5KB</text>
+<path d="M 70.0 263.1 L 215.0 263.3 L 360.0 241.3 L 505.0 263.3 L 650.0 245.9" fill="none" stroke="#56d364" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="245.9" r="4" fill="#56d364"/>
-<path d="M 70.0 188.1 L 263.3 188.1 L 456.7 166.3 L 650.0 171.3" fill="none" stroke="#f78166" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="249.9" fill="#56d364" font-family="monospace" font-size="9px">107.5KB</text>
+<path d="M 70.0 188.1 L 215.0 188.1 L 360.0 166.3 L 505.0 188.1 L 650.0 171.3" fill="none" stroke="#f78166" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="171.3" r="4" fill="#f78166"/>
-<path d="M 70.0 204.6 L 263.3 204.6 L 456.7 181.0 L 650.0 185.8" fill="none" stroke="#ffa657" stroke-width="2" opacity="0.8"/>
+<text x="656.0" y="175.3" fill="#f78166" font-family="monospace" font-size="9px">118.5KB</text>
+<path d="M 70.0 204.6 L 215.0 204.6 L 360.0 181.0 L 505.0 204.6 L 650.0 185.8" fill="none" stroke="#ffa657" stroke-width="2" opacity="0.8"/>
 <circle cx="650.0" cy="185.8" r="4" fill="#ffa657"/>
+<text x="656.0" y="189.8" fill="#ffa657" font-family="monospace" font-size="9px">116.4KB</text>
 <rect x="665" y="44" width="12" height="12" fill="#58a6ff"/>
 <text x="683" y="54" class="legend">Win i386</text>
 <rect x="665" y="62" width="12" height="12" fill="#1f6feb"/>

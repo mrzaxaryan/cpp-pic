@@ -79,7 +79,7 @@
 
 /// @name Network Types
 /// @{
-#include "types/network/ip_address.h"
+#include "network/ip_address.h"
 /// @}
 
 /** @} */ // end of core group

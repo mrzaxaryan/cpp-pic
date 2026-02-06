@@ -57,12 +57,12 @@ typedef struct
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 
 // Helper: Check if host is localhost and return loopback address
-static inline BOOL IsLocalhost(PCCHAR host, IPAddress *pResult)
+static inline BOOL IsLocalhost(PCCHAR host, IPAddress *pResult, RequestType type)
 {
     auto localhost = "localhost"_embed;
     if (String::Compare(host, (PCCHAR)localhost))
     {
-        *pResult = IPAddress::FromIPv4(0x0100007F);
+        *pResult = IPAddress::LocalHost(type == AAAA);
         return TRUE;
     }
     return FALSE;
@@ -467,7 +467,7 @@ BOOL DNS::FormatterCallback(PVOID context, CHAR ch)
 IPAddress DNS::ResloveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
     IPAddress result;
-    if (IsLocalhost(host, &result))
+    if (IsLocalhost(host, &result, dnstype))
         return result;
 
     TLSClient tlsClient(DNSServerName, DNSServerIp, 443);
@@ -554,15 +554,18 @@ IPAddress DNS::Resolve(PCCHAR host)
 
     // Try IPv6 (AAAA) first via Cloudflare, then Google
     IPAddress ip = CloudflareResolve(host, AAAA);
-    if (ip.IsValid()) return ip;
+    if (ip.IsValid())
+        return ip;
 
     ip = GoogleResolve(host, AAAA);
-    if (ip.IsValid()) return ip;
+    if (ip.IsValid())
+        return ip;
 
     // Fall back to IPv4 (A)
     LOG_DEBUG("IPv6 resolution failed, falling back to IPv4 (A) for %s", host);
     ip = CloudflareResolve(host, A);
-    if (ip.IsValid()) return ip;
+    if (ip.IsValid())
+        return ip;
 
     return GoogleResolve(host, A);
 }

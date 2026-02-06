@@ -11,8 +11,8 @@
 class SocketTests
 {
 private:
-	// Test server IP address: 1.1.1.1 (one.one.one.one)
-	#define TEST_SERVER_IP 0x01010101
+// Test server IP address: 1.1.1.1 (one.one.one.one)
+#define TEST_SERVER_IP 0x01010101
 	// Test 1: Socket creation
 	static BOOL TestSocketCreation()
 	{
@@ -244,6 +244,43 @@ private:
 		return TRUE;
 	}
 
+	// Test 7: HTTP GET request to httpbin.org (tests real-world connectivity and DNS resolution)
+	static BOOL TestHttpBin()
+	{
+		IPAddress ip = DNS::Resolve("httpbin.org"_embed);
+		if (!ip.IsValid())
+		{
+			LOG_ERROR("Failed to resolve httpbin.org");
+			return FALSE;
+		}
+		Socket sock(ip, 80);
+		if (!sock.Open())
+		{
+			LOG_ERROR("Failed to open socket to httpbin.org");
+			return FALSE;
+		}
+		auto request = "GET /get HTTP/1.1\r\nHost: httpbin.org\r\nConnection: close\r\n\r\n"_embed;
+		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		if (bytesSent != request.Length())
+		{
+			LOG_ERROR("Failed to send complete HTTP request to httpbin.org (sent %d/%d bytes)", bytesSent, request.Length());
+			sock.Close();
+			return FALSE;
+		}
+		CHAR buffer[1024];
+		Memory::Zero(buffer, sizeof(buffer));
+		SSIZE bytesRead = sock.Read(buffer, sizeof(buffer) - 1);
+		if (bytesRead <= 0)
+		{
+			LOG_ERROR("Failed to receive HTTP response from httpbin.org");
+			sock.Close();
+			return FALSE;
+		}
+		LOG_INFO("Received %d bytes from httpbin.org", bytesRead);
+		sock.Close();
+		return TRUE;
+	}
+
 public:
 	// Run all socket tests
 	static BOOL RunAll()
@@ -259,6 +296,7 @@ public:
 		RunTest(allPassed, EMBED_FUNC(TestMultipleConnections), L"Multiple sequential connections"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestIpConversion), L"IP address conversion"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestIPv6Connection), L"IPv6 connection"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestHttpBin), L"HTTP GET request to httpbin.org"_embed);
 
 		if (allPassed)
 			LOG_INFO("All Socket tests passed!");

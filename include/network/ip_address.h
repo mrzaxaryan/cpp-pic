@@ -29,9 +29,9 @@
  */
 enum class IPVersion : UINT8
 {
-    IPv4 = 4,      ///< IPv4 address (32-bit)
-    IPv6 = 6,      ///< IPv6 address (128-bit)
-    Invalid = 0    ///< Invalid/uninitialized address
+    IPv4 = 4,   ///< IPv4 address (32-bit)
+    IPv6 = 6,   ///< IPv6 address (128-bit)
+    Invalid = 0 ///< Invalid/uninitialized address
 };
 
 /**
@@ -60,11 +60,11 @@ enum class IPVersion : UINT8
 class IPAddress
 {
 private:
-    IPVersion version;  ///< Address version (IPv4, IPv6, or Invalid)
+    IPVersion version; ///< Address version (IPv4, IPv6, or Invalid)
     union
     {
-        UINT32 ipv4;        ///< IPv4 address (4 bytes, network byte order)
-        UINT8 ipv6[16];     ///< IPv6 address (16 bytes)
+        UINT32 ipv4;    ///< IPv4 address (4 bytes, network byte order)
+        UINT8 ipv6[16]; ///< IPv6 address (16 bytes)
     } address;
 
 private:
@@ -93,7 +93,7 @@ public:
      * @brief Copy constructor
      * @param other IPAddress to copy
      */
-    IPAddress(const IPAddress& other);
+    IPAddress(const IPAddress &other);
 
     /// @}
     /// @name Factory Methods
@@ -119,6 +119,13 @@ public:
      * @return IPAddress instance (Invalid if parsing fails)
      */
     static IPAddress FromString(PCCHAR ipString);
+
+    /**
+     * @brief Get loopback address (127.0.0.1 for IPv4, ::1 for IPv6)
+     * @param ipv6 TRUE for IPv6 loopback, FALSE for IPv4 loopback
+     * @return IPAddress instance representing the loopback address
+     */
+    static IPAddress LocalHost(BOOL ipv6 = FALSE);
 
     /**
      * @brief Create an invalid IP address
@@ -168,7 +175,7 @@ public:
      * @brief Get IPv6 address array
      * @return Pointer to 16-byte IPv6 address (undefined if not IPv6)
      */
-    const UINT8* ToIPv6() const;
+    const UINT8 *ToIPv6() const;
 
     /**
      * @brief Convert to string representation
@@ -187,21 +194,21 @@ public:
      * @param other IPAddress to compare
      * @return TRUE if addresses are equal
      */
-    BOOL operator==(const IPAddress& other) const;
+    BOOL operator==(const IPAddress &other) const;
 
     /**
      * @brief Inequality comparison
      * @param other IPAddress to compare
      * @return TRUE if addresses are not equal
      */
-    BOOL operator!=(const IPAddress& other) const;
+    BOOL operator!=(const IPAddress &other) const;
 
     /**
      * @brief Assignment operator
      * @param other IPAddress to assign
      * @return Reference to this
      */
-    IPAddress& operator=(const IPAddress& other);
+    IPAddress &operator=(const IPAddress &other);
 
     /// @}
 };

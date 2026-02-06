@@ -464,7 +464,7 @@ BOOL DNS::FormatterCallback(PVOID context, CHAR ch)
     return tlsClient->Write(&ch, 1);
 }
 
-IPAddress DNS::ResloveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
+IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
     IPAddress result;
     if (IsLocalhost(host, &result, dnstype))
@@ -533,18 +533,18 @@ IPAddress DNS::ResloveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR
 IPAddress DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
 {
     auto serverName = "one.one.one.one"_embed;
-    IPAddress ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x01010101), (PCCHAR)serverName, dnstype);
+    IPAddress ip = ResolveOverHttp(host, IPAddress::FromIPv4(0x01010101), (PCCHAR)serverName, dnstype);
     if (!ip.IsValid())
-        ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x01000001), (PCCHAR)serverName, dnstype);
+        ip = ResolveOverHttp(host, IPAddress::FromIPv4(0x01000001), (PCCHAR)serverName, dnstype);
     return ip;
 }
 
 IPAddress DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
 {
     auto serverName = "dns.google"_embed;
-    IPAddress ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x08080808), (PCCHAR)serverName, dnstype);
+    IPAddress ip = ResolveOverHttp(host, IPAddress::FromIPv4(0x08080808), (PCCHAR)serverName, dnstype);
     if (!ip.IsValid())
-        ip = ResloveOverHttp(host, IPAddress::FromIPv4(0x04040808), (PCCHAR)serverName, dnstype);
+        ip = ResolveOverHttp(host, IPAddress::FromIPv4(0x04040808), (PCCHAR)serverName, dnstype);
     return ip;
 }
 

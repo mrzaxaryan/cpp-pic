@@ -23,7 +23,7 @@ class DNS
 {
 private:
     // Function to resolve a hostname using HTTP POST (defaults to IPv6/AAAA)
-    static IPAddress ResloveOverHttp(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
+    static IPAddress ResolveOverHttp(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
     // Callback function for formatting DNS queries
     static BOOL FormatterCallback(PVOID context, CHAR ch);
 

@@ -21,7 +21,17 @@ private:
 			return FALSE;
 		}
 
-		LOG_INFO("Localhost resolved correctly to 127.0.0.1");
+		IPAddress ip6 = DNS::CloudflareResolve("localhost"_embed, AAAA);
+		// localhost should resolve to ::1 for IPv6
+		UINT8 expectedIPv6[16]{};
+		expectedIPv6[15] = 1; // ::1 in IPv6
+		if (ip6.IsIPv6() == FALSE || Memory::Compare(ip6.ToIPv6(), expectedIPv6, 16) != 0)
+		{
+			LOG_ERROR("Localhost IPv6 resolution failed: expected ::1, got different address");
+			return FALSE;
+		}
+
+		LOG_INFO("Localhost resolved correctly");
 		return TRUE;
 	}
 
@@ -32,7 +42,7 @@ private:
 
 		IPAddress ip = DNS::CloudflareResolve("dns.google"_embed, A);
 
-		if (ip .IsValid() == FALSE)
+		if (ip.IsValid() == FALSE)
 		{
 			LOG_ERROR("Cloudflare DNS resolution failed");
 			return FALSE;
@@ -58,7 +68,7 @@ private:
 
 		IPAddress ip = DNS::GoogleResolve("one.one.one.one"_embed, A);
 
-		if (ip .IsValid() == FALSE)
+		if (ip.IsValid() == FALSE)
 		{
 			LOG_ERROR("Google DNS resolution failed");
 			return FALSE;
@@ -84,7 +94,7 @@ private:
 
 		IPAddress ip = DNS::Resolve("example.com"_embed);
 
-		if (ip .IsValid() == FALSE)
+		if (ip.IsValid() == FALSE)
 		{
 			LOG_ERROR("Main DNS resolution failed");
 			return FALSE;
@@ -102,7 +112,7 @@ private:
 
 		IPAddress ip = DNS::Resolve("dns.google"_embed);
 
-		if (ip .IsValid() == FALSE)
+		if (ip.IsValid() == FALSE)
 		{
 			LOG_ERROR("DNS resolution for dns.google failed");
 			return FALSE;

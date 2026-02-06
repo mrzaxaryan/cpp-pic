@@ -21,7 +21,7 @@ IPAddress::IPAddress(const UINT8 ipv6Address[16]) : version(IPVersion::IPv6)
 }
 
 // Copy constructor
-IPAddress::IPAddress(const IPAddress& other) : version(other.version)
+IPAddress::IPAddress(const IPAddress &other) : version(other.version)
 {
     if (version == IPVersion::IPv4)
     {
@@ -43,6 +43,23 @@ IPAddress IPAddress::FromIPv4(UINT32 ipv4Address)
 IPAddress IPAddress::FromIPv6(const UINT8 ipv6Address[16])
 {
     return IPAddress(ipv6Address);
+}
+
+IPAddress IPAddress::LocalHost(BOOL ipv6)
+{
+    if (ipv6)
+    {
+        // IPv6 loopback is ::1 (15 bytes of 0, 1 byte of 1)
+        UINT8 loopbackV6[16]{};
+        loopbackV6[15] = 1;
+        return IPAddress::FromIPv6(loopbackV6);
+    }
+    else
+    {
+        // IPv4 loopback is 127.0.0.1
+        // Using your specific hex format: 0x0100007F
+        return IPAddress::FromIPv4(0x0100007F);
+    }
 }
 
 // Static factory method for invalid IP
@@ -287,7 +304,7 @@ UINT32 IPAddress::ToIPv4() const
 }
 
 // Get IPv6 address (returns NULL if not IPv6)
-const UINT8* IPAddress::ToIPv6() const
+const UINT8 *IPAddress::ToIPv6() const
 {
     if (version == IPVersion::IPv6)
     {
@@ -363,7 +380,7 @@ BOOL IPAddress::ToString(PCHAR buffer, UINT32 bufferSize) const
 }
 
 // Equality operator
-BOOL IPAddress::operator==(const IPAddress& other) const
+BOOL IPAddress::operator==(const IPAddress &other) const
 {
     if (version != other.version)
     {
@@ -383,13 +400,13 @@ BOOL IPAddress::operator==(const IPAddress& other) const
 }
 
 // Inequality operator
-BOOL IPAddress::operator!=(const IPAddress& other) const
+BOOL IPAddress::operator!=(const IPAddress &other) const
 {
     return !(*this == other);
 }
 
 // Assignment operator
-IPAddress& IPAddress::operator=(const IPAddress& other)
+IPAddress &IPAddress::operator=(const IPAddress &other)
 {
     if (this != &other)
     {

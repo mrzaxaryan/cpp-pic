@@ -15,6 +15,9 @@ Copy and paste the following command into PowerShell or Command Prompt:
 ```powershell
 # Install all dependencies
 winget install --id Kitware.CMake && winget install --id Ninja-build.Ninja && winget install --id LLVM.LLVM
+
+# Optional: Install Doxygen for documentation generation
+winget install -e --id DimitriVanHeesch.Doxygen
 ```
 
 **Important:** After installation, restart your terminal or log out and log back in for the PATH changes to take effect.

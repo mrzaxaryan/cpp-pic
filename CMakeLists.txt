@@ -77,6 +77,30 @@ if(CPPPIC_PLATFORM STREQUAL "uefi")
 endif()
 
 # =============================================================================
+# Documentation (Doxygen)
+# =============================================================================
+find_package(Doxygen OPTIONAL_COMPONENTS dot)
+
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_PROJECT_NAME "Position-Independent Runtime")
+    set(DOXYGEN_PROJECT_BRIEF "Position-Independent Runtime for Windows, Linux, and UEFI")
+    set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_EXTRACT_ALL YES)
+    set(DOXYGEN_EXTRACT_STATIC YES)
+    set(DOXYGEN_SOURCE_BROWSER YES)
+
+    doxygen_add_docs(docs
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/src
+        COMMENT "Generating documentation with Doxygen"
+    )
+    set(_doxygen_status "Available")
+else()
+    set(_doxygen_status "Not found")
+endif()
+
+# =============================================================================
 # Build Summary
 # =============================================================================
 message(STATUS "")
@@ -90,5 +114,6 @@ message(STATUS "│ Optimization: -${CPPPIC_OPT_LEVEL}")
 message(STATUS "│ Triple:       ${CPPPIC_TRIPLE}")
 message(STATUS "├─────────────────────────────────────┤")
 message(STATUS "│ Output:       output${CPPPIC_EXT}")
+message(STATUS "│ Doxygen:      ${_doxygen_status}")
 message(STATUS "└─────────────────────────────────────┘")
 message(STATUS "")

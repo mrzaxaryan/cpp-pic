@@ -245,6 +245,13 @@
       "group": "test"
     },
     {
+      "label": "Generate Docs",
+      "type": "shell",
+      "command": "cmake --preset windows-x86_64-release && cmake --build --preset windows-x86_64-release --target docs",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
       "label": "Build All",
       "dependsOrder": "parallel",
       "dependsOn": [

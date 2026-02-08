@@ -543,6 +543,8 @@ All functionality is implemented using low-level native interfaces to avoid exte
 ## Practical Use Cases
 
 Position-Indepenedent Runtime is designed for execution environments where traditional runtime assumptions do not apply. Its architecture makes it particularly suitable for the following domains:
+- **Authorized penetration testing** with written scope and client approval
+- **Security research** with proper disclosure practices
 - Shellcode and loaderless code execution
 - Security research and malware analysis
 - Embedded and low-level system programming

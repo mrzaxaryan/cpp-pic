@@ -330,7 +330,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
     NTDLL::RtlFreeUnicodeString(&uniName);
 
-    if (NT_SUCCESS(status) && hDir && hDir != INVALID_HANDLE_VALUE)
+    if (NT_SUCCESS(status))
     {
         NTDLL::NtClose(hDir);
         return TRUE;

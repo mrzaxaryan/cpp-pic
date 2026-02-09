@@ -11,9 +11,16 @@ const char PATH_SEPARATOR = '/';
 #error "Path separator not defined for this platform"
 #endif
 
+// Path class for handling file paths
 class Path
 {
 public:
+    /// @brief Combine two paths into one, ensuring proper path separators
+    /// @tparam TChar Character type (CHAR or WCHAR)
+    /// @param path1 First path to combine
+    /// @param path2 Second path to combine
+    /// @return Combined path as a newly allocated string 
+    
     template <TCHAR TChar>
     static TChar *Combine(const TChar *path1, const TChar *path2)
     {
@@ -48,6 +55,11 @@ public:
 
         return combined;
     }
+    
+    /// @brief Get the file name from a full path
+    /// @tparam TChar Character type (CHAR or WCHAR)
+    /// @param fullPath The full file path
+    /// @return A newly allocated string containing the file name
 
     template <TCHAR TChar>
     static TChar *GetFileName(const TChar *fullPath)
@@ -88,6 +100,11 @@ public:
 
         return fileName;
     }
+
+    /// @brief Get the file extension from a file name
+    /// @tparam TChar Character type (CHAR or WCHAR)
+    /// @param fileName File name to extract the extension from
+    /// @return Extension as a newly allocated string, or empty string if no extension found
 
     template <TCHAR TChar>
     static TChar *GetExtension(const TChar *fileName)
@@ -130,6 +147,11 @@ public:
         return extension;
     }
 
+    /// @brief Get the directory name from a full path
+    /// @tparam TChar Character type (CHAR or WCHAR)
+    /// @param fullPath Full file path to extract the directory name from
+    /// @return Directory name as a newly allocated string, or empty string if no directory found
+    
     template <TCHAR TChar>
     static TChar *GetDirectoryName(const TChar *fullPath)
     {
@@ -168,6 +190,11 @@ public:
         return directoryName;
     }
 
+    /// @brief Check if a path is rooted
+    /// @tparam TChar Character type (CHAR or WCHAR)
+    /// @param path Path to check
+    /// @return TRUE if the path is rooted, FALSE otherwise
+
     template <TCHAR TChar>
     static BOOL IsPathRooted(TChar *path)
     {
@@ -181,6 +208,11 @@ public:
 #endif
     }
 
+    /// @brief Normalize a path by replacing all separators with the platform-specific separator
+    /// @tparam TChar Character type (CHAR or WCHAR)
+    /// @param path Platform-specific path to normalize
+    /// @return Normalized path 
+    
     static PWCHAR NormalizePath(PCWCHAR path)
     {
         if (path == NULL)

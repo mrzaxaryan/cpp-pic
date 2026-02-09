@@ -106,10 +106,10 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
                                   SynchronizationEvent,
                                   FALSE);
 
-    if (Status != STATUS_SUCCESS)
+    if (!NT_SUCCESS(Status))
     {
         LOG_ERROR("Failed to create event for socket binding: 0x%08X\n", Status);
-        return NT_SUCCESS(Status);
+        return FALSE;
     }
     LOG_DEBUG("Event successfully created for socket binding\n");
 
@@ -191,7 +191,7 @@ BOOL Socket::Open()
                                   SynchronizationEvent,
                                   FALSE);
 
-    if (Status != STATUS_SUCCESS)
+    if (!NT_SUCCESS(Status))
     {
         LOG_ERROR("Failed to create event\n");
         return FALSE;
@@ -287,7 +287,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
                                   SynchronizationEvent,
                                   FALSE);
 
-    if (Status != STATUS_SUCCESS)
+    if (!NT_SUCCESS(Status))
     {
         LOG_ERROR("Failed to create event\n");
         return lpNumberOfBytesRead;
@@ -333,7 +333,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
         lpNumberOfBytesRead = IOSB.Information;
     }
 
-    if (Status == STATUS_SUCCESS)
+    if (NT_SUCCESS(Status))
     {
         lpNumberOfBytesRead = IOSB.Information;
     }
@@ -362,7 +362,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
                                   SynchronizationEvent,
                                   FALSE);
 
-    if (Status != STATUS_SUCCESS)
+    if (!NT_SUCCESS(Status))
     {
         LOG_ERROR("Failed to create event for socket write: 0x%08X\n", Status);
         return FALSE;
@@ -405,7 +405,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
         Status = IOSB.Status;
         lpNumberOfBytesAlreadySend = IOSB.Information;
 
-        if (Status != STATUS_SUCCESS)
+        if (!NT_SUCCESS(Status))
         {
             NTDLL::NtClose(SockEvent);
             LOG_ERROR("Failed to write to socket: 0x%08X\n", Status);
@@ -467,7 +467,7 @@ Socket::Socket(const IPAddress& ipAddress, UINT16 port) : ip(ipAddress), port(po
                                  &(EaBuffer),
                                  sizeof(EaBuffer));
 
-    if (Status != STATUS_SUCCESS)
+    if (!NT_SUCCESS(Status))
     {
         LOG_ERROR("Failed to create socket. Status: 0x%08X\n", Status);
     }

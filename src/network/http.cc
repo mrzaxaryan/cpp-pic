@@ -12,6 +12,10 @@ static USIZE AppendStr(CHAR* buf, USIZE pos, USIZE maxPos, const CHAR* str) noex
     return pos;
 }
 
+/// @brief Parameterized constructor for HttpClient class
+/// @param url The URL of the server to connect to
+/// @param ipAddress The IP address of the server to connect to
+
 HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 {
     // Attempt to parse the URL to extract the host name, path, port, and security setting
@@ -31,6 +35,9 @@ HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
         }
     }
 }
+
+/// @brief Parameterized constructor for HttpClient class
+/// @param url URL of the server to connect to (IP address will be resolved from the hostname)
 
 HttpClient::HttpClient(PCCHAR url)
 {
@@ -59,10 +66,14 @@ HttpClient::HttpClient(PCCHAR url)
     }
 }
 
+// Destructor to clean up resources when the HttpClient object is destroyed
 HttpClient::~HttpClient()
 {
     Close();
 }
+
+/// @brief Open a connection to the server
+/// @return Indicates whether the connection was opened successfully (TRUE) or if there was an error (FALSE)
 
 BOOL HttpClient::Open()
 {
@@ -76,6 +87,9 @@ BOOL HttpClient::Open()
     }
 }
 
+/// @brief Closes the connection to the server and cleans up resources
+/// @return Indicates whether the connection was closed successfully (TRUE) or if there was an error (FALSE)
+
 BOOL HttpClient::Close()
 {
     if (isSecure)
@@ -87,6 +101,11 @@ BOOL HttpClient::Close()
         return socketContext.Close();
     }
 }
+
+/// @brief Read data from the server into the provided buffer, handling decryption if the connection is secure
+/// @param buffer The buffer to store the read data
+/// @param bufferLength The maximum number of bytes to read into the buffer
+/// @return The number of bytes read from the server
 
 SSIZE HttpClient::Read(PVOID buffer, UINT32 bufferLength)
 {
@@ -100,6 +119,11 @@ SSIZE HttpClient::Read(PVOID buffer, UINT32 bufferLength)
     }
 }
 
+/// @brief Write data to the server
+/// @param buffer Pointer to the data to be sent to the server
+/// @param bufferLength The length of the data to be sent in bytes
+/// @return The number of bytes written to the server
+
 UINT32 HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
 {
     if (isSecure)
@@ -111,6 +135,9 @@ UINT32 HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
         return socketContext.Write(buffer, bufferLength);
     }
 }
+
+/// @brief Send an HTTP GET request to the server 
+/// @return Indicates whether the GET request was sent successfully (TRUE) or if there was an error (FALSE)
 
 BOOL HttpClient::SendGetRequest()
 {
@@ -129,6 +156,11 @@ BOOL HttpClient::SendGetRequest()
     UINT32 written = Write(request, (UINT32)pos);
     return written == pos;
 }
+
+/// @brief Send an HTTP POST request to the server
+/// @param data The data to be sent in the body of the POST request
+/// @param dataLength Length of the data to be sent in bytes
+/// @return Indicates whether the POST request was sent successfully (TRUE) or if there was an error (FALSE)
 
 BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
 {
@@ -188,6 +220,14 @@ BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
 
     return TRUE;
 }
+
+/// @brief Parse a URL into its components (host, path, port, secure) and validate the format
+/// @param url The URL to be parsed
+/// @param host Buffer to store the parsed host
+/// @param path Buffer to store the parsed path
+/// @param port Pointer to store the parsed port
+/// @param secure Pointer to store whether the connection is secure (TRUE) or not (FALSE)
+/// @return Indicates whether the URL was parsed successfully (TRUE) or if there was an error (FALSE)
 
 BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure)
 {

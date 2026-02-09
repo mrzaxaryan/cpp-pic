@@ -26,8 +26,11 @@ public:
     INT32 Append(CHAR data);
     INT32 Append(INT16 data);
     INT32 AppendSize(INT32 size);
+    // Setting operation
     VOID SetSize(INT32 size);
+    // Clean up for buffers
     VOID Clear();
+    // Ensure there is enough capacity to append data
     VOID CheckSize(INT32 appendSize);
 
     // Read operations

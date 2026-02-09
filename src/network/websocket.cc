@@ -6,6 +6,7 @@
 #include "dns.h"
 #include "http.h"
 #include "embedded_string.h"
+
 // This function creates a WebSocket frame with the specified parameters.
 static BOOL web_socket_create_frame(PWebSocketFrame frame, INT32 fin, INT32 rsv1, INT32 rsv2, INT32 rsv3, INT32 opcode, INT32 has_mask, PVOID data, INT32 len)
 {
@@ -23,6 +24,7 @@ static BOOL web_socket_create_frame(PWebSocketFrame frame, INT32 fin, INT32 rsv1
     return TRUE; // Frame created successfully
 }
 
+// Callback function for formatting WebSocket handshake request headers, used with StringFormatter
 BOOL WebSocketClient::FormatterCallback(PVOID context, CHAR ch)
 {
     WebSocketClient *wsClient = (WebSocketClient *)context;

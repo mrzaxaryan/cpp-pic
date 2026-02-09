@@ -51,6 +51,12 @@ typedef enum
     EXT_LAST = 0x7FFF
 } SSL_EXTENTION;
 
+/// @brief Send packet data over TLS connection
+/// @param packetType Type of the TLS packet (e.g., handshake, application data)
+/// @param ver Version of TLS to use for the packet
+/// @param buf The buffer containing the packet data to send
+/// @return TRUE if the packet was sent successfully, FALSE otherwise
+
 BOOL TLSClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer *buf)
 {
     // PNETWORK pNetwork = GetNetwork();
@@ -90,6 +96,10 @@ BOOL TLSClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer *buf)
     tempBuffer.Clear();
     return TRUE;
 }
+
+/// @brief Sent a ClientHello message to initiate the TLS handshake with the server
+/// @param host The hostname of the server to connect to
+/// @return TRUE if the ClientHello message was sent successfully, FALSE otherwise
 
 BOOL TLSClient::SendClientHello(const CHAR *host)
 {
@@ -197,6 +207,9 @@ BOOL TLSClient::SendClientHello(const CHAR *host)
     return SendPacket(CONTENT_HANDSHAKE, 0x303, &sendBuffer);
 }
 
+/// @brief Send a Client Finished message to complete the TLS handshake
+/// @return TRUE if the Client Finished message was sent successfully, FALSE otherwise
+
 BOOL TLSClient::SendClientFinished()
 {
     TlsBuffer verify;
@@ -216,6 +229,9 @@ BOOL TLSClient::SendClientFinished()
     return SendPacket(CONTENT_HANDSHAKE, 0x303, &sendBuffer);
 }
 
+/// @brief Send a Client Key Exchange message to the server during the TLS handshake
+/// @return TRUE if the Client Key Exchange message was sent successfully, FALSE otherwise
+
 BOOL TLSClient::SendClientExchange()
 {
     sendBuffer.Clear();
@@ -229,12 +245,19 @@ BOOL TLSClient::SendClientExchange()
     return SendPacket(CONTENT_HANDSHAKE, 0x303, &sendBuffer);
 }
 
+/// @brief Send a Change Cipher Spec message to the server to indicate that subsequent messages will be encrypted
+/// @return TRUE if the Change Cipher Spec message was sent successfully, FALSE otherwise
+
 BOOL TLSClient::SendChangeCipherSpec()
 {
     sendBuffer.Clear();
     sendBuffer.Append((CHAR)1);
     return SendPacket(CONTENT_CHANGECIPHERSPEC, 0x303, &sendBuffer);
 }
+
+/// @brief Process the ServerHello message from the server and advances the TLS handshake state
+/// @param reader Buffer containing the ServerHello message data
+/// @return Indicates whether the ServerHello message was processed successfully (TRUE) or if there was an error (FALSE)
 
 BOOL TLSClient::OnServerHello(TlsBuffer *reader)
 {
@@ -326,6 +349,9 @@ BOOL TLSClient::OnServerHello(TlsBuffer *reader)
     return TRUE;
 }
 
+/// @brief Process the ServerHelloDone message from the server and advances the TLS handshake state
+/// @return TRUE if the ServerHelloDone message was processed successfully, FALSE otherwise
+
 BOOL TLSClient::OnServerHelloDone()
 {
     if (!SendClientExchange())
@@ -351,6 +377,10 @@ BOOL TLSClient::OnServerHelloDone()
     return TRUE;
 }
 
+/// @brief Verify the Finished message from the server by comparing the verify data with the expected value computed from the handshake messages
+/// @param reader Buffer containing the Finished message data from the server
+/// @return Indicates whether the Finished message was verified successfully (TRUE) or if the verification failed (FALSE)
+
 BOOL TLSClient::VerifyFinished(TlsBuffer *reader)
 {
     INT32 server_finished_size = UINT32SwapByteOrder(reader->Read<INT8>() << 8 | reader->Read<INT16>() << 16);
@@ -370,6 +400,9 @@ BOOL TLSClient::VerifyFinished(TlsBuffer *reader)
     verify.Clear();
     return TRUE;
 }
+
+/// @brief Finished message from the server has been received, process it and advance the TLS handshake state to complete the handshake
+/// @return Indicates whether the Server Finished message was processed successfully (TRUE) or if there was an error (FALSE)
 
 BOOL TLSClient::OnServerFinished()
 {
@@ -400,6 +433,12 @@ BOOL TLSClient::OnServerFinished()
     LOG_DEBUG("Server Finished processed successfully for client: %p", this);
     return TRUE;
 }
+
+/// @brief Process incoming TLS packets from the server, handle different packet types and advance the TLS handshake state accordingly
+/// @param packetType Type of the incoming TLS packet (e.g., handshake, alert)
+/// @param version Version of TLS used in the packet
+/// @param TlsReader Buffer containing the packet data to process
+/// @return Indicates whether the packet was processed successfully (TRUE) or if there was an error (FALSE)
 
 BOOL TLSClient::OnPacket(INT32 packetType, INT32 version, TlsBuffer *TlsReader)
 {
@@ -535,6 +574,9 @@ BOOL TLSClient::OnPacket(INT32 packetType, INT32 version, TlsBuffer *TlsReader)
     return TRUE;
 }
 
+/// @brief Packet processing - read data from the socket, parse TLS packets
+/// @return Indicates whether the received data was processed successfully (TRUE) or if there was an error (FALSE)
+
 BOOL TLSClient::ProcessReceive()
 {
     LOG_DEBUG("Processing received data for client: %p, current state index: %d", this, stateIndex);
@@ -577,6 +619,11 @@ BOOL TLSClient::ProcessReceive()
     return TRUE;
 }
 
+/// @brief Read data from channel buffer
+/// @param out Pointer to the output buffer where the read data will be stored
+/// @param size Size of the output buffer and the maximum number of bytes to read from the channel buffer
+/// @return The number of bytes read from the channel buffer
+
 INT32 TLSClient::ReadChannel(PCHAR out, INT32 size)
 {
     INT32 movesize = Math::Min(size, channelBuffer.GetSize() - channelBytesRead);
@@ -601,6 +648,9 @@ INT32 TLSClient::ReadChannel(PCHAR out, INT32 size)
     LOG_DEBUG("Returning movesize: %d for client: %p", movesize, this);
     return movesize;
 }
+
+/// @brief Open a TLS connection to the server, perform the TLS handshake by sending the ClientHello message and processing the server's responses
+/// @return Indicates whether the TLS connection was opened and the handshake completed successfully (TRUE) or if there was an error (FALSE)
 
 BOOL TLSClient::Open()
 {
@@ -631,6 +681,10 @@ BOOL TLSClient::Open()
 
     return TRUE;
 }
+
+/// @brief Close connection to the server, clean up buffers and cryptographic context
+/// @return Indicates whether the connection was closed successfully (TRUE) or if there was an error (FALSE)
+
 BOOL TLSClient::Close()
 {
     // PNETWORK pNetwork = GetNetwork();
@@ -648,6 +702,11 @@ BOOL TLSClient::Close()
 
     return TRUE;
 }
+
+/// @brief Write data to the TLS channel, encrypting it if the handshake is complete and the encoding is enabled
+/// @param buffer Pointer to the input buffer containing the data to be sent to the server
+/// @param bufferLength Length of the input buffer in bytes
+/// @return The number of bytes successfully written to the TLS channel
 
 UINT32 TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
 {
@@ -676,6 +735,12 @@ UINT32 TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
     LOG_DEBUG("Data sent successfully for client: %p, total size: %d bytes", this, bufferLength);
     return bufferLength;
 }
+
+/// @brief Read from the TLS channel, decrypting data if the handshake is complete and the encoding is enabled, and store it in the provided buffer
+/// @param buffer Buffer where the read data will be stored
+/// @param bufferLength Length of the buffer in bytes, indicating the maximum number of bytes to read from the TLS channel
+/// @return The number of bytes read from the TLS channel
+
 SSIZE TLSClient::Read(PVOID buffer, UINT32 bufferLength)
 {
     if (stateIndex < 6)
@@ -696,6 +761,12 @@ SSIZE TLSClient::Read(PVOID buffer, UINT32 bufferLength)
 
     return ReadChannel((PCHAR)buffer, bufferLength);
 }
+
+/// @brief Constructor for the TLSClient class
+/// @param host The hostname of the server to connect to
+/// @param ipAddress The IP address of the server to connect to
+/// @param port The port number of the server to connect to
+
 TLSClient::TLSClient(PCCHAR host, const IPAddress &ipAddress, UINT16 port)
     : host(host), ip(ipAddress), context(ipAddress, port)
 {

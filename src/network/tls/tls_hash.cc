@@ -2,16 +2,28 @@
 #include "logger.h"
 #include "sha2.h"
 
+/// @brief Reset the hash cache by clearing the underlying buffer
+/// @return void
 
 VOID TlsHash::Reset()
 {
     this->cache.Clear();
 }
 
+/// @brief Append data to the hash cache by adding it to the underlying buffer
+/// @param buffer The data to append
+/// @param size The size of the data to append
+/// @return void
+
 VOID TlsHash::Append(const CHAR *buffer, INT32 size)
 {
     this->cache.Append(buffer, size);
 }
+
+/// @brief Get the hash value from the cache by computing the appropriate hash (SHA-256 or SHA-384) based on the specified hash size
+/// @param out The buffer to store the computed hash
+/// @param hashSize The size of the hash to compute
+/// @return void
 
 VOID TlsHash::GetHash(PCHAR out, INT32 hashSize)
 {

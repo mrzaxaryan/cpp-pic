@@ -4,7 +4,15 @@
 #include "sha2.h"
 #include "tls_buffer.h"
 
-// TlsHKDF class implementation
+/// @brief Create an HKDF label according to TLS 1.3 specification
+/// @param label The label to use in the HKDF label
+/// @param labelLen The length of the label
+/// @param data The data to include in the HKDF label
+/// @param dataLen The length of the data
+/// @param hkdflabel The buffer to store the created HKDF label
+/// @param length Length of the output keying material (OKM) that will be derived using this label
+/// @return The total length of the created HKDF label
+
 INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR dataLen, PUCHAR hkdflabel, UINT16 length)
 {
     auto prefix = "tls13 "_embed;
@@ -28,6 +36,15 @@ INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR
     return 4 + prefix_len + labelLen + dataLen;
 }
 
+/// @brief Extract the HKDF keying material using the given salt and input keying material (IKM)
+/// @param output The buffer to store the extracted keying material
+/// @param outlen The length of the output keying material
+/// @param salt The salt value
+/// @param saltLen The length of the salt
+/// @param ikm The input keying material
+/// @param ikmLen The length of the input keying material
+/// @return void
+
 VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 saltLen, const UCHAR *ikm, UCHAR ikmLen)
 {
     HMAC_SHA256 hmac;
@@ -38,6 +55,15 @@ VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 sa
     hmac.Update(ikm, ikmLen);
     hmac.Final(output, outlen);
 }
+
+/// @brief Expand the HKDF keying material using the given secret, info, and output length
+/// @param output The buffer to store the expanded keying material
+/// @param outlen The length of the output keying material
+/// @param secret The secret value
+/// @param secretLen The length of the secret
+/// @param info The info value
+/// @param infoLen The length of the info
+/// @return void
 
 VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const UCHAR *info, UCHAR infoLen)
 {
@@ -86,6 +112,17 @@ VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 s
         }
     }
 }
+
+/// @brief Expand the HKDF keying material using a label according to TLS 1.3 specification
+/// @param output The buffer to store the expanded keying material
+/// @param outlen The length of the output keying material
+/// @param secret The secret value
+/// @param secretLen The length of the secret
+/// @param label The label to use in the HKDF label
+/// @param labelLen The length of the label
+/// @param data The data to include in the HKDF label
+/// @param dataLen The length of the data
+/// @return void 
 
 VOID TlsHKDF::ExpandLabel(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR dataLen)
 {

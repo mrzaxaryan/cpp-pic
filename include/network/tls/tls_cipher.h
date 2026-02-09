@@ -60,21 +60,30 @@ private:
     BOOL isEncoding;                 // Encoding status
 
 public:
+    // Constructor
     TlsCipher();
+    // Reset function
     VOID Reset();
+    // Destroy function to clean up resources
     VOID Destroy();
     PINT8 CreateClientRand();
+    // Function to update server information
     BOOL UpdateServerInfo();
+    // Function to get and update the current handshake hash
     VOID GetHash(const CHAR *out);
     VOID UpdateHash(const CHAR *in, UINT32 len);
+    // Key computation functions
     BOOL ComputePublicKey(INT32 eccIndex, TlsBuffer *out);
     BOOL ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer *premasterKey);
     BOOL ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash);
     VOID ComputeVerify(TlsBuffer *out, INT32 verifySize, INT32 localOrRemote);
+    // Functions for encoding and decoding TLS records
     VOID Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal);
     BOOL Decode(TlsBuffer *inout, INT32 version);
     VOID SetEncoding(BOOL encoding);
+    // Function to reset sequence numbers
     VOID ResetSequenceNumber();
+    // Accessor functions
     BOOL GetEncoding() { return isEncoding; };
     INT32 GetCipherCount() { return cipherCount; };
     TlsBuffer *GetPubKey() { return &publicKey; };

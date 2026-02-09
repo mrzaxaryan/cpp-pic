@@ -2,7 +2,11 @@
 #include "memory.h"
 #include "logger.h"
 
-// Write operations
+/// @brief Append data to the TLS buffer
+/// @param data Pointer to the data to append
+/// @param size Size of the data to append
+/// @return The offset at which the data was appended
+
 INT32 TlsBuffer::Append(PCVOID data, INT32 size)
 {
     CheckSize(size);
@@ -10,6 +14,10 @@ INT32 TlsBuffer::Append(PCVOID data, INT32 size)
     this->size += size;
     return this->size - size;
 }
+
+/// @brief Append a single character to the TLS buffer
+/// @param data Character to append
+/// @return The offset at which the character was appended
 
 INT32 TlsBuffer::Append(CHAR data)
 {
@@ -19,6 +27,10 @@ INT32 TlsBuffer::Append(CHAR data)
     return this->size - 1;
 }
 
+/// @brief Append a 16-bit integer to the TLS buffer
+/// @param data The 16-bit integer to append
+/// @return The offset at which the 16-bit integer was appended
+
 INT32 TlsBuffer::Append(INT16 data)
 {
     CheckSize(2);
@@ -27,6 +39,10 @@ INT32 TlsBuffer::Append(INT16 data)
     return this->size - 2;
 }
 
+/// @brief Append a 32-bit integer to the TLS buffer
+/// @param size The 32-bit integer to append
+/// @return The offset at which the 32-bit integer was appended
+
 INT32 TlsBuffer::AppendSize(INT32 size)
 {
     CheckSize(size);
@@ -34,12 +50,19 @@ INT32 TlsBuffer::AppendSize(INT32 size)
     return this->size - size;
 }
 
+/// @brief Set the size of the TLS buffer
+/// @param size The new size of the buffer
+/// @return void
+
 VOID TlsBuffer::SetSize(INT32 size)
 {
     this->size = 0;
     CheckSize(size);
     this->size = size;
 }
+
+/// @brief Clean up the TLS buffer by freeing memory if owned and resetting size and capacity
+/// @return void
 
 VOID TlsBuffer::Clear()
 {
@@ -52,6 +75,10 @@ VOID TlsBuffer::Clear()
     this->capacity = 0;
     this->readPos = 0;
 }
+
+/// @brief Ensure there is enough capacity in the TLS buffer to append additional data
+/// @param appendSize The size of the data to be appended
+/// @return void
 
 VOID TlsBuffer::CheckSize(INT32 appendSize)
 {
@@ -83,7 +110,10 @@ VOID TlsBuffer::CheckSize(INT32 appendSize)
     this->ownsMemory = true;
 }
 
-// Read operations
+/// @brief Read a value of type T from the TLS buffer
+/// @tparam T The type of the value to read
+/// @return The value read from the buffer
+
 template <typename T>
 T TlsBuffer::Read()
 {
@@ -91,6 +121,9 @@ T TlsBuffer::Read()
     this->readPos += sizeof(T);
     return value;
 }
+
+/// @brief Read 2-byte value from the TLS buffer
+/// @return The 2-byte value read from the buffer
 
 template <>
 INT16 TlsBuffer::Read<INT16>()
@@ -101,6 +134,9 @@ INT16 TlsBuffer::Read<INT16>()
     return value;
 }
 
+/// @brief Read a single byte from the TLS buffer
+/// @return The byte read from the buffer
+
 template <>
 INT8 TlsBuffer::Read<INT8>()
 {
@@ -109,6 +145,11 @@ INT8 TlsBuffer::Read<INT8>()
     this->readPos += sizeof(INT8);
     return value;
 }
+
+/// @brief Read a block of data from the TLS buffer
+/// @param buf The buffer to store the read data
+/// @param size The number of bytes to read
+/// @return void
 
 VOID TlsBuffer::Read(PCHAR buf, INT32 size)
 {

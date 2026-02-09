@@ -122,7 +122,7 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
         AfdBindData6 BindConfig;
         Memory::Zero(&BindConfig, sizeof(BindConfig));
         BindConfig.ShareType = ShareType;
-        BindConfig.Address = *(SockAddr6*)SocketAddress;
+        BindConfig.Address = *(SockAddr6 *)SocketAddress;
 
         Status = NTDLL::NtDeviceIoControlFile(m_socket,
                                               SockEvent,
@@ -171,13 +171,14 @@ BOOL Socket::Open()
     NTSTATUS Status = 0;
 
     // Prepare bind address using helper
-    union {
+    union
+    {
         SockAddr addr4;
         SockAddr6 addr6;
     } bindBuffer;
 
     SocketAddressHelper::PrepareBindAddress(ip.IsIPv6(), 0, &bindBuffer, sizeof(bindBuffer));
-    if (Bind((SockAddr*)&bindBuffer, AFD_SHARE_REUSE) == FALSE)
+    if (Bind((SockAddr *)&bindBuffer, AFD_SHARE_REUSE) == FALSE)
     {
         LOG_ERROR("Failed to bind socket\n");
         return FALSE;
@@ -201,7 +202,8 @@ BOOL Socket::Open()
     IO_STATUS_BLOCK IOSB;
 
     // Prepare connect address using helper
-    union {
+    union
+    {
         SockAddr addr4;
         SockAddr6 addr6;
     } addrBuffer;
@@ -418,7 +420,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
     return lpNumberOfBytesAlreadySend;
 }
 
-Socket::Socket(const IPAddress& ipAddress, UINT16 port) : ip(ipAddress), port(port)
+Socket::Socket(const IPAddress &ipAddress, UINT16 port) : ip(ipAddress), port(port)
 {
     LOG_DEBUG("Create(pNTSocket: 0x%p)\n", this);
 

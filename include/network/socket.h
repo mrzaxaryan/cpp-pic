@@ -3,17 +3,17 @@
 #include "core.h"
 
 /* Socket address families */
-#define AF_INET      2
-#define AF_INET6     23
+#define AF_INET 2
+#define AF_INET6 23
 
 /* Socket types */
-#define SOCK_STREAM  1
-#define SOCK_DGRAM   2
+#define SOCK_STREAM 1
+#define SOCK_DGRAM 2
 
 /* Shutdown modes */
-#define SHUT_RD      0
-#define SHUT_WR      1
-#define SHUT_RDWR    2
+#define SHUT_RD 0
+#define SHUT_WR 1
+#define SHUT_RDWR 2
 
 struct SockAddr
 {
@@ -25,7 +25,7 @@ struct SockAddr
 
 struct SockAddr6
 {
-	INT16 sin6_family;
+	UINT16 sin6_family;
 	UINT16 sin6_port;
 	UINT32 sin6_flowinfo;
 	UINT8 sin6_addr[16];
@@ -38,21 +38,21 @@ class SocketAddressHelper
 public:
 	// Prepare a socket address for connect/bind operations
 	// Returns the size of the prepared address structure
-	static UINT32 PrepareAddress(const IPAddress& ip, UINT16 port, PVOID addrBuffer, UINT32 bufferSize)
+	static UINT32 PrepareAddress(const IPAddress &ip, UINT16 port, PVOID addrBuffer, UINT32 bufferSize)
 	{
 		if (ip.IsIPv6())
 		{
 			if (bufferSize < sizeof(SockAddr6))
 				return 0;
 
-			SockAddr6* addr6 = (SockAddr6*)addrBuffer;
+			SockAddr6 *addr6 = (SockAddr6 *)addrBuffer;
 			Memory::Zero(addr6, sizeof(SockAddr6));
 			addr6->sin6_family = AF_INET6;
 			addr6->sin6_port = UINT16SwapByteOrder(port);
 			addr6->sin6_flowinfo = 0;
 			addr6->sin6_scope_id = 0;
 
-			const UINT8* ipv6Addr = ip.ToIPv6();
+			const UINT8 *ipv6Addr = ip.ToIPv6();
 			if (ipv6Addr != NULL)
 			{
 				Memory::Copy(addr6->sin6_addr, ipv6Addr, 16);
@@ -65,7 +65,7 @@ public:
 			if (bufferSize < sizeof(SockAddr))
 				return 0;
 
-			SockAddr* addr = (SockAddr*)addrBuffer;
+			SockAddr *addr = (SockAddr *)addrBuffer;
 			Memory::Zero(addr, sizeof(SockAddr));
 			addr->sin_family = AF_INET;
 			addr->sin_port = UINT16SwapByteOrder(port);
@@ -83,7 +83,7 @@ public:
 			if (bufferSize < sizeof(SockAddr6))
 				return 0;
 
-			SockAddr6* addr6 = (SockAddr6*)addrBuffer;
+			SockAddr6 *addr6 = (SockAddr6 *)addrBuffer;
 			Memory::Zero(addr6, sizeof(SockAddr6));
 			addr6->sin6_family = AF_INET6;
 			addr6->sin6_port = UINT16SwapByteOrder(port);
@@ -95,7 +95,7 @@ public:
 			if (bufferSize < sizeof(SockAddr))
 				return 0;
 
-			SockAddr* addr = (SockAddr*)addrBuffer;
+			SockAddr *addr = (SockAddr *)addrBuffer;
 			Memory::Zero(addr, sizeof(SockAddr));
 			addr->sin_family = AF_INET;
 			addr->sin_port = UINT16SwapByteOrder(port);
@@ -105,7 +105,7 @@ public:
 	}
 
 	// Get the address family for an IP address
-	static INT32 GetAddressFamily(const IPAddress& ip)
+	static INT32 GetAddressFamily(const IPAddress &ip)
 	{
 		return ip.IsIPv6() ? AF_INET6 : AF_INET;
 	}
@@ -123,7 +123,7 @@ public:
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	Socket() = default;
-	Socket(const IPAddress& ipAddress, UINT16 port);
+	Socket(const IPAddress &ipAddress, UINT16 port);
 	BOOL IsValid() const { return m_socket != NULL && m_socket != (PVOID)(SSIZE)(-1); }
 	SSIZE GetFd() const { return (SSIZE)m_socket; }
 	BOOL Open();

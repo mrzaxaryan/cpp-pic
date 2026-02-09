@@ -16,6 +16,7 @@ typedef enum _EVENT_TYPE
     SynchronizationEvent
 } EVENT_TYPE,*PEVENT_TYPE;
 
+// Structure for file information classes - basic, standard, position and disposition information
 typedef struct _FILE_BASIC_INFORMATION {
   LARGE_INTEGER CreationTime;
   LARGE_INTEGER LastAccessTime;
@@ -50,6 +51,7 @@ typedef VOID(STDCALL *PIO_APC_ROUTINE)(
 
 typedef struct _RTLP_CURDIR_REF *PRTLP_CURDIR_REF;
 
+// Relative name structure
 typedef struct _RTL_RELATIVE_NAME_U
 {
     UNICODE_STRING RelativeName;
@@ -57,13 +59,14 @@ typedef struct _RTL_RELATIVE_NAME_U
     PRTLP_CURDIR_REF CurDirRef;
 } RTL_RELATIVE_NAME_U, *PRTL_RELATIVE_NAME_U;
 
-
+// File information class
 typedef struct _FILE_FS_DEVICE_INFORMATION
 {
     UINT32 DeviceType;      // Type of the device (e.g., FILE_DEVICE_DISK)
     UINT32 Characteristics; // Bitmask of device characteristics (see FILE_DEVICE_* flags)
 } FILE_FS_DEVICE_INFORMATION, *PFILE_FS_DEVICE_INFORMATION;
 
+// Directory information structures for file enumeration
 typedef struct _FILE_DIRECTORY_INFORMATION
 {
     UINT32 NextEntryOffset;
@@ -79,6 +82,7 @@ typedef struct _FILE_DIRECTORY_INFORMATION
     WCHAR FileName[1];
 } FILE_DIRECTORY_INFORMATION, *PFILE_DIRECTORY_INFORMATION;
 
+// Structure to query detailed information about files in a directory
 typedef struct _FILE_BOTH_DIR_INFORMATION
 {
     UINT32 NextEntryOffset;
@@ -97,6 +101,7 @@ typedef struct _FILE_BOTH_DIR_INFORMATION
     WCHAR FileName[1];
 } FILE_BOTH_DIR_INFORMATION, *PFILE_BOTH_DIR_INFORMATION;
 
+// Information class 
 typedef enum _FILE_INFORMATION_CLASS_DIR
 {
     FileDirectoryInformation = 1,

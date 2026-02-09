@@ -9,6 +9,10 @@
 #define STARTF_USESHOWWINDOW 0x00000001
 #define STARTF_USESTDHANDLES 0x00000100
 
+#define CP_UTF8 65001
+#define CREATE_NO_WINDOW 0x08000000
+
+// Structures for process creation and management in Windows API
 typedef struct _STARTUPINFOW
 {
     UINT32 cb;
@@ -31,6 +35,7 @@ typedef struct _STARTUPINFOW
     PVOID hStdError;
 } STARTUPINFOW, *LPSTARTUPINFOW;
 
+// Structure for process information
 typedef struct _PROCESS_INFORMATION
 {
     PVOID hProcess;
@@ -39,9 +44,8 @@ typedef struct _PROCESS_INFORMATION
     UINT32 dwThreadId;
 } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 
-#define CP_UTF8 65001
-#define CREATE_NO_WINDOW 0x08000000
 
+// Kernel32 class for wrapping Windows API functions 
 class Kernel32
 {
 private:

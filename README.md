@@ -198,23 +198,7 @@ These approaches are not universal, as they rely on compiler-specific behavior a
 #### Position-Independent Runtime Solution: No Relocations Needed
 
 By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, Position-Independent Runtime produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
-To achieve this, Position-Independent Runtime replaces conventional string literals with compile-time–decomposed representations. Leveraging C++23 features—such as user-defined literals, variadic templates, and fold expressions—string contents are expanded into individual character operations entirely at compile time:
-
-
-
-```cpp
-template <typename TChar, TChar... Chars>
-class EMBEDDED_STRING
-{
-    TChar data[sizeof...(Chars) + 1];
-    NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING()
-    {
-        USIZE i = 0;
-        ((data[i++] = Chars), ...); // Fold expression
-        data[i] = 0;
-    }
-};
-```
+To achieve this, Position-Independent Runtime replaces conventional string literals with compile-time–decomposed representations. Leveraging C++23 features—such as user-defined literals and variadic templates—string characters are packed into 64-bit words at compile time and written as immediate values in the instruction stream, reducing instruction count by up to 8x compared to character-by-character writes:
 
 Usage:
 ```cpp
@@ -223,11 +207,8 @@ auto msg = "Hello, World!"_embed; // Embedded in code, not .rdata
 
 Assembly Output:
 ```asm
-movw $0x48, (%rdi)  ; 'H'
-movw $0x65, 2(%rdi) ; 'e'
-movw $0x6C, 4(%rdi) ; 'l'
-movw $0x6C, 6(%rdi) ; 'l'
-movw $0x6F, 8(%rdi) ; 'o'
+movabsq $0x57202C6F6C6C6548, (%rsp)   ; "Hello, W" packed into a single immediate
+movabsq $0x00000021646C726F, 8(%rsp)  ; "orld!\0"
 ```
 As a result, string data exists only transiently in registers or on the stack and never appears in static data sections, fully eliminating loader dependencies and relocation requirements.
 In case of working with constant arrays, array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:

@@ -163,7 +163,7 @@ SSIZE Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd) noexcept
     }
 
     // 2. Close the thread handle to prevent leaks
-    NTDLL::NtClose(pi.hThread);
+    NTDLL::ZwClose(pi.hThread);
 
     return (SSIZE)pi.hProcess;
 }

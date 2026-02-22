@@ -30,7 +30,7 @@ PPEB GetCurrentPEB(VOID)
 }
 
 // Get the base address of a module by its name
-PVOID GetModuleHandleFromPEB(USIZE moduleNameHash)
+PVOID GetModuleHandleFromPEB(UINT64 moduleNameHash)
 {
     PPEB peb = GetCurrentPEB();
     PLIST_ENTRY list = &peb->LoaderData->InMemoryOrderModuleList;
@@ -49,7 +49,7 @@ PVOID GetModuleHandleFromPEB(USIZE moduleNameHash)
     return NULL;
 }
 
-PVOID ResolveExportAddressFromPebModule(USIZE moduleNameHash, USIZE functionNameHash)
+PVOID ResolveExportAddressFromPebModule(UINT64 moduleNameHash, UINT64 functionNameHash)
 {
     // Resolve the module handle
     PVOID moduleBase = GetModuleHandleFromPEB(moduleNameHash);

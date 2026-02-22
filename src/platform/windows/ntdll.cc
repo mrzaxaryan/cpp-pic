@@ -1,6 +1,7 @@
 #include "ntdll.h"
 #include "platform.h"
 #include "peb.h"
+#include "platform/windows/system.h"
 
 #define ResolveNtdllExportAddress(functionName) ResolveExportAddressFromPebModule(Djb2::HashCompileTime(L"ntdll.dll"), Djb2::HashCompileTime(functionName))
 
@@ -18,14 +19,23 @@ NTSTATUS NTDLL::NtWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEG
     return ((NTSTATUS(STDCALL *)(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout))ResolveNtdllExportAddress("NtWaitForSingleObject"))(Object, Alertable, Timeout);
 }
 
-INT64 NTDLL::NtClose(PVOID Handle)
+NTSTATUS NTDLL::ZwClose(PVOID Handle)
 {
-    return ((INT64(STDCALL *)(PVOID Handle))ResolveNtdllExportAddress("NtClose"))(Handle);
+    SYSCALL_ENTRY entry = ResolveSyscall("ZwClose");
+    return entry.ssn != SYSCALL_SSN_INVALID 
+            ? System::Call(entry, (USIZE)Handle) 
+            : -1;//((NTSTATUS(STDCALL *)(PVOID Handle))ResolveNtdllExportAddress("ZwClose"))(Handle);
 }
+    
 
-NTSTATUS NTDLL::NtCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength)
+NTSTATUS NTDLL::ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength)
 {
-    return ((NTSTATUS(STDCALL *)(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength))ResolveNtdllExportAddress("NtCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+    SYSCALL_ENTRY entry = ResolveSyscall("ZwCreateFile");
+
+    return entry.ssn != SYSCALL_SSN_INVALID
+            ? System::Call(entry, (USIZE)FileHandle, DesiredAccess, (USIZE)ObjectAttributes, (USIZE)IoStatusBlock, (USIZE)AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, (USIZE)EaBuffer, EaLength) 
+            : -1;
+            //((NTSTATUS(STDCALL *)(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength))ResolveNtdllExportAddress("ZwCreateFile"))(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
 }
 
 PVOID NTDLL::RtlAllocateHeap(PVOID HeapHandle, INT32 Flags, USIZE Size)
@@ -40,8 +50,14 @@ BOOL NTDLL::RtlFreeHeap(PVOID HeapHandle, INT32 Flags, PVOID Pointer)
 
 NTSTATUS NTDLL::ZwTerminateProcess(PVOID ProcessHandle, NTSTATUS ExitStatus)
 {
-    return ((NTSTATUS(STDCALL *)(PVOID ProcessHandle, NTSTATUS ExitStatus))ResolveNtdllExportAddress("ZwTerminateProcess"))(ProcessHandle, ExitStatus);
+    SYSCALL_ENTRY entry = ResolveSyscall("ZwTerminateProcess");
+
+    return entry.ssn != SYSCALL_SSN_INVALID
+        ? System::Call(entry, (USIZE)ProcessHandle, (USIZE)ExitStatus) 
+        : -1;
+            //((NTSTATUS(STDCALL *)(PVOID ProcessHandle, NTSTATUS ExitStatus))ResolveNtdllExportAddress("ZwTerminateProcess"))(ProcessHandle, ExitStatus);
 }
+
 NTSTATUS NTDLL::NtQueryInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass)
 {
     return ((NTSTATUS(STDCALL *)(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass))ResolveNtdllExportAddress("NtQueryInformationFile"))(FileHandle, IoStatusBlock, FileInformation, Length, FileInformationClass);

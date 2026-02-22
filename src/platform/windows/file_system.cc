@@ -61,7 +61,7 @@ void File::Close()
 {
     if (IsValid())
     {
-        NTDLL::NtClose((PVOID)fileHandle);
+        NTDLL::ZwClose((PVOID)fileHandle);
         fileHandle = nullptr;
         fileSize = 0;
     }
@@ -228,7 +228,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     IO_STATUS_BLOCK ioStatusBlock;
     PVOID hFile = nullptr;
 
-    status = NTDLL::NtCreateFile(
+    status = NTDLL::ZwCreateFile(
         &hFile,
         dwDesiredAccess,
         &objAttr,
@@ -264,12 +264,12 @@ BOOL FileSystem::Delete(PCWCHAR path)
 
     InitializeObjectAttributes(&attr, &ntName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NTDLL::NtCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
+    status = NTDLL::ZwCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
                                  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
 
     if (NT_SUCCESS(status))
-        status = NTDLL::NtClose(hFile);
+        status = NTDLL::ZwClose(hFile);
 
     NTDLL::RtlFreeUnicodeString(&ntName);
     return NT_SUCCESS(status);
@@ -315,7 +315,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, NULL, NULL);
 
-    status = NTDLL::NtCreateFile(
+    status = NTDLL::ZwCreateFile(
         &hDir,
         FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objAttr,
@@ -332,7 +332,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
     if (NT_SUCCESS(status))
     {
-        NTDLL::NtClose(hDir);
+        NTDLL::ZwClose(hDir);
         return TRUE;
     }
     LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", status, path);
@@ -368,7 +368,7 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
         sizeof(disp),
         FileDispositionInformation);
 
-    NTDLL::NtClose(hDir);
+    NTDLL::ZwClose(hDir);
     NTDLL::RtlFreeUnicodeString(&uniName);
 
     return NT_SUCCESS(status);
@@ -487,7 +487,7 @@ DirectoryIterator::DirectoryIterator(PCWCHAR path) : handle((PVOID)-1), first(TR
     }
     else
     {
-        NTDLL::NtClose(handle);
+        NTDLL::ZwClose(handle);
         handle = (PVOID)-1;
     }
 }
@@ -530,7 +530,7 @@ BOOL DirectoryIterator::Next()
                     &info,
                     sizeof(info),
                     FileFsDeviceInformation);
-                NTDLL::NtClose(handle);
+                NTDLL::ZwClose(handle);
 
                 switch (info.DeviceType)
                 {
@@ -609,7 +609,7 @@ DirectoryIterator::~DirectoryIterator()
     {
         if (!isBitMaskMode)
         {
-            NTDLL::NtClose(handle);
+            NTDLL::ZwClose(handle);
         }
         // If it's a bitmask, we do nothing. No memory was allocated!
         handle = (PVOID)-1;

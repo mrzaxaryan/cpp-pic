@@ -34,11 +34,11 @@
  * @details Uses FNV-1a algorithm to generate a unique seed from the build date.
  * This function must be consteval to ensure compile-time evaluation.
  */
-consteval USIZE ct_hash_str_seed(const CHAR *s)
+consteval UINT64 ct_hash_str_seed(const CHAR *s)
 {
-    USIZE h = (USIZE)2166136261u;
-    for (USIZE i = 0; s[i] != '\0'; ++i)
-        h = (h ^ (USIZE)(UINT8)s[i]) * (USIZE)16777619u;
+    UINT64 h = (UINT64)2166136261u;
+    for (UINT64 i = 0; s[i] != '\0'; ++i)
+        h = (h ^ (UINT64)(UINT8)s[i]) * (UINT64)16777619u;
     return h;
 }
 
@@ -53,10 +53,10 @@ consteval USIZE ct_hash_str_seed(const CHAR *s)
  * @par Example Usage:
  * @code
  * // Runtime hash computation
- * USIZE hash = Djb2::Hash("LoadLibraryA");
+ * UINT64 hash = Djb2::Hash("LoadLibraryA");
  *
  * // Compile-time hash computation (for constant expressions)
- * constexpr USIZE LOADLIBRARY_HASH = Djb2::HashCompileTime("LoadLibraryA");
+ * constexpr UINT64 LOADLIBRARY_HASH = Djb2::HashCompileTime("LoadLibraryA");
  *
  * // Compare runtime hash with compile-time hash
  * if (Djb2::Hash(exportName) == LOADLIBRARY_HASH) {
@@ -71,7 +71,7 @@ private:
      * @brief Compile-time seed derived from build date
      * @details Unique per build, provides anti-signature protection.
      */
-    static constexpr USIZE Seed = ct_hash_str_seed(__DATE__);
+    static constexpr UINT64 Seed = ct_hash_str_seed(__DATE__);
 
 public:
     /**
@@ -85,13 +85,13 @@ public:
      * hash = ((hash << 5) + hash) + c, which is equivalent to hash * 33 + c.
      */
     template <typename TChar>
-    static USIZE Hash(const TChar *value)
+    static UINT64 Hash(const TChar *value)
     {
-        USIZE h = Seed;
-        for (USIZE i = 0; value[i] != (TChar)0; ++i)
+        UINT64 h = Seed;
+        for (UINT64 i = 0; value[i] != (TChar)0; ++i)
         {
             TChar c = String::ToLowerCase(value[i]);
-            h = ((h << 5) + h) + (USIZE)c;
+            h = ((h << 5) + h) + (UINT64)c;
         }
         return h;
     }
@@ -109,14 +109,14 @@ public:
      *
      * @note Must be called with a string literal or constexpr array.
      */
-    template <typename TChar, USIZE N>
-    static consteval USIZE HashCompileTime(const TChar (&value)[N])
+    template <typename TChar, UINT64 N>
+    static consteval UINT64 HashCompileTime(const TChar (&value)[N])
     {
-        USIZE h = Seed;
-        for (USIZE i = 0; value[i] != (TChar)0; ++i)
+        UINT64 h = Seed;
+        for (UINT64 i = 0; value[i] != (TChar)0; ++i)
         {
             TChar c = String::ToLowerCase(value[i]);
-            h = ((h << 5) + h) + (USIZE)c;
+            h = ((h << 5) + h) + (UINT64)c;
         }
         return h;
     }

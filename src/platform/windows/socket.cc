@@ -160,7 +160,7 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
         Status = IOSB.Status;
     }
 
-    NTDLL::NtClose(SockEvent);
+    NTDLL::ZwClose(SockEvent);
     return NT_SUCCESS(Status);
 }
 
@@ -255,7 +255,7 @@ BOOL Socket::Open()
         Status = IOSB.Status;
     }
 
-    NTDLL::NtClose(SockEvent);
+    NTDLL::ZwClose(SockEvent);
     return NT_SUCCESS(Status);
 }
 
@@ -263,8 +263,8 @@ BOOL Socket::Close()
 {
     LOG_DEBUG("Disconnect(pNTSocket: 0x%p)\n", this);
 
-    NTSTATUS NTstatus = 0;
-    NTstatus = NTDLL::NtClose((PVOID)m_socket);
+    NTSTATUS NTstatus = -1;
+    NTstatus = NTDLL::ZwClose((PVOID)m_socket);
     m_socket = NULL;
     return NT_SUCCESS(NTstatus);
 }
@@ -328,7 +328,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
 
         if (waitStatus == 0x00000102)
         {
-            NTDLL::NtClose(SockEvent);
+            NTDLL::ZwClose(SockEvent);
             return -1;
         }
         Status = IOSB.Status;
@@ -340,7 +340,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
         lpNumberOfBytesRead = IOSB.Information;
     }
 
-    NTDLL::NtClose(SockEvent);
+    NTDLL::ZwClose(SockEvent);
     return lpNumberOfBytesRead;
 }
 
@@ -409,13 +409,13 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
 
         if (!NT_SUCCESS(Status))
         {
-            NTDLL::NtClose(SockEvent);
+            NTDLL::ZwClose(SockEvent);
             LOG_ERROR("Failed to write to socket: 0x%08X\n", Status);
             return FALSE;
         }
     } while (lpNumberOfBytesAlreadySend < bufferLength);
 
-    NTDLL::NtClose(SockEvent);
+    NTDLL::ZwClose(SockEvent);
     LOG_DEBUG("Successfully wrote %d bytes to socket\n", lpNumberOfBytesAlreadySend);
     return lpNumberOfBytesAlreadySend;
 }
@@ -457,7 +457,7 @@ Socket::Socket(const IPAddress &ipAddress, UINT16 port) : ip(ipAddress), port(po
                                0,
                                0);
 
-    Status = NTDLL::NtCreateFile(&m_socket,
+    Status = NTDLL::ZwCreateFile(&m_socket,
                                  GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE,
                                  &Object,
                                  &IOSB,

@@ -111,10 +111,10 @@ public:
     static NTSTATUS NtWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout);
     // This function closes a handle to an object.
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
-    static INT64 NtClose(PVOID Handle);
+    static NTSTATUS ZwClose(PVOID Handle);
     // This function creates a new file or directory, or opens an existing file, device, directory, or volume.
     // Minimum supported client	Windows XP [desktop apps | UWP apps]
-    static NTSTATUS NtCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
+    static NTSTATUS ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
     // This function routine allocates a block of memory from a heap.
     // Minimum supported client	Windows XP.
     static PVOID RtlAllocateHeap(PVOID HeapHandle, INT32 Flags, USIZE Size);

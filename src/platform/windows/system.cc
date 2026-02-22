@@ -3,44 +3,16 @@
 #include "peb.h"
 #include "djb2.h"
 
-#if !defined(ARCHITECTURE_I386)
-// Swap two entries — field by field, prevents compiler memcpy optimization
-static inline VOID SwapEntry(ZW_ENTRY* a, ZW_ENTRY* b)
+SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 {
-    UINT64  tmpHash    = a->nameHash;
-    UINT32 tmpRva     = a->rva;
-    PVOID  tmpSyscall = a->syscallAddress;
-    a->nameHash       = b->nameHash;
-    a->rva            = b->rva;
-    a->syscallAddress = b->syscallAddress;
-    b->nameHash       = tmpHash;
-    b->rva            = tmpRva;
-    b->syscallAddress = tmpSyscall;
-}
-
-static VOID SortEntriesByRva(ZW_ENTRY* entries, UINT32 count)
-{
-    // Insertion sort — swap-based to avoid struct copies
-    for (UINT32 i = 1; i < count; i++)
-    {
-        UINT32 j = i;
-        while (j > 0 && entries[j - 1].rva > entries[j].rva)
-        {
-            SwapEntry(&entries[j], &entries[j - 1]);
-            j--;
-        }
-    }
-}
-#endif
-
-static UINT32 BuildTable(SYSCALL_TABLE* table)
-{
-    table->count       = 0;
+    SYSCALL_ENTRY result;
+    result.ssn            = SYSCALL_SSN_INVALID;
+    result.syscallAddress = nullptr;
 
     PVOID ntdllBase = GetModuleHandleFromPEB(Djb2::HashCompileTime(L"ntdll.dll"));
 
     if (!ntdllBase)
-        return 0;
+        return result;
 
     UINT8* base = (UINT8*)ntdllBase;
 
@@ -58,7 +30,7 @@ static UINT32 BuildTable(SYSCALL_TABLE* table)
 #endif
 
     if (exportDirRva == 0)
-        return 0;
+        return result;
 
     UINT8* exportDir = base + exportDirRva;
 
@@ -71,13 +43,82 @@ static UINT32 BuildTable(SYSCALL_TABLE* table)
     UINT32* nameRvaTable = (UINT32*)(base + addressOfNames);
     UINT16* ordinalTable = (UINT16*)(base + addressOfOrdinals);
 
-    UINT32 count = 0;
+    // --- Pass 1: Find the target function by hash ---
+    UINT32 targetRva    = 0;
+    PVOID  targetGadget = nullptr;
 
-    for (UINT32 i = 0; i < numberOfNames && count < SYSCALL_MAX_ENTRIES; i++)
+    for (UINT32 i = 0; i < numberOfNames; i++)
     {
         const CHAR* name = (const CHAR*)(base + nameRvaTable[i]);
 
-        // Zw as short 0x775A ('Z''w') to quickly filter non-syscall exports
+        // 'Zw' prefix filter
+        if (*(UINT16*)name != 0x775A)
+            continue;
+
+        if (Djb2::Hash(name) != functionNameHash)
+            continue;
+
+        UINT16 ordinal = ordinalTable[i];
+        UINT32 funcRva = funcRvaTable[ordinal];
+
+        // Skip forwarded exports
+        if (funcRva >= exportDirRva && funcRva < (exportDirRva + exportDirSize))
+            return result;
+
+#if defined(ARCHITECTURE_X86_64)
+        {
+            // Each x64 stub contains an inline syscall;ret gadget (0F 05 C3)
+            UINT8* funcAddr = base + funcRva;
+            for (UINT32 k = 0; k < 30; k++)
+            {
+                if (funcAddr[k] == 0x0F && funcAddr[k + 1] == 0x05 && funcAddr[k + 2] == 0xC3)
+                {
+                    targetGadget = (PVOID)(funcAddr + k);
+                    break;
+                }
+            }
+            if (!targetGadget)
+                return result;
+            targetRva = funcRva;
+        }
+#elif defined(ARCHITECTURE_I386)
+        {
+            // i386 stubs: B8 [SSN:4] BA [addr:4] {FF12|FFD2} C2 [cleanup:2]
+            UINT8* funcAddr = base + funcRva;
+            if (funcAddr[0] != 0xB8 || funcAddr[5] != 0xBA)
+                return result;
+
+            PVOID rawAddr = *(PVOID*)(funcAddr + 6);
+
+            if (funcAddr[10] == 0xFF && funcAddr[11] == 0x12)
+                targetGadget = *(PVOID*)rawAddr;   // native: dereference pointer to KiFastSystemCall
+            else if (funcAddr[10] == 0xFF && funcAddr[11] == 0xD2)
+                targetGadget = rawAddr;            // WoW64: direct trampoline address
+            else
+                return result;
+
+            // SSN is embedded directly in the stub — no pass 2 needed
+            result.ssn            = (INT32)(*(UINT32*)(funcAddr + 1));
+            result.syscallAddress = targetGadget;
+            return result;
+        }
+#elif defined(ARCHITECTURE_AARCH64)
+        // AArch64 stubs use svc #0 directly; no gadget needed
+        targetRva = funcRva;
+#endif
+
+        break;
+    }
+
+    if (targetRva == 0)
+        return result;
+
+    // --- Pass 2: Count Zw* exports with lower RVA to derive SSN (x86_64/aarch64) ---
+    UINT32 ssn = 0;
+    for (UINT32 i = 0; i < numberOfNames; i++)
+    {
+        const CHAR* name = (const CHAR*)(base + nameRvaTable[i]);
+
         if (*(UINT16*)name != 0x775A)
             continue;
 
@@ -88,90 +129,11 @@ static UINT32 BuildTable(SYSCALL_TABLE* table)
         if (funcRva >= exportDirRva && funcRva < (exportDirRva + exportDirSize))
             continue;
 
-#if defined(ARCHITECTURE_X86_64)
-        // Each x64 stub contains an inline syscall;ret gadget (0F 05 C3)
-        UINT8* funcAddr    = base + funcRva;
-        PVOID  gadgetAddr  = nullptr;
-        for (UINT32 k = 0; k < 30; k++)
-        {
-            if (funcAddr[k] == 0x0F && funcAddr[k + 1] == 0x05 && funcAddr[k + 2] == 0xC3)
-            {
-                gadgetAddr = (PVOID)(funcAddr + k);
-                break;
-            }
-        }
-#elif defined(ARCHITECTURE_I386)
-        // i386 stubs: B8 [SSN:4] BA [addr:4] {FF12|FFD2} C2 [cleanup:2]
-        // Read SSN and gadget address directly from the stub bytes.
-        // Native 32-bit: FF 12 = call [edx] (deref SharedUserData pointer to KiFastSystemCall)
-        // WoW64:         FF D2 = call *edx  (direct trampoline address)
-        UINT8* funcAddr = base + funcRva;
-        if (funcAddr[0] != 0xB8 || funcAddr[5] != 0xBA)
-            continue;
-
-        UINT32 stubSsn  = *(UINT32*)(funcAddr + 1);
-        PVOID  rawAddr  = *(PVOID*)(funcAddr + 6);
-        PVOID  gadgetAddr = nullptr;
-
-        if (funcAddr[10] == 0xFF && funcAddr[11] == 0x12)
-            gadgetAddr = *(PVOID*)rawAddr;   // native: dereference pointer to KiFastSystemCall
-        else if (funcAddr[10] == 0xFF && funcAddr[11] == 0xD2)
-            gadgetAddr = rawAddr;            // WoW64: direct trampoline address
-        else
-            continue;
-
-        // Repurpose rva field to store the actual stub SSN
-        funcRva = stubSsn;
-
-#elif defined(ARCHITECTURE_AARCH64)
-        // AArch64 Call wrappers use svc #0 directly; gadget address unused
-        PVOID gadgetAddr = nullptr;
-#endif
-
-        table->entries[count].nameHash       = Djb2::Hash(name);
-        table->entries[count].rva            = funcRva;
-        table->entries[count].syscallAddress = gadgetAddr;
-        count++;
+        if (funcRva < targetRva)
+            ssn++;
     }
 
-    table->count = count;
-#if !defined(ARCHITECTURE_I386)
-    // Sort by RVA to derive SSN from position (x86_64/aarch64 only).
-    // On i386, the SSN is read directly from stub bytes and stored in the rva field.
-    SortEntriesByRva(table->entries, table->count);
-#endif
-    return table->count;
-}
-
-SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
-{
-    SYSCALL_ENTRY result;
-    result.ssn            = SYSCALL_SSN_INVALID;
-    result.syscallAddress = nullptr;
-
-    SYSCALL_TABLE table;
-    if (BuildTable(&table) == 0)
-        return result;
-
-    for (UINT32 i = 0; i < table.count; i++)
-    {
-        if (table.entries[i].nameHash == functionNameHash)
-        {
-#if !defined(ARCHITECTURE_AARCH64)
-            if (!table.entries[i].syscallAddress)
-                return result;
-#endif
-#if defined(ARCHITECTURE_I386)
-            // On i386, the actual SSN is stored in the rva field (read from stub bytes)
-            result.ssn            = (INT32)table.entries[i].rva;
-#else
-            // On x86_64/aarch64, SSN = sorted position index
-            result.ssn            = (INT32)i;
-#endif
-            result.syscallAddress = table.entries[i].syscallAddress;
-            return result;
-        }
-    }
-
+    result.ssn            = (INT32)ssn;
+    result.syscallAddress = targetGadget;
     return result;
 }

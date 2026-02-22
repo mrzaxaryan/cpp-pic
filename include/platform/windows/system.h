@@ -3,27 +3,13 @@
 #include "platform.h"
 #include "peb.h"
 
-#define SYSCALL_MAX_ENTRIES 512
 #define SYSCALL_SSN_INVALID ((INT32) - 1)
-
-typedef struct ZW_ENTRY
-{
-    UINT64 nameHash;
-    UINT32 rva;
-    PVOID syscallAddress; // absolute address of syscall;ret gadget in this stub
-} ZW_ENTRY;
 
 typedef struct SYSCALL_ENTRY
 {
     INT32 ssn;
     PVOID syscallAddress;
 } SYSCALL_ENTRY;
-
-typedef struct SYSCALL_TABLE
-{
-    ZW_ENTRY entries[SYSCALL_MAX_ENTRIES];
-    UINT32 count;
-} SYSCALL_TABLE;
 
 class System
 {

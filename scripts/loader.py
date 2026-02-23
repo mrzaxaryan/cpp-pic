@@ -308,7 +308,7 @@ def main():
         code = run_mmap(shellcode)
 
     print(f"[+] Exit: {code}")
-    sys.exit(code)
+    os._exit(code)
 
 
 if __name__ == '__main__':

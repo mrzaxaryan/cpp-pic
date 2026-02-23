@@ -67,6 +67,25 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
             if (!result.syscallAddress)
                 return result;
         }
+#elif defined(ARCHITECTURE_AARCH64)
+        {
+            // ARM64 ntdll stubs: SVC #N; RET (each instruction is 4 bytes)
+            // The syscall number is encoded in the SVC immediate, NOT in a register.
+            // We find the SVC+RET pair and BLR to it (indirect syscall).
+            // SVC encoding: 0xD4000001 | (imm16 << 5), mask 0xFFE0001F
+            // RET encoding: 0xD65F03C0
+            UINT32* instrs = (UINT32*)(base + funcRva);
+            for (UINT32 k = 0; k < 8; k++)
+            {
+                if ((instrs[k] & 0xFFE0001F) == 0xD4000001 && instrs[k + 1] == 0xD65F03C0)
+                {
+                    result.syscallAddress = (PVOID)&instrs[k];
+                    break;
+                }
+            }
+            if (!result.syscallAddress)
+                return result;
+        }
 #elif defined(ARCHITECTURE_I386)
         {
             // i386 stubs: B8 [SSN:4] BA [addr:4] {FF12|FFD2} C2 [cleanup:2]

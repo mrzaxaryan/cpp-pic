@@ -218,22 +218,26 @@ public:
     }
 
     // Syscall with 6 arguments
+    // Cannot use register __asm__("ebp") for arg6 — it conflicts with the
+    // frame pointer at -O1+ under LTO. Save/restore EBP manually instead.
     static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
     {
+        SSIZE ret;
         register USIZE r_ebx __asm__("ebx") = arg1;
         register USIZE r_ecx __asm__("ecx") = arg2;
         register USIZE r_edx __asm__("edx") = arg3;
         register USIZE r_esi __asm__("esi") = arg4;
         register USIZE r_edi __asm__("edi") = arg5;
-        register USIZE r_ebp __asm__("ebp") = arg6;
-        register USIZE r_eax __asm__("eax") = number;
         __asm__ volatile(
+            "pushl %%ebp\n"
+            "movl %[a6], %%ebp\n"
             "int $0x80\n"
-            : "+r"(r_eax)
-            : "r"(r_ebx), "r"(r_ecx), "r"(r_edx), "r"(r_esi), "r"(r_edi), "r"(r_ebp)
+            "popl %%ebp\n"
+            : "=a"(ret)
+            : "a"(number), "r"(r_ebx), "r"(r_ecx), "r"(r_edx), "r"(r_esi), "r"(r_edi), [a6] "g"(arg6)
             : "memory"
         );
-        return (SSIZE)r_eax;
+        return ret;
     }
 
     // AArch64 syscall wrappers

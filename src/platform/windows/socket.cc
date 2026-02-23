@@ -124,7 +124,7 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
         BindConfig.ShareType = ShareType;
         BindConfig.Address = *(SockAddr6 *)SocketAddress;
 
-        Status = NTDLL::NtDeviceIoControlFile(m_socket,
+        Status = NTDLL::ZwDeviceIoControlFile(m_socket,
                                               SockEvent,
                                               NULL,
                                               NULL,
@@ -142,7 +142,7 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
         BindConfig.ShareType = ShareType;
         BindConfig.Address = *SocketAddress;
 
-        Status = NTDLL::NtDeviceIoControlFile(m_socket,
+        Status = NTDLL::ZwDeviceIoControlFile(m_socket,
                                               SockEvent,
                                               NULL,
                                               NULL,
@@ -218,7 +218,7 @@ BOOL Socket::Open()
         ConnectInfo.Unknown = 0;
         ConnectInfo.Address = addrBuffer.addr6;
 
-        Status = NTDLL::NtDeviceIoControlFile((PVOID)m_socket,
+        Status = NTDLL::ZwDeviceIoControlFile((PVOID)m_socket,
                                               SockEvent,
                                               NULL,
                                               NULL,
@@ -237,7 +237,7 @@ BOOL Socket::Open()
         ConnectInfo.Unknown = 0;
         ConnectInfo.Address = addrBuffer.addr4;
 
-        Status = NTDLL::NtDeviceIoControlFile((PVOID)m_socket,
+        Status = NTDLL::ZwDeviceIoControlFile((PVOID)m_socket,
                                               SockEvent,
                                               NULL,
                                               NULL,
@@ -308,7 +308,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
     SendRecvInfo.BufferArray = &SendRecvBuffer;
 
     IO_STATUS_BLOCK IOSB;
-    Status = NTDLL::NtDeviceIoControlFile((PVOID)m_socket,
+    Status = NTDLL::ZwDeviceIoControlFile((PVOID)m_socket,
                                           SockEvent,
                                           NULL,
                                           NULL,
@@ -386,7 +386,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
         SendRecvBuffer.Length = bufferLength - lpNumberOfBytesAlreadySend;
         SendRecvInfo.BufferArray = &SendRecvBuffer;
 
-        Status = NTDLL::NtDeviceIoControlFile(m_socket,
+        Status = NTDLL::ZwDeviceIoControlFile(m_socket,
                                               SockEvent,
                                               NULL,
                                               NULL,

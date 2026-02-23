@@ -105,7 +105,7 @@ public:
     static NTSTATUS ZwCreateEvent(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState);
     // This function builds descriptors for the supplied buffer(s) and passes the untyped data to the device driver associated with the file handle
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
-    static NTSTATUS NtDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength);
+    static NTSTATUS ZwDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength);
     // This function waits until the specified object attains a state of signaled.
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
     static NTSTATUS NtWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout);

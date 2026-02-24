@@ -109,7 +109,6 @@ set(CPPPIC_BASE_FLAGS
     -Wno-gnu-string-literal-operator-template
     -Qn
     -nostdlib
-    -fno-omit-frame-pointer
     -fno-ident
     -fno-exceptions
     -fno-rtti
@@ -131,15 +130,22 @@ endif()
 # Build-type-specific
 if(CPPPIC_BUILD_TYPE STREQUAL "debug")
     list(APPEND CPPPIC_BASE_FLAGS
+        -fno-omit-frame-pointer
         -g3 -ferror-limit=200 -${CPPPIC_OPT_LEVEL}
     )
 else()
     list(APPEND CPPPIC_BASE_FLAGS
+        -fomit-frame-pointer
         -fno-asynchronous-unwind-tables
         -fno-unwind-tables
         -flto=full
         -finline-functions
         -fwhole-program-vtables
+        -fvisibility=hidden
+        -fvisibility-inlines-hidden
+        -fno-threadsafe-statics
+        -fmerge-all-constants
+        -fno-math-errno
         -${CPPPIC_OPT_LEVEL}
     )
 endif()

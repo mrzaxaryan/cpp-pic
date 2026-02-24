@@ -29,8 +29,10 @@ cpppic_add_link_flags(
     /MAP:${CPPPIC_MAP_FILE}
 )
 
+cpppic_add_link_flags(/FILEALIGN:0x200)
+
 if(CPPPIC_ARCH STREQUAL "i386")
-    cpppic_add_link_flags(/BASE:0x400000 /FILEALIGN:0x1000 /SAFESEH:NO)
+    cpppic_add_link_flags(/BASE:0x400000 /SAFESEH:NO)
 endif()
 
 if(CPPPIC_BUILD_TYPE STREQUAL "debug")

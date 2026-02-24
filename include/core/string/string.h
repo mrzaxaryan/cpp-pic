@@ -140,7 +140,7 @@ public:
      * @return TRUE if strings are equal, FALSE otherwise
      */
     template <TCHAR TChar>
-    static FORCE_INLINE BOOL Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase = FALSE) noexcept;
+    static inline BOOL Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase = FALSE) noexcept;
 
     /**
      * @brief Compare two strings with explicit lengths
@@ -152,7 +152,7 @@ public:
      * @return TRUE if strings are equal, FALSE otherwise
      */
     template <TCHAR TChar>
-    static FORCE_INLINE BOOL Equals(const TChar *a, USIZE aLen, const TChar *b, USIZE bLen) noexcept;
+    static inline BOOL Equals(const TChar *a, USIZE aLen, const TChar *b, USIZE bLen) noexcept;
 
     /**
      * @brief Compare two null-terminated strings for equality
@@ -172,7 +172,7 @@ public:
      * @return TRUE if string starts with prefix, FALSE otherwise
      */
     template <TCHAR TChar>
-    static FORCE_INLINE BOOL StartsWith(const TChar *pChar, const TChar *pSubString) noexcept;
+    static inline BOOL StartsWith(const TChar *pChar, const TChar *pSubString) noexcept;
 
     /**
      * @brief Check if string starts with prefix (with explicit lengths)
@@ -210,7 +210,7 @@ public:
      * @return Pointer to first occurrence, or NULL if not found
      */
     template <TCHAR TChar>
-    static FORCE_INLINE const TChar *AddressOf(TChar c, const TChar *pChar) noexcept;
+    static inline const TChar *AddressOf(TChar c, const TChar *pChar) noexcept;
 
     /**
      * @brief Find index of character in string
@@ -233,7 +233,7 @@ public:
      * @return Index of first occurrence, or -1 if not found
      */
     template <TCHAR TChar>
-    static FORCE_INLINE SSIZE IndexOf(const TChar *str, USIZE strLen, const TChar *sub, USIZE subLen) noexcept;
+    static inline SSIZE IndexOf(const TChar *str, USIZE strLen, const TChar *sub, USIZE subLen) noexcept;
 
     /// @}
     /// @name String Copy Operations
@@ -260,7 +260,7 @@ public:
      * @return Number of characters copied (excluding null terminator)
      */
     template <TCHAR TChar>
-    static FORCE_INLINE USIZE Copy(TChar *dest, USIZE destSize, const TChar *src, USIZE srcLen) noexcept;
+    static inline USIZE Copy(TChar *dest, USIZE destSize, const TChar *src, USIZE srcLen) noexcept;
 
     /**
      * @brief Safe string copy with compile-time buffer size
@@ -283,7 +283,7 @@ public:
      * @return Number of characters copied (excluding null terminator)
      */
     template <typename T>
-    static FORCE_INLINE USIZE CopyEmbed(const T &src, CHAR *buffer, USIZE bufSize) noexcept;
+    static inline USIZE CopyEmbed(const T &src, CHAR *buffer, USIZE bufSize) noexcept;
 
     /// @}
     /// @name String Manipulation
@@ -296,7 +296,7 @@ public:
      * @return New length including null terminator
      */
     template <TCHAR TChar>
-    static FORCE_INLINE USIZE TrimEnd(TChar *str) noexcept;
+    static inline USIZE TrimEnd(TChar *str) noexcept;
 
     /**
      * @brief Trim whitespace from end (with explicit length)
@@ -339,9 +339,9 @@ public:
      * @return Total number of characters written (excluding null terminator)
      */
     template <TCHAR TChar>
-    static FORCE_INLINE USIZE Concat(TChar *buffer, USIZE bufSize,
-                                     const TChar *s1, USIZE len1,
-                                     const TChar *s2, USIZE len2) noexcept;
+    static inline USIZE Concat(TChar *buffer, USIZE bufSize,
+                               const TChar *s1, USIZE len1,
+                               const TChar *s2, USIZE len2) noexcept;
 
     /// @}
     /// @name Number Conversion
@@ -354,7 +354,7 @@ public:
      * @param bufSize Size of destination buffer
      * @return Number of characters written (excluding null terminator)
      */
-    static FORCE_INLINE USIZE IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept;
+    static inline USIZE IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept;
 
     /**
      * @brief Convert unsigned integer to string
@@ -363,14 +363,14 @@ public:
      * @param bufSize Size of destination buffer
      * @return Number of characters written (excluding null terminator)
      */
-    static FORCE_INLINE USIZE UIntToStr(UINT64 value, CHAR *buffer, USIZE bufSize) noexcept;
+    static inline USIZE UIntToStr(UINT64 value, CHAR *buffer, USIZE bufSize) noexcept;
 
     /**
      * @brief Parse hexadecimal string to UINT32
      * @param str Hexadecimal string (without 0x prefix)
      * @return Parsed value (stops at first non-hex character)
      */
-    static FORCE_INLINE UINT32 ParseHex(PCCHAR str) noexcept;
+    static inline UINT32 ParseHex(PCCHAR str) noexcept;
 
     /**
      * @brief Write decimal number to buffer
@@ -387,7 +387,7 @@ public:
      * @param uppercase TRUE for A-F, FALSE for a-f
      * @return Pointer to null terminator
      */
-    static FORCE_INLINE PCHAR WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase = FALSE) noexcept;
+    static inline PCHAR WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase = FALSE) noexcept;
 
     /**
      * @brief Convert DOUBLE to string
@@ -397,7 +397,7 @@ public:
      * @param precision Number of decimal places (default 6)
      * @return Number of characters written (excluding null terminator)
      */
-    static FORCE_INLINE USIZE FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize, UINT8 precision = 6) noexcept;
+    static inline USIZE FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize, UINT8 precision = 6) noexcept;
 
     /**
      * @brief Parse string to INT64 (with explicit length)
@@ -406,7 +406,7 @@ public:
      * @param result Output parameter for parsed value
      * @return TRUE on success, FALSE on failure
      */
-    static FORCE_INLINE BOOL ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept;
+    static inline BOOL ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept;
 
     /**
      * @brief Parse null-terminated string to INT64
@@ -422,7 +422,7 @@ public:
      * @param result Output parameter for parsed value
      * @return TRUE on success, FALSE on failure
      */
-    static FORCE_INLINE BOOL StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept;
+    static inline BOOL StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept;
 
     /**
      * @brief Parse string to specified type
@@ -524,7 +524,7 @@ constexpr FORCE_INLINE USIZE String::Length(const TChar *p) noexcept
 }
 
 template <TCHAR TChar>
-FORCE_INLINE BOOL String::Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase) noexcept
+inline BOOL String::Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase) noexcept
 {
     const TChar *str1 = s1;
     const TChar *str2 = s2;
@@ -543,7 +543,7 @@ FORCE_INLINE BOOL String::Compare(const TChar *s1, const TChar *s2, BOOL ignoreC
 }
 
 template <TCHAR TChar>
-FORCE_INLINE BOOL String::Equals(const TChar *a, USIZE aLen, const TChar *b, USIZE bLen) noexcept
+inline BOOL String::Equals(const TChar *a, USIZE aLen, const TChar *b, USIZE bLen) noexcept
 {
     if (aLen != bLen) return FALSE;
     for (USIZE i = 0; i < aLen; i++)
@@ -567,7 +567,7 @@ FORCE_INLINE BOOL String::Equals(const TChar *a, const TChar *b) noexcept
 }
 
 template <TCHAR TChar>
-FORCE_INLINE BOOL String::StartsWith(const TChar *pChar, const TChar *pSubString) noexcept
+inline BOOL String::StartsWith(const TChar *pChar, const TChar *pSubString) noexcept
 {
     USIZE i = 0;
     while (pChar[i] != '\0' && pSubString[i] != '\0')
@@ -613,7 +613,7 @@ FORCE_INLINE BOOL String::EndsWith(const TChar *str, USIZE strLen, const TChar *
 // ============================================================================
 
 template <TCHAR TChar>
-FORCE_INLINE const TChar *String::AddressOf(TChar c, const TChar *pChar) noexcept
+inline const TChar *String::AddressOf(TChar c, const TChar *pChar) noexcept
 {
     USIZE i = 0;
     while (pChar[i] != '\0')
@@ -638,7 +638,7 @@ FORCE_INLINE SSIZE String::IndexOfChar(const TChar *str, USIZE strLen, TChar ch)
 }
 
 template <TCHAR TChar>
-FORCE_INLINE SSIZE String::IndexOf(const TChar *str, USIZE strLen, const TChar *sub, USIZE subLen) noexcept
+inline SSIZE String::IndexOf(const TChar *str, USIZE strLen, const TChar *sub, USIZE subLen) noexcept
 {
     if (subLen == 0) return 0;
     if (subLen > strLen) return -1;
@@ -674,7 +674,7 @@ FORCE_INLINE TChar *String::Copy(TChar *dest, const TChar *src) noexcept
 }
 
 template <TCHAR TChar>
-FORCE_INLINE USIZE String::Copy(TChar *dest, USIZE destSize, const TChar *src, USIZE srcLen) noexcept
+inline USIZE String::Copy(TChar *dest, USIZE destSize, const TChar *src, USIZE srcLen) noexcept
 {
     if (!dest || destSize == 0) return 0;
     if (!src || srcLen == 0)
@@ -699,7 +699,7 @@ FORCE_INLINE USIZE String::Copy(TChar (&dest)[MaxLen], const TChar *src, USIZE s
 }
 
 template <typename T>
-FORCE_INLINE USIZE String::CopyEmbed(const T &src, CHAR *buffer, USIZE bufSize) noexcept
+inline USIZE String::CopyEmbed(const T &src, CHAR *buffer, USIZE bufSize) noexcept
 {
     if (!buffer || bufSize == 0) return 0;
 
@@ -719,7 +719,7 @@ FORCE_INLINE USIZE String::CopyEmbed(const T &src, CHAR *buffer, USIZE bufSize) 
 // ============================================================================
 
 template <TCHAR TChar>
-FORCE_INLINE USIZE String::TrimEnd(TChar *str) noexcept
+inline USIZE String::TrimEnd(TChar *str) noexcept
 {
     if (!str)
         return 0;
@@ -770,9 +770,9 @@ FORCE_INLINE const TChar *String::Trim(const TChar *str, USIZE &len) noexcept
 }
 
 template <TCHAR TChar>
-FORCE_INLINE USIZE String::Concat(TChar *buffer, USIZE bufSize,
-                                  const TChar *s1, USIZE len1,
-                                  const TChar *s2, USIZE len2) noexcept
+inline USIZE String::Concat(TChar *buffer, USIZE bufSize,
+                            const TChar *s1, USIZE len1,
+                            const TChar *s2, USIZE len2) noexcept
 {
     if (!buffer || bufSize == 0) return 0;
 
@@ -796,7 +796,7 @@ FORCE_INLINE USIZE String::Concat(TChar *buffer, USIZE bufSize,
 // NUMBER CONVERSION IMPLEMENTATIONS
 // ============================================================================
 
-FORCE_INLINE USIZE String::IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept
+inline USIZE String::IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept
 {
     if (!buffer || bufSize < 2) return 0;
 
@@ -837,7 +837,7 @@ FORCE_INLINE USIZE String::IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) no
     return copyLen;
 }
 
-FORCE_INLINE USIZE String::UIntToStr(UINT64 value, CHAR *buffer, USIZE bufSize) noexcept
+inline USIZE String::UIntToStr(UINT64 value, CHAR *buffer, USIZE bufSize) noexcept
 {
     if (!buffer || bufSize < 2) return 0;
 
@@ -866,7 +866,7 @@ FORCE_INLINE USIZE String::UIntToStr(UINT64 value, CHAR *buffer, USIZE bufSize) 
     return copyLen;
 }
 
-FORCE_INLINE USIZE String::FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize, UINT8 precision) noexcept
+inline USIZE String::FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize, UINT8 precision) noexcept
 {
     if (!buffer || bufSize < 2) return 0;
     if (precision > 15) precision = 15;
@@ -927,7 +927,7 @@ FORCE_INLINE USIZE String::FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize,
     return pos;
 }
 
-FORCE_INLINE BOOL String::ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept
+inline BOOL String::ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept
 {
     if (!str || len == 0)
     {
@@ -981,7 +981,7 @@ FORCE_INLINE INT64 String::ParseInt64(PCCHAR str) noexcept
     return result;
 }
 
-FORCE_INLINE BOOL String::StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept
+inline BOOL String::StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept
 {
     if (!str || len == 0)
     {
@@ -1001,7 +1001,7 @@ FORCE_INLINE BOOL String::StrToFloat(const CHAR *str, USIZE len, DOUBLE &result)
     return TRUE;
 }
 
-FORCE_INLINE UINT32 String::ParseHex(PCCHAR str) noexcept
+inline UINT32 String::ParseHex(PCCHAR str) noexcept
 {
     UINT32 result = 0;
     while (*str != '\0')
@@ -1038,7 +1038,7 @@ FORCE_INLINE PCHAR String::WriteDecimal(PCHAR buffer, UINT32 num) noexcept
     return buffer + len;
 }
 
-FORCE_INLINE PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) noexcept
+inline PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) noexcept
 {
     if (num == 0)
     {

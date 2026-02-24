@@ -1,6 +1,6 @@
 # Toolchain Installation Guide
 
-This guide provides step-by-step instructions for installing the required build toolchain (LLVM/Clang, CMake, Ninja) for Position-Independent Runtime (PIR) on Windows and Linux.
+This guide provides step-by-step instructions for installing the required build toolchain (LLVM/Clang, CMake, Ninja) for Position-Independent Runtime (PIR) on Windows, Linux, and macOS.
 
 ## Windows Installation
 
@@ -53,6 +53,43 @@ LLVM_VER=21 && sudo apt-get update && sudo apt-get install -y wget lsb-release c
 clang --version
 clang++ --version
 lld --version
+cmake --version
+ninja --version
+```
+
+## macOS Installation
+
+### Prerequisites
+
+Ensure [Homebrew](https://brew.sh/) is installed.
+
+### Installation
+
+Copy and paste the following command into Terminal:
+
+```bash
+# Install all dependencies
+brew install llvm cmake ninja
+```
+
+Homebrew installs LLVM to a non-default path. Add it to your PATH:
+
+```bash
+# For Apple Silicon (M1/M2/M3/M4)
+echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# For Intel Macs
+echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+### Verify Installation
+
+```bash
+clang --version
+clang++ --version
+ld64.lld --version
 cmake --version
 ninja --version
 ```

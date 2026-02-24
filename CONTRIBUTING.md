@@ -25,11 +25,11 @@ cmake --build --preset linux-aarch64-release
 ```
 
 Available presets follow the pattern `{platform}-{arch}-{build_type}`:
-- **Platforms:** `windows`, `linux`, `uefi`
+- **Platforms:** `windows`, `linux`, `macos`, `uefi`
 - **Architectures:** `i386`, `x86_64`, `armv7a`, `aarch64`
 - **Build types:** `debug`, `release`
 
-Output binaries go to `build/{build_type}/{platform}/{arch}/output.{exe|elf|efi}`.
+Output binaries go to `build/{build_type}/{platform}/{arch}/output.{exe|elf|efi}` (macOS has no extension).
 
 ## Running Tests
 
@@ -41,6 +41,9 @@ Tests are built into the output binary. Simply run it:
 
 # Linux
 ./build/debug/linux/x86_64/output.elf
+
+# macOS
+./build/debug/macos/x86_64/output
 ```
 
 Exit code `0` means all tests passed.
@@ -60,6 +63,7 @@ include/                    # Headers (.h)
   platform/                 # OS-specific abstractions
     windows/                # PEB, NTDLL, Kernel32, system calls
     linux/                  # Linux syscall wrappers
+    macos/                  # macOS BSD syscall wrappers
     uefi/                   # EFI boot/runtime services
   system/                   # DateTime, Random, Process, Environment
   runtime.h                 # Top-level include (CORE + PLATFORM + RUNTIME)
@@ -85,7 +89,7 @@ RUNTIME (Runtime Abstraction Layer)
   depends on
       v
 PLATFORM (Platform Abstraction Layer)
-  Windows PEB/NTAPI, Linux syscalls, UEFI services
+  Windows PEB/NTAPI, Linux/macOS syscalls, UEFI services
   Includes: platform.h
       |
   depends on
@@ -177,6 +181,10 @@ Use preprocessor guards for platform/architecture-specific code:
     // Windows ARM64 only
 #elif defined(PLATFORM_LINUX_X86_64)
     // Linux x86_64 only
+#elif defined(PLATFORM_MACOS_X86_64)
+    // macOS x86_64 only
+#elif defined(PLATFORM_MACOS_AARCH64)
+    // macOS aarch64 only
 #endif
 ```
 

@@ -200,6 +200,58 @@
       }
     },
     {
+      "name": "macos-x86_64-debug",
+      "displayName": "macOS x86_64 (Debug)",
+      "description": "macOS 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/macos/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "macos-x86_64-release",
+      "displayName": "macOS x86_64 (Release)",
+      "description": "macOS 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/macos/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "macos-aarch64-debug",
+      "displayName": "macOS AArch64 (Debug)",
+      "description": "macOS Apple Silicon debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/macos/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "macos-aarch64-release",
+      "displayName": "macOS AArch64 (Release)",
+      "description": "macOS Apple Silicon release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/macos/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
       "name": "uefi-x86_64-debug",
       "displayName": "UEFI x86_64 (Debug)",
       "description": "UEFI 64-bit x86 debug build",
@@ -308,6 +360,22 @@
     {
       "name": "linux-aarch64-release",
       "configurePreset": "linux-aarch64-release"
+    },
+    {
+      "name": "macos-x86_64-debug",
+      "configurePreset": "macos-x86_64-debug"
+    },
+    {
+      "name": "macos-x86_64-release",
+      "configurePreset": "macos-x86_64-release"
+    },
+    {
+      "name": "macos-aarch64-debug",
+      "configurePreset": "macos-aarch64-debug"
+    },
+    {
+      "name": "macos-aarch64-release",
+      "configurePreset": "macos-aarch64-release"
     },
     {
       "name": "uefi-x86_64-debug",

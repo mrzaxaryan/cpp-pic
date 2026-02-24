@@ -197,6 +197,68 @@ jobs:
             build/**/output.elf
             build/**/output.bin
 
+  build-macos:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: macos-13
+            llvm_tarball: "LLVM-21.1.0-macOS-X64.tar.xz"
+          - arch: aarch64
+            runner: macos-14
+            llvm_tarball: "LLVM-21.1.0-macOS-ARM64.tar.xz"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-macos-${{ matrix.arch }}
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${{ matrix.llvm_tarball }}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "${{ matrix.llvm_tarball }}" -C /opt/llvm --strip-components=1
+          rm "${{ matrix.llvm_tarball }}"
+
+      - name: Install build tools
+        run: brew install ninja cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz
+        run: |
+          cmake --preset macos-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset macos-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          MACHO=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          MACHO_SIZE=$(stat -f%z "$MACHO" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -f%z "$BIN" 2>/dev/null || echo 0)
+          echo "result=macos-${{ matrix.arch }},$MACHO_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-macos-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output
+            build/**/output.bin
+
   build-uefi:
     runs-on: ubuntu-22.04
     strategy:
@@ -257,7 +319,7 @@ jobs:
             build/**/output.bin
 
   update-readme:
-    needs: [build-windows, build-windows-aarch64, build-linux, build-uefi]
+    needs: [build-windows, build-windows-aarch64, build-linux, build-macos, build-uefi]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -301,6 +363,12 @@ jobs:
                   if files:
                       exe_file = files[0]
                       break
+              # macOS Mach-O has no extension - look for "output" without extension
+              if exe_file is None and "macos" in platform_arch:
+                  for f in size_dir.rglob("output"):
+                      if f.is_file() and f.suffix == "" and f.stat().st_size > 0:
+                          exe_file = f
+                          break
               bin_files = list(size_dir.rglob("output.bin"))
               bin_file = bin_files[0] if bin_files else None
 
@@ -390,6 +458,8 @@ jobs:
                   ("linux_x86_64_bin", "#238636", "Linux x64"),
                   ("linux_armv7a_bin", "#2ea043", "Linux ARM"),
                   ("linux_aarch64_bin", "#56d364", "Linux ARM64"),
+                  ("macos_x86_64_bin", "#bc8cff", "macOS x64"),
+                  ("macos_aarch64_bin", "#d2a8ff", "macOS ARM64"),
                   ("uefi_x86_64_bin", "#f78166", "UEFI x64"),
                   ("uefi_aarch64_bin", "#ffa657", "UEFI ARM64"),
               ]

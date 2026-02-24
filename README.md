@@ -23,6 +23,13 @@
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-aarch64.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
 </tr>
 <tr>
+<td>macOS</td>
+<td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-macos-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-macos-x86_64.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
+<td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-macos-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-macos-aarch64.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
+</tr>
+<tr>
 <td>UEFI</td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-uefi-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-uefi-x86_64.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -65,6 +72,15 @@
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_armv7a_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
+</tr>
+<tr>
+<td>macOS</td>
+<td align="center">-</td><td align="center">-</td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
+<td align="center">-</td><td align="center">-</td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 </tr>
 <tr>
 <td>UEFI</td>
@@ -421,7 +437,7 @@ Position-Independent Runtime is built on a clean three-layer abstraction that se
 │  High-level features: Cryptography, Networking, TLS 1.3     │
 ├─────────────────────────────────────────────────────────────┤
 │  PLATFORM (Platform Abstraction Layer)                      │
-│  OS-specific: Windows PEB/NTAPI, Linux syscalls             │
+│  OS-specific: Windows PEB/NTAPI, Linux/macOS syscalls        │
 ├─────────────────────────────────────────────────────────────┤
 │  CORE (Core Abstraction Layer)                              │
 │  Platform-independent: Types, Memory, Strings, Algorithms   │
@@ -437,6 +453,7 @@ Position-Independent Runtime is built on a clean three-layer abstraction that se
 **PLATFORM (Platform Abstraction Layer)** handles OS and hardware specifics:
 - Windows: PEB walking, PE parsing, NTAPI-based operations
 - Linux: Direct syscall interface without libc
+- macOS: Direct BSD syscall interface without libc
 - Console I/O, file system, networking, memory allocation
 
 **RUNTIME (Runtime Abstraction Layer)** provides high-level application features:
@@ -536,14 +553,14 @@ Position-Indepenedent Runtime is designed for execution environments where tradi
 
 ## To Do
 This project is still a work in progress. Below is a list of remaining tasks and planned improvements. Any help or contributions are greatly appreciated.
-- Support for additional platforms (macOS, FreeBSD)
+- Support for additional platforms (FreeBSD)
 - Windows more direct syscall implementations (bypassing ntdll)
 - Compile-time polymorphism
 
 ## Conclusion
 
-Position-Independent Runtime is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows or an ELF file on Linux, supporting i386, x86_64, armv7a, and aarch64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, Position-Independent Runtime enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
+Position-Independent Runtime is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows, an ELF file on Linux, or a Mach-O file on macOS, supporting i386, x86_64, armv7a, and aarch64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, Position-Independent Runtime enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
 
-The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, and Linux with its direct syscall approach—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
+The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, Linux with its direct syscall approach, and macOS with its BSD syscall interface—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
 
 This project is intended for researchers, systems programmers, and security engineers who are willing to work beneath high-level abstractions and take full control of the machine. Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project's design goals.

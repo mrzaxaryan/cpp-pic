@@ -4,7 +4,13 @@
 
 /* Socket address families */
 #define AF_INET 2
+#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_UEFI)
 #define AF_INET6 23
+#elif defined(PLATFORM_MACOS)
+#define AF_INET6 30
+#else
+#define AF_INET6 10
+#endif
 
 /* Socket types */
 #define SOCK_STREAM 1

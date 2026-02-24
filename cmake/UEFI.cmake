@@ -10,7 +10,7 @@ if(NOT CPPPIC_ARCH MATCHES "^(x86_64|aarch64)$")
 endif()
 
 cpppic_get_target_info()
-cpppic_filter_sources(windows linux)
+cpppic_filter_sources(windows linux macos)
 
 list(APPEND CPPPIC_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/include/platform/uefi")
 list(APPEND CPPPIC_BASE_FLAGS -target ${CPPPIC_TRIPLE})

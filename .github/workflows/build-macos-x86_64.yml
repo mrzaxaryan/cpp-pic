@@ -1,0 +1,89 @@
+name: macOS x86_64
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - "**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LLVM_VERSION: "21.1.0"
+
+jobs:
+  build-and-test:
+    runs-on: macos-13
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-macos-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-macOS-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: brew install ninja cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build, Upload, and Test all optimization levels
+        run: |
+          set -e
+          OPTS="O0 O1 O2 O3 Os Oz Og"
+          FAILED=""
+          for opt in $OPTS; do
+            echo "========== Building -$opt =========="
+            rm -rf build
+            cmake --preset macos-x86_64-release -DOPTIMIZATION_LEVEL=$opt
+            cmake --build --preset macos-x86_64-release
+            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-build"; continue; fi
+
+            echo "========== Saving -$opt =========="
+            mkdir -p "artifacts/$opt"
+            cp -r build/* "artifacts/$opt/"
+
+            echo "========== Testing Mach-O -$opt =========="
+            TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
+            chmod +x "$TEST_BIN"
+            "$TEST_BIN"
+            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-macho"; continue; fi
+
+            echo "========== Testing PIC -$opt =========="
+            python3 scripts/loader.py --arch x86_64 $(find build -type f -name "output.bin" | head -n 1)
+            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-pic"; continue; fi
+
+            echo "========== $opt passed =========="
+          done
+          if [ -n "$FAILED" ]; then
+            echo "Failed:$FAILED"
+            exit 1
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-macos-x86_64
+          retention-days: 1
+          path: |
+            artifacts/
+            !artifacts/**/cmake/

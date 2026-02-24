@@ -28,7 +28,7 @@ string(TOLOWER "${BUILD_TYPE}" CPPPIC_BUILD_TYPE)
 
 # Validate inputs
 set(_valid_archs i386 x86_64 armv7a aarch64)
-set(_valid_platforms windows linux uefi)
+set(_valid_platforms windows linux macos uefi)
 
 if(NOT CPPPIC_ARCH IN_LIST _valid_archs)
     message(FATAL_ERROR "Invalid ARCHITECTURE '${ARCHITECTURE}'. Valid: ${_valid_archs}")
@@ -66,12 +66,15 @@ set(_triple_linux_i386      "i386-unknown-linux-gnu")
 set(_triple_linux_x86_64    "x86_64-unknown-linux-gnu")
 set(_triple_linux_armv7a    "armv7a-unknown-linux-gnueabihf")
 set(_triple_linux_aarch64   "aarch64-unknown-linux-gnu")
+set(_triple_macos_x86_64    "x86_64-apple-macos11")
+set(_triple_macos_aarch64   "arm64-apple-macos11")
 set(_triple_uefi_x86_64     "x86_64-pc-windows-gnu")
 set(_triple_uefi_aarch64    "aarch64-pc-windows-gnu")
 
 # Platform extensions
 set(_ext_windows ".exe")
 set(_ext_linux ".elf")
+set(_ext_macos "")
 set(_ext_uefi ".efi")
 
 # =============================================================================

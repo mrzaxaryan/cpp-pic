@@ -291,6 +291,88 @@
             }
         },
         {
+            "name": "macos-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "macos-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_MACOS",
+                "PLATFORM_MACOS_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/core",
+                "${workspaceFolder}/include/algorithms",
+                "${workspaceFolder}/include/core/encoding",
+                "${workspaceFolder}/include/core/string",
+                "${workspaceFolder}/include/core/types",
+                "${workspaceFolder}/include/core/types/embedded",
+                "${workspaceFolder}/include/core/types/network",
+                "${workspaceFolder}/include/core/types/numeric",
+                "${workspaceFolder}/include/platform",
+                "${workspaceFolder}/include/platform/macos",
+                "${workspaceFolder}/include/io",
+                "${workspaceFolder}/include/memory",
+                "${workspaceFolder}/include/network",
+                "${workspaceFolder}/include/network/tls",
+                "${workspaceFolder}/include/system",
+                "${workspaceFolder}/include/crypt"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
+                ]
+            }
+        },
+        {
+            "name": "macos-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "macos-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_MACOS",
+                "PLATFORM_MACOS_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/tests",
+                "${workspaceFolder}/include/core",
+                "${workspaceFolder}/include/algorithms",
+                "${workspaceFolder}/include/core/encoding",
+                "${workspaceFolder}/include/core/string",
+                "${workspaceFolder}/include/core/types",
+                "${workspaceFolder}/include/core/types/embedded",
+                "${workspaceFolder}/include/core/types/network",
+                "${workspaceFolder}/include/core/types/numeric",
+                "${workspaceFolder}/include/platform",
+                "${workspaceFolder}/include/platform/macos",
+                "${workspaceFolder}/include/io",
+                "${workspaceFolder}/include/memory",
+                "${workspaceFolder}/include/network",
+                "${workspaceFolder}/include/network/tls",
+                "${workspaceFolder}/include/system",
+                "${workspaceFolder}/include/crypt"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/src",
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/tests"
+                ]
+            }
+        },
+        {
             "name": "uefi-x86_64",
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
             "intelliSenseMode": "windows-clang-x64",

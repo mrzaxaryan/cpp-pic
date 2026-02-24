@@ -42,6 +42,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/Common.cmake)
 # Platform modules (windows->Windows, linux->Linux, uefi->UEFI)
 set(_platform_map_windows Windows)
 set(_platform_map_linux Linux)
+set(_platform_map_macos macOS)
 set(_platform_map_uefi UEFI)
 include(${CMAKE_SOURCE_DIR}/cmake/${_platform_map_${CPPPIC_PLATFORM}}.cmake)
 

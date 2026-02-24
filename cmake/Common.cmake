@@ -139,7 +139,7 @@ else()
         -fno-unwind-tables
         -flto=full
         -finline-functions
-        -funroll-loops
+        -fno-semantic-interposition
         -fwhole-program-vtables
         -${CPPPIC_OPT_LEVEL}
     )

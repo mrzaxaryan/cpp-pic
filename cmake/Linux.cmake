@@ -20,7 +20,7 @@ cpppic_add_link_flags(
 )
 
 if(CPPPIC_BUILD_TYPE STREQUAL "release")
-    cpppic_add_link_flags(--strip-all --gc-sections)
+    cpppic_add_link_flags(--strip-all --gc-sections --icf=all)
 endif()
 
 list(APPEND CPPPIC_BASE_LINK_FLAGS -target ${CPPPIC_TRIPLE})

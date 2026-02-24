@@ -46,18 +46,11 @@ BOOL WebSocketClient::Open()
 
     // Generate random 16-byte WebSocket key from alphanumeric charset
     CHAR key[16];
-    CHAR alphanum[63];
-    for (INT32 i = 0; i < 10; i++)
-        alphanum[i] = '0' + i;
-    for (INT32 i = 0; i < 26; i++)
-        alphanum[i + 10] = 'A' + i;
-    for (INT32 i = 0; i < 26; i++)
-        alphanum[i + 36] = 'a' + i;
-    alphanum[62] = '\0';
+    auto alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"_embed;
 
     Random random;
     for (INT32 i = 0; i < 16; i++)
-        key[i] = alphanum[random.Get() % 62];
+        key[i] = alphanum[(USIZE)(random.Get() % 62)];
 
     PCHAR secureKey = new CHAR[Base64::GetEncodeOutSize(16)];
     Base64::Encode(key, 16, secureKey);
@@ -345,15 +338,6 @@ PVOID WebSocketClient::Read(USIZE &dwBufferLength, INT8 &opcode)
         }
         else if (frame.opcode == OPCODE_CLOSE)
         {
-            if (frame.length >= 2)
-            {
-                CHAR reason[126];
-                UINT32 reasonLen = (UINT32)frame.length - 2;
-                if (reasonLen > sizeof(reason) - 1)
-                    reasonLen = sizeof(reason) - 1;
-                Memory::Zero(reason, sizeof(reason));
-                Memory::Copy(reason, frame.data + 2, reasonLen);
-            }
             delete[] frame.data;
 
             if (pvBuffer)

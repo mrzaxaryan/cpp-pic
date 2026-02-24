@@ -256,7 +256,7 @@ public:
      *
      * @details Internal function that applies the SHA compression function.
      */
-    static VOID Transform(SHABase *ctx, const UINT8 *message, UINT64 block_nb);
+    static VOID Transform(SHABase &ctx, const UINT8 *message, UINT64 block_nb);
 };
 
 /** @brief SHA-256 hash algorithm (256-bit output) */

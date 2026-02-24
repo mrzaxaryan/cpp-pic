@@ -30,5 +30,5 @@ public:
     // Destructor to clean up resources
     ~HttpClient();
     // Static method to parse a URL into its components (host, path, port, secure) and validate the format
-    static BOOL ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure);
+    static BOOL ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL &secure);
 };

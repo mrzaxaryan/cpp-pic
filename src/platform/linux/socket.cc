@@ -86,7 +86,7 @@ Socket::Socket(const IPAddress& ipAddress, UINT16 port)
 }
 
 // Bind socket to address
-BOOL Socket::Bind(SockAddr* socketAddress, INT32 shareType)
+BOOL Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 {
     (VOID)shareType;  // Not used on Linux
 
@@ -94,8 +94,8 @@ BOOL Socket::Bind(SockAddr* socketAddress, INT32 shareType)
         return FALSE;
 
     SSIZE sockfd = (SSIZE)m_socket;
-    UINT32 addrLen = (socketAddress->sin_family == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
-    SSIZE result = linux_bind(sockfd, socketAddress, addrLen);
+    UINT32 addrLen = (socketAddress.sin_family == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
+    SSIZE result = linux_bind(sockfd, &socketAddress, addrLen);
     return result == 0;
 }
 

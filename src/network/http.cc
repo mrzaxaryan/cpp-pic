@@ -20,7 +20,7 @@ HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 {
     // Attempt to parse the URL to extract the host name, path, port, and security setting
     {
-        if (!ParseUrl(url, hostName, path, &port, &isSecure))
+        if (!ParseUrl(url, hostName, path, port, isSecure))
         {
             return;
         }
@@ -42,7 +42,7 @@ HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 HttpClient::HttpClient(PCCHAR url)
 {
     // Attempt to parse the URL to extract the host name, path, port, and security setting
-    if (!ParseUrl(url, hostName, path, &port, &isSecure))
+    if (!ParseUrl(url, hostName, path, port, isSecure))
     {
         // return FALSE;
     }
@@ -229,34 +229,34 @@ BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
 /// @param secure Pointer to store whether the connection is secure (TRUE) or not (FALSE)
 /// @return Indicates whether the URL was parsed successfully (TRUE) or if there was an error (FALSE)
 
-BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOOL secure)
+BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL &secure)
 {
     CHAR portBuffer[6];
 
     host[0] = '\0';
     path[0] = '\0';
-    *port = 0;
-    *secure = FALSE;
+    port = 0;
+    secure = FALSE;
 
     UINT8 schemeLength = 0;
     if (String::StartsWith<CHAR>(url, "ws://"_embed))
     {
-        *secure = FALSE;
+        secure = FALSE;
         schemeLength = 5; // ws://
     }
     else if (String::StartsWith<CHAR>(url, "wss://"_embed))
     {
-        *secure = TRUE;
+        secure = TRUE;
         schemeLength = 6; // wss://
     }
     else if (String::StartsWith<CHAR>(url, "http://"_embed))
     {
-        *secure = FALSE;
+        secure = FALSE;
         schemeLength = 7; // http://
     }
     else if (String::StartsWith<CHAR>(url, "https://"_embed))
     {
-        *secure = TRUE;
+        secure = TRUE;
         schemeLength = 8; // https://
     }
     else
@@ -276,7 +276,7 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOO
 
     if (portStart == NULL)
     {
-        *port = *secure ? 443 : 80;
+        port = secure ? 443 : 80;
 
         USIZE hostLen = (USIZE)(pathStart - pHostStart);
         if (hostLen == 0)
@@ -320,7 +320,7 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, PUINT16 port, PBOO
         INT64 pnum = String::ParseInt64(portBuffer);
         if (pnum == 0 || pnum > 65535)
             return FALSE;
-        *port = (UINT16)pnum;
+        port = (UINT16)pnum;
 
         if (*pathStart == '\0')
         {

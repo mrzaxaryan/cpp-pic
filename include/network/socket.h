@@ -117,7 +117,7 @@ private:
 	IPAddress ip;
 	UINT16 port;
 	PVOID m_socket;
-	BOOL Bind(SockAddr *SocketAddress, INT32 ShareType);
+	BOOL Bind(SockAddr &SocketAddress, INT32 ShareType);
 
 public:
 	VOID *operator new(USIZE) = delete;

@@ -672,7 +672,7 @@ BOOL Socket::Close()
 // Bind (not used)
 // =============================================================================
 
-BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
+BOOL Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 {
 	(VOID) SocketAddress;
 	(VOID) ShareType;

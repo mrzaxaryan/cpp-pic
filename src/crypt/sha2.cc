@@ -171,7 +171,7 @@ SHABase<Traits>::SHABase()
 }
 
 template<typename Traits>
-VOID SHABase<Traits>::Transform(SHABase *ctx, const UINT8 *message, UINT64 block_nb)
+VOID SHABase<Traits>::Transform(SHABase &ctx, const UINT8 *message, UINT64 block_nb)
 {
     Word w[Traits::ROUND_COUNT];
     Word wv[8];
@@ -199,7 +199,7 @@ VOID SHABase<Traits>::Transform(SHABase *ctx, const UINT8 *message, UINT64 block
 
         for (j = 0; j < 8; j++)
         {
-            wv[j] = ctx->h[j];
+            wv[j] = ctx.h[j];
         }
 
         for (j = 0; j < (INT32)Traits::ROUND_COUNT; j++)
@@ -218,7 +218,7 @@ VOID SHABase<Traits>::Transform(SHABase *ctx, const UINT8 *message, UINT64 block
 
         for (j = 0; j < 8; j++)
         {
-            ctx->h[j] += wv[j];
+            ctx.h[j] += wv[j];
         }
     }
 }
@@ -246,8 +246,8 @@ VOID SHABase<Traits>::Update(const UINT8 *message, UINT64 len)
 
     shifted_message = message + rem_len;
 
-    SHABase<Traits>::Transform(this, this->block, 1);
-    SHABase<Traits>::Transform(this, shifted_message, block_nb);
+    SHABase<Traits>::Transform(*this, this->block, 1);
+    SHABase<Traits>::Transform(*this, shifted_message, block_nb);
 
     rem_len = new_len % Traits::BLOCK_SIZE;
 
@@ -289,7 +289,7 @@ VOID SHABase<Traits>::Final(UINT8 *digest)
     len_ptr[1] = (UINT8)(len_b >> 48);
     len_ptr[0] = (UINT8)(len_b >> 56);
 
-    SHABase<Traits>::Transform(this, this->block, block_nb);
+    SHABase<Traits>::Transform(*this, this->block, block_nb);
 
     for (i = 0; i < (INT32)Traits::OUTPUT_WORDS; i++)
     {

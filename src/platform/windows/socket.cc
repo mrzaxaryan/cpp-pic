@@ -88,9 +88,9 @@ typedef struct AfdSocketParams
     WCHAR ProviderInfo[8];
 } AfdSocketParams;
 
-BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
+BOOL Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 {
-    LOG_DEBUG("Bind(pNTSocket: 0x%p, SocketAddress: 0x%p, ShareType: %d)\n", m_socket, SocketAddress, ShareType);
+    LOG_DEBUG("Bind(pNTSocket: 0x%p, SocketAddress: 0x%p, ShareType: %d)\n", m_socket, &SocketAddress, ShareType);
 
     if (m_socket == 0)
     {
@@ -117,12 +117,12 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
     UINT8 OutputBlock[40];
     Memory::Zero(&OutputBlock, sizeof(OutputBlock));
 
-    if (SocketAddress->sin_family == AF_INET6)
+    if (SocketAddress.sin_family == AF_INET6)
     {
         AfdBindData6 BindConfig;
         Memory::Zero(&BindConfig, sizeof(BindConfig));
         BindConfig.ShareType = ShareType;
-        BindConfig.Address = *(SockAddr6 *)SocketAddress;
+        BindConfig.Address = (SockAddr6 &)SocketAddress;
 
         Status = NTDLL::ZwDeviceIoControlFile(m_socket,
                                               SockEvent,
@@ -140,7 +140,7 @@ BOOL Socket::Bind(SockAddr *SocketAddress, INT32 ShareType)
         AfdBindData BindConfig;
         Memory::Zero(&BindConfig, sizeof(BindConfig));
         BindConfig.ShareType = ShareType;
-        BindConfig.Address = *SocketAddress;
+        BindConfig.Address = SocketAddress;
 
         Status = NTDLL::ZwDeviceIoControlFile(m_socket,
                                               SockEvent,
@@ -178,7 +178,7 @@ BOOL Socket::Open()
     } bindBuffer;
 
     SocketAddressHelper::PrepareBindAddress(ip.IsIPv6(), 0, &bindBuffer, sizeof(bindBuffer));
-    if (Bind((SockAddr *)&bindBuffer, AFD_SHARE_REUSE) == FALSE)
+    if (Bind((SockAddr &)bindBuffer, AFD_SHARE_REUSE) == FALSE)
     {
         LOG_ERROR("Failed to bind socket\n");
         return FALSE;

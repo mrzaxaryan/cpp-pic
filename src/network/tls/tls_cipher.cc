@@ -115,7 +115,7 @@ VOID TlsCipher::UpdateHash(const CHAR *in, UINT32 len)
 /// @param out Pointer to the buffer where the computed public key will be stored
 /// @return TRUE if the public key was successfully computed, FALSE otherwise
 
-BOOL TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer *out)
+BOOL TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 {
     //	CLock lock(lockdata);
 
@@ -134,9 +134,9 @@ BOOL TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer *out)
         }
     }
 
-    out->CheckSize(MAX_PUBKEY_SIZE);
+    out.CheckSize(MAX_PUBKEY_SIZE);
 
-    out->SetSize(out->GetSize() + this->privateEccKeys[eccIndex]->ExportPublicKey((UINT8 *)out->GetBuffer() + out->GetSize(), MAX_PUBKEY_SIZE));
+    out.SetSize(out.GetSize() + this->privateEccKeys[eccIndex]->ExportPublicKey((UINT8 *)out.GetBuffer() + out.GetSize(), MAX_PUBKEY_SIZE));
 
     return TRUE;
 }
@@ -148,7 +148,7 @@ BOOL TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer *out)
 /// @param premasterKey Pointer to the buffer where the computed pre-master key will be stored
 /// @return TRUE if the pre-master key was successfully computed, FALSE otherwise
 
-BOOL TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer *premasterKey)
+BOOL TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer &premasterKey)
 {
     INT32 eccIndex;
     INT32 eccSize;
@@ -168,15 +168,15 @@ BOOL TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 server
     {
         return FALSE;
     }
-    if (!(this->ComputePublicKey(eccIndex, &this->publicKey)))
+    if (!(this->ComputePublicKey(eccIndex, this->publicKey)))
     {
         LOG_DEBUG("Failed to compute public key for ECC group %d", ecc);
         return FALSE;
     }
 
-    premasterKey->SetSize(eccSize);
+    premasterKey.SetSize(eccSize);
 
-    if (this->privateEccKeys[eccIndex]->ComputeSharedSecret((UINT8 *)serverKey, serverKeyLen, (UINT8 *)premasterKey->GetBuffer()) != 0)
+    if (this->privateEccKeys[eccIndex]->ComputeSharedSecret((UINT8 *)serverKey, serverKeyLen, (UINT8 *)premasterKey.GetBuffer()) != 0)
     {
         LOG_DEBUG("Failed to compute shared secret for ECC group %d", ecc);
         return FALSE;
@@ -238,7 +238,7 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
     {
         TlsBuffer premaster_key;
         Memory::Zero(&premaster_key, sizeof(TlsBuffer));
-        if (!this->ComputePreKey(ecc, serverKey, serverKeyLen, &premaster_key))
+        if (!this->ComputePreKey(ecc, serverKey, serverKeyLen, premaster_key))
         {
             LOG_DEBUG("Failed to compute pre-master key for ECC group %d", ecc);
             return FALSE;
@@ -283,7 +283,7 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
 /// @param localOrRemote Indicates whether to use the local or remote finished key
 /// @return void 
 
-VOID TlsCipher::ComputeVerify(TlsBuffer *out, INT32 verifySize, INT32 localOrRemote)
+VOID TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote)
 {
     if (this->cipherIndex == -1)
     {
@@ -307,13 +307,13 @@ VOID TlsCipher::ComputeVerify(TlsBuffer *out, INT32 verifySize, INT32 localOrRem
         LOG_DEBUG("tls_cipher_compute_verify: Using client finished key");
         TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.handshakeSecret, hashLen, (CHAR[]){'f', 'i', 'n', 'i', 's', 'h', 'e', 'd', '\0'}, 8, NULL, 0);
     }
-    out->SetSize(verifySize);
+    out.SetSize(verifySize);
     LOG_DEBUG("tls_cipher_compute_verify: Calculating HMAC for verify, verify_size=%d", verifySize);
     HMAC_SHA256 hmac;
     hmac.Init(finished_key, hashLen);
     hmac.Update((UINT8 *)hash, hashLen);
 
-    hmac.Final((UINT8 *)out->GetBuffer(), out->GetSize());
+    hmac.Final((UINT8 *)out.GetBuffer(), out.GetSize());
     LOG_DEBUG("tls_cipher_compute_verify: Finished verify computation");
 }
 
@@ -324,13 +324,13 @@ VOID TlsCipher::ComputeVerify(TlsBuffer *out, INT32 verifySize, INT32 localOrRem
 /// @param keepOriginal Indicates whether to keep the original TLS record without encoding
 /// @return void
 
-VOID TlsCipher::Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal)
+VOID TlsCipher::Encode(TlsBuffer &sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal)
 {
     //	CLock lock(lockdata);
     if (!this->isEncoding || !this->chacha20Context.IsInitialized() || keepOriginal)
     {
         LOG_DEBUG("Encoding not enabled or encoder is NULL, appending packet directly to sendbuf");
-        sendbuf->Append(packet, packetSize);
+        sendbuf.Append(packet, packetSize);
         return;
     }
     LOG_DEBUG("Encoding packet with size: %d bytes", packetSize);
@@ -338,8 +338,8 @@ VOID TlsCipher::Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize,
     UCHAR aad[13];
 
     aad[0] = CONTENT_APPLICATION_DATA;
-    aad[1] = sendbuf->GetBuffer()[1];
-    aad[2] = sendbuf->GetBuffer()[2];
+    aad[1] = sendbuf.GetBuffer()[1];
+    aad[2] = sendbuf.GetBuffer()[2];
     *((UINT16 *)(aad + 3)) = UINT16SwapByteOrder(ChaCha20Encoder::ComputeSize(packetSize, 0)); //-header_size
     UINT64 clientSeq = UINT64SwapByteOrder(this->clientSeqNum++);
     Memory::Copy(aad + 5, &clientSeq, sizeof(UINT64));
@@ -352,7 +352,7 @@ VOID TlsCipher::Encode(TlsBuffer *sendbuf, const CHAR *packet, INT32 packetSize,
 /// @param version TLS version of the record to decode
 /// @return TRUE if the TLS record was successfully decoded, FALSE otherwise
 
-BOOL TlsCipher::Decode(TlsBuffer *inout, INT32 version)
+BOOL TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 {
     if (!this->isEncoding || !this->chacha20Context.IsInitialized())
     {
@@ -364,18 +364,18 @@ BOOL TlsCipher::Decode(TlsBuffer *inout, INT32 version)
     aad[0] = CONTENT_APPLICATION_DATA;
     aad[1] = UINT16SwapByteOrder(version) >> 8;
     aad[2] = UINT16SwapByteOrder(version) & 0xff;
-    *((UINT16 *)(aad + 3)) = UINT16SwapByteOrder(inout->GetSize()); //-header_size
+    *((UINT16 *)(aad + 3)) = UINT16SwapByteOrder(inout.GetSize()); //-header_size
     UINT64 serverSeq = UINT64SwapByteOrder(this->serverSeqNum++);
     Memory::Copy(aad + 5, &serverSeq, sizeof(UINT64));
 
-    BOOL ret = this->chacha20Context.Decode(inout, &this->decodeBuffer, aad, sizeof(aad));
+    BOOL ret = this->chacha20Context.Decode(inout, this->decodeBuffer, aad, sizeof(aad));
     if (!ret)
     {
         LOG_ERROR("Decoding failed, returning error");
         return ret;
     }
-    inout->SetBuffer(this->decodeBuffer.GetBuffer());
-    inout->SetSize(this->decodeBuffer.GetSize());
+    inout.SetBuffer(this->decodeBuffer.GetBuffer());
+    inout.SetSize(this->decodeBuffer.GetSize());
 
     return TRUE;
 }

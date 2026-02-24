@@ -39,9 +39,9 @@ private:
     BOOL isConnected;       // Indicates whether the WebSocket client is currently connected to the server
 
     BOOL ReceiveRestrict(PVOID buffer, INT32 size);
-    BOOL ReceiveFrame(PWebSocketFrame frame);
+    BOOL ReceiveFrame(WebSocketFrame &frame);
 
-public: 
+public:
     // Disable dynamic memory allocation for WebSocketClient instances
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
@@ -51,6 +51,6 @@ public:
     // Open, Close, Read, and Write operations for WebSocketClient
     BOOL Open();
     BOOL Close();
-    PVOID Read(PUSIZE dwBufferLength, PINT8 opcode);
+    PVOID Read(USIZE &dwBufferLength, INT8 &opcode);
     UINT32 Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode = OPCODE_BINARY);
 };

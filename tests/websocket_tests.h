@@ -94,7 +94,7 @@ private:
 		// We need to read and discard it before sending our test data
 		USIZE initialLength = 0;
 		INT8 initialOpcode = 0;
-		PVOID initialMsg = wsClient.Read(&initialLength, &initialOpcode);
+		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
 			LOG_INFO("Received initial server message (%d bytes), discarding", initialLength);
@@ -115,7 +115,7 @@ private:
 		// Receive echo response
 		USIZE responseLength = 0;
 		INT8 opcode = 0;
-		PVOID response = wsClient.Read(&responseLength, &opcode);
+		PVOID response = wsClient.Read(responseLength, opcode);
 
 		if (response == NULL || responseLength == 0)
 		{
@@ -167,7 +167,7 @@ private:
 		// Discard initial server message
 		USIZE initialLength = 0;
 		INT8 initialOpcode = 0;
-		PVOID initialMsg = wsClient.Read(&initialLength, &initialOpcode);
+		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
 			delete[] (PCHAR)initialMsg;
@@ -199,7 +199,7 @@ private:
 		// Receive echo response
 		USIZE responseLength = 0;
 		INT8 opcode = 0;
-		PVOID response = wsClient.Read(&responseLength, &opcode);
+		PVOID response = wsClient.Read(responseLength, opcode);
 
 		if (response == NULL || responseLength == 0)
 		{
@@ -253,7 +253,7 @@ private:
 		// Discard initial server message
 		USIZE initialLength = 0;
 		INT8 initialOpcode = 0;
-		PVOID initialMsg = wsClient.Read(&initialLength, &initialOpcode);
+		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
 			delete[] (PCHAR)initialMsg;
@@ -275,7 +275,7 @@ private:
 
 		USIZE len1 = 0;
 		INT8 op1 = 0;
-		PVOID resp1 = wsClient.Read(&len1, &op1);
+		PVOID resp1 = wsClient.Read(len1, op1);
 		if (resp1 == NULL || len1 != msg1.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 1");
@@ -296,7 +296,7 @@ private:
 
 		USIZE len2 = 0;
 		INT8 op2 = 0;
-		PVOID resp2 = wsClient.Read(&len2, &op2);
+		PVOID resp2 = wsClient.Read(len2, op2);
 		if (resp2 == NULL || len2 != msg2.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 2");
@@ -317,7 +317,7 @@ private:
 
 		USIZE len3 = 0;
 		INT8 op3 = 0;
-		PVOID resp3 = wsClient.Read(&len3, &op3);
+		PVOID resp3 = wsClient.Read(len3, op3);
 		if (resp3 == NULL || len3 != msg3.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 3");
@@ -350,7 +350,7 @@ private:
 		// Discard initial server message
 		USIZE initialLength = 0;
 		INT8 initialOpcode = 0;
-		PVOID initialMsg = wsClient.Read(&initialLength, &initialOpcode);
+		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
 			delete[] (PCHAR)initialMsg;
@@ -389,7 +389,7 @@ private:
 		// Receive echo response
 		USIZE responseLength = 0;
 		INT8 opcode = 0;
-		PVOID response = wsClient.Read(&responseLength, &opcode);
+		PVOID response = wsClient.Read(responseLength, opcode);
 
 		if (response == NULL || responseLength == 0)
 		{

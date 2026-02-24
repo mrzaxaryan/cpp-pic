@@ -25,16 +25,16 @@ private:
     INT32 channelBytesRead;  // Number of bytes read from channel buffer
     INT32 ReadChannel(PCHAR out, INT32 size);
     BOOL ProcessReceive();
-    BOOL OnPacket(INT32 packetType, INT32 version, TlsBuffer *TlsReader);
+    BOOL OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader);
     BOOL OnServerFinished();
-    BOOL VerifyFinished(TlsBuffer *TlsReader);
+    BOOL VerifyFinished(TlsBuffer &TlsReader);
     BOOL OnServerHelloDone();
-    BOOL OnServerHello(TlsBuffer *TlsReader);
+    BOOL OnServerHello(TlsBuffer &TlsReader);
     BOOL SendChangeCipherSpec();
     BOOL SendClientExchange();
     BOOL SendClientFinished();
     BOOL SendClientHello(const CHAR *host);
-    BOOL SendPacket(INT32 packetType, INT32 ver, TlsBuffer *TlsBuffer);
+    BOOL SendPacket(INT32 packetType, INT32 ver, TlsBuffer &TlsBuffer);
 
 public:
     VOID *operator new(USIZE) = delete;

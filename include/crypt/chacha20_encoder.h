@@ -106,7 +106,7 @@ public:
      * and ciphertext, and appends the 16-byte tag to output.
      * Automatically increments the local sequence number.
      */
-    VOID Encode(TlsBuffer *out, const CHAR *packet, INT32 packetSize, const UCHAR *aad, INT32 aadSize);
+    VOID Encode(TlsBuffer &out, const CHAR *packet, INT32 packetSize, const UCHAR *aad, INT32 aadSize);
 
     /**
      * @brief Decrypts and verifies a TLS record
@@ -122,7 +122,7 @@ public:
      * @warning Returns FALSE if authentication fails - output buffer contents
      * are undefined and MUST NOT be used.
      */
-    BOOL Decode(TlsBuffer *in, TlsBuffer *out, const UCHAR *aad, INT32 aadSize);
+    BOOL Decode(TlsBuffer &in, TlsBuffer &out, const UCHAR *aad, INT32 aadSize);
 
     /**
      * @brief Computes output size for encoding or decoding

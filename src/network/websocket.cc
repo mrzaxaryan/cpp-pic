@@ -8,18 +8,18 @@
 #include "embedded_string.h"
 
 // This function creates a WebSocket frame with the specified parameters.
-static BOOL web_socket_create_frame(PWebSocketFrame frame, INT32 fin, INT32 rsv1, INT32 rsv2, INT32 rsv3, INT32 opcode, INT32 has_mask, PVOID data, INT32 len)
+static BOOL web_socket_create_frame(WebSocketFrame &frame, INT32 fin, INT32 rsv1, INT32 rsv2, INT32 rsv3, INT32 opcode, INT32 has_mask, PVOID data, INT32 len)
 {
 
     // Initialize the frame structure
-    frame->fin = fin;
-    frame->rsv1 = rsv1;
-    frame->rsv2 = rsv2;
-    frame->rsv3 = rsv3;
-    frame->mask = has_mask;
-    frame->opcode = opcode;
-    frame->data = (PCHAR)data;
-    frame->length = len;
+    frame.fin = fin;
+    frame.rsv1 = rsv1;
+    frame.rsv2 = rsv2;
+    frame.rsv3 = rsv3;
+    frame.mask = has_mask;
+    frame.opcode = opcode;
+    frame.data = (PCHAR)data;
+    frame.length = len;
 
     return TRUE; // Frame created successfully
 }
@@ -367,7 +367,7 @@ static PVOID web_socket_mask_frame(UINT32 mask_key, PVOID data, INT32 len)
 }
 
 // This function receives a WebSocket frame from the client context and fills the provided frame structure with the received data.
-BOOL WebSocketClient::ReceiveFrame(PWebSocketFrame frame)
+BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 {
     UINT8 b1, b2, fin, rsv1, rsv2, rsv3, opcode, has_mask; // these are the bits of the frame header
     UINT64 frame_length = 0;
@@ -454,85 +454,84 @@ BOOL WebSocketClient::ReceiveFrame(PWebSocketFrame frame)
 
     return web_socket_create_frame(frame, fin, rsv1, rsv2, rsv3, opcode, has_mask, payload, (UINT32)frame_length);
 }
-PVOID WebSocketClient::Read(PUSIZE dwBufferLength, PINT8 opcode)
+PVOID WebSocketClient::Read(USIZE &dwBufferLength, INT8 &opcode)
 {
     // Initialize the WebSocket frame structure and buffer for received data
     WebSocketFrame webSocketFrame;
     Memory::Zero(&webSocketFrame, sizeof(webSocketFrame));
-    PWebSocketFrame pWebSocketFrame = &webSocketFrame;
     PVOID pvBuffer = NULL;
-    *dwBufferLength = 0;
+    dwBufferLength = 0;
 
     while (1)
     {
-        Memory::Zero(pWebSocketFrame, sizeof(webSocketFrame)); // Reset the WebSocket frame structure
+        Memory::Zero(&webSocketFrame, sizeof(webSocketFrame)); // Reset the WebSocket frame structure
         // Attempt to receive a WebSocket frame from the client context
-        if (!ReceiveFrame(pWebSocketFrame))
+        if (!ReceiveFrame(webSocketFrame))
         {
             goto end; // Error handling: if receiving the frame fails, exit the loop
         }
         // Checking the opcode of the received WebSocket frame
-        if (pWebSocketFrame->opcode == OPCODE_TEXT || pWebSocketFrame->opcode == OPCODE_BINARY || pWebSocketFrame->opcode == OPCODE_CONTINUE)
+        if (webSocketFrame.opcode == OPCODE_TEXT || webSocketFrame.opcode == OPCODE_BINARY || webSocketFrame.opcode == OPCODE_CONTINUE)
         {
-            if (pWebSocketFrame->opcode == OPCODE_CONTINUE && pvBuffer == NULL)
+            if (webSocketFrame.opcode == OPCODE_CONTINUE && pvBuffer == NULL)
             {
                 goto end;
             }
-            if (pWebSocketFrame->length == 0)
+            if (webSocketFrame.length == 0)
             {
                 goto end;
             }
             if (pvBuffer)
             {
                 // Reallocate the buffer to hold the new data
-                PCHAR tempBuffer = new CHAR[*dwBufferLength + (UINT32)pWebSocketFrame->length];
-                Memory::Copy(tempBuffer, (PCHAR)pvBuffer, *dwBufferLength);
+                PCHAR tempBuffer = new CHAR[dwBufferLength + (UINT32)webSocketFrame.length];
+                Memory::Copy(tempBuffer, (PCHAR)pvBuffer, dwBufferLength);
                 delete[] (PCHAR)pvBuffer;
                 pvBuffer = tempBuffer;
                 // Otherwise, copy the new data into the existing buffer
-                Memory::Copy((PCHAR)pvBuffer + *dwBufferLength, pWebSocketFrame->data, (UINT32)pWebSocketFrame->length);
-                *dwBufferLength += (UINT32)pWebSocketFrame->length;
-                delete[] pWebSocketFrame->data;
+                Memory::Copy((PCHAR)pvBuffer + dwBufferLength, webSocketFrame.data, (UINT32)webSocketFrame.length);
+                dwBufferLength += (UINT32)webSocketFrame.length;
+                delete[] webSocketFrame.data;
             }
             else
             {
                 // Otherwise, allocate a new buffer to hold the received data
-                pvBuffer = new CHAR[(UINT32)pWebSocketFrame->length];
+                pvBuffer = new CHAR[(UINT32)webSocketFrame.length];
                 // Check if the allocation was successful
                 if (pvBuffer == NULL)
                 {
                     goto end;
                 }
                 // Copy the received data into the newly allocated buffer
-                Memory::Copy(pvBuffer, pWebSocketFrame->data, (UINT32)pWebSocketFrame->length);
-                *dwBufferLength = (UINT32)pWebSocketFrame->length;
-                delete[] pWebSocketFrame->data;
+                Memory::Copy(pvBuffer, webSocketFrame.data, (UINT32)webSocketFrame.length);
+                dwBufferLength = (UINT32)webSocketFrame.length;
+                delete[] webSocketFrame.data;
             }
             // Check if the opcode is a final frame (fin bit is set)
-            if (pWebSocketFrame->fin)
+            if (webSocketFrame.fin)
             {
-                *opcode = pWebSocketFrame->opcode; // Set the opcode to the received frame's opcode
-                goto end;                          // Exit the loop if the frame is final
+                opcode = webSocketFrame.opcode; // Set the opcode to the received frame's opcode
+                goto end;                       // Exit the loop if the frame is final
             }
         }
-        else if (pWebSocketFrame->opcode == OPCODE_CLOSE)
+        else if (webSocketFrame.opcode == OPCODE_CLOSE)
         {
             pvBuffer = NULL;
-            *dwBufferLength = 0;
+            dwBufferLength = 0;
             CHAR reason[126];
             Memory::Zero(reason, sizeof(reason));
-            Memory::Copy(reason, pWebSocketFrame->data + 2, (UINT32)((USIZE)pWebSocketFrame->length - 2));
-            delete[] pWebSocketFrame->data;
+            Memory::Copy(reason, webSocketFrame.data + 2, (UINT32)((USIZE)webSocketFrame.length - 2));
+            delete[] webSocketFrame.data;
             goto end;
         }
         // If opcode is OPCODE_PING, send a pong response
-        else if (pWebSocketFrame->opcode == OPCODE_PING)
+        else if (webSocketFrame.opcode == OPCODE_PING)
         {
-            Write(pWebSocketFrame->data, pWebSocketFrame->length, OPCODE_PONG);
-            delete[] pWebSocketFrame->data;
+            Write(webSocketFrame.data, webSocketFrame.length, OPCODE_PONG);
+            delete[] webSocketFrame.data;
         }
         // If opcode is OPCODE_PONG,
-        else if (pWebSocketFrame->opcode == OPCODE_PONG)
+        else if (webSocketFrame.opcode == OPCODE_PONG)
         {
         }
         else
@@ -551,7 +550,7 @@ WebSocketClient::WebSocketClient(PCCHAR url, PCCHAR ipAddress)
     isConnected = FALSE;
 
     // Attempt to parse the URL to extract the host name, path, port, and security setting
-    if (!HttpClient::ParseUrl(url, hostName, path, &port, &isSecure))
+    if (!HttpClient::ParseUrl(url, hostName, path, port, isSecure))
     {
         // return FALSE;
     }
@@ -569,7 +568,7 @@ WebSocketClient::WebSocketClient(PCCHAR url)
     isConnected = FALSE;
 
     // Attempt to parse the URL to extract the host name, path, port, and security setting
-    if (!HttpClient::ParseUrl(url, hostName, path, &port, &isSecure))
+    if (!HttpClient::ParseUrl(url, hostName, path, port, isSecure))
     {
         // return FALSE;
     }

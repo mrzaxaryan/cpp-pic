@@ -79,6 +79,35 @@ public:
      */
     ~ChaCha20Encoder();
 
+    ChaCha20Encoder(const ChaCha20Encoder &) = delete;
+    ChaCha20Encoder &operator=(const ChaCha20Encoder &) = delete;
+
+    ChaCha20Encoder(ChaCha20Encoder &&other)
+        : remoteCipher(other.remoteCipher)
+        , localCipher(other.localCipher)
+        , ivLength(other.ivLength)
+        , initialized(other.initialized)
+    {
+        Memory::Copy(remoteNonce, other.remoteNonce, TLS_CHACHA20_IV_LENGTH);
+        Memory::Copy(localNonce, other.localNonce, TLS_CHACHA20_IV_LENGTH);
+        Memory::Zero(&other, sizeof(ChaCha20Encoder));
+    }
+
+    ChaCha20Encoder &operator=(ChaCha20Encoder &&other)
+    {
+        if (this != &other)
+        {
+            remoteCipher = other.remoteCipher;
+            localCipher = other.localCipher;
+            ivLength = other.ivLength;
+            initialized = other.initialized;
+            Memory::Copy(remoteNonce, other.remoteNonce, TLS_CHACHA20_IV_LENGTH);
+            Memory::Copy(localNonce, other.localNonce, TLS_CHACHA20_IV_LENGTH);
+            Memory::Zero(&other, sizeof(ChaCha20Encoder));
+        }
+        return *this;
+    }
+
     /**
      * @brief Initializes encoder with TLS-derived keys and IVs
      * @param localKey Key for encrypting outgoing data (client_write_key)

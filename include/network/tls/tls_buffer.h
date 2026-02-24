@@ -21,6 +21,37 @@ public:
 
     ~TlsBuffer() { if (ownsMemory) Clear(); }
 
+    TlsBuffer(const TlsBuffer &) = delete;
+    TlsBuffer &operator=(const TlsBuffer &) = delete;
+
+    TlsBuffer(TlsBuffer &&other)
+        : buffer(other.buffer), capacity(other.capacity), size(other.size), readPos(other.readPos), ownsMemory(other.ownsMemory)
+    {
+        other.buffer = nullptr;
+        other.capacity = 0;
+        other.size = 0;
+        other.readPos = 0;
+        other.ownsMemory = false;
+    }
+    TlsBuffer &operator=(TlsBuffer &&other)
+    {
+        if (this != &other)
+        {
+            if (ownsMemory) Clear();
+            buffer = other.buffer;
+            capacity = other.capacity;
+            size = other.size;
+            readPos = other.readPos;
+            ownsMemory = other.ownsMemory;
+            other.buffer = nullptr;
+            other.capacity = 0;
+            other.size = 0;
+            other.readPos = 0;
+            other.ownsMemory = false;
+        }
+        return *this;
+    }
+
     // Write operations
     INT32 Append(PCVOID data, INT32 size);
     INT32 Append(CHAR data);

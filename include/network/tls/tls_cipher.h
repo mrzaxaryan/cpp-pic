@@ -62,6 +62,54 @@ private:
 public:
     // Constructor
     TlsCipher();
+    ~TlsCipher() { Destroy(); }
+
+    TlsCipher(const TlsCipher &) = delete;
+    TlsCipher &operator=(const TlsCipher &) = delete;
+
+    TlsCipher(TlsCipher &&other)
+        : cipherCount(other.cipherCount)
+        , clientSeqNum(other.clientSeqNum)
+        , serverSeqNum(other.serverSeqNum)
+        , publicKey(static_cast<TlsBuffer &&>(other.publicKey))
+        , decodeBuffer(static_cast<TlsBuffer &&>(other.decodeBuffer))
+        , handshakeHash(static_cast<TlsHash &&>(other.handshakeHash))
+        , cipherIndex(other.cipherIndex)
+        , chacha20Context(static_cast<ChaCha20Encoder &&>(other.chacha20Context))
+        , isEncoding(other.isEncoding)
+    {
+        for (INT32 i = 0; i < ECC_COUNT; i++)
+        {
+            privateEccKeys[i] = other.privateEccKeys[i];
+            other.privateEccKeys[i] = nullptr;
+        }
+        Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
+    }
+
+    TlsCipher &operator=(TlsCipher &&other)
+    {
+        if (this != &other)
+        {
+            Destroy();
+            cipherCount = other.cipherCount;
+            clientSeqNum = other.clientSeqNum;
+            serverSeqNum = other.serverSeqNum;
+            publicKey = static_cast<TlsBuffer &&>(other.publicKey);
+            decodeBuffer = static_cast<TlsBuffer &&>(other.decodeBuffer);
+            handshakeHash = static_cast<TlsHash &&>(other.handshakeHash);
+            cipherIndex = other.cipherIndex;
+            chacha20Context = static_cast<ChaCha20Encoder &&>(other.chacha20Context);
+            isEncoding = other.isEncoding;
+            for (INT32 i = 0; i < ECC_COUNT; i++)
+            {
+                privateEccKeys[i] = other.privateEccKeys[i];
+                other.privateEccKeys[i] = nullptr;
+            }
+            Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
+        }
+        return *this;
+    }
+
     // Reset function
     VOID Reset();
     // Destroy function to clean up resources

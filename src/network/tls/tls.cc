@@ -704,8 +704,6 @@ BOOL TLSClient::Close()
 
     LOG_DEBUG("Closing socket for client: %p", this);
     return context.Close();
-
-    return TRUE;
 }
 
 /// @brief Write data to the TLS channel, encrypting it if the handshake is complete and the encoding is enabled

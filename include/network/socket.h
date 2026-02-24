@@ -122,8 +122,30 @@ private:
 public:
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
-	Socket() = default;
+	Socket() : ip(), port(0), m_socket(NULL) {}
 	Socket(const IPAddress &ipAddress, UINT16 port);
+	~Socket() { if (IsValid()) Close(); }
+
+	Socket(const Socket &) = delete;
+	Socket &operator=(const Socket &) = delete;
+
+	Socket(Socket &&other) : ip(other.ip), port(other.port), m_socket(other.m_socket)
+	{
+		other.m_socket = NULL;
+	}
+	Socket &operator=(Socket &&other)
+	{
+		if (this != &other)
+		{
+			if (IsValid()) Close();
+			ip = other.ip;
+			port = other.port;
+			m_socket = other.m_socket;
+			other.m_socket = NULL;
+		}
+		return *this;
+	}
+
 	BOOL IsValid() const { return m_socket != NULL && m_socket != (PVOID)(SSIZE)(-1); }
 	SSIZE GetFd() const { return (SSIZE)m_socket; }
 	BOOL Open();

@@ -66,12 +66,6 @@ HttpClient::HttpClient(PCCHAR url)
     }
 }
 
-// Destructor to clean up resources when the HttpClient object is destroyed
-HttpClient::~HttpClient()
-{
-    Close();
-}
-
 /// @brief Open a connection to the server
 /// @return Indicates whether the connection was opened successfully (TRUE) or if there was an error (FALSE)
 

@@ -41,6 +41,49 @@ public:
     VOID operator delete(VOID *) = delete;
     TLSClient() : host(nullptr), ip(), stateIndex(0), channelBytesRead(0) {}
     TLSClient(PCCHAR host, const IPAddress &ipAddress, UINT16 port);
+    ~TLSClient() = default;
+
+    TLSClient(const TLSClient &) = delete;
+    TLSClient &operator=(const TLSClient &) = delete;
+
+    TLSClient(TLSClient &&other)
+        : host(other.host)
+        , ip(other.ip)
+        , context(static_cast<Socket &&>(other.context))
+        , crypto(static_cast<TlsCipher &&>(other.crypto))
+        , stateIndex(other.stateIndex)
+        , sendBuffer(static_cast<TlsBuffer &&>(other.sendBuffer))
+        , recvBuffer(static_cast<TlsBuffer &&>(other.recvBuffer))
+        , channelBuffer(static_cast<TlsBuffer &&>(other.channelBuffer))
+        , channelBytesRead(other.channelBytesRead)
+    {
+        other.host = nullptr;
+        other.stateIndex = 0;
+        other.channelBytesRead = 0;
+    }
+
+    TLSClient &operator=(TLSClient &&other)
+    {
+        if (this != &other)
+        {
+            Close();
+            host = other.host;
+            ip = other.ip;
+            context = static_cast<Socket &&>(other.context);
+            crypto = static_cast<TlsCipher &&>(other.crypto);
+            stateIndex = other.stateIndex;
+            sendBuffer = static_cast<TlsBuffer &&>(other.sendBuffer);
+            recvBuffer = static_cast<TlsBuffer &&>(other.recvBuffer);
+            channelBuffer = static_cast<TlsBuffer &&>(other.channelBuffer);
+            channelBytesRead = other.channelBytesRead;
+            other.host = nullptr;
+            other.stateIndex = 0;
+            other.channelBytesRead = 0;
+        }
+        return *this;
+    }
+
+    BOOL IsValid() const { return context.IsValid(); }
     BOOL Open();
     BOOL Close();
     SSIZE Read(PVOID buffer, UINT32 bufferLength);

@@ -48,6 +48,14 @@ public:
     // Constructors for WebSocketClient class, allowing initialization with a URL and optional IP address
     WebSocketClient(PCCHAR url);
     WebSocketClient(PCCHAR url, PCCHAR ipAddress);
+    ~WebSocketClient() { if (IsValid()) Close(); }
+
+    WebSocketClient(const WebSocketClient &) = delete;
+    WebSocketClient &operator=(const WebSocketClient &) = delete;
+    WebSocketClient(WebSocketClient &&) = default;
+    WebSocketClient &operator=(WebSocketClient &&) = default;
+
+    BOOL IsValid() const { return tlsContext.IsValid() || socketContext.IsValid(); }
     // Open, Close, Read, and Write operations for WebSocketClient
     BOOL Open();
     BOOL Close();

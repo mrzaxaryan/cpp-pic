@@ -17,7 +17,6 @@ TlsCipher::TlsCipher()
     this->Reset();
 }
 
-
 /// @brief Reset the TlsCipher object to its initial state
 /// @return void
 

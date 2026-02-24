@@ -139,14 +139,16 @@ public:
 
     /**
      * @brief Destructor that prevents the compiler from reusing the stack storage
-     * @details At -O1+ with LTO, the compiler may determine the object is "dead"
-     * after conversion to a raw pointer, and reuse its stack slot for other
-     * temporaries. This empty asm barrier forces the compiler to keep the
-     * storage alive until the destructor runs at end of full-expression.
+     * @details At -O1+ the compiler may determine the object is "dead" after
+     * conversion to a raw pointer, and reuse its stack slot for other temporaries.
+     * The "m" constraint tells the compiler the asm reads from the data array,
+     * forcing it to keep the CONTENTS (not just the address) intact until the
+     * destructor runs at end of full-expression. The previous "r"(data) variant
+     * was insufficient because it only required the address, not the data content.
      */
     FORCE_INLINE ~EMBEDDED_STRING() noexcept
     {
-        __asm__ volatile("" : : "r"(data) : "memory");
+        __asm__ volatile("" : : "m"(*(const char (*)[sizeof(TChar) * AllocN])data));
     }
 
     /**

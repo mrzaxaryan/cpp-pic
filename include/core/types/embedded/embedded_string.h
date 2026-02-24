@@ -138,6 +138,18 @@ public:
     }
 
     /**
+     * @brief Destructor that prevents the compiler from reusing the stack storage
+     * @details At -O1+ with LTO, the compiler may determine the object is "dead"
+     * after conversion to a raw pointer, and reuse its stack slot for other
+     * temporaries. This empty asm barrier forces the compiler to keep the
+     * storage alive until the destructor runs at end of full-expression.
+     */
+    FORCE_INLINE ~EMBEDDED_STRING() noexcept
+    {
+        __asm__ volatile("" : : "r"(data) : "memory");
+    }
+
+    /**
      * @brief Implicit conversion to const character pointer
      * @return Pointer to the string data
      */

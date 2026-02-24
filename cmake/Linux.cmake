@@ -26,4 +26,4 @@ if(CPPPIC_BUILD_TYPE STREQUAL "release")
     )
 endif()
 
-list(APPEND CPPPIC_BASE_LINK_FLAGS -target ${CPPPIC_TRIPLE})
+list(APPEND CPPPIC_BASE_LINK_FLAGS -target ${CPPPIC_TRIPLE} -fuse-ld=lld)

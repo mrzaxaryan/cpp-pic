@@ -31,7 +31,7 @@ private:
 		// Force IPv4 resolution since CI environments may not have IPv6 connectivity
 		auto domain = "echo.websocket.org"_embed;
 		IPAddress resolvedIp = DNS::CloudflareResolve((PCCHAR)domain, A);
-		if (resolvedIp .IsValid() == FALSE)
+		if (resolvedIp.IsValid() == FALSE)
 		{
 			LOG_ERROR("DNS resolution failed for %s", (PCCHAR)domain);
 			LOG_ERROR("WebSocket tests require network connectivity");
@@ -41,8 +41,7 @@ private:
 
 		// Use hardcoded IPv4 to avoid IPv6 connectivity issues in CI
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{
@@ -61,8 +60,7 @@ private:
 		LOG_INFO("Test: Basic Secure WebSocket Connection (wss://)");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{
@@ -81,8 +79,7 @@ private:
 		LOG_INFO("Test: WebSocket Text Echo");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{
@@ -134,7 +131,7 @@ private:
 
 		// Verify echo matches sent message
 		BOOL matches = (responseLength == testMessage.Length()) &&
-		               (Memory::Compare(response, (PCVOID)(PCCHAR)testMessage, testMessage.Length()) == 0);
+					   (Memory::Compare(response, (PCVOID)(PCCHAR)testMessage, testMessage.Length()) == 0);
 
 		delete[] (PCHAR)response;
 		wsClient.Close();
@@ -155,8 +152,7 @@ private:
 		LOG_INFO("Test: WebSocket Binary Echo");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{
@@ -220,7 +216,7 @@ private:
 
 		// Verify echo matches sent data
 		BOOL matches = (responseLength == dataLength) &&
-		               (Memory::Compare(response, (PCVOID)binaryData, dataLength) == 0);
+					   (Memory::Compare(response, (PCVOID)binaryData, dataLength) == 0);
 
 		delete[] (PCHAR)response;
 		wsClient.Close();
@@ -241,8 +237,7 @@ private:
 		LOG_INFO("Test: Multiple Sequential Messages");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{
@@ -279,7 +274,8 @@ private:
 		if (resp1 == NULL || len1 != msg1.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 1");
-			if (resp1) delete[] (PCHAR)resp1;
+			if (resp1)
+				delete[] (PCHAR)resp1;
 			wsClient.Close();
 			return FALSE;
 		}
@@ -300,7 +296,8 @@ private:
 		if (resp2 == NULL || len2 != msg2.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 2");
-			if (resp2) delete[] (PCHAR)resp2;
+			if (resp2)
+				delete[] (PCHAR)resp2;
 			wsClient.Close();
 			return FALSE;
 		}
@@ -321,7 +318,8 @@ private:
 		if (resp3 == NULL || len3 != msg3.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 3");
-			if (resp3) delete[] (PCHAR)resp3;
+			if (resp3)
+				delete[] (PCHAR)resp3;
 			wsClient.Close();
 			return FALSE;
 		}
@@ -338,8 +336,7 @@ private:
 		LOG_INFO("Test: Large Message Handling");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{
@@ -403,7 +400,7 @@ private:
 
 		// Verify echo matches sent message
 		BOOL matches = (responseLength == largeMessageSize) &&
-		               (Memory::Compare(response, (PCVOID)largeMessage, largeMessageSize) == 0);
+					   (Memory::Compare(response, (PCVOID)largeMessage, largeMessageSize) == 0);
 
 		delete[] largeMessage;
 		delete[] (PCHAR)response;
@@ -425,8 +422,7 @@ private:
 		LOG_INFO("Test: WebSocket Close Handshake");
 
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		auto ipv4 = "66.241.124.119"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl, (PCCHAR)ipv4);
+		WebSocketClient wsClient((PCCHAR)wssUrl);
 
 		if (!wsClient.Open())
 		{

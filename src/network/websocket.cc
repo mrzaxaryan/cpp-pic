@@ -476,18 +476,6 @@ PVOID WebSocketClient::Read(USIZE &dwBufferLength, INT8 &opcode)
 end:
     return pvBuffer;
 }
-WebSocketClient::WebSocketClient(PCCHAR url, PCCHAR ipAddress)
-{
-    this->ipAddress = IPAddress::FromString(ipAddress);
-    isConnected = FALSE;
-
-    BOOL isSecure = FALSE;
-    if (!HttpClient::ParseUrl(url, hostName, path, port, isSecure))
-    {
-        return;
-    }
-    tlsContext = TLSClient(hostName, this->ipAddress, port, isSecure);
-}
 WebSocketClient::WebSocketClient(PCCHAR url)
 {
     isConnected = FALSE;

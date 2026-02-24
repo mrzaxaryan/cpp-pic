@@ -43,9 +43,7 @@ public:
     // Disable dynamic memory allocation for WebSocketClient instances
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
-    // Constructors for WebSocketClient class, allowing initialization with a URL and optional IP address
     WebSocketClient(PCCHAR url);
-    WebSocketClient(PCCHAR url, PCCHAR ipAddress);
     ~WebSocketClient() { if (IsValid()) Close(); }
 
     WebSocketClient(const WebSocketClient &) = delete;

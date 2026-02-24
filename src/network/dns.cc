@@ -57,19 +57,19 @@ typedef struct
 #define isdigit(c) ((c) >= '0' && (c) <= '9')
 
 // Helper: Check if host is localhost and return loopback address
-static inline BOOL IsLocalhost(PCCHAR host, IPAddress *pResult, RequestType type)
+static inline BOOL IsLocalhost(PCCHAR host, IPAddress &result, RequestType type)
 {
     auto localhost = "localhost"_embed;
     if (String::Compare(host, (PCCHAR)localhost))
     {
-        *pResult = IPAddress::LocalHost(type == AAAA);
+        result = IPAddress::LocalHost(type == AAAA);
         return TRUE;
     }
     return FALSE;
 }
 
 // Helper: Read HTTP response headers until \r\n\r\n
-static BOOL ReadHttpHeaders(TLSClient *client, PCHAR buffer, UINT16 bufferSize, PUINT32 pBytesRead)
+static BOOL ReadHttpHeaders(TLSClient &client, PCHAR buffer, UINT16 bufferSize, UINT32 &bytesRead)
 {
     UINT32 totalBytesRead = 0;
     for (;;)
@@ -79,18 +79,18 @@ static BOOL ReadHttpHeaders(TLSClient *client, PCHAR buffer, UINT16 bufferSize, 
             LOG_WARNING("DNS response too large.");
             return FALSE;
         }
-        UINT32 bytesRead = client->Read(buffer + totalBytesRead, 1);
-        if (bytesRead == 0)
+        UINT32 read = client.Read(buffer + totalBytesRead, 1);
+        if (read == 0)
         {
             LOG_WARNING("Failed to read DNS response.");
             return FALSE;
         }
-        totalBytesRead += bytesRead;
+        totalBytesRead += read;
         // Check for \r\n\r\n (168626701 as UINT32)
         if (totalBytesRead >= 4 && *(PUINT32)(buffer + totalBytesRead - 4) == 168626701)
             break;
     }
-    *pBytesRead = totalBytesRead;
+    bytesRead = totalBytesRead;
     return TRUE;
 }
 
@@ -200,9 +200,9 @@ static PUINT8 DNS_readName(PUINT8 data, PUINT8 src, PINT32 size)
 }
 
 // This function parses the DNS answer section and extracts the IP address if the type is A (IPv4) or AAAA (IPv6).
-static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPAddress *pIpAddress)
+static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPAddress &ipAddress)
 {
-    LOG_DEBUG("DNS_parseAnswer(ptr: 0x%p, buffer: 0x%p, cnt: %d, pIpAddress: 0x%p) called", ptr, buffer, cnt, pIpAddress);
+    LOG_DEBUG("DNS_parseAnswer(ptr: 0x%p, buffer: 0x%p, cnt: %d, ipAddress: 0x%p) called", ptr, buffer, cnt, &ipAddress);
     // Check for NULL pointers
 
     // UINT16 count = 0;
@@ -231,7 +231,7 @@ static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPAddress *pI
         {
             LOG_DEBUG("Processing A record with TTL: %d", a.ttl);
             PUINT32 ipv4Data = (PUINT32)(p + sizeof(Answer)); // Pointer to the IPv4 address
-            *pIpAddress = IPAddress::FromIPv4(*ipv4Data);     // Create IPAddress from IPv4
+            ipAddress = IPAddress::FromIPv4(*ipv4Data);       // Create IPAddress from IPv4
             return 0;
         }
         // Check if the type is AAAA (IPv6 address)
@@ -239,7 +239,7 @@ static INT32 DNS_parseAnswer(PUINT8 ptr, PUINT8 buffer, INT32 cnt, IPAddress *pI
         {
             LOG_DEBUG("Processing AAAA record with TTL: %d", a.ttl);
             PUINT8 ipv6Data = p + sizeof(Answer);        // Pointer to the IPv6 address (16 bytes)
-            *pIpAddress = IPAddress::FromIPv6(ipv6Data); // Create IPAddress from IPv6
+            ipAddress = IPAddress::FromIPv6(ipv6Data);   // Create IPAddress from IPv6
             return 0;
         }
         else
@@ -302,9 +302,9 @@ static INT32 DNS_parseQuery(PUINT8 ptr, INT32 cnt)
 
 // This function resolves a DNS request for a given host and type, and stores the resolved IP address in the provided buffer.
 
-static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress *pIpAddress)
+static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress &ipAddress)
 {
-    LOG_DEBUG("DNS_parse(buffer: 0x%p, len: %d, pIPAddress: 0x%p) called", buffer, len, pIpAddress);
+    LOG_DEBUG("DNS_parse(buffer: 0x%p, len: %d, ipAddress: 0x%p) called", buffer, len, &ipAddress);
     // Validate the input parameters
     if (!buffer || !len || len < sizeof(DNS_REQUEST_HEADER))
     {
@@ -349,7 +349,7 @@ static BOOL DNS_parse(PUINT8 buffer, UINT16 len, IPAddress *pIpAddress)
 
     // Start parsing the answers
     if (pDNSRequestHeader->ansCount > 0)
-        recordOffset += DNS_parseAnswer(buffer + recordOffset, buffer, pDNSRequestHeader->ansCount, pIpAddress);
+        recordOffset += DNS_parseAnswer(buffer + recordOffset, buffer, pDNSRequestHeader->ansCount, ipAddress);
 
     return TRUE;
     // the same with
@@ -467,7 +467,7 @@ BOOL DNS::FormatterCallback(PVOID context, CHAR ch)
 IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
     IPAddress result;
-    if (IsLocalhost(host, &result, dnstype))
+    if (IsLocalhost(host, result, dnstype))
         return result;
 
     TLSClient tlsClient(DNSServerName, DNSServerIp, 443);
@@ -496,7 +496,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR
     PCHAR dnsResponseStart = dnsResponse;
     UINT32 totalBytesRead = 0;
 
-    if (!ReadHttpHeaders(&tlsClient, dnsResponse, responseBufferSize, &totalBytesRead))
+    if (!ReadHttpHeaders(tlsClient, dnsResponse, responseBufferSize, totalBytesRead))
     {
         delete[] dnsResponseStart;
         return IPAddress::Invalid();
@@ -519,7 +519,7 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR
 
     IPAddress ipAddress;
 
-    if (!DNS_parse((PUINT8)binaryResponse, (UINT16)contentLength, &ipAddress))
+    if (!DNS_parse((PUINT8)binaryResponse, (UINT16)contentLength, ipAddress))
     {
         tlsClient.Close();
         LOG_WARNING("Failed to parse DNS response");

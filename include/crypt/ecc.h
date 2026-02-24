@@ -193,7 +193,7 @@ private:
     // =========================================================================
 
     /** @brief Tests if point is at infinity */
-    INT32 IsZero(EccPoint *point);
+    INT32 IsZero(EccPoint &point);
 
     /** @brief Point doubling in Jacobian coordinates */
     VOID DoubleJacobian(UINT64 *X1, UINT64 *Y1, UINT64 *Z1);
@@ -210,8 +210,8 @@ private:
     /** @brief Co-Z conjugate addition */
     VOID XYcZAddC(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2);
 
-    /** @brief Scalar multiplication: pResult = pScalar * pPoint */
-    VOID Mult(EccPoint *pResult, EccPoint *pPoint, UINT64 *pScalar, UINT64 *pInitialZ);
+    /** @brief Scalar multiplication: result = pScalar * point */
+    VOID Mult(EccPoint &result, EccPoint &point, UINT64 *pScalar, UINT64 *pInitialZ);
 
     // =========================================================================
     // Serialization
@@ -227,7 +227,7 @@ private:
     VOID ModSqrt(UINT64 *pA);
 
     /** @brief Decompresses point from compressed format (02/03 || x) */
-    VOID PointDecompress(EccPoint *pPoint, const UINT8 *pCompressed);
+    VOID PointDecompress(EccPoint &point, const UINT8 *pCompressed);
 
 public:
     /**

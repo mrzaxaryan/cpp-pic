@@ -596,10 +596,10 @@ VOID Ecc::VliModInv(UINT64 *pResult, UINT64 *pInput, UINT64 *pMod)
 
 /* ------ Point operations ------ */
 
-/* Returns 1 if p_point is the point at infinity, 0 otherwise. */
-INT32 Ecc::IsZero(EccPoint *pPoint)
+/* Returns 1 if point is the point at infinity, 0 otherwise. */
+INT32 Ecc::IsZero(EccPoint &point)
 {
-    return (this->VliIsZero(pPoint->x) && this->VliIsZero(pPoint->y));
+    return (this->VliIsZero(point.x) && this->VliIsZero(point.y));
 }
 
 /* Point multiplication algorithm using Montgomery's ladder with co-Z coordinates.
@@ -750,7 +750,7 @@ VOID Ecc::XYcZAddC(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2)
     this->VliSet(X1, t7);
 }
 
-VOID Ecc::Mult(EccPoint *pResult, EccPoint *pPoint, UINT64 *pScalar, UINT64 *pInitialZ)
+VOID Ecc::Mult(EccPoint &result, EccPoint &point, UINT64 *pScalar, UINT64 *pInitialZ)
 {
     /* R0 and R1 */
     UINT64 Rx[2][MAX_NUM_ECC_DIGITS];
@@ -759,8 +759,8 @@ VOID Ecc::Mult(EccPoint *pResult, EccPoint *pPoint, UINT64 *pScalar, UINT64 *pIn
 
     INT32 i, nb;
 
-    this->VliSet(Rx[1], pPoint->x);
-    this->VliSet(Ry[1], pPoint->y);
+    this->VliSet(Rx[1], point.x);
+    this->VliSet(Ry[1], point.y);
 
     this->XYcZInitialDouble(Rx[1], Ry[1], Rx[0], Ry[0], pInitialZ);
 
@@ -777,9 +777,9 @@ VOID Ecc::Mult(EccPoint *pResult, EccPoint *pPoint, UINT64 *pScalar, UINT64 *pIn
     /* Find final 1/Z value. */
     this->VliModSub(z, Rx[1], Rx[0], this->curveP); /* X1 - X0 */
     this->VliModMultFast(z, z, Ry[1 - nb]);         /* Yb * (X1 - X0) */
-    this->VliModMultFast(z, z, pPoint->x);          /* xP * Yb * (X1 - X0) */
+    this->VliModMultFast(z, z, point.x);             /* xP * Yb * (X1 - X0) */
     this->VliModInv(z, z, this->curveP);            /* 1 / (xP * Yb * (X1 - X0)) */
-    this->VliModMultFast(z, z, pPoint->y);          /* yP / (xP * Yb * (X1 - X0)) */
+    this->VliModMultFast(z, z, point.y);            /* yP / (xP * Yb * (X1 - X0)) */
     this->VliModMultFast(z, z, Rx[1 - nb]);         /* Xb * yP / (xP * Yb * (X1 - X0)) */
     /* End 1/Z calculation */
 
@@ -787,8 +787,8 @@ VOID Ecc::Mult(EccPoint *pResult, EccPoint *pPoint, UINT64 *pScalar, UINT64 *pIn
 
     this->ApplyZ(Rx[0], Ry[0], z);
 
-    this->VliSet(pResult->x, Rx[0]);
-    this->VliSet(pResult->y, Ry[0]);
+    this->VliSet(result.x, Rx[0]);
+    this->VliSet(result.y, Ry[0]);
 }
 
 VOID Ecc::Bytes2Native(UINT64 *pNative, const UINT8 *pBytes)
@@ -840,21 +840,21 @@ VOID Ecc::ModSqrt(UINT64 *pA)
     this->VliSet(pA, l_result);
 }
 
-VOID Ecc::PointDecompress(EccPoint *pPoint, const UINT8 *pCompressed)
+VOID Ecc::PointDecompress(EccPoint &point, const UINT8 *pCompressed)
 {
     UINT64 _3[MAX_NUM_ECC_DIGITS] = {3}; /* -a = 3 */
-    this->Bytes2Native(pPoint->x, pCompressed + 1);
+    this->Bytes2Native(point.x, pCompressed + 1);
 
-    this->VliModSquareFast(pPoint->y, pPoint->x);                      /* y = x^2 */
-    this->VliModSub(pPoint->y, pPoint->y, _3, this->curveP);           /* y = x^2 - 3 */
-    this->VliModMultFast(pPoint->y, pPoint->y, pPoint->x);             /* y = x^3 - 3x */
-    this->VliModAdd(pPoint->y, pPoint->y, this->curveB, this->curveP); /* y = x^3 - 3x + b */
+    this->VliModSquareFast(point.y, point.x);                      /* y = x^2 */
+    this->VliModSub(point.y, point.y, _3, this->curveP);           /* y = x^2 - 3 */
+    this->VliModMultFast(point.y, point.y, point.x);               /* y = x^3 - 3x */
+    this->VliModAdd(point.y, point.y, this->curveB, this->curveP); /* y = x^3 - 3x + b */
 
-    this->ModSqrt(pPoint->y);
+    this->ModSqrt(point.y);
 
-    if ((pPoint->y[0] & 0x01) != (pCompressed[0] & 0x01))
+    if ((point.y[0] & 0x01) != (pCompressed[0] & 0x01))
     {
-        this->VliSub(pPoint->y, this->curveP, pPoint->y);
+        this->VliSub(point.y, this->curveP, point.y);
     }
 }
 
@@ -889,9 +889,9 @@ INT32 Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UIN
     this->Bytes2Native(l_public.y, publicKey + 1 + this->eccBytes);
 
     EccPoint l_product;
-    this->Mult(&l_product, &l_public, this->privateKey, l_random);
+    this->Mult(l_product, l_public, this->privateKey, l_random);
     this->Native2Bytes(secret, l_product.x);
-    return this->IsZero(&l_product) ? -1 : 0;
+    return this->IsZero(l_product) ? -1 : 0;
 }
 
 INT32 Ecc::Initialize(INT32 curve)
@@ -948,8 +948,8 @@ INT32 Ecc::Initialize(INT32 curve)
         if (this->VliCmp(this->curveN, this->privateKey) != 1)
             this->VliSub(this->privateKey, this->privateKey, this->curveN);
 
-        this->Mult(&this->publicKey, &this->curveG, this->privateKey, NULL);
-    } while (this->IsZero(&this->publicKey));
+        this->Mult(this->publicKey, this->curveG, this->privateKey, NULL);
+    } while (this->IsZero(this->publicKey));
     return 0;
 };
 

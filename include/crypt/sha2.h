@@ -95,9 +95,9 @@ struct SHA256Traits
     /**
      * @brief Packs 4 bytes into a 32-bit word (big-endian)
      * @param str Input byte array
-     * @param x Output word pointer
+     * @param x Output word reference
      */
-    static FORCE_INLINE VOID Pack(const UINT8* str, Word* x);
+    static FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
 
     /**
      * @brief Unpacks a 32-bit word into 4 bytes (big-endian)
@@ -155,9 +155,9 @@ struct SHA384Traits
     /**
      * @brief Packs 8 bytes into a 64-bit word (big-endian)
      * @param str Input byte array
-     * @param x Output word pointer
+     * @param x Output word reference
      */
-    static FORCE_INLINE VOID Pack(const UINT8* str, Word* x);
+    static FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
 
     /**
      * @brief Unpacks a 64-bit word into 8 bytes (big-endian)

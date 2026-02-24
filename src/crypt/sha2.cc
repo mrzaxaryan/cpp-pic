@@ -119,9 +119,9 @@ FORCE_INLINE VOID SHA256Traits::FillK(Word* out)
     Memory::Copy(out, (PCVOID)embedded, sizeof(sha256_k));
 }
 
-FORCE_INLINE VOID SHA256Traits::Pack(const UINT8* str, Word* x)
+FORCE_INLINE VOID SHA256Traits::Pack(const UINT8* str, Word &x)
 {
-    *x = ((Word)str[3]) | ((Word)str[2] << 8) | ((Word)str[1] << 16) | ((Word)str[0] << 24);
+    x = ((Word)str[3]) | ((Word)str[2] << 8) | ((Word)str[1] << 16) | ((Word)str[0] << 24);
 }
 
 FORCE_INLINE VOID SHA256Traits::Unpack(Word x, UINT8* str)
@@ -144,10 +144,10 @@ FORCE_INLINE VOID SHA384Traits::FillK(Word* out)
     Memory::Copy(out, (PCVOID)embedded, sizeof(sha512_k));
 }
 
-FORCE_INLINE VOID SHA384Traits::Pack(const UINT8* str, Word* x)
+FORCE_INLINE VOID SHA384Traits::Pack(const UINT8* str, Word &x)
 {
-    *x = ((Word)str[7]) | ((Word)str[6] << 8) | ((Word)str[5] << 16) | ((Word)str[4] << 24) |
-         ((Word)str[3] << 32) | ((Word)str[2] << 40) | ((Word)str[1] << 48) | ((Word)str[0] << 56);
+    x = ((Word)str[7]) | ((Word)str[6] << 8) | ((Word)str[5] << 16) | ((Word)str[4] << 24) |
+        ((Word)str[3] << 32) | ((Word)str[2] << 40) | ((Word)str[1] << 48) | ((Word)str[0] << 56);
 }
 
 FORCE_INLINE VOID SHA384Traits::Unpack(Word x, UINT8* str)
@@ -189,7 +189,7 @@ VOID SHABase<Traits>::Transform(SHABase &ctx, const UINT8 *message, UINT64 block
 
         for (j = 0; j < 16; j++)
         {
-            Traits::Pack(&sub_block[j << Traits::WORD_SHIFT], &w[j]);
+            Traits::Pack(&sub_block[j << Traits::WORD_SHIFT], w[j]);
         }
 
         for (j = 16; j < (INT32)Traits::ROUND_COUNT; j++)

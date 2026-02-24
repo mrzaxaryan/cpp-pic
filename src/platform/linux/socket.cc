@@ -4,68 +4,56 @@
 #include "memory.h"
 #include "ip_address.h"
 
-// Helper functions for socketcall architectures (i386, ARMv7)
-#if defined(ARCHITECTURE_I386)
-
+// Socket syscall helpers - i386 uses multiplexed socketcall(), others use direct syscalls
 static SSIZE linux_socket(INT32 domain, INT32 type, INT32 protocol)
 {
+#if defined(ARCHITECTURE_I386)
     USIZE args[3] = {(USIZE)domain, (USIZE)type, (USIZE)protocol};
     return System::Call(SYS_SOCKETCALL, SOCKOP_SOCKET, (USIZE)args);
+#else
+    return System::Call(SYS_SOCKET, domain, type, protocol);
+#endif
 }
 
 static SSIZE linux_bind(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
+#if defined(ARCHITECTURE_I386)
     USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
     return System::Call(SYS_SOCKETCALL, SOCKOP_BIND, (USIZE)args);
+#else
+    return System::Call(SYS_BIND, sockfd, (USIZE)addr, addrlen);
+#endif
 }
 
 static SSIZE linux_connect(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
 {
+#if defined(ARCHITECTURE_I386)
     USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
     return System::Call(SYS_SOCKETCALL, SOCKOP_CONNECT, (USIZE)args);
+#else
+    return System::Call(SYS_CONNECT, sockfd, (USIZE)addr, addrlen);
+#endif
 }
 
 static SSIZE linux_send(SSIZE sockfd, const VOID* buf, USIZE len, INT32 flags)
 {
+#if defined(ARCHITECTURE_I386)
     USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
     return System::Call(SYS_SOCKETCALL, SOCKOP_SEND, (USIZE)args);
+#else
+    return System::Call(SYS_SENDTO, sockfd, (USIZE)buf, len, flags, 0, 0);
+#endif
 }
 
 static SSIZE linux_recv(SSIZE sockfd, VOID* buf, USIZE len, INT32 flags)
 {
+#if defined(ARCHITECTURE_I386)
     USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
     return System::Call(SYS_SOCKETCALL, SOCKOP_RECV, (USIZE)args);
-}
-
 #else
-
-// Direct syscall versions for x86_64, AArch64, and ARMv7A
-static SSIZE linux_socket(INT32 domain, INT32 type, INT32 protocol)
-{
-    return System::Call(SYS_SOCKET, domain, type, protocol);
-}
-
-static SSIZE linux_bind(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
-{
-    return System::Call(SYS_BIND, sockfd, (USIZE)addr, addrlen);
-}
-
-static SSIZE linux_connect(SSIZE sockfd, const SockAddr* addr, UINT32 addrlen)
-{
-    return System::Call(SYS_CONNECT, sockfd, (USIZE)addr, addrlen);
-}
-
-static SSIZE linux_send(SSIZE sockfd, const VOID* buf, USIZE len, INT32 flags)
-{
-    return System::Call(SYS_SENDTO, sockfd, (USIZE)buf, len, flags, 0, 0);
-}
-
-static SSIZE linux_recv(SSIZE sockfd, VOID* buf, USIZE len, INT32 flags)
-{
     return System::Call(SYS_RECVFROM, sockfd, (USIZE)buf, len, flags, 0, 0);
-}
-
 #endif
+}
 
 // Socket constructor
 Socket::Socket(const IPAddress& ipAddress, UINT16 port)

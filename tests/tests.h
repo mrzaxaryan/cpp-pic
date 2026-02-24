@@ -61,3 +61,29 @@ inline BOOL RunTestSuite(BOOL& allPassedVar)
 	LOG_INFO("");
 	return result;
 }
+
+/**
+ * CompareBytes - Compare two byte arrays for equality
+ */
+inline BOOL CompareBytes(const UINT8 *a, const UINT8 *b, UINT32 length)
+{
+	for (UINT32 i = 0; i < length; i++)
+	{
+		if (a[i] != b[i])
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/**
+ * IsAllZeros - Check if all bytes in a buffer are zero
+ */
+inline BOOL IsAllZeros(const UINT8 *data, UINT32 length)
+{
+	for (UINT32 i = 0; i < length; i++)
+	{
+		if (data[i] != 0)
+			return FALSE;
+	}
+	return TRUE;
+}

@@ -35,28 +35,6 @@ public:
 	}
 
 private:
-	// Helper function to compare byte arrays
-	static BOOL CompareBytes(const UINT8 *a, const UINT8 *b, UINT32 length)
-	{
-		for (UINT32 i = 0; i < length; i++)
-		{
-			if (a[i] != b[i])
-				return FALSE;
-		}
-		return TRUE;
-	}
-
-	// Helper function to check if all bytes are zero
-	static BOOL IsAllZeros(const UINT8 *data, UINT32 length)
-	{
-		for (UINT32 i = 0; i < length; i++)
-		{
-			if (data[i] != 0)
-				return FALSE;
-		}
-		return TRUE;
-	}
-
 	// Test 1: Basic ECC initialization
 	static BOOL TestEccInitialization()
 	{

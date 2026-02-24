@@ -57,7 +57,7 @@ BOOL WebSocketClient::Open()
 
     Random random;
     for (INT32 i = 0; i < 16; i++)
-        key[i] = alphanum[random.Get() % 61];
+        key[i] = alphanum[random.Get() % 62];
 
     PCHAR secureKey = new CHAR[Base64::GetEncodeOutSize(16)];
     Base64::Encode(key, 16, secureKey);

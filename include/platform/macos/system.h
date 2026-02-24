@@ -15,6 +15,7 @@ public:
 #if defined(ARCHITECTURE_X86_64)
 
 	// Syscall with 0 arguments
+	// Note: macOS kernel writes rval[1] to RDX on return, so RDX must be clobbered.
 	static inline SSIZE Call(USIZE number)
 	{
 		register USIZE r_rax __asm__("rax") = number;
@@ -25,7 +26,7 @@ public:
 			"1:\n"
 			: "+r"(r_rax)
 			:
-			: "rcx", "r11", "memory", "cc"
+			: "rcx", "rdx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
 	}
@@ -42,7 +43,7 @@ public:
 			"1:\n"
 			: "+r"(r_rax)
 			: "r"(r_rdi)
-			: "rcx", "r11", "memory", "cc"
+			: "rcx", "rdx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
 	}
@@ -60,12 +61,13 @@ public:
 			"1:\n"
 			: "+r"(r_rax)
 			: "r"(r_rdi), "r"(r_rsi)
-			: "rcx", "r11", "memory", "cc"
+			: "rcx", "rdx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
 	}
 
 	// Syscall with 3 arguments
+	// RDX is used as input and clobbered by kernel (rval[1]), so mark as "+r".
 	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
 	{
 		register USIZE r_rdi __asm__("rdi") = arg1;
@@ -77,8 +79,8 @@ public:
 			"jnc 1f\n"
 			"negq %%rax\n"
 			"1:\n"
-			: "+r"(r_rax)
-			: "r"(r_rdi), "r"(r_rsi), "r"(r_rdx)
+			: "+r"(r_rax), "+r"(r_rdx)
+			: "r"(r_rdi), "r"(r_rsi)
 			: "rcx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
@@ -97,8 +99,8 @@ public:
 			"jnc 1f\n"
 			"negq %%rax\n"
 			"1:\n"
-			: "+r"(r_rax)
-			: "r"(r_rdi), "r"(r_rsi), "r"(r_rdx), "r"(r_r10)
+			: "+r"(r_rax), "+r"(r_rdx)
+			: "r"(r_rdi), "r"(r_rsi), "r"(r_r10)
 			: "rcx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
@@ -118,8 +120,8 @@ public:
 			"jnc 1f\n"
 			"negq %%rax\n"
 			"1:\n"
-			: "+r"(r_rax)
-			: "r"(r_rdi), "r"(r_rsi), "r"(r_rdx), "r"(r_r10), "r"(r_r8)
+			: "+r"(r_rax), "+r"(r_rdx)
+			: "r"(r_rdi), "r"(r_rsi), "r"(r_r10), "r"(r_r8)
 			: "rcx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
@@ -140,8 +142,8 @@ public:
 			"jnc 1f\n"
 			"negq %%rax\n"
 			"1:\n"
-			: "+r"(r_rax)
-			: "r"(r_rdi), "r"(r_rsi), "r"(r_rdx), "r"(r_r10), "r"(r_r8), "r"(r_r9)
+			: "+r"(r_rax), "+r"(r_rdx)
+			: "r"(r_rdi), "r"(r_rsi), "r"(r_r10), "r"(r_r8), "r"(r_r9)
 			: "rcx", "r11", "memory", "cc"
 		);
 		return (SSIZE)r_rax;
@@ -150,6 +152,7 @@ public:
 #elif defined(ARCHITECTURE_AARCH64)
 
 	// Syscall with 0 arguments
+	// Note: macOS kernel writes rval[1] to X1 on return, so X1 must be clobbered.
 	static inline SSIZE Call(USIZE number)
 	{
 		register USIZE x0 __asm__("x0");
@@ -161,7 +164,7 @@ public:
 			"1:\n"
 			: "=r"(x0)
 			: "r"(x16)
-			: "memory", "cc"
+			: "x1", "memory", "cc"
 		);
 		return (SSIZE)x0;
 	}
@@ -178,12 +181,13 @@ public:
 			"1:\n"
 			: "+r"(x0)
 			: "r"(x16)
-			: "memory", "cc"
+			: "x1", "memory", "cc"
 		);
 		return (SSIZE)x0;
 	}
 
 	// Syscall with 2 arguments
+	// X1 is used as input and clobbered by kernel (rval[1]), so mark as "+r".
 	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
@@ -194,8 +198,8 @@ public:
 			"b.cc 1f\n"
 			"neg x0, x0\n"
 			"1:\n"
-			: "+r"(x0)
-			: "r"(x1), "r"(x16)
+			: "+r"(x0), "+r"(x1)
+			: "r"(x16)
 			: "memory", "cc"
 		);
 		return (SSIZE)x0;
@@ -213,8 +217,8 @@ public:
 			"b.cc 1f\n"
 			"neg x0, x0\n"
 			"1:\n"
-			: "+r"(x0)
-			: "r"(x1), "r"(x2), "r"(x16)
+			: "+r"(x0), "+r"(x1)
+			: "r"(x2), "r"(x16)
 			: "memory", "cc"
 		);
 		return (SSIZE)x0;
@@ -233,8 +237,8 @@ public:
 			"b.cc 1f\n"
 			"neg x0, x0\n"
 			"1:\n"
-			: "+r"(x0)
-			: "r"(x1), "r"(x2), "r"(x3), "r"(x16)
+			: "+r"(x0), "+r"(x1)
+			: "r"(x2), "r"(x3), "r"(x16)
 			: "memory", "cc"
 		);
 		return (SSIZE)x0;
@@ -254,8 +258,8 @@ public:
 			"b.cc 1f\n"
 			"neg x0, x0\n"
 			"1:\n"
-			: "+r"(x0)
-			: "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x16)
+			: "+r"(x0), "+r"(x1)
+			: "r"(x2), "r"(x3), "r"(x4), "r"(x16)
 			: "memory", "cc"
 		);
 		return (SSIZE)x0;
@@ -276,8 +280,8 @@ public:
 			"b.cc 1f\n"
 			"neg x0, x0\n"
 			"1:\n"
-			: "+r"(x0)
-			: "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5), "r"(x16)
+			: "+r"(x0), "+r"(x1)
+			: "r"(x2), "r"(x3), "r"(x4), "r"(x5), "r"(x16)
 			: "memory", "cc"
 		);
 		return (SSIZE)x0;

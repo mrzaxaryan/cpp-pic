@@ -86,6 +86,6 @@ public:
     // Accessor functions
     BOOL GetEncoding() { return isEncoding; };
     INT32 GetCipherCount() { return cipherCount; };
-    TlsBuffer *GetPubKey() { return &publicKey; };
+    TlsBuffer &GetPubKey() { return publicKey; };
     VOID SetCipherCount(INT32 count) { cipherCount = count; };
 };

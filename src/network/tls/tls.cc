@@ -235,13 +235,13 @@ BOOL TLSClient::SendClientFinished()
 BOOL TLSClient::SendClientExchange()
 {
     sendBuffer.Clear();
-    TlsBuffer *pubkey = crypto.GetPubKey();
-    LOG_DEBUG("Sending Client Key Exchange for client: %p, public key size: %d bytes", this, pubkey->GetSize());
+    TlsBuffer &pubkey = crypto.GetPubKey();
+    LOG_DEBUG("Sending Client Key Exchange for client: %p, public key size: %d bytes", this, pubkey.GetSize());
     sendBuffer.Append((CHAR)MSG_CLIENT_KEY_EXCHANGE);
     sendBuffer.Append((CHAR)0);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(pubkey->GetSize() + 1));
-    sendBuffer.Append(((CHAR)(pubkey->GetSize()))); // tls body size
-    sendBuffer.Append(pubkey->GetBuffer(), pubkey->GetSize());
+    sendBuffer.Append((INT16)UINT16SwapByteOrder(pubkey.GetSize() + 1));
+    sendBuffer.Append(((CHAR)(pubkey.GetSize()))); // tls body size
+    sendBuffer.Append(pubkey.GetBuffer(), pubkey.GetSize());
     return SendPacket(CONTENT_HANDSHAKE, 0x303, sendBuffer);
 }
 

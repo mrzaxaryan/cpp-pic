@@ -5,7 +5,7 @@
 
 #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_UEFI)
 const char PATH_SEPARATOR = '\\';
-#elif defined(PLATFORM_LINUX)
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS)
 const char PATH_SEPARATOR = '/';
 #else
 #error "Path separator not defined for this platform"

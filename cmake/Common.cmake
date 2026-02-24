@@ -188,6 +188,7 @@ file(GLOB_RECURSE CPPPIC_HEADERS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/
 macro(cpppic_filter_sources)
     foreach(_exclude ${ARGN})
         list(FILTER CPPPIC_SOURCES EXCLUDE REGEX ".*/${_exclude}/.*")
+        list(FILTER CPPPIC_INCLUDE_PATHS EXCLUDE REGEX ".*/platform/${_exclude}$")
     endforeach()
 endmacro()
 

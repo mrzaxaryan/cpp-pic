@@ -34,14 +34,10 @@ if(_content MATCHES "\\.text\n[^\n]+\\(\\.text\\.entry_point\\)")
     set(entry_point_first TRUE)
 endif()
 
-# macOS (Mach-O format): Check _entry_point is the first symbol in __TEXT,__text
-# ld64.lld map format: "# Symbols:" section lists symbols with addresses
-# The first symbol in __TEXT,__text should be _entry_point
-if(_content MATCHES "__TEXT,__text\n[^\n]*_entry_point")
-    set(entry_point_first TRUE)
-endif()
-# Alternative Mach-O map format: check in the ordered symbols section
-if(_content MATCHES "# Symbols:\n[^\n]*_entry_point")
+# macOS (Mach-O format): Check _entry_point is the first symbol listed
+# ld64.lld map format: "# Symbols:" header, then "# Address..." header line, then symbols
+# The first actual symbol should be _entry_point
+if(_content MATCHES "# Symbols:\n#[^\n]*\n[^\n]*_entry_point")
     set(entry_point_first TRUE)
 endif()
 
@@ -70,15 +66,16 @@ foreach(_sec ${_sections})
     endif()
 endforeach()
 
-# macOS (Mach-O format): Check for __DATA segment sections
-# ld64.lld map lists sections as "__DATA,__data", "__DATA,__bss", etc.
-if(_content MATCHES "__DATA,__data")
+# macOS (Mach-O format): Check for __DATA segment user data sections
+# ld64.lld map uses tab-separated "Segment\tSection" format
+# Only flag user data sections, not linker-generated ones (__got, __la_symbol_ptr)
+if(_content MATCHES "__DATA[ \t]+__data")
     list(APPEND _found "__DATA,__data")
 endif()
-if(_content MATCHES "__DATA,__bss")
+if(_content MATCHES "__DATA[ \t]+__bss")
     list(APPEND _found "__DATA,__bss")
 endif()
-if(_content MATCHES "__DATA_CONST,__const")
+if(_content MATCHES "__DATA_CONST[ \t]+__const")
     list(APPEND _found "__DATA_CONST,__const")
 endif()
 

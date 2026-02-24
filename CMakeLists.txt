@@ -29,8 +29,7 @@ foreach(_lang C CXX)
     set(CMAKE_${_lang}_STANDARD_LIBRARIES "")
 endforeach()
 
-set(CMAKE_LINKER lld)
-set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> -fuse-ld=lld <LINK_FLAGS> <OBJECTS> -o <TARGET>")
+set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <LINK_FLAGS> <OBJECTS> -o <TARGET>")
 
 # =============================================================================
 # Project

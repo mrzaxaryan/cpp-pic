@@ -12,6 +12,13 @@ endif()
 cpppic_get_target_info()
 cpppic_filter_sources(windows linux uefi)
 
+# Resolve full path to ld64.lld (Homebrew LLVM may not expose it in clang's search path)
+find_program(_lld_path NAMES ld64.lld lld)
+if(_lld_path)
+    list(REMOVE_ITEM CPPPIC_BASE_LINK_FLAGS -fuse-ld=lld)
+    list(PREPEND CPPPIC_BASE_LINK_FLAGS "-fuse-ld=${_lld_path}")
+endif()
+
 list(APPEND CPPPIC_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/include/platform/macos")
 list(APPEND CPPPIC_BASE_FLAGS -target ${CPPPIC_TRIPLE})
 

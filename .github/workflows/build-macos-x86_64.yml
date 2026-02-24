@@ -19,8 +19,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install LLVM and build tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          brew install llvm ninja cmake
+          for i in 1 2 3; do
+            brew install llvm ninja cmake && break
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       - name: Build, Upload, and Test all optimization levels

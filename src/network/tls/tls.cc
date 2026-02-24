@@ -51,6 +51,11 @@ typedef enum
     EXT_LAST = 0x7FFF
 } SSL_EXTENTION;
 
+static FORCE_INLINE VOID AppendU16BE(TlsBuffer &buf, UINT16 val)
+{
+    buf.Append((INT16)UINT16SwapByteOrder(val));
+}
+
 /// @brief Send packet data over TLS connection
 /// @param packetType Type of the TLS packet (e.g., handshake, application data)
 /// @param ver Version of TLS to use for the packet
@@ -125,7 +130,7 @@ BOOL TLSClient::SendClientHello(const CHAR *host)
     LOG_DEBUG("Appending ClientHello with cipher count index: %d", cipherCountIndex);
     for (INT32 i = 0; i < crypto.GetCipherCount(); i++)
     {
-        sendBuffer.Append((INT16)UINT16SwapByteOrder((UINT16)TLS_CHACHA20_POLY1305_SHA256));
+        AppendU16BE(sendBuffer, (UINT16)TLS_CHACHA20_POLY1305_SHA256);
         hastls13 = TRUE;
     }
     LOG_DEBUG("Appending ClientHello with %d ciphers", crypto.GetCipherCount());
@@ -135,47 +140,47 @@ BOOL TLSClient::SendClientHello(const CHAR *host)
 
     INT32 extSizeIndex = sendBuffer.AppendSize(2);
     LOG_DEBUG("Appending ClientHello with extension size index: %d", extSizeIndex);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(EXT_SERVER_NAME));
+    AppendU16BE(sendBuffer, EXT_SERVER_NAME);
     INT32 hostLen = (INT32)String::Length((PCHAR)host);
     LOG_DEBUG("Appending ClientHello with host: %s, length: %d", host, hostLen);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(hostLen + 5));
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(hostLen + 3));
+    AppendU16BE(sendBuffer, hostLen + 5);
+    AppendU16BE(sendBuffer, hostLen + 3);
     sendBuffer.Append((CHAR)0);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(hostLen));
+    AppendU16BE(sendBuffer, hostLen);
     sendBuffer.Append(host, hostLen);
 
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(EXT_SUPPORTED_GROUPS)); // ext type ÍÖÔ²ÇúÏß
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(ECC_COUNT * 2 + 2));    // ext size
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(ECC_COUNT * 2));
+    AppendU16BE(sendBuffer, EXT_SUPPORTED_GROUPS); // ext type
+    AppendU16BE(sendBuffer, ECC_COUNT * 2 + 2);    // ext size
+    AppendU16BE(sendBuffer, ECC_COUNT * 2);
     LOG_DEBUG("Appending ClientHello with supported groups, count: %d", ECC_COUNT);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder((UINT16)ECC_secp256r1));
-    sendBuffer.Append((INT16)UINT16SwapByteOrder((UINT16)ECC_secp384r1));
+    AppendU16BE(sendBuffer, (UINT16)ECC_secp256r1);
+    AppendU16BE(sendBuffer, (UINT16)ECC_secp384r1);
 
     if (hastls13)
     {
         LOG_DEBUG("Appending ClientHello with TLS 1.3 specific extensions");
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(EXT_SUPPORTED_VERSION));
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(3));
+        AppendU16BE(sendBuffer, EXT_SUPPORTED_VERSION);
+        AppendU16BE(sendBuffer, 3);
         sendBuffer.Append((CHAR)2);
         // tls 1.3 version
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0304));
+        AppendU16BE(sendBuffer, 0x0304);
 
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(EXT_SIGNATURE_ALGORITHMS)); //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(24));                       //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(22));                       //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0403));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0503));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0603));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0804));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0805));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0806));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0401));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0501));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0601));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0203));                   //
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(0x0201));                   //
+        AppendU16BE(sendBuffer, EXT_SIGNATURE_ALGORITHMS);
+        AppendU16BE(sendBuffer, 24);
+        AppendU16BE(sendBuffer, 22);
+        AppendU16BE(sendBuffer, 0x0403);
+        AppendU16BE(sendBuffer, 0x0503);
+        AppendU16BE(sendBuffer, 0x0603);
+        AppendU16BE(sendBuffer, 0x0804);
+        AppendU16BE(sendBuffer, 0x0805);
+        AppendU16BE(sendBuffer, 0x0806);
+        AppendU16BE(sendBuffer, 0x0401);
+        AppendU16BE(sendBuffer, 0x0501);
+        AppendU16BE(sendBuffer, 0x0601);
+        AppendU16BE(sendBuffer, 0x0203);
+        AppendU16BE(sendBuffer, 0x0201);
 
-        sendBuffer.Append((INT16)UINT16SwapByteOrder(EXT_KEY_SHARE)); // ext type ÍÖÔ²ÇúÏß
+        AppendU16BE(sendBuffer, EXT_KEY_SHARE); // ext type
         INT32 shareSize = sendBuffer.AppendSize(2);
         sendBuffer.AppendSize(2);
         UINT16 ecc_iana_list[2]{};
@@ -185,7 +190,7 @@ BOOL TLSClient::SendClientHello(const CHAR *host)
         for (INT32 i = 0; i < ECC_COUNT; i++)
         {
             UINT16 eccIana = ecc_iana_list[i];
-            sendBuffer.Append((INT16)UINT16SwapByteOrder(eccIana));
+            AppendU16BE(sendBuffer, eccIana);
             INT32 shareSizeSub = sendBuffer.AppendSize(2);
             if (!crypto.ComputePublicKey(i, sendBuffer))
             {

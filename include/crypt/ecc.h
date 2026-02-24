@@ -179,6 +179,9 @@ private:
     /** @brief Fast reduction mod p for 384-bit curves (P-384) */
     VOID VliMmodFast384(UINT64 *pResult, UINT64 *pProduct);
 
+    /** @brief Dispatches to curve-specific fast reduction */
+    VOID MmodFast(UINT64 *pResult, UINT64 *pProduct);
+
     /** @brief Fast modular multiplication using curve-specific reduction */
     VOID VliModMultFast(UINT64 *pResult, UINT64 *pLeft, UINT64 *pRight);
 

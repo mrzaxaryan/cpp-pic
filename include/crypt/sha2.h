@@ -84,13 +84,13 @@ struct SHA256Traits
      * @brief Fills initial hash values (H0) for SHA-256
      * @param out Output array for 8 initial hash values
      */
-    static FORCE_INLINE VOID FillH0(Word* out);
+    static VOID FillH0(Word* out);
 
     /**
      * @brief Fills round constants (K) for SHA-256
      * @param out Output array for 64 round constants
      */
-    static FORCE_INLINE VOID FillK(Word* out);
+    static VOID FillK(Word* out);
 
     /**
      * @brief Packs 4 bytes into a 32-bit word (big-endian)
@@ -144,13 +144,13 @@ struct SHA384Traits
      * @brief Fills initial hash values (H0) for SHA-384
      * @param out Output array for 8 initial hash values
      */
-    static FORCE_INLINE VOID FillH0(Word* out);
+    static VOID FillH0(Word* out);
 
     /**
      * @brief Fills round constants (K) for SHA-384
      * @param out Output array for 80 round constants
      */
-    static FORCE_INLINE VOID FillK(Word* out);
+    static VOID FillK(Word* out);
 
     /**
      * @brief Packs 8 bytes into a 64-bit word (big-endian)

@@ -471,19 +471,25 @@ VOID Ecc::VliMmodFast384(UINT64 *pResult, UINT64 *pProduct)
     this->VliSet(pResult, pProduct);
 }
 
+/* Dispatches to the curve-specific fast reduction. */
+VOID Ecc::MmodFast(UINT64 *pResult, UINT64 *pProduct)
+{
+    if (this->eccBytes == secp128r1)
+        this->VliMmodFast128(pResult, pProduct);
+    else if (this->eccBytes == secp192r1)
+        this->VliMmodFast192(pResult, pProduct);
+    else if (this->eccBytes == secp256r1)
+        this->VliMmodFast256(pResult, pProduct);
+    else if (this->eccBytes == secp384r1)
+        this->VliMmodFast384(pResult, pProduct);
+}
+
 /* Computes p_result = (p_left * p_right) % curve_p. */
 VOID Ecc::VliModMultFast(UINT64 *pResult, UINT64 *pLeft, UINT64 *pRight)
 {
     UINT64 l_product[2 * MAX_NUM_ECC_DIGITS];
     this->VliMult(l_product, pLeft, pRight);
-    if (this->eccBytes == secp128r1)
-        this->VliMmodFast128(pResult, l_product);
-    else if (this->eccBytes == secp192r1)
-        this->VliMmodFast192(pResult, l_product);
-    else if (this->eccBytes == secp256r1)
-        this->VliMmodFast256(pResult, l_product);
-    else if (this->eccBytes == secp384r1)
-        this->VliMmodFast384(pResult, l_product);
+    this->MmodFast(pResult, l_product);
 }
 
 /* Computes p_result = p_left^2 % curveP. */
@@ -491,14 +497,7 @@ VOID Ecc::VliModSquareFast(UINT64 *pResult, UINT64 *pLeft)
 {
     UINT64 l_product[2 * MAX_NUM_ECC_DIGITS];
     this->VliSquare(l_product, pLeft);
-    if (this->eccBytes == secp128r1)
-        this->VliMmodFast128(pResult, l_product);
-    else if (this->eccBytes == secp192r1)
-        this->VliMmodFast192(pResult, l_product);
-    else if (this->eccBytes == secp256r1)
-        this->VliMmodFast256(pResult, l_product);
-    else if (this->eccBytes == secp384r1)
-        this->VliMmodFast384(pResult, l_product);
+    this->MmodFast(pResult, l_product);
 }
 
 /* Computes p_result = (1 / p_input) % p_mod. All VL== are the same size.
@@ -860,16 +859,7 @@ VOID Ecc::PointDecompress(EccPoint &point, const UINT8 *pCompressed)
 
 Ecc::Ecc()
 {
-    this->eccBytes = 0;
-    this->numEccDigits = 0;
-    Memory::Set(this->privateKey, 0, sizeof(this->privateKey));
-    Memory::Set(this->publicKey.x, 0, sizeof(this->publicKey.x));
-    Memory::Set(this->publicKey.y, 0, sizeof(this->publicKey.y));
-    Memory::Set(this->curveP, 0, sizeof(this->curveP));
-    Memory::Set(this->curveB, 0, sizeof(this->curveB));
-    Memory::Set(this->curveG.x, 0, sizeof(this->curveG.x));
-    Memory::Set(this->curveG.y, 0, sizeof(this->curveG.y));
-    Memory::Set(this->curveN, 0, sizeof(this->curveN));
+    Memory::Zero(this, sizeof(Ecc));
 }
 
 INT32 Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UINT8 *secret)

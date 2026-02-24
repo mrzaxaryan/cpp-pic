@@ -180,10 +180,11 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
     INT32 mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 
 #if defined(ARCHITECTURE_AARCH64)
-    return System::Call(SYS_MKDIRAT, AT_FDCWD, (USIZE)utf8Path, mode) == 0;
+    SSIZE result = System::Call(SYS_MKDIRAT, AT_FDCWD, (USIZE)utf8Path, mode);
 #else
-    return System::Call(SYS_MKDIR, (USIZE)utf8Path, mode) == 0;
+    SSIZE result = System::Call(SYS_MKDIR, (USIZE)utf8Path, mode);
 #endif
+    return result == 0 || result == -17; // -EEXIST: directory already exists
 }
 
 BOOL FileSystem::DeleteDirectory(PCWCHAR path)

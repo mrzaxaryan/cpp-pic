@@ -163,7 +163,8 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
 	// Mode 0755 (rwxr-xr-x)
 	INT32 mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-	return System::Call(SYS_MKDIR, (USIZE)utf8Path, mode) == 0;
+	SSIZE result = System::Call(SYS_MKDIR, (USIZE)utf8Path, mode);
+	return result == 0 || result == -17; // -EEXIST: directory already exists
 }
 
 BOOL FileSystem::DeleteDirectory(PCWCHAR path)

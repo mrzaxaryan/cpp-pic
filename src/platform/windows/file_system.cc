@@ -323,7 +323,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
         NULL,
         FILE_ATTRIBUTE_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        FILE_CREATE,
+        FILE_OPEN_IF,
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
         NULL,
         0);

@@ -42,6 +42,7 @@ jobs:
             echo "========== Testing Mach-O -$opt =========="
             TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
             chmod +x "$TEST_BIN"
+            codesign --sign - --force "$TEST_BIN"
             "$TEST_BIN"
             if [ $? -ne 0 ]; then FAILED="$FAILED $opt-macho"; continue; fi
 

@@ -31,7 +31,7 @@ else()
     )
     if(NOT _result EQUAL 0)
         execute_process(
-            COMMAND base64 "${PIC_FILE}"
+            COMMAND base64 -i "${PIC_FILE}"
             OUTPUT_VARIABLE _b64
             RESULT_VARIABLE _result
         )

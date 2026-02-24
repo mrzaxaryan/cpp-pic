@@ -307,7 +307,7 @@ Use `#pragma once` as the include guard in all headers.
 - **No STL:** Everything is implemented from scratch
 - **No exceptions:** Return error codes (`NTSTATUS`, `BOOL`, etc.)
 - **Prefer `static` methods** on classes over free functions
-- **Use `FORCE_INLINE`** for performance-critical small functions
+- **Use `FORCE_INLINE`** for force inline functions
 - **Use `NOINLINE`** when you need to prevent inlining (e.g., for function pointer embedding)
 - **Cast to `USIZE`** when passing pointer arguments to syscall wrappers
 

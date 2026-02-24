@@ -22,51 +22,12 @@ DateTime DateTime::Now()
     UINT64 totalSeconds = (UINT64)ts.tv_sec;
     UINT64 nanoseconds = (UINT64)ts.tv_nsec;
 
-    // Constants
     const UINT64 SECONDS_PER_DAY = 86400;
-    const UINT64 SECONDS_PER_HOUR = 3600;
-    const UINT64 SECONDS_PER_MINUTE = 60;
 
-    // Calculate days since Unix epoch (1970-01-01)
     UINT64 days = totalSeconds / SECONDS_PER_DAY;
     UINT64 timeOfDay = totalSeconds % SECONDS_PER_DAY;
 
-    // Time of day
-    dt.Hours = (UINT32)(timeOfDay / SECONDS_PER_HOUR);
-    dt.Minutes = (UINT32)((timeOfDay % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
-    dt.Seconds = (UINT32)(timeOfDay % SECONDS_PER_MINUTE);
-
-    // Sub-second precision
-    dt.Milliseconds = nanoseconds / 1000000;
-    dt.Microseconds = (nanoseconds / 1000) % 1000;
-    dt.Nanoseconds = nanoseconds % 1000;
-
-    // Convert days since 1970-01-01 to (Year, Month, Day)
-    UINT64 year = 1970;
-
-    // Fast-forward through years
-    while (TRUE)
-    {
-        UINT32 daysInYear = DateTime::IsLeapYear(year) ? 366 : 365;
-        if (days >= daysInYear)
-        {
-            days -= daysInYear;
-            year++;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    // Use shared helper to convert day-of-year to month and day
-    UINT32 month, day;
-    DateTime::DaysToMonthDay(days, year, month, day);
-
-    dt.Years = year;
-    dt.Monthes = month;
-    dt.Days = day;
-
+    DateTime::FromDaysAndTime(dt, days, 1970, timeOfDay, nanoseconds);
     return dt;
 }
 

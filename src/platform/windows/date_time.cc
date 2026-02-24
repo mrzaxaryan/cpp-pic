@@ -75,40 +75,12 @@ DateTime DateTime::Now()
     UINT64 days = local100ns / TICKS_PER_DAY;
     UINT64 dayTicks = local100ns % TICKS_PER_DAY;
 
-    // Convert days since 1601-01-01 to year
-    UINT64 year = 1601;
+    // Convert 100ns ticks to seconds + nanoseconds for the shared helper
+    UINT64 totalSecs = dayTicks / TICKS_PER_SEC;
+    UINT64 sub100ns = dayTicks % TICKS_PER_SEC;
+    UINT64 subSecNs = sub100ns * UINT64(100u); // 100ns units -> nanoseconds
 
-    while (1)
-    {
-        UINT32 diy = DateTime::IsLeapYear(year) ? 366u : 365u;
-        if (days >= diy)
-        {
-            days -= diy;
-            year++;
-        }
-        else
-            break;
-    }
-
-    // Use shared helper to convert day-of-year to month and day
-    UINT32 month, day;
-    DateTime::DaysToMonthDay(days, year, month, day);
-
-    dt.Years = year;
-    dt.Monthes = month;
-    dt.Days = day;
-
-    // time-of-day
-    UINT64 total_secs = dayTicks / TICKS_PER_SEC;
-    dt.Hours = (UINT32)(total_secs / UINT64(3600u));
-    dt.Minutes = (UINT32)((total_secs / UINT64(60u)) % UINT64(60u));
-    dt.Seconds = (UINT32)(total_secs % UINT64(60u));
-
-    // sub-second from remaining 100ns ticks
-    UINT64 sub100ns = dayTicks % TICKS_PER_SEC;                 // 0..9,999,999 (100ns units)
-    dt.Milliseconds = sub100ns / UINT64(10000u);                // 1 ms = 10,000 * 100ns
-    dt.Microseconds = (sub100ns / UINT64(10u)) % UINT64(1000u); // 1 us = 10 * 100ns
-    dt.Nanoseconds = (sub100ns % UINT64(10u)) * UINT64(100u);   // remainder * 100ns -> ns
+    DateTime::FromDaysAndTime(dt, days, 1601, totalSecs, subSecNs);
     return dt;
 }
 

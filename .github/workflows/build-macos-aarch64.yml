@@ -11,9 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  LLVM_VERSION: "21.1.0"
-
 jobs:
   build-and-test:
     runs-on: macos-14
@@ -21,29 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v4
-        with:
-          path: /opt/llvm
-          key: llvm-${{ env.LLVM_VERSION }}-macos-arm64
-
-      - name: Install LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+      - name: Install LLVM and build tools
         run: |
-          set -e
-          TARBALL="LLVM-${{ env.LLVM_VERSION }}-macOS-ARM64.tar.xz"
-          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
-          wget -q "$URL"
-          sudo mkdir -p /opt/llvm
-          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
-          rm "$TARBALL"
-
-      - name: Install build tools
-        run: brew install ninja cmake
-
-      - name: Add LLVM to PATH
-        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+          brew install llvm ninja cmake
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       - name: Build, Upload, and Test all optimization levels
         run: |

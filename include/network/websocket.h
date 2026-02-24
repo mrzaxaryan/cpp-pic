@@ -2,45 +2,43 @@
 #include "platform.h"
 #include "tls.h"
 
-#define OPCODE_CONTINUE 0x0
-#define OPCODE_TEXT 0x1
-#define OPCODE_BINARY 0x2
-#define OPCODE_CLOSE 0x8
-#define OPCODE_PING 0x9
-#define OPCODE_PONG 0xA
-
-// Structure that represents a Websocket frame - final, reserved bits, mask, opcode, payload data, and payload length
-typedef struct WebSocketFrame
+enum WebSocketOpcode : INT8
 {
-    INT32 fin;
-    INT32 rsv1;
-    INT32 rsv2;
-    INT32 rsv3;
-    INT32 mask;
-    INT32 opcode;
+    OPCODE_CONTINUE = 0x0,
+    OPCODE_TEXT     = 0x1,
+    OPCODE_BINARY   = 0x2,
+    OPCODE_CLOSE    = 0x8,
+    OPCODE_PING     = 0x9,
+    OPCODE_PONG     = 0xA
+};
+
+struct WebSocketFrame
+{
     PCHAR data;
     UINT64 length;
-} WebSocketFrame, *PWebSocketFrame;
+    INT8 opcode;
+    UINT8 fin;
+    UINT8 mask;
+    UINT8 rsv1;
+    UINT8 rsv2;
+    UINT8 rsv3;
+};
 
-// WebSocketClient class for managing WebSocket connections, sending and receiving data, and handling WebSocket frames
 class WebSocketClient
 {
 private:
     static BOOL FormatterCallback(PVOID context, CHAR ch);
-    CHAR hostName[1024];    // Host name extracted from the URL
-    CHAR path[1024];        // Path extracted from the URL
-    IPAddress ipAddress;    // IP address of the WebSocket server
-    UINT16 port;            // Port number of the WebSocket server
+    CHAR hostName[254];  // RFC 1035: max 253 chars + null
+    CHAR path[2048];     // De facto max URL path length
+    IPAddress ipAddress;
+    UINT16 port;
+    TLSClient tlsContext;
+    BOOL isConnected;
 
-    TLSClient tlsContext;   // TLS/TCP client context for WebSocket connections
-
-    BOOL isConnected;       // Indicates whether the WebSocket client is currently connected to the server
-
-    BOOL ReceiveRestrict(PVOID buffer, INT32 size);
+    BOOL ReceiveRestrict(PVOID buffer, UINT32 size);
     BOOL ReceiveFrame(WebSocketFrame &frame);
 
 public:
-    // Disable dynamic memory allocation for WebSocketClient instances
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
     WebSocketClient(PCCHAR url);
@@ -53,7 +51,7 @@ public:
 
     BOOL IsValid() const { return tlsContext.IsValid(); }
     BOOL IsSecure() const { return tlsContext.IsSecure(); }
-    // Open, Close, Read, and Write operations for WebSocketClient
+    BOOL IsConnected() const { return isConnected; }
     BOOL Open();
     BOOL Close();
     PVOID Read(USIZE &dwBufferLength, INT8 &opcode);

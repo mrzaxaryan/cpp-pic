@@ -7,8 +7,8 @@
 class HttpClient
 {
 private:
-    CHAR hostName[1024];
-    CHAR path[1024];
+    CHAR hostName[254];  // RFC 1035: max 253 chars + null
+    CHAR path[2048];     // De facto max URL path length
     IPAddress ipAddress;
     UINT16 port;
     TLSClient tlsContext;

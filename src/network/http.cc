@@ -227,7 +227,7 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL
         port = secure ? 443 : 80;
 
         USIZE hostLen = (USIZE)(pathStart - pHostStart);
-        if (hostLen == 0)
+        if (hostLen == 0 || hostLen > 253)
             return FALSE;
 
         Memory::Copy(host, pHostStart, hostLen);
@@ -241,6 +241,8 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL
         else
         {
             USIZE pLen = (USIZE)String::Length(pathStart);
+            if (pLen > 2047)
+                return FALSE;
             Memory::Copy(path, pathStart, pLen);
             path[pLen] = '\0';
         }
@@ -248,7 +250,7 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL
     else
     {
         USIZE hostLen = (USIZE)(portStart - pHostStart);
-        if (hostLen == 0)
+        if (hostLen == 0 || hostLen > 253)
             return FALSE;
 
         Memory::Copy(host, pHostStart, hostLen);
@@ -278,6 +280,8 @@ BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL
         else
         {
             USIZE pLen = (USIZE)String::Length(pathStart);
+            if (pLen > 2047)
+                return FALSE;
             Memory::Copy(path, pathStart, pLen);
             path[pLen] = '\0';
         }

@@ -41,7 +41,7 @@ public:
     VOID operator delete(VOID *) = delete;
     TLSClient() : host(nullptr), ip(), stateIndex(0), channelBytesRead(0) {}
     TLSClient(PCCHAR host, const IPAddress &ipAddress, UINT16 port);
-    ~TLSClient() = default;
+    ~TLSClient() { if (IsValid()) Close(); }
 
     TLSClient(const TLSClient &) = delete;
     TLSClient &operator=(const TLSClient &) = delete;

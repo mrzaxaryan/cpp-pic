@@ -23,10 +23,10 @@ class DNS
 {
 private:
     // Function to resolve a hostname using HTTP POST (defaults to IPv6/AAAA)
-    static IPAddress ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
+    [[nodiscard]] static IPAddress ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
     // Try each DNS server IP in order until one succeeds
     template <UINT32 N>
-    static IPAddress ResolveWithFallback(PCCHAR host, const IPAddress (&ips)[N], PCCHAR serverName, RequestType dnstype)
+    [[nodiscard]] static IPAddress ResolveWithFallback(PCCHAR host, const IPAddress (&ips)[N], PCCHAR serverName, RequestType dnstype)
     {
         for (UINT32 i = 0; i < N; i++)
         {
@@ -39,10 +39,10 @@ private:
 
 public:
     // Function to resolve a hostname to an IP address (tries IPv6 first, then IPv4)
-    static IPAddress Resolve(PCCHAR host, RequestType dnstype = AAAA);
+    [[nodiscard]] static IPAddress Resolve(PCCHAR host, RequestType dnstype = AAAA);
     // Cloudflare DNS over HTTPS [IP:1.1.1.1|1.0.0.1] [POST:/dns-query] [content-type:application/dns-message]
-    static IPAddress CloudflareResolve(PCCHAR host, RequestType dnstype = AAAA);
+    [[nodiscard]] static IPAddress CloudflareResolve(PCCHAR host, RequestType dnstype = AAAA);
     // Google DNS over HTTPS [IP:8.8.8.8|8.8.4.4] [POST:/dns-query] [content-type:application/dns-message]
-    static IPAddress GoogleResolve(PCCHAR host, RequestType dnstype = AAAA);
+    [[nodiscard]] static IPAddress GoogleResolve(PCCHAR host, RequestType dnstype = AAAA);
 };
 

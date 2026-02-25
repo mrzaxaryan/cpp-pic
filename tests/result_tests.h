@@ -243,10 +243,10 @@ private:
 
 	static BOOL TestTypeAliases()
 	{
-		static_assert(__is_same(Result<UINT32, UINT64>::value_type, UINT32), "value_type mismatch");
-		static_assert(__is_same(Result<UINT32, UINT64>::error_type, UINT64), "error_type mismatch");
-		static_assert(__is_same(Result<void, UINT32>::value_type, void), "void value_type mismatch");
-		static_assert(__is_same(Result<void, UINT32>::error_type, UINT32), "void error_type mismatch");
+		static_assert(__is_same(Result<UINT32, UINT64>::ValueType, UINT32), "ValueType mismatch");
+		static_assert(__is_same(Result<UINT32, UINT64>::ErrorType, UINT64), "ErrorType mismatch");
+		static_assert(__is_same(Result<void, UINT32>::ValueType, void), "void ValueType mismatch");
+		static_assert(__is_same(Result<void, UINT32>::ErrorType, UINT32), "void ErrorType mismatch");
 
 		return TRUE;
 	}

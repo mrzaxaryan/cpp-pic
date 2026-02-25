@@ -35,6 +35,9 @@ typedef struct DNS_REQUEST_QUESTION
     UINT16 qclass; // class of the query
 } DNS_REQUEST_QUESTION, *PDNS_REQUEST_QUESTION;
 
+static_assert(sizeof(DNS_REQUEST_HEADER) == 12, "DNS header must be 12 bytes (no padding)");
+static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (no padding)");
+
 static inline BOOL IsLocalhost(PCCHAR host, IPAddress &result, RequestType type)
 {
     auto localhost = "localhost"_embed;
@@ -83,7 +86,7 @@ static INT32 SkipName(const UINT8 *ptr, INT32 maxLen)
 
 // Parse DNS answer section, extract A/AAAA address. Sets parsedLen to bytes consumed.
 // bufferLen is the total bytes available from ptr.
-static BOOL ParseAnswer(const UINT8 *ptr, INT32 cnt, INT32 bufferLen, IPAddress &ipAddress, INT32 &parsedLen)
+[[nodiscard]] static BOOL ParseAnswer(const UINT8 *ptr, INT32 cnt, INT32 bufferLen, IPAddress &ipAddress, INT32 &parsedLen)
 {
     // type(2) + class(2) + ttl(4) + rdlength(2)
     constexpr INT32 FIXED_FIELDS_SIZE = 10;
@@ -178,7 +181,7 @@ static INT32 ParseQuery(const UINT8 *ptr, INT32 cnt, INT32 bufferLen)
     return offset;
 }
 
-static BOOL ParseDnsResponse(const UINT8 *buffer, INT32 len, IPAddress &ipAddress)
+[[nodiscard]] static BOOL ParseDnsResponse(const UINT8 *buffer, INT32 len, IPAddress &ipAddress)
 {
     if (!buffer || len < (INT32)sizeof(DNS_REQUEST_HEADER))
     {
@@ -206,6 +209,12 @@ static BOOL ParseDnsResponse(const UINT8 *buffer, INT32 len, IPAddress &ipAddres
     if (ansCount == 0 || ansCount > 20)
     {
         LOG_WARNING("ParseDnsResponse: invalid answer count: %d", ansCount);
+        return FALSE;
+    }
+
+    if (qCount > 10)
+    {
+        LOG_WARNING("ParseDnsResponse: suspicious question count: %d", qCount);
         return FALSE;
     }
 
@@ -250,11 +259,14 @@ static INT32 FormatDnsName(UINT8 *dns, INT32 dnsSize, PCCHAR host)
     {
         if (host[i] == '.')
         {
-            if (i == t)
+            UINT32 labelLen = i - t;
+            if (labelLen == 0)
                 return -1; // empty label (leading dot or consecutive dots)
-            if (written + 1 + (INT32)(i - t) >= dnsSize)
+            if (labelLen > 63)
+                return -1; // RFC 1035: label max 63 octets
+            if (written + 1 + (INT32)labelLen >= dnsSize)
                 return -1;
-            dns[written++] = (UINT8)(i - t);
+            dns[written++] = (UINT8)labelLen;
             for (; t < i; t++)
                 dns[written++] = host[t];
             t++;
@@ -262,11 +274,14 @@ static INT32 FormatDnsName(UINT8 *dns, INT32 dnsSize, PCCHAR host)
     }
     if (hostLen > 0 && host[hostLen - 1] != '.')
     {
-        if (i == t)
+        UINT32 labelLen = i - t;
+        if (labelLen == 0)
             return -1; // trailing empty segment (shouldn't happen, but guard)
-        if (written + 1 + (INT32)(i - t) >= dnsSize)
+        if (labelLen > 63)
+            return -1; // RFC 1035: label max 63 octets
+        if (written + 1 + (INT32)labelLen >= dnsSize)
             return -1;
-        dns[written++] = (UINT8)(i - t);
+        dns[written++] = (UINT8)labelLen;
         for (; t < i; t++)
             dns[written++] = host[t];
     }
@@ -336,18 +351,24 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR
         return IPAddress::Invalid();
     }
 
-    auto writeStr = [&tlsClient](PCCHAR s) { tlsClient.Write(s, String::Length(s)); };
+    auto writeStr = [&tlsClient](PCCHAR s) -> BOOL {
+        UINT32 len = String::Length(s);
+        return tlsClient.Write(s, len) == len;
+    };
 
     CHAR sizeBuf[8];
     String::UIntToStr(querySize, sizeBuf, sizeof(sizeBuf));
 
-    writeStr("POST /dns-query HTTP/1.1\r\nHost: "_embed);
-    writeStr(DNSServerName);
-    writeStr("\r\nContent-Type: application/dns-message\r\nAccept: application/dns-message\r\nContent-Length: "_embed);
-    writeStr(sizeBuf);
-    writeStr("\r\n\r\n"_embed);
-
-    tlsClient.Write(queryBuffer, querySize);
+    if (!writeStr("POST /dns-query HTTP/1.1\r\nHost: "_embed) ||
+        !writeStr(DNSServerName) ||
+        !writeStr("\r\nContent-Type: application/dns-message\r\nAccept: application/dns-message\r\nContent-Length: "_embed) ||
+        !writeStr(sizeBuf) ||
+        !writeStr("\r\n\r\n"_embed) ||
+        tlsClient.Write(queryBuffer, querySize) != querySize)
+    {
+        LOG_WARNING("Failed to send DNS query");
+        return IPAddress::Invalid();
+    }
 
     INT64 contentLength = -1;
 

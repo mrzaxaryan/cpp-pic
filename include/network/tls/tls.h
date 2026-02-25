@@ -42,7 +42,7 @@ public:
     VOID operator delete(VOID *) = delete;
     TLSClient() : host(nullptr), ip(), secure(TRUE), stateIndex(0), channelBytesRead(0) {}
     TLSClient(PCCHAR host, const IPAddress &ipAddress, UINT16 port, BOOL secure = TRUE);
-    ~TLSClient() { if (IsValid()) Close(); }
+    ~TLSClient() { if (IsValid()) (void)Close(); }
 
     TLSClient(const TLSClient &) = delete;
     TLSClient &operator=(const TLSClient &) = delete;
@@ -69,7 +69,7 @@ public:
     {
         if (this != &other)
         {
-            Close();
+            (void)Close();
             host = other.host;
             ip = other.ip;
             context = static_cast<Socket &&>(other.context);

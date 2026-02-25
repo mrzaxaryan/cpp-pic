@@ -27,7 +27,7 @@ Result<void, WebSocketError> WebSocketClient::Open()
 
 		ipAddress = dnsResult.Value();
 
-		tlsContext.Close();
+		(void)tlsContext.Close();
 		tlsContext = TLSClient(hostName, ipAddress, port, isSecure);
 		result = tlsContext.Open();
 	}
@@ -89,7 +89,7 @@ BOOL WebSocketClient::Close()
 	}
 
 	isConnected = FALSE;
-	tlsContext.Close();
+	(void)tlsContext.Close();
 	LOG_DEBUG("WebSocket client to %s:%u%s closed", hostName, port, path);
 	return TRUE;
 }

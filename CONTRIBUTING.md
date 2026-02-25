@@ -285,7 +285,7 @@ private:
 ```
 
 **Stack:**
-- Avoid large local arrays -- use `Allocator::AllocateMemory` for kilobyte+ buffers
+- Avoid large local arrays
 - Be mindful of `EMBEDDED_STRING` temporaries (each materializes packed words on the stack)
 - Avoid deep recursion -- prefer iterative algorithms
 - Watch aggregate sizes -- large fixed-size members consume stack when instantiated as locals
@@ -380,20 +380,6 @@ public:
     ~TlsBuffer() { if (ownsMemory) Clear(); }
 };
 ```
-
-**Manual allocation** -- Use `Allocator::AllocateMemory` / `Allocator::ReleaseMemory`. Track the size yourself. Match every allocation with a release on every return path:
-
-```cpp
-USIZE size = 4096;
-PVOID buffer = Allocator::AllocateMemory(size);
-if (buffer == nullptr)
-    return FALSE;
-
-// ... use buffer ...
-
-Allocator::ReleaseMemory(buffer, size);
-```
-
 ### Platform-Specific Code Rules
 
 Use preprocessor guards for platform/architecture-specific code:

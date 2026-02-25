@@ -85,8 +85,8 @@ public:
 
     BOOL IsValid() const { return context.IsValid(); }
     BOOL IsSecure() const { return secure; }
-    [[nodiscard]] Result<void, NetworkError> Open();
-    [[nodiscard]] Result<void, NetworkError> Close();
-    [[nodiscard]] Result<SSIZE, NetworkError> Read(PVOID buffer, UINT32 bufferLength);
-    [[nodiscard]] Result<UINT32, NetworkError> Write(PCVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<void, Error> Open();
+    [[nodiscard]] Result<void, Error> Close();
+    [[nodiscard]] Result<SSIZE, Error> Read(PVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<UINT32, Error> Write(PCVOID buffer, UINT32 bufferLength);
 };

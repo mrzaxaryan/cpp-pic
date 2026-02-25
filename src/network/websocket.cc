@@ -7,7 +7,7 @@
 #include "http.h"
 #include "embedded_string.h"
 
-Result<void, NetworkError> WebSocketClient::Open()
+Result<void, Error> WebSocketClient::Open()
 {
 	BOOL isSecure = tlsContext.IsSecure();
 	LOG_DEBUG("Opening WebSocket client to %s:%u%s (secure: %s)", hostName, port, path, isSecure ? "true"_embed : "false"_embed);
@@ -22,9 +22,9 @@ Result<void, NetworkError> WebSocketClient::Open()
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve IPv4 address for %s, cannot connect to WebSocket server", hostName);
-			NetworkError err;
-			err.Push(NetworkError::Ws_DnsFailed);
-			return Result<void, NetworkError>::Err(err);
+			Error err;
+			err.Push(Error::Ws_DnsFailed);
+			return Result<void, Error>::Err(err);
 		}
 
 		ipAddress = dnsResult.Value();
@@ -37,9 +37,9 @@ Result<void, NetworkError> WebSocketClient::Open()
 	if (!openResult)
 	{
 		LOG_DEBUG("Failed to open network transport for WebSocket client");
-		NetworkError err = openResult.Error();
-		err.Push(NetworkError::Ws_TransportFailed);
-		return Result<void, NetworkError>::Err(err);
+		Error err = openResult.Error();
+		err.Push(Error::Ws_TransportFailed);
+		return Result<void, Error>::Err(err);
 	}
 
 	// Generate random 16-byte WebSocket key (RFC 6455: 16 random bytes, base64-encoded)
@@ -70,25 +70,25 @@ Result<void, NetworkError> WebSocketClient::Open()
 		!writeStr("\r\n\r\n"_embed))
 	{
 		(void)Close();
-		NetworkError err;
-		err.Push(NetworkError::Ws_WriteFailed);
-		return Result<void, NetworkError>::Err(err);
+		Error err;
+		err.Push(Error::Ws_WriteFailed);
+		return Result<void, Error>::Err(err);
 	}
 
 	INT64 contentLength = -1;
 	if (!HttpClient::ReadResponseHeaders(tlsContext, 101, contentLength))
 	{
 		(void)Close();
-		NetworkError err;
-		err.Push(NetworkError::Ws_HandshakeFailed);
-		return Result<void, NetworkError>::Err(err);
+		Error err;
+		err.Push(Error::Ws_HandshakeFailed);
+		return Result<void, Error>::Err(err);
 	}
 
 	isConnected = true;
-	return Result<void, NetworkError>::Ok();
+	return Result<void, Error>::Ok();
 }
 
-Result<void, NetworkError> WebSocketClient::Close()
+Result<void, Error> WebSocketClient::Close()
 {
 	if (isConnected)
 	{
@@ -100,16 +100,16 @@ Result<void, NetworkError> WebSocketClient::Close()
 	isConnected = false;
 	(void)tlsContext.Close();
 	LOG_DEBUG("WebSocket client to %s:%u%s closed", hostName, port, path);
-	return Result<void, NetworkError>::Ok();
+	return Result<void, Error>::Ok();
 }
 
-Result<UINT32, NetworkError> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode)
+Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode)
 {
 	if (!isConnected && opcode != OPCODE_CLOSE)
 	{
-		NetworkError err;
-		err.Push(NetworkError::Ws_NotConnected);
-		return Result<UINT32, NetworkError>::Err(err);
+		Error err;
+		err.Push(Error::Ws_NotConnected);
+		return Result<UINT32, Error>::Err(err);
 	}
 
 	// Build frame header on stack (max 14 bytes: 2 base + 8 ext length + 4 mask key)
@@ -164,21 +164,21 @@ Result<UINT32, NetworkError> WebSocketClient::Write(PCVOID buffer, UINT32 buffer
 		auto smallWrite = tlsContext.Write(chunk, frameLength);
 		if (!smallWrite || smallWrite.Value() != frameLength)
 		{
-			NetworkError err;
-			err.Push(NetworkError::Ws_WriteFailed);
-			return Result<UINT32, NetworkError>::Err(err);
+			Error err;
+			err.Push(Error::Ws_WriteFailed);
+			return Result<UINT32, Error>::Err(err);
 		}
 
-		return Result<UINT32, NetworkError>::Ok(bufferLength);
+		return Result<UINT32, Error>::Ok(bufferLength);
 	}
 
 	// Large frames: write header, then mask and write payload in chunks
 	auto headerWrite = tlsContext.Write(header, headerLength);
 	if (!headerWrite || headerWrite.Value() != headerLength)
 	{
-		NetworkError err;
-		err.Push(NetworkError::Ws_WriteFailed);
-		return Result<UINT32, NetworkError>::Err(err);
+		Error err;
+		err.Push(Error::Ws_WriteFailed);
+		return Result<UINT32, Error>::Err(err);
 	}
 
 	PUINT8 src = (PUINT8)buffer;
@@ -194,16 +194,16 @@ Result<UINT32, NetworkError> WebSocketClient::Write(PCVOID buffer, UINT32 buffer
 		auto chunkWrite = tlsContext.Write(chunk, chunkSize);
 		if (!chunkWrite || chunkWrite.Value() != chunkSize)
 		{
-			NetworkError err;
-			err.Push(NetworkError::Ws_WriteFailed);
-			return Result<UINT32, NetworkError>::Err(err);
+			Error err;
+			err.Push(Error::Ws_WriteFailed);
+			return Result<UINT32, Error>::Err(err);
 		}
 
 		offset += chunkSize;
 		remaining -= chunkSize;
 	}
 
-	return Result<UINT32, NetworkError>::Ok(bufferLength);
+	return Result<UINT32, Error>::Ok(bufferLength);
 }
 
 // Read exactly `size` bytes from the TLS transport
@@ -314,13 +314,13 @@ BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 	return true;
 }
 
-Result<WebSocketMessage, NetworkError> WebSocketClient::Read()
+Result<WebSocketMessage, Error> WebSocketClient::Read()
 {
 	if (!isConnected)
 	{
-		NetworkError err;
-		err.Push(NetworkError::Ws_NotConnected);
-		return Result<WebSocketMessage, NetworkError>::Err(err);
+		Error err;
+		err.Push(Error::Ws_NotConnected);
+		return Result<WebSocketMessage, Error>::Err(err);
 	}
 
 	WebSocketFrame frame;
@@ -383,9 +383,9 @@ Result<WebSocketMessage, NetworkError> WebSocketClient::Read()
 			(void)Write(frame.data, (frame.length >= 2) ? 2 : 0, OPCODE_CLOSE);
 			delete[] frame.data;
 			isConnected = false;
-			NetworkError err;
-			err.Push(NetworkError::Ws_ConnectionClosed);
-			return Result<WebSocketMessage, NetworkError>::Err(err);
+			Error err;
+			err.Push(Error::Ws_ConnectionClosed);
+			return Result<WebSocketMessage, Error>::Err(err);
 		}
 		else if (frame.opcode == OPCODE_PING)
 		{
@@ -405,12 +405,12 @@ Result<WebSocketMessage, NetworkError> WebSocketClient::Read()
 
 	if (!messageComplete)
 	{
-		NetworkError err;
-		err.Push(NetworkError::Ws_ReceiveFailed);
-		return Result<WebSocketMessage, NetworkError>::Err(err);
+		Error err;
+		err.Push(Error::Ws_ReceiveFailed);
+		return Result<WebSocketMessage, Error>::Err(err);
 	}
 
-	return Result<WebSocketMessage, NetworkError>::Ok(static_cast<WebSocketMessage &&>(message));
+	return Result<WebSocketMessage, Error>::Ok(static_cast<WebSocketMessage &&>(message));
 }
 
 WebSocketClient::WebSocketClient(PCCHAR url)

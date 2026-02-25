@@ -5,44 +5,84 @@
 
 #define ResolveNtdllExportAddress(functionName) ResolveExportAddressFromPebModule(Djb2::HashCompileTime(L"ntdll.dll"), Djb2::HashCompileTime(functionName))
 #define CALL_FUNCTION(functionName, ...) -1
-NTSTATUS NTDLL::ZwCreateEvent(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState)
+Result<NTSTATUS, Error> NTDLL::ZwCreateEvent(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwCreateEvent");
-    return entry.ssn != SYSCALL_SSN_INVALID
-               ? System::Call(entry, (USIZE)EventHandle, (USIZE)DesiredAccess, (USIZE)ObjectAttributes, (USIZE)EventType, (USIZE)InitialState)
-               : CALL_FUNCTION("ZwCreateEvent", PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState);
+    NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
+                          ? System::Call(entry, (USIZE)EventHandle, (USIZE)DesiredAccess, (USIZE)ObjectAttributes, (USIZE)EventType, (USIZE)InitialState)
+                          : CALL_FUNCTION("ZwCreateEvent", PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState);
+    if (!NT_SUCCESS(status))
+    {
+        Error err;
+        err.SetPlatformCode((UINT32)status);
+        err.Push(Error::Ntdll_ZwCreateEvent);
+        return Result<NTSTATUS, Error>::Err(err);
+    }
+    return Result<NTSTATUS, Error>::Ok(status);
 }
-NTSTATUS NTDLL::ZwDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength)
+
+Result<NTSTATUS, Error> NTDLL::ZwDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwDeviceIoControlFile");
-    return entry.ssn != SYSCALL_SSN_INVALID
-               ? System::Call(entry, (USIZE)FileHandle, (USIZE)Event, (USIZE)ApcRoutine, (USIZE)ApcContext, (USIZE)IoStatusBlock, (USIZE)IoControlCode, (USIZE)InputBuffer, (USIZE)InputBufferLength, (USIZE)OutputBuffer, (USIZE)OutputBufferLength)
-               : CALL_FUNCTION("ZwDeviceIoControlFile", PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength);
+    NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
+                          ? System::Call(entry, (USIZE)FileHandle, (USIZE)Event, (USIZE)ApcRoutine, (USIZE)ApcContext, (USIZE)IoStatusBlock, (USIZE)IoControlCode, (USIZE)InputBuffer, (USIZE)InputBufferLength, (USIZE)OutputBuffer, (USIZE)OutputBufferLength)
+                          : CALL_FUNCTION("ZwDeviceIoControlFile", PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength);
+    if (!NT_SUCCESS(status))
+    {
+        Error err;
+        err.SetPlatformCode((UINT32)status);
+        err.Push(Error::Ntdll_ZwDeviceIoControlFile);
+        return Result<NTSTATUS, Error>::Err(err);
+    }
+    return Result<NTSTATUS, Error>::Ok(status);
 }
 
-NTSTATUS NTDLL::ZwWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout)
+Result<NTSTATUS, Error> NTDLL::ZwWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwWaitForSingleObject");
-    return entry.ssn != SYSCALL_SSN_INVALID
-               ? System::Call(entry, (USIZE)Object, (USIZE)Alertable, (USIZE)Timeout)
-               : CALL_FUNCTION("ZwWaitForSingleObject", PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout);
+    NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
+                          ? System::Call(entry, (USIZE)Object, (USIZE)Alertable, (USIZE)Timeout)
+                          : CALL_FUNCTION("ZwWaitForSingleObject", PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout);
+    if (!NT_SUCCESS(status))
+    {
+        Error err;
+        err.SetPlatformCode((UINT32)status);
+        err.Push(Error::Ntdll_ZwWaitForSingleObject);
+        return Result<NTSTATUS, Error>::Err(err);
+    }
+    return Result<NTSTATUS, Error>::Ok(status);
 }
 
-NTSTATUS NTDLL::ZwClose(PVOID Handle)
+Result<NTSTATUS, Error> NTDLL::ZwClose(PVOID Handle)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwClose");
-    return entry.ssn != SYSCALL_SSN_INVALID
-               ? System::Call(entry, (USIZE)Handle)
-               : CALL_FUNCTION("ZwClose", PVOID Handle);
+    NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
+                          ? System::Call(entry, (USIZE)Handle)
+                          : CALL_FUNCTION("ZwClose", PVOID Handle);
+    if (!NT_SUCCESS(status))
+    {
+        Error err;
+        err.SetPlatformCode((UINT32)status);
+        err.Push(Error::Ntdll_ZwClose);
+        return Result<NTSTATUS, Error>::Err(err);
+    }
+    return Result<NTSTATUS, Error>::Ok(status);
 }
 
-NTSTATUS NTDLL::ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength)
+Result<NTSTATUS, Error> NTDLL::ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwCreateFile");
-
-    return entry.ssn != SYSCALL_SSN_INVALID
-               ? System::Call(entry, (USIZE)FileHandle, (USIZE)DesiredAccess, (USIZE)ObjectAttributes, (USIZE)IoStatusBlock, (USIZE)AllocationSize, (USIZE)FileAttributes, (USIZE)ShareAccess, (USIZE)CreateDisposition, (USIZE)CreateOptions, (USIZE)EaBuffer, (USIZE)EaLength)
-               : CALL_FUNCTION("ZwCreateFile", PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
+    NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
+                          ? System::Call(entry, (USIZE)FileHandle, (USIZE)DesiredAccess, (USIZE)ObjectAttributes, (USIZE)IoStatusBlock, (USIZE)AllocationSize, (USIZE)FileAttributes, (USIZE)ShareAccess, (USIZE)CreateDisposition, (USIZE)CreateOptions, (USIZE)EaBuffer, (USIZE)EaLength)
+                          : CALL_FUNCTION("ZwCreateFile", PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
+    if (!NT_SUCCESS(status))
+    {
+        Error err;
+        err.SetPlatformCode((UINT32)status);
+        err.Push(Error::Ntdll_ZwCreateFile);
+        return Result<NTSTATUS, Error>::Err(err);
+    }
+    return Result<NTSTATUS, Error>::Ok(status);
 }
 
 NTSTATUS NTDLL::ZwAllocateVirtualMemory(PVOID ProcessHandle, PPVOID BaseAddress, USIZE ZeroBits, PUSIZE RegionSize, UINT32 AllocationType, UINT32 Protect)

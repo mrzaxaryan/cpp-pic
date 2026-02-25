@@ -52,6 +52,11 @@
 #include "types/result.h"
 /// @}
 
+/// @name Error Type
+/// @{
+#include "core/error.h"
+/// @}
+
 /// @name Numeric Types
 /// @{
 #include "types/numeric/double.h"

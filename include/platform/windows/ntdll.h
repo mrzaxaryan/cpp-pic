@@ -3,6 +3,8 @@
 #include "primitives.h"
 #include "windows_types.h"
 #include "djb2.h"
+#include "error.h"
+#include "result.h"
 
 #define EVENT_ALL_ACCESS ((0x000F0000L) | (0x00100000L) | 0x3)
 #define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
@@ -108,19 +110,24 @@ public:
     static VOID RtlFreeUnicodeString(PUNICODE_STRING UnicodeString);
     // This function creates or opens an event object.
     // Minimum supported client	Windows XP.
-    [[nodiscard]] static NTSTATUS ZwCreateEvent(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{Ntdll_ZwCreateEvent, platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwCreateEvent(PPVOID EventHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, EVENT_TYPE EventType, INT8 InitialState);
     // This function builds descriptors for the supplied buffer(s) and passes the untyped data to the device driver associated with the file handle
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
-    [[nodiscard]] static NTSTATUS ZwDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength);
+    // Returns Ok(status) on NT_SUCCESS (including STATUS_PENDING), Err(Error{Ntdll_ZwDeviceIoControlFile, platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwDeviceIoControlFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, UINT32 IoControlCode, PVOID InputBuffer, UINT32 InputBufferLength, PVOID OutputBuffer, UINT32 OutputBufferLength);
     // This function waits until the specified object attains a state of signaled.
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
-    [[nodiscard]] static NTSTATUS ZwWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout);
+    // Returns Ok(status) on NT_SUCCESS (including STATUS_TIMEOUT), Err(Error{Ntdll_ZwWaitForSingleObject, platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwWaitForSingleObject(PVOID Object, INT8 Alertable, PLARGE_INTEGER Timeout);
     // This function closes a handle to an object.
     // Minimum supported client	Windows 2000 Professional [desktop apps only]
-    [[nodiscard]] static NTSTATUS ZwClose(PVOID Handle);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{Ntdll_ZwClose, platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwClose(PVOID Handle);
     // This function creates a new file or directory, or opens an existing file, device, directory, or volume.
     // Minimum supported client	Windows XP [desktop apps | UWP apps]
-    [[nodiscard]] static NTSTATUS ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{Ntdll_ZwCreateFile, platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
     // This function allocates virtual memory in the address space of a process.
     // Minimum supported client	Windows XP.
     [[nodiscard]] static NTSTATUS ZwAllocateVirtualMemory(PVOID ProcessHandle, PPVOID BaseAddress, USIZE ZeroBits, PUSIZE RegionSize, UINT32 AllocationType, UINT32 Protect);

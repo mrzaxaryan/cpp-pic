@@ -227,7 +227,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     IO_STATUS_BLOCK ioStatusBlock;
     PVOID hFile = nullptr;
 
-    NTSTATUS status = NTDLL::ZwCreateFile(
+    auto createResult = NTDLL::ZwCreateFile(
         &hFile,
         dwDesiredAccess,
         &objAttr,
@@ -242,7 +242,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
 
     NTDLL::RtlFreeUnicodeString(&ntPathU);
 
-    if (!NT_SUCCESS(status) || hFile == INVALID_HANDLE_VALUE)
+    if (!createResult || hFile == INVALID_HANDLE_VALUE)
         return File();
 
     return File((PVOID)hFile);
@@ -253,7 +253,6 @@ BOOL FileSystem::Delete(PCWCHAR path)
 {
     UNICODE_STRING ntName;
     OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
     PVOID hFile = nullptr;
     IO_STATUS_BLOCK io;
 
@@ -262,15 +261,15 @@ BOOL FileSystem::Delete(PCWCHAR path)
 
     InitializeObjectAttributes(&attr, &ntName, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
-    status = NTDLL::ZwCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, nullptr, 0,
-                                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                 FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, nullptr, 0);
-
-    if (NT_SUCCESS(status))
-        status = NTDLL::ZwClose(hFile);
+    auto createResult = NTDLL::ZwCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, nullptr, 0,
+                                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                            FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, nullptr, 0);
+    BOOL ok = (BOOL)createResult;
+    if (ok)
+        ok = (BOOL)NTDLL::ZwClose(hFile);
 
     NTDLL::RtlFreeUnicodeString(&ntName);
-    return NT_SUCCESS(status);
+    return ok;
 }
 
 // Check if a file exists at the specified path
@@ -310,7 +309,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
-    NTSTATUS status = NTDLL::ZwCreateFile(
+    auto createResult = NTDLL::ZwCreateFile(
         &hDir,
         FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objAttr,
@@ -325,12 +324,12 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
     NTDLL::RtlFreeUnicodeString(&uniName);
 
-    if (NT_SUCCESS(status))
+    if (createResult)
     {
         (void)NTDLL::ZwClose(hDir);
         return true;
     }
-    LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", status, path);
+    LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", createResult.Error().PlatformCode, path);
     return false;
 }
 

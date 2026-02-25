@@ -34,7 +34,7 @@ private:
 		auto openResult = wsClient.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("Secure WebSocket handshake failed (error: %u)", openResult.Error().ErrorCode[0]);
+			LOG_ERROR("Secure WebSocket handshake failed (error: %u)", openResult.Error().RuntimeCode[0]);
 			return false;
 		}
 
@@ -54,7 +54,7 @@ private:
 		auto openResult = wsClient.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().ErrorCode[0]);
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().RuntimeCode[0]);
 			return false;
 		}
 
@@ -70,7 +70,7 @@ private:
 
 		if (!writeResult)
 		{
-			LOG_ERROR("Failed to send message (error: %u)", writeResult.Error().ErrorCode[0]);
+			LOG_ERROR("Failed to send message (error: %u)", writeResult.Error().RuntimeCode[0]);
 			(void)wsClient.Close();
 			return false;
 		}
@@ -80,7 +80,7 @@ private:
 
 		if (!readResult)
 		{
-			LOG_ERROR("Failed to receive echo response (error: %u)", readResult.Error().ErrorCode[0]);
+			LOG_ERROR("Failed to receive echo response (error: %u)", readResult.Error().RuntimeCode[0]);
 			(void)wsClient.Close();
 			return false;
 		}
@@ -121,7 +121,7 @@ private:
 		auto openResult = wsClient.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().ErrorCode[0]);
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().RuntimeCode[0]);
 			return false;
 		}
 
@@ -144,7 +144,7 @@ private:
 
 		if (!writeResult)
 		{
-			LOG_ERROR("Failed to send binary message (error: %u)", writeResult.Error().ErrorCode[0]);
+			LOG_ERROR("Failed to send binary message (error: %u)", writeResult.Error().RuntimeCode[0]);
 			(void)wsClient.Close();
 			return false;
 		}
@@ -156,7 +156,7 @@ private:
 
 		if (!readResult)
 		{
-			LOG_ERROR("Failed to receive echo response (error: %u)", readResult.Error().ErrorCode[0]);
+			LOG_ERROR("Failed to receive echo response (error: %u)", readResult.Error().RuntimeCode[0]);
 			(void)wsClient.Close();
 			return false;
 		}
@@ -199,7 +199,7 @@ private:
 		auto openResult = wsClient.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().ErrorCode[0]);
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().RuntimeCode[0]);
 			return false;
 		}
 
@@ -278,7 +278,7 @@ private:
 		auto openResult = wsClient.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().ErrorCode[0]);
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().RuntimeCode[0]);
 			return false;
 		}
 
@@ -307,7 +307,7 @@ private:
 
 		if (!writeResult)
 		{
-			LOG_ERROR("Failed to send large message (error: %u)", writeResult.Error().ErrorCode[0]);
+			LOG_ERROR("Failed to send large message (error: %u)", writeResult.Error().RuntimeCode[0]);
 			delete[] largeMessage;
 			(void)wsClient.Close();
 			return false;
@@ -320,7 +320,7 @@ private:
 
 		if (!readResult)
 		{
-			LOG_ERROR("Failed to receive large echo response (error: %u)", readResult.Error().ErrorCode[0]);
+			LOG_ERROR("Failed to receive large echo response (error: %u)", readResult.Error().RuntimeCode[0]);
 			delete[] largeMessage;
 			(void)wsClient.Close();
 			return false;
@@ -358,7 +358,7 @@ private:
 		auto openResult = wsClient.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().ErrorCode[0]);
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error().RuntimeCode[0]);
 			return false;
 		}
 

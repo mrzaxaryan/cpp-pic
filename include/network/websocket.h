@@ -95,8 +95,8 @@ public:
 	[[nodiscard]] BOOL IsValid() const { return tlsContext.IsValid(); }
 	[[nodiscard]] BOOL IsSecure() const { return tlsContext.IsSecure(); }
 	[[nodiscard]] BOOL IsConnected() const { return isConnected; }
-	[[nodiscard]] Result<void, NetworkError> Open();
-	[[nodiscard]] Result<void, NetworkError> Close();
-	[[nodiscard]] Result<WebSocketMessage, NetworkError> Read();
-	[[nodiscard]] Result<UINT32, NetworkError> Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
+	[[nodiscard]] Result<void, Error> Open();
+	[[nodiscard]] Result<void, Error> Close();
+	[[nodiscard]] Result<WebSocketMessage, Error> Read();
+	[[nodiscard]] Result<UINT32, Error> Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
 };

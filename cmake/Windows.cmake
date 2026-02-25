@@ -38,7 +38,7 @@ endif()
 if(CPPPIC_BUILD_TYPE STREQUAL "debug")
     cpppic_add_link_flags(/DEBUG)
 else()
-    cpppic_add_link_flags(--strip-all /OPT:REF /OPT:ICF /RELEASE /LTCG)
+    cpppic_add_link_flags(--strip-all /OPT:REF /OPT:ICF /RELEASE)
 endif()
 
 list(APPEND CPPPIC_BASE_LINK_FLAGS -target ${CPPPIC_TRIPLE} -fuse-ld=lld)

@@ -110,7 +110,6 @@ set(CPPPIC_BASE_FLAGS
     -std=c++23
     -Werror -Wall -Wextra
     -Wno-gnu-string-literal-operator-template
-    -Qn
     -nostdlib
     -fno-ident
     -fno-exceptions
@@ -141,10 +140,7 @@ else()
         -fno-asynchronous-unwind-tables
         -fno-unwind-tables
         -flto=full
-        -finline-functions
-        -fwhole-program-vtables
         -fvisibility=hidden
-        -fvisibility-inlines-hidden
         -fno-threadsafe-statics
         -fmerge-all-constants
         -fno-math-errno

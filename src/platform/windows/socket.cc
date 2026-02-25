@@ -19,7 +19,8 @@
 
 #define OBJ_INHERIT 0x00000002L
 
-#define STATUS_PENDING ((UINT32)0x00000103L)
+#define STATUS_PENDING  ((UINT32)0x00000103L)
+#define STATUS_TIMEOUT  ((UINT32)0x00000102L)
 #define CRYPT_STRING_BASE64 0x00000001
 #define IPPROTO_TCP 6
 #define ERROR_SUCCESS 0L
@@ -170,7 +171,13 @@ BOOL Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 
 BOOL Socket::Open()
 {
-    LOG_DEBUG("Connect(pNTSocket: 0x%p, port: %d)\n", this, port);
+    LOG_DEBUG("Open(pNTSocket: 0x%p, port: %d)\n", this, port);
+
+    if (!IsValid())
+    {
+        LOG_ERROR("Socket not initialized\n");
+        return false;
+    }
 
     NTSTATUS Status = 0;
 
@@ -267,8 +274,7 @@ BOOL Socket::Close()
 {
     LOG_DEBUG("Disconnect(pNTSocket: 0x%p)\n", this);
 
-    NTSTATUS NTstatus = -1;
-    NTstatus = NTDLL::ZwClose((PVOID)m_socket);
+    NTSTATUS NTstatus = NTDLL::ZwClose((PVOID)m_socket);
     m_socket = nullptr;
     return NT_SUCCESS(NTstatus);
 }
@@ -330,7 +336,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
 
         NTSTATUS waitStatus = NTDLL::ZwWaitForSingleObject(SockEvent, 0, &Timeout);
 
-        if (waitStatus == 0x00000102)
+        if (waitStatus == STATUS_TIMEOUT)
         {
             NTDLL::ZwClose(SockEvent);
             return -1;
@@ -405,7 +411,13 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
         {
             LARGE_INTEGER Timeout;
             Timeout.QuadPart = 1 * 60 * 1000 * -10000LL;
-            NTDLL::ZwWaitForSingleObject(SockEvent, 0, &Timeout);
+            NTSTATUS waitStatus = NTDLL::ZwWaitForSingleObject(SockEvent, 0, &Timeout);
+            if (waitStatus == STATUS_TIMEOUT)
+            {
+                NTDLL::ZwClose(SockEvent);
+                LOG_ERROR("Timeout waiting for socket write\n");
+                return 0;
+            }
         }
 
         Status = IOSB.Status;

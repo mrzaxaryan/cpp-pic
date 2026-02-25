@@ -123,7 +123,7 @@ private:
 	IPAddress ip;
 	UINT16 port;
 	PVOID m_socket;
-	BOOL Bind(SockAddr &SocketAddress, INT32 ShareType);
+	[[nodiscard]] BOOL Bind(SockAddr &SocketAddress, INT32 ShareType);
 
 public:
 	VOID *operator new(USIZE) = delete;
@@ -159,8 +159,8 @@ public:
 
 	BOOL IsValid() const { return m_socket != nullptr && m_socket != (PVOID)(SSIZE)(-1); }
 	SSIZE GetFd() const { return (SSIZE)m_socket; }
-	BOOL Open();
+	[[nodiscard]] BOOL Open();
 	BOOL Close();
-	SSIZE Read(PVOID buffer, UINT32 bufferLength);
-	UINT32 Write(PCVOID buffer, UINT32 bufferLength);
+	[[nodiscard]] SSIZE Read(PVOID buffer, UINT32 bufferLength);
+	[[nodiscard]] UINT32 Write(PCVOID buffer, UINT32 bufferLength);
 };

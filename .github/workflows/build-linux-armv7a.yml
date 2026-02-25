@@ -61,8 +61,7 @@ jobs:
             echo "========== Building -$opt =========="
             rm -rf build
             cmake --preset linux-armv7a-release -DOPTIMIZATION_LEVEL=$opt
-            cmake --build --preset linux-armv7a-release
-            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-build"; continue; fi
+            if ! cmake --build --preset linux-armv7a-release; then FAILED="$FAILED $opt-build"; continue; fi
 
             echo "========== Saving -$opt =========="
             mkdir -p "artifacts/$opt"
@@ -71,12 +70,10 @@ jobs:
             echo "========== Testing ELF -$opt =========="
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
-            qemu-arm-static "$TEST_ELF"
-            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-elf"; continue; fi
+            if ! qemu-arm-static "$TEST_ELF"; then FAILED="$FAILED $opt-elf"; continue; fi
 
             echo "========== Testing PIC -$opt =========="
-            python3 scripts/loader.py --arch armv7a $(find build -type f -name "output.bin" | head -n 1)
-            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-pic"; continue; fi
+            if ! python3 scripts/loader.py --arch armv7a $(find build -type f -name "output.bin" | head -n 1); then FAILED="$FAILED $opt-pic"; continue; fi
 
             echo "========== $opt passed =========="
           done

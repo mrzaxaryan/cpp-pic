@@ -307,3 +307,175 @@ Even though `-fno-builtin` is set globally, try adding `-fno-builtin-memset -fno
 | `include/core/types/embedded/embedded_string.h` | EMBEDDED_STRING with "+m" destructor |
 | `include/io/logger.h` | Logger creating EMBEDDED_STRING temporaries |
 | `cmake/Common.cmake` | Build flags including -fno-builtin and -flto=full |
+
+---
+
+## Fix Applied
+
+**Confirmed root cause: Hypothesis 1 — memset/memcpy infinite recursion.**
+
+Restored `COMPILER_RUNTIME` attribute on all three memory functions in `src/core/memory.cc`:
+
+```cpp
+extern "C" COMPILER_RUNTIME PVOID memset(PVOID dest, INT32 ch, USIZE count)
+extern "C" COMPILER_RUNTIME PVOID memcpy(PVOID dest, const VOID *src, USIZE count)
+extern "C" COMPILER_RUNTIME INT32 memcmp(const VOID *ptr1, const VOID *ptr2, USIZE num)
+```
+
+### Why this fixes the crash
+
+`COMPILER_RUNTIME` expands to `__attribute__((noinline, used, optnone))`. The `optnone` attribute prevents LLVM's `LoopIdiomRecognize` pass from running on these functions. Without it, at `-O1+` the optimizer recognizes the byte-by-byte loops as standard memory operations and transforms them into calls to `llvm.memset`/`llvm.memcpy` intrinsics, which lower to calls to `memset`/`memcpy` — the very same functions being defined — creating infinite recursion that overflows the stack (SIGSEGV).
+
+### Why the attribute is essential and must not be removed again
+
+These three functions (`memset`, `memcpy`, `memcmp`) are ABI-mandated symbols that the compiler's code generation backend may emit calls to at any time. The `optnone` attribute is not optional optimization guidance — it is a correctness requirement. Without it, the compiler is free to "optimize" the implementation into a recursive call to itself. The `-fno-builtin` flag is insufficient because LLVM's LTO pipeline (`-flto=full`) may not fully respect it across translation unit boundaries.
+
+### Verification
+
+- Windows x86_64 debug build: compiles cleanly, PIC verification passes
+- All tests pass on Windows (DOUBLE, String, ArrayStorage, StringFormatter, DJB2, Base64, Memory, Random, SHA, ECC, Socket, TLS, DNS, WebSocket, FileSystem)
+- **macOS CI result: FIX INSUFFICIENT** — crash persists at O1 with identical symptoms (same last output line, same SIGSEGV). The COMPILER_RUNTIME fix is kept as a correctness measure but is not the root cause of this crash. Investigation continues below.
+
+---
+
+## Continued Investigation (Post-COMPILER_RUNTIME fix)
+
+### Deep Static Analysis of O1 Binary
+
+Exhaustive disassembly analysis of the O1 Mach-O binary was performed. Key findings:
+
+#### Binary layout (O1, `-flto=full -fomit-frame-pointer`)
+- `start()` at 0x100017E70: frame 0xB28 + 6 pushes (~2960 bytes)
+- `ConsoleCallback<wchar_t>` at 0x1000042A0: **NO frame, uses red zone** for UTF-8 syscall buffer
+- `FormatWithArgs<wchar_t>` at 0x100002A40: frame 0x88 + 6 pushes (184 bytes)
+- `TimestampedLogOutput<wchar_t, char const*>` at 0x10002E8B0: frame 0x98 + 6 pushes (200 bytes)
+- `Logger::Info<wchar_t, char const*>` at 0x100032740: frame 0x20 + 3 pushes (56 bytes)
+- `EMBEDDED_FUNCTION_POINTER::Get()` at 0x100002A20: `leaq ConsoleCallback(%rip), %rax; retq`
+
+#### Hypotheses DISPROVEN by binary analysis:
+1. **Register allocation bug in FromString** — all registers correctly assigned in disassembly
+2. **FromString miscompilation** — verified all test inputs produce expected control flow
+3. **Stack frame overflow** — 0xB18 highest offset within 0xB28 frame
+4. **EMBEDDED_STRING constructor overflow** — 16 bytes written correctly
+5. **SIMD alignment crash** — no SIMD instructions in FromString
+6. **Logger::Info argument passing** — RSI correctly saved to RBX and forwarded
+7. **TimestampedLogOutput RDX handling** — saves arg ref to R14 before DateTime::Now
+8. **Argument forwarding/dereference** — `movq (%r14), %rax` correctly dereferences at 0x10002E9F5
+9. **Format string corruption** — RBX preserves format pointer across all three Format calls
+10. **Stack slot reuse** — "+m" destructor barrier prevents premature reuse
+11. **Console callback function pointer** — EMBEDDED_FUNCTION_POINTER::Get() returns correct address
+12. **Syscall RDX clobbering** — all overloads correctly handle RDX (0-2 arg: clobber, 3+: "+r")
+13. **UTF-16 CodepointToUTF8** — inputIndex passed by reference, loop terminates correctly
+
+#### Critical Discovery: First-Time Template Instantiation
+
+Test 5 line 189 (`LOG_INFO("IPv6 conversion successful: %s", ...)`) is the **FIRST-EVER execution** of `TimestampedLogOutput<wchar_t, char const*>` (1-arg version) in the entire test suite.
+
+- All prior `LOG_INFO` calls use the 0-arg instantiation (`Logger::Info<WCHAR>`) or the 2-arg version
+- `LOG_ERROR` calls with `%s` exist but are on error paths NOT taken (tests pass)
+- The specific 1-arg template instantiation has never been exercised before the crash point
+
+The 2-arg version (`TimestampedLogOutput<wchar_t, char const*, unsigned int>`) at line 153 works correctly, suggesting the issue is specific to the 1-arg instantiation's codegen at O1.
+
+#### Critical Discovery: CI Runner Environment
+
+The `macos-15-intel` runner specified in `.github/workflows/build-macos-x86_64.yml` is **NOT a standard GitHub Actions runner**. GitHub's standard `macos-15` runner uses Apple Silicon (M-series). The `macos-15-intel` designation likely means Apple Silicon running x86_64 code via **Rosetta 2**.
+
+This is significant because:
+- Rosetta 2 translates x86_64 instructions to ARM64 on the fly
+- The `syscall` instruction is translated to `svc` for the ARM64 kernel
+- Red zone handling during the syscall translation may differ from native x86_64
+
+#### ConsoleCallback Red Zone Usage
+
+At O1, `ConsoleCallback<wchar_t>` (and likely `<char>`) compiles as a **leaf function with no stack frame**, storing the UTF-8 conversion buffer in the **red zone** (below RSP). The function flow is:
+
+1. Store WCHAR `ch` below RSP (red zone)
+2. Convert to UTF-8 in red zone buffer
+3. Execute `syscall` instruction for `SYS_WRITE` with buffer pointer pointing into the red zone
+
+This is technically legal on native x86_64 (the kernel doesn't touch user stack during syscall). However, under Rosetta 2, the translation of `syscall` involves additional runtime state management that may clobber the red zone.
+
+### Fixes Applied
+
+#### Fix 1: IPv6 Double-Colon Parsing (correctness bug)
+
+**File:** `src/network/ip_address.cc`
+
+The `::` handler in `FromString()` did not process accumulated hex digits before recording the double-colon position, and did not reset `hexIndex`. For input "2001:db8::1":
+- "db8" accumulated in hexBuffer (hexIndex=3)
+- `::` encountered but hexIndex not reset
+- "1" appended at hexIndex=3, making "db81"
+- Parsed as single group 0xDB81 instead of separate groups 0x0DB8 and 0x0001
+
+**Fix:** Process accumulated hex digits before the double colon, reset hexIndex, then record `doubleColonPos` after the potential `groupIndex` increment. Added `continue` statement for explicit control flow.
+
+This is a correctness bug only — produces wrong IPv6 bytes but doesn't cause SIGSEGV (no out-of-bounds access).
+
+#### Fix 2: Console::Write NOINLINE (speculative SIGSEGV fix)
+
+**File:** `include/io/console.h`
+
+Added `NOINLINE` attribute to both `Console::Write` overloads:
+```cpp
+static NOINLINE UINT32 Write(const CHAR *text, USIZE length);
+static NOINLINE UINT32 Write(const WCHAR *text, USIZE length);
+```
+
+**Rationale:** At O1 with `-flto=full`, LTO inlines `Console::Write` into `ConsoleCallback`, making it a leaf function that uses the red zone for the syscall buffer. By marking Write as NOINLINE:
+- ConsoleCallback must issue a `call` instruction → requires a proper stack frame
+- The `ch` parameter is stored in ConsoleCallback's frame (not the red zone)
+- The syscall happens inside Console::Write's own context
+- Eliminates any potential red zone/Rosetta 2 syscall interaction
+
+**Performance impact:** Negligible. Adds one `call`/`ret` pair per character written, dwarfed by the syscall overhead.
+
+**Verification:** Windows x86_64 debug build compiles and all tests pass (DOUBLE, String, ArrayStorage, StringFormatter, DJB2, Base64, Memory, Random, SHA, ECC, Socket, TLS, DNS, WebSocket, FileSystem).
+
+### What Remains Unknown
+
+1. **Whether this fixes the macOS O1 crash** — Needs CI run to confirm
+2. **Whether the runner is truly Rosetta 2** — `macos-15-intel` is not a documented standard GitHub runner
+3. **Whether there's a Clang 21 miscompilation** specific to the 1-arg template instantiation at O1
+4. **Whether O2-Og are also affected** — CI pipeline stops after first failure
+
+#### Fix 3: CI Workflow `set -e` Bug (all platforms)
+
+**Files:** All `.github/workflows/build-*.yml` files
+
+With `set -e` active, a bare command like `"$TEST_BIN"` that exits via signal (e.g., SIGSEGV exit code 139) causes the shell to abort immediately — before the `if [ $? -ne 0 ]` check on the next line can execute. This meant:
+- O1 crash killed the entire loop, O2-Og were never tested
+- We couldn't determine if the bug was O1-specific or affected all optimization levels
+
+**Fix:** Changed all bare test execution + separate exit check patterns from:
+```bash
+"$TEST_BIN"
+if [ $? -ne 0 ]; then FAILED="$FAILED $opt-macho"; continue; fi
+```
+to:
+```bash
+if ! "$TEST_BIN"; then FAILED="$FAILED $opt-macho"; continue; fi
+```
+
+Under `set -e`, commands inside `if` conditions are exempt from early-abort behavior. Applied to all test binary executions (ELF, Mach-O, PIC loader) and cmake build commands across 8 workflow files.
+
+#### Fix 4: Diagnostic Markers in TestIpConversion
+
+**File:** `tests/socket_tests.h`
+
+Added `LOG_INFO` markers between each major operation in `TestIpConversion` to narrow down the exact crash location via CI output:
+- `[D1]` before `256.1.1.1` invalid IP test
+- `[D2]` before `192.168.1` invalid IP test
+- `[D3]` before `abc.def.ghi.jkl` invalid IP test
+- `[D4]` before `2001:db8::1` IPv6 test
+
+If CI shows `[D1]` but not `[D2]`, the crash is in the first invalid IP test. If all markers appear, the crash is in the final IPv6 block. This also tests whether adding LOG_INFO calls (which change the stack layout) moves or masks the bug — a positive result either way.
+
+### Recommended Next Steps
+
+1. Push changes and run macOS CI to test all fixes
+2. Analyze which diagnostic markers appear before the crash
+3. If crash persists, add `-g` to the O1 build for debug symbols and use `lldb` to get a stack trace
+4. With CI fix, check whether O2-Og also crash or if this is O1-specific
+5. Consider adding `NOINLINE` to `Logger::ConsoleCallback` as an additional measure
+6. Test with `-mno-red-zone` flag (prevents any red zone usage) as a more aggressive workaround

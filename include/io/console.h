@@ -79,7 +79,7 @@ public:
 	 *   Windows: NtDll!ZwWriteFile or Kernel32!WriteConsoleA
 	 *   Linux:   syscall(__NR_write, 1, text, length)
 	 */
-	static UINT32 Write(const CHAR *text, USIZE length);
+	static NOINLINE UINT32 Write(const CHAR *text, USIZE length);
 
 	/**
 	 * Write - Output wide (Unicode) string to console
@@ -100,7 +100,7 @@ public:
 	 *   Length is in characters, not bytes!
 	 *   For WCHAR, each character is 2 bytes (UTF-16 code unit)
 	 */
-	static UINT32 Write(const WCHAR *text, USIZE length);
+	static NOINLINE UINT32 Write(const WCHAR *text, USIZE length);
 
 	/**
 	 * Write - Output null-terminated string to console (template version)

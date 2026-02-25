@@ -62,8 +62,7 @@ jobs:
             echo "========== Building -$opt =========="
             rm -rf build
             cmake --preset uefi-aarch64-release -DOPTIMIZATION_LEVEL=$opt
-            cmake --build --preset uefi-aarch64-release
-            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-build"; continue; fi
+            if ! cmake --build --preset uefi-aarch64-release; then FAILED="$FAILED $opt-build"; continue; fi
 
             echo "========== Saving -$opt =========="
             mkdir -p "artifacts/$opt"

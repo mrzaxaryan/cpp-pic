@@ -109,12 +109,23 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
             {
                 if (*(pCurrent + 1) == ':' && !foundDoubleColon)
                 {
+                    // Flush accumulated hex digits before :: as a separate group
+                    if (hexIndex > 0 && groupIndex < 8)
+                    {
+                        hexBuffer[hexIndex] = '\0';
+                        UINT32 value = String::ParseHex(hexBuffer);
+                        ipv6[groupIndex * 2] = (UINT8)(value >> 8);
+                        ipv6[groupIndex * 2 + 1] = (UINT8)(value & 0xFF);
+                        groupIndex++;
+                        hexIndex = 0;
+                    }
                     // Handle double colon
                     foundDoubleColon = TRUE;
                     doubleColonPos = groupIndex;
                     pCurrent += 2;
                     if (*pCurrent == '\0')
                         break;
+                    continue;
                 }
                 else if (hexIndex > 0)
                 {

@@ -220,7 +220,7 @@ IPAddress FromIPv4(UINT32 address);       // Return small structs by value
 ```cpp
 NTSTATUS ZwCreateFile(PPVOID FileHandle, ...);           // Output parameter
 NTSTATUS ZwCreateEvent(PPVOID EventHandle, UINT32 Access,
-                       POBJECT_ATTRIBUTES ObjectAttributes,  // Nullable (may be NULL)
+                       POBJECT_ATTRIBUTES ObjectAttributes,  // Nullable (may be nullptr)
                        EVENT_TYPE EventType, INT8 InitialState);
 BOOL Read(PVOID buffer, UINT32 bufferSize);              // Buffer pointer
 ```
@@ -360,7 +360,7 @@ public:
 ChaCha20Encoder::~ChaCha20Encoder()
 {
     Memory::Zero(this, sizeof(ChaCha20Encoder));
-    this->initialized = FALSE;
+    this->initialized = false;
 }
 ```
 
@@ -472,7 +472,7 @@ class MyFeatureTests
 public:
     static BOOL RunAll()
     {
-        BOOL allPassed = TRUE;
+        BOOL allPassed = true;
 
         LOG_INFO("Running MyFeature Tests...");
 
@@ -492,12 +492,12 @@ private:
     {
         auto msg = "test input"_embed;
         // ... test logic ...
-        return TRUE; // TRUE = pass, FALSE = fail
+        return true; // true = pass, false = fail
     }
 
     static BOOL TestEdgeCase()
     {
-        return TRUE;
+        return true;
     }
 };
 ```

@@ -686,7 +686,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                 // Checking the string is not NULL and calculating its length
                 if (str)
                 {
-                    TChar *temp = (TChar *)str;
+                    CHAR *temp = str;
                     while (*temp)
                     {
                         len++;
@@ -742,7 +742,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                 {                                                                           // long int (%ld)
                     i += 2;                                                                 // Skip over "ld"
                     if (currentArg >= argCount) continue;
-                    INT32 num = args[currentArg++].i32;                                     // Get the next argument as an INT32 (long int)
+                    INT64 num = args[currentArg++].i64;                                     // Get the next argument as an INT64 (long int is 64-bit on LP64)
                     j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the long int to string with specified formatting
                     continue;
                 }
@@ -750,7 +750,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                 {                                                                            // unsigned long int (%lu)
                     i += 2;                                                                  // Skip over "lu"
                     if (currentArg >= argCount) continue;
-                    UINT32 num = args[currentArg++].u32;                                     // Get the next argument as an UINT32 (unsigned long int)
+                    UINT64 num = args[currentArg++].u64;                                     // Get the next argument as UINT64 (unsigned long is 64-bit on LP64)
                     j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the unsigned long int to string with specified formatting
                     continue;
                 }

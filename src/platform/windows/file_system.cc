@@ -376,30 +376,30 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
 // --- DirectoryIterator Implementation ---
 
 // Helper to fill the entry from FILE_BOTH_DIR_INFORMATION
-static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION *data)
+static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &data)
 {
     // 1. Copy Name (FileNameLength is in bytes, divide by sizeof(WCHAR))
-    UINT32 nameLen = data->FileNameLength / sizeof(WCHAR);
+    UINT32 nameLen = data.FileNameLength / sizeof(WCHAR);
     if (nameLen > 259)
         nameLen = 259;
     for (UINT32 j = 0; j < nameLen; j++)
     {
-        entry.name[j] = data->FileName[j];
+        entry.name[j] = data.FileName[j];
     }
     entry.name[nameLen] = L'\0';
 
     // 2. Size
-    entry.size = data->EndOfFile.QuadPart;
+    entry.size = data.EndOfFile.QuadPart;
 
     // 3. Attributes
-    UINT32 attr = data->FileAttributes;
+    UINT32 attr = data.FileAttributes;
     entry.isDirectory = (attr & 0x10); // FILE_ATTRIBUTE_DIRECTORY
     entry.isHidden = (attr & 0x02);    // FILE_ATTRIBUTE_HIDDEN
     entry.isSystem = (attr & 0x04);    // FILE_ATTRIBUTE_SYSTEM
     entry.isReadOnly = (attr & 0x01);  // FILE_ATTRIBUTE_READONLY
 
     // 4. Timestamps
-    entry.creationTime = data->CreationTime.QuadPart;
+    entry.creationTime = data.CreationTime.QuadPart;
 
     // 5. IsDrive
     entry.isDrive = (entry.name[1] == ':' && entry.name[2] == L'\0');
@@ -481,7 +481,7 @@ DirectoryIterator::DirectoryIterator(PCWCHAR path) : handle((PVOID)-1), first(TR
 
     if (NT_SUCCESS(status))
     {
-        FILE_BOTH_DIR_INFORMATION *info = (FILE_BOTH_DIR_INFORMATION *)buffer;
+        const FILE_BOTH_DIR_INFORMATION &info = *(const FILE_BOTH_DIR_INFORMATION *)buffer;
         FillEntry(currentEntry, info);
     }
     else
@@ -592,7 +592,7 @@ BOOL DirectoryIterator::Next()
 
     if (NT_SUCCESS(status))
     {
-        FILE_BOTH_DIR_INFORMATION *dirInfo = (FILE_BOTH_DIR_INFORMATION *)buffer;
+        const FILE_BOTH_DIR_INFORMATION &dirInfo = *(const FILE_BOTH_DIR_INFORMATION *)buffer;
         FillEntry(currentEntry, dirInfo);
         return TRUE;
     }

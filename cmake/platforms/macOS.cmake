@@ -5,20 +5,19 @@
 include_guard(GLOBAL)
 
 # Validate: macOS only supports x86_64 and aarch64
-if(NOT CPPPIC_ARCH MATCHES "^(x86_64|aarch64)$")
-    message(FATAL_ERROR "macOS only supports x86_64 and aarch64 (got: ${CPPPIC_ARCH})")
+if(NOT PIR_ARCH MATCHES "^(x86_64|aarch64)$")
+    message(FATAL_ERROR "macOS only supports x86_64 and aarch64 (got: ${PIR_ARCH})")
 endif()
 
-cpppic_get_target_info()
-cpppic_filter_sources(windows linux uefi)
+pir_get_target_info()
+pir_filter_sources(windows linux uefi)
 
-list(APPEND CPPPIC_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/include/platform/macos")
-list(APPEND CPPPIC_BASE_FLAGS -target ${CPPPIC_TRIPLE})
+list(APPEND PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/include/platform/macos")
 
 # macOS-specific compiler flags
-list(APPEND CPPPIC_BASE_FLAGS -fno-stack-protector)
+list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
 
-if(CPPPIC_ARCH STREQUAL "x86_64")
+if(PIR_ARCH STREQUAL "x86_64")
     # Disable the red zone for x86_64. The System V ABI allows leaf functions to
     # use 128 bytes below RSP without adjusting RSP (the "red zone"). PIR is
     # designed as position-independent shellcode that executes syscalls via inline
@@ -28,24 +27,22 @@ if(CPPPIC_ARCH STREQUAL "x86_64")
     # syscall buffers in the red zone. This flag is already used for UEFI x86_64
     # (where interrupts clobber the red zone) and is standard practice for
     # freestanding / position-independent code that makes direct syscalls.
-    list(APPEND CPPPIC_BASE_FLAGS -mno-red-zone)
-elseif(CPPPIC_ARCH STREQUAL "aarch64")
-    list(APPEND CPPPIC_BASE_FLAGS -mstack-probe-size=0)
+    list(APPEND PIR_BASE_FLAGS -mno-red-zone)
+elseif(PIR_ARCH STREQUAL "aarch64")
+    list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 endif()
 
 # Linker configuration (ld64.lld / Mach-O)
-cpppic_add_link_flags(
+pir_add_link_flags(
     -e,_entry_point
     -static
     -platform_version,macos,11.0.0,11.0.0
-    -order_file,${CMAKE_SOURCE_DIR}/cmake/function.order.macos
-    -map,${CPPPIC_MAP_FILE}
+    -order_file,${CMAKE_SOURCE_DIR}/cmake/data/function.order.macos
+    -map,${PIR_MAP_FILE}
 )
 
-if(CPPPIC_BUILD_TYPE STREQUAL "release")
-    cpppic_add_link_flags(
-        -dead_strip
-    )
+if(PIR_BUILD_TYPE STREQUAL "release")
+    pir_add_link_flags(-dead_strip)
 endif()
 
-list(APPEND CPPPIC_BASE_LINK_FLAGS -target ${CPPPIC_TRIPLE})
+# macOS uses ld64.lld via target triple (no explicit -fuse-ld=lld)

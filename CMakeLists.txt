@@ -1,5 +1,5 @@
 # =============================================================================
-# cpp-pic - Position-Independent Code Build System
+# pir - Position-Independent Runtime Build System
 # =============================================================================
 
 cmake_minimum_required(VERSION 3.20)
@@ -34,7 +34,7 @@ set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <LINK_FLAGS> <OBJECTS> -o <T
 # =============================================================================
 # Project
 # =============================================================================
-project(cpp-pic LANGUAGES CXX)
+project(pir LANGUAGES CXX)
 
 include(${CMAKE_SOURCE_DIR}/cmake/Common.cmake)
 
@@ -43,37 +43,41 @@ set(_platform_map_windows Windows)
 set(_platform_map_linux Linux)
 set(_platform_map_macos macOS)
 set(_platform_map_uefi UEFI)
-include(${CMAKE_SOURCE_DIR}/cmake/${_platform_map_${CPPPIC_PLATFORM}}.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/platforms/${_platform_map_${PIR_PLATFORM}}.cmake)
+
+# Universal target flags (every platform uses -target for both compile and link)
+list(APPEND PIR_BASE_FLAGS -target ${PIR_TRIPLE})
+list(APPEND PIR_BASE_LINK_FLAGS -target ${PIR_TRIPLE})
 
 # =============================================================================
 # Output Configuration
 # =============================================================================
-file(MAKE_DIRECTORY "${CPPPIC_OUTPUT_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CPPPIC_OUTPUT_DIR}")
-set(CMAKE_PDB_OUTPUT_DIRECTORY "${CPPPIC_OUTPUT_DIR}")
+file(MAKE_DIRECTORY "${PIR_OUTPUT_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PIR_OUTPUT_DIR}")
+set(CMAKE_PDB_OUTPUT_DIRECTORY "${PIR_OUTPUT_DIR}")
 
 # =============================================================================
 # Target
 # =============================================================================
-add_executable(${CPPPIC_TRIPLE} ${CPPPIC_SOURCES} ${CPPPIC_HEADERS})
+add_executable(${PIR_TRIPLE} ${PIR_SOURCES} ${PIR_HEADERS})
 
-set_target_properties(${CPPPIC_TRIPLE} PROPERTIES
+set_target_properties(${PIR_TRIPLE} PROPERTIES
     OUTPUT_NAME "output"
-    SUFFIX "${CPPPIC_EXT}"
+    SUFFIX "${PIR_EXT}"
 )
 
-target_include_directories(${CPPPIC_TRIPLE} PRIVATE ${CPPPIC_INCLUDE_PATHS})
-target_compile_definitions(${CPPPIC_TRIPLE} PRIVATE ${CPPPIC_DEFINES})
-target_compile_options(${CPPPIC_TRIPLE} PRIVATE ${CPPPIC_BASE_FLAGS})
-target_link_options(${CPPPIC_TRIPLE} PRIVATE ${CPPPIC_BASE_LINK_FLAGS})
+target_include_directories(${PIR_TRIPLE} PRIVATE ${PIR_INCLUDE_PATHS})
+target_compile_definitions(${PIR_TRIPLE} PRIVATE ${PIR_DEFINES})
+target_compile_options(${PIR_TRIPLE} PRIVATE ${PIR_BASE_FLAGS})
+target_link_options(${PIR_TRIPLE} PRIVATE ${PIR_BASE_LINK_FLAGS})
 
 # =============================================================================
 # Post-Build
 # =============================================================================
-cpppic_add_postbuild(${CPPPIC_TRIPLE})
+pir_add_postbuild(${PIR_TRIPLE})
 
-if(CPPPIC_PLATFORM STREQUAL "uefi")
-    cpppic_add_uefi_boot(${CPPPIC_TRIPLE})
+if(PIR_PLATFORM STREQUAL "uefi")
+    pir_add_uefi_boot(${PIR_TRIPLE})
 endif()
 
 # =============================================================================
@@ -107,13 +111,13 @@ message(STATUS "")
 message(STATUS "┌─────────────────────────────────────┐")
 message(STATUS "│      Build Configuration            │")
 message(STATUS "├─────────────────────────────────────┤")
-message(STATUS "│ Platform:     ${CPPPIC_PLATFORM}")
-message(STATUS "│ Architecture: ${CPPPIC_ARCH}")
-message(STATUS "│ Build Type:   ${CPPPIC_BUILD_TYPE}")
-message(STATUS "│ Optimization: -${CPPPIC_OPT_LEVEL}")
-message(STATUS "│ Triple:       ${CPPPIC_TRIPLE}")
+message(STATUS "│ Platform:     ${PIR_PLATFORM}")
+message(STATUS "│ Architecture: ${PIR_ARCH}")
+message(STATUS "│ Build Type:   ${PIR_BUILD_TYPE}")
+message(STATUS "│ Optimization: -${PIR_OPT_LEVEL}")
+message(STATUS "│ Triple:       ${PIR_TRIPLE}")
 message(STATUS "├─────────────────────────────────────┤")
-message(STATUS "│ Output:       output${CPPPIC_EXT}")
+message(STATUS "│ Output:       output${PIR_EXT}")
 message(STATUS "│ Doxygen:      ${_doxygen_status}")
 message(STATUS "└─────────────────────────────────────┘")
 message(STATUS "")

@@ -139,6 +139,22 @@ public:
     }
 
     /**
+     * @brief Destructor that prevents the compiler from reusing the stack storage
+     * @details At -O1+ the compiler may determine the object is "dead" after
+     * conversion to a raw pointer, and reuse its stack slot for other temporaries.
+     * The "+m" (read+write) constraint tells the compiler the asm both reads and
+     * modifies the data array, making it impossible to reuse the stack slot or
+     * reorder stores into it before the destructor runs at end of full-expression.
+     *
+     * The operand type must be TChar(*)[AllocN] to match the actual data type,
+     * ensuring the constraint and caller reads are in the same TBAA alias set.
+     */
+    FORCE_INLINE ~EMBEDDED_STRING() noexcept
+    {
+        __asm__ volatile("" : "+m"(*(TChar (*)[AllocN])data));
+    }
+
+    /**
      * @brief Implicit conversion to const character pointer
      * @return Pointer to the string data
      */

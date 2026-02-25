@@ -88,10 +88,10 @@ BOOL Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 }
 
 // Open/Connect socket
-BOOL Socket::Open()
+Result<void, SocketError> Socket::Open()
 {
     if (!IsValid())
-        return false;
+        return Result<void, SocketError>::Err(SOCKET_ERROR_CONNECT_FAILED);
 
     SSIZE sockfd = (SSIZE)m_socket;
 
@@ -104,22 +104,24 @@ BOOL Socket::Open()
 
     UINT32 addrLen = SocketAddressHelper::PrepareAddress(ip, port, &addrBuffer, sizeof(addrBuffer));
     if (addrLen == 0)
-        return false;
+        return Result<void, SocketError>::Err(SOCKET_ERROR_CONNECT_FAILED);
 
     SSIZE result = linux_connect(sockfd, (SockAddr *)&addrBuffer, addrLen);
-    return result == 0;
+    if (result != 0)
+        return Result<void, SocketError>::Err(SOCKET_ERROR_CONNECT_FAILED);
+    return Result<void, SocketError>::Ok();
 }
 
 // Close socket
-BOOL Socket::Close()
+Result<void, SocketError> Socket::Close()
 {
     if (!IsValid())
-        return false;
+        return Result<void, SocketError>::Err(SOCKET_ERROR_CLOSE_FAILED);
 
     SSIZE sockfd = (SSIZE)m_socket;
     System::Call(SYS_CLOSE, sockfd);
     m_socket = (PVOID)INVALID_FD;
-    return true;
+    return Result<void, SocketError>::Ok();
 }
 
 // Read from socket
@@ -129,15 +131,14 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferLength)
         return -1;
 
     SSIZE sockfd = (SSIZE)m_socket;
-    SSIZE result = linux_recv(sockfd, buffer, bufferLength, 0);
-    return result;
+    return linux_recv(sockfd, buffer, bufferLength, 0);
 }
 
 // Write to socket
-UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 {
     if (!IsValid())
-        return 0;
+        return Result<UINT32, SocketError>::Err(SOCKET_ERROR_SEND_FAILED);
 
     SSIZE sockfd = (SSIZE)m_socket;
     UINT32 totalSent = 0;
@@ -147,10 +148,10 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
         SSIZE sent = linux_send(sockfd, (const CHAR *)buffer + totalSent,
                                 bufferLength - totalSent, 0);
         if (sent <= 0)
-            break;
+            return Result<UINT32, SocketError>::Err(SOCKET_ERROR_SEND_FAILED);
 
         totalSent += (UINT32)sent;
     }
 
-    return totalSent;
+    return Result<UINT32, SocketError>::Ok(totalSent);
 }

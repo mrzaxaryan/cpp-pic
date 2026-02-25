@@ -13,5 +13,5 @@ PVOID Allocator::AllocateMemory(USIZE len)
 VOID Allocator::ReleaseMemory(PVOID ptr, USIZE)
 {
     USIZE size = 0;
-    NTDLL::ZwFreeVirtualMemory(NTDLL::NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
+    (void)NTDLL::ZwFreeVirtualMemory(NTDLL::NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
 }

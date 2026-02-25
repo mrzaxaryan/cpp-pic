@@ -61,7 +61,7 @@ void File::Close()
 {
     if (IsValid())
     {
-        NTDLL::ZwClose((PVOID)fileHandle);
+        (void)NTDLL::ZwClose((PVOID)fileHandle);
         fileHandle = nullptr;
         fileSize = 0;
     }
@@ -132,7 +132,7 @@ void File::SetOffset(USIZE absoluteOffset)
     Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
     posInfo.CurrentByteOffset.QuadPart = INT64((INT64)absoluteOffset);
     // Set the file pointer to the specified absolute offset using ZwSetInformationFile
-    NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+    (void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
 }
 
 // Move the file offset by a relative amount based on the specified origin
@@ -172,7 +172,7 @@ void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
         break;
     }
     posInfo.CurrentByteOffset.QuadPart = distance;
-    NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+    (void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
 }
 
 // --- FileSystem Implementation ---
@@ -218,8 +218,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
 
     // Convert DOS path to NT path
     UNICODE_STRING ntPathU;
-    NTSTATUS status = NTDLL::RtlDosPathNameToNtPathName_U(path, &ntPathU, nullptr, nullptr);
-    if (!NT_SUCCESS(status))
+    if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &ntPathU, nullptr, nullptr))
         return File();
 
     OBJECT_ATTRIBUTES objAttr;
@@ -228,7 +227,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     IO_STATUS_BLOCK ioStatusBlock;
     PVOID hFile = nullptr;
 
-    status = NTDLL::ZwCreateFile(
+    NTSTATUS status = NTDLL::ZwCreateFile(
         &hFile,
         dwDesiredAccess,
         &objAttr,
@@ -258,8 +257,7 @@ BOOL FileSystem::Delete(PCWCHAR path)
     PVOID hFile = nullptr;
     IO_STATUS_BLOCK io;
 
-    status = NTDLL::RtlDosPathNameToNtPathName_U(path, &ntName, nullptr, nullptr);
-    if (!NT_SUCCESS(status))
+    if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &ntName, nullptr, nullptr))
         return false;
 
     InitializeObjectAttributes(&attr, &ntName, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
@@ -282,12 +280,11 @@ BOOL FileSystem::Exists(PCWCHAR path)
     UNICODE_STRING uniName;
     FILE_BASIC_INFORMATION fileBasicInfo;
 
-    NTSTATUS status = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr);
-    if (!NT_SUCCESS(status))
+    if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
         return false;
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
-    status = NTDLL::ZwQueryAttributesFile(&objAttr, &fileBasicInfo);
+    NTSTATUS status = NTDLL::ZwQueryAttributesFile(&objAttr, &fileBasicInfo);
 
     NTDLL::RtlFreeUnicodeString(&uniName);
 
@@ -308,14 +305,12 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
     OBJECT_ATTRIBUTES objAttr;
     IO_STATUS_BLOCK ioStatusBlock;
 
-    NTSTATUS status = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr);
-
-    if (!NT_SUCCESS(status))
+    if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
         return false;
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
-    status = NTDLL::ZwCreateFile(
+    NTSTATUS status = NTDLL::ZwCreateFile(
         &hDir,
         FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objAttr,
@@ -332,7 +327,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 
     if (NT_SUCCESS(status))
     {
-        NTDLL::ZwClose(hDir);
+        (void)NTDLL::ZwClose(hDir);
         return true;
     }
     LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", status, path);
@@ -350,14 +345,12 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
     Memory::Zero(&disp, sizeof(FILE_DISPOSITION_INFORMATION));
     disp.DeleteFile = true;
 
-    NTSTATUS status = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr);
-
-    if (!NT_SUCCESS(status))
+    if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
         return false;
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
-    status = NTDLL::ZwOpenFile(&hDir, DELETE | SYNCHRONIZE, &objAttr, &ioStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
+    NTSTATUS status = NTDLL::ZwOpenFile(&hDir, DELETE | SYNCHRONIZE, &objAttr, &ioStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
     if (!NT_SUCCESS(status))
         return false;
 
@@ -368,7 +361,7 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
         sizeof(disp),
         FileDispositionInformation);
 
-    NTDLL::ZwClose(hDir);
+    (void)NTDLL::ZwClose(hDir);
     NTDLL::RtlFreeUnicodeString(&uniName);
 
     return NT_SUCCESS(status);
@@ -441,8 +434,7 @@ DirectoryIterator::DirectoryIterator(PCWCHAR path) : handle((PVOID)-1), first(tr
 
     // Convert path to NT path and open directory handle
     UNICODE_STRING uniPath;
-    status = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniPath, nullptr, nullptr);
-    if (!NT_SUCCESS(status))
+    if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniPath, nullptr, nullptr))
         return;
 
     OBJECT_ATTRIBUTES objAttr;
@@ -489,7 +481,7 @@ DirectoryIterator::DirectoryIterator(PCWCHAR path) : handle((PVOID)-1), first(tr
     }
     else
     {
-        NTDLL::ZwClose(handle);
+        (void)NTDLL::ZwClose(handle);
         handle = (PVOID)-1;
     }
 }
@@ -526,7 +518,7 @@ BOOL DirectoryIterator::Next()
                 currentEntry.isDirectory = true;
                 currentEntry.isDrive = true;
 
-                NTDLL::ZwQueryVolumeInformationFile(
+                (void)NTDLL::ZwQueryVolumeInformationFile(
                     NTDLL::NtCurrentProcess(),
                     &ioStatusBlock,
                     &info,
@@ -614,7 +606,7 @@ DirectoryIterator &DirectoryIterator::operator=(DirectoryIterator &&other) noexc
     if (this != &other)
     {
         if (IsValid() && !isBitMaskMode)
-            NTDLL::ZwClose(handle);
+            (void)NTDLL::ZwClose(handle);
         handle = other.handle;
         currentEntry = other.currentEntry;
         first = other.first;
@@ -631,7 +623,7 @@ DirectoryIterator::~DirectoryIterator()
     {
         if (!isBitMaskMode)
         {
-            NTDLL::ZwClose(handle);
+            (void)NTDLL::ZwClose(handle);
         }
         // If it's a bitmask, we do nothing. No memory was allocated!
         handle = (PVOID)-1;

@@ -21,7 +21,7 @@ private:
 		Socket sock(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
 
 		LOG_INFO("Socket created successfully");
-		sock.Close();
+		(void)sock.Close();
 		return true;
 	}
 
@@ -35,12 +35,12 @@ private:
 		if (!sock.Open())
 		{
 			LOG_ERROR("Socket connection failed");
-			sock.Close();
+			(void)sock.Close();
 			return false;
 		}
 
 		LOG_INFO("Socket connected successfully to one.one.one.one:80");
-		sock.Close();
+		(void)sock.Close();
 		return true;
 	}
 
@@ -59,12 +59,13 @@ private:
 
 		// Send HTTP GET request
 		auto request = "GET / HTTP/1.1\r\nHost: one.one.one.one\r\nConnection: close\r\n\r\n"_embed;
-		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
 
-		if (bytesSent != request.Length())
+		if (!writeResult || writeResult.Value() != request.Length())
 		{
-			LOG_ERROR("Failed to send complete HTTP request (sent %d/%d bytes)", bytesSent, request.Length());
-			sock.Close();
+			LOG_ERROR("Failed to send complete HTTP request (sent %d/%d bytes)",
+			          writeResult ? writeResult.Value() : 0, request.Length());
+			(void)sock.Close();
 			return false;
 		}
 
@@ -76,11 +77,11 @@ private:
 		if (bytesRead <= 0)
 		{
 			LOG_ERROR("Failed to receive HTTP response");
-			sock.Close();
+			(void)sock.Close();
 			return false;
 		}
 
-		sock.Close();
+		(void)sock.Close();
 		return true;
 	}
 
@@ -101,12 +102,12 @@ private:
 
 			// Send minimal HTTP request
 			auto request = "GET / HTTP/1.0\r\n\r\n"_embed;
-			UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+			auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
 
-			if (bytesSent != request.Length())
+			if (!writeResult || writeResult.Value() != request.Length())
 			{
 				LOG_ERROR("Connection %d: failed to send request", i + 1);
-				sock.Close();
+				(void)sock.Close();
 				return false;
 			}
 
@@ -118,11 +119,11 @@ private:
 			if (bytesRead <= 0)
 			{
 				LOG_ERROR("Connection %d: failed to receive response", i + 1);
-				sock.Close();
+				(void)sock.Close();
 				return false;
 			}
 
-			sock.Close();
+			(void)sock.Close();
 		}
 
 		LOG_INFO("All sequential connections successful");
@@ -218,7 +219,7 @@ private:
 		if (!sock.Open())
 		{
 			LOG_WARNING("IPv6 socket connection failed (IPv6 may not be available in this environment)");
-			sock.Close();
+			(void)sock.Close();
 			return true; // Return true to avoid failing the test suite when IPv6 is unavailable
 		}
 
@@ -226,12 +227,13 @@ private:
 
 		// Send minimal HTTP request
 		auto request = "GET / HTTP/1.1\r\nHost: one.one.one.one\r\nConnection: close\r\n\r\n"_embed;
-		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
 
-		if (bytesSent != request.Length())
+		if (!writeResult || writeResult.Value() != request.Length())
 		{
-			LOG_ERROR("Failed to send complete HTTP request over IPv6 (sent %d/%d bytes)", bytesSent, request.Length());
-			sock.Close();
+			LOG_ERROR("Failed to send complete HTTP request over IPv6 (sent %d/%d bytes)",
+			          writeResult ? writeResult.Value() : 0, request.Length());
+			(void)sock.Close();
 			return false;
 		}
 
@@ -243,11 +245,11 @@ private:
 		if (bytesRead <= 0)
 		{
 			LOG_ERROR("Failed to receive HTTP response over IPv6");
-			sock.Close();
+			(void)sock.Close();
 			return false;
 		}
 
-		sock.Close();
+		(void)sock.Close();
 		return true;
 	}
 
@@ -267,11 +269,12 @@ private:
 			return false;
 		}
 		auto request = "GET /get HTTP/1.1\r\nHost: httpbin.org\r\nConnection: close\r\n\r\n"_embed;
-		UINT32 bytesSent = sock.Write((PCVOID)(PCCHAR)request, request.Length());
-		if (bytesSent != request.Length())
+		auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		if (!writeResult || writeResult.Value() != request.Length())
 		{
-			LOG_ERROR("Failed to send complete HTTP request to httpbin.org (sent %d/%d bytes)", bytesSent, request.Length());
-			sock.Close();
+			LOG_ERROR("Failed to send complete HTTP request to httpbin.org (sent %d/%d bytes)",
+			          writeResult ? writeResult.Value() : 0, request.Length());
+			(void)sock.Close();
 			return false;
 		}
 		CHAR buffer[1024];
@@ -280,11 +283,11 @@ private:
 		if (bytesRead <= 0)
 		{
 			LOG_ERROR("Failed to receive HTTP response from httpbin.org");
-			sock.Close();
+			(void)sock.Close();
 			return false;
 		}
 		LOG_INFO("Received %d bytes from httpbin.org", bytesRead);
-		sock.Close();
+		(void)sock.Close();
 		return true;
 	}
 

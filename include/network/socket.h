@@ -2,6 +2,15 @@
 
 #include "core.h"
 
+enum SocketError : UINT32
+{
+	SOCKET_ERROR_CREATE_FAILED  = 1,
+	SOCKET_ERROR_BIND_FAILED    = 2,
+	SOCKET_ERROR_CONNECT_FAILED = 3,
+	SOCKET_ERROR_SEND_FAILED    = 4,
+	SOCKET_ERROR_CLOSE_FAILED   = 5
+};
+
 /* Socket address families */
 #define AF_INET 2
 #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_UEFI)
@@ -133,7 +142,7 @@ public:
 	~Socket()
 	{
 		if (IsValid())
-			Close();
+			(void)Close();
 	}
 
 	Socket(const Socket &) = delete;
@@ -148,7 +157,7 @@ public:
 		if (this != &other)
 		{
 			if (IsValid())
-				Close();
+				(void)Close();
 			ip = other.ip;
 			port = other.port;
 			m_socket = other.m_socket;
@@ -159,8 +168,8 @@ public:
 
 	BOOL IsValid() const { return m_socket != nullptr && m_socket != (PVOID)(SSIZE)(-1); }
 	SSIZE GetFd() const { return (SSIZE)m_socket; }
-	[[nodiscard]] BOOL Open();
-	BOOL Close();
+	[[nodiscard]] Result<void, SocketError> Open();
+	[[nodiscard]] Result<void, SocketError> Close();
 	[[nodiscard]] SSIZE Read(PVOID buffer, UINT32 bufferLength);
-	[[nodiscard]] UINT32 Write(PCVOID buffer, UINT32 bufferLength);
+	[[nodiscard]] Result<UINT32, SocketError> Write(PCVOID buffer, UINT32 bufferLength);
 };

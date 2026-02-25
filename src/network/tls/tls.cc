@@ -87,13 +87,13 @@ BOOL TLSClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer &buf)
     crypto.Encode(tempBuffer, buf.GetBuffer(), buf.GetSize(), keep_original); //-----------¼ÓÃÜ´úÂë
 
     *(UINT16 *)(tempBuffer.GetBuffer() + bodySizeIndex) = UINT16SwapByteOrder(tempBuffer.GetSize() - bodySizeIndex - 2);
-    UINT32 bytesWritten = 0;
-    if ((bytesWritten = context.Write((PCHAR)tempBuffer.GetBuffer(), tempBuffer.GetSize())) <= 0)
+    auto writeResult = context.Write((PCHAR)tempBuffer.GetBuffer(), tempBuffer.GetSize());
+    if (!writeResult)
     {
-        LOG_DEBUG("Failed to write packet to socket, bytesWritten: %d", bytesWritten);
+        LOG_DEBUG("Failed to write packet to socket");
         return false;
     }
-    LOG_DEBUG("Packet sent successfully, bytesWritten: %d", bytesWritten);
+    LOG_DEBUG("Packet sent successfully, bytesWritten: %d", writeResult.Value());
     return true;
 }
 
@@ -712,7 +712,8 @@ UINT32 TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
 
     if (!secure)
     {
-        return context.Write(buffer, bufferLength);
+        auto writeResult = context.Write(buffer, bufferLength);
+        return writeResult ? writeResult.Value() : 0;
     }
 
     if (stateIndex < 6)

@@ -17,7 +17,7 @@
  * - %c, %C - Character
  * - %ld, %lu - Long integers
  * - %lld, %llu - Long long integers
- * - %lx, %llx - Long/long long hex
+ * - %lx, %lX, %llx, %llX - Long/long long hex
  * - %zu, %zd - Size_t variants
  * - %% - Literal percent sign
  *
@@ -167,7 +167,7 @@ template <TCHAR TChar>
 INT32 StringFormatter::FormatInt64(BOOL (*writer)(PVOID, TChar), PVOID context, INT64 num, INT32 width, INT32 zeroPad, INT32 leftAlign)
 {
     if (num < 0)
-        return FormatUInt64<TChar>(writer, context, (UINT64)(-num), width, zeroPad, leftAlign, (TChar)'-');
+        return FormatUInt64<TChar>(writer, context, UINT64(0) - UINT64(num), width, zeroPad, leftAlign, (TChar)'-');
     return FormatUInt64<TChar>(writer, context, (UINT64)num, width, zeroPad, leftAlign, (TChar)0);
 }
 
@@ -372,8 +372,7 @@ INT32 StringFormatter::FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID cont
     if (wstr == NULL)
     {
         writer(context, (TChar)'?');
-        writer(context, (TChar)'\0');
-        return 2;
+        return 1;
     }
     for (INT32 k = 0; wstr[k] != (WCHAR)'\0'; k++)
     {
@@ -402,15 +401,14 @@ INT32 StringFormatter::FormatDouble(
     // Handle NaN (portable check)
     if (num != num)
     {
+        INT32 pad = (width > 3) ? (width - 3) : 0;
+        // Right-align: pad before "nan"
+        for (INT32 i = 0; i < pad; ++i)
+            if (!writer(context, (TChar)' '))
+                return i;
         writer(context, (TChar)'n');
         writer(context, (TChar)'a');
         writer(context, (TChar)'n');
-        // pad after
-        INT32 pad = (width > 3) ? (width - 3) : 0;
-        TChar pch = zeroPad ? (TChar)'0' : (TChar)' ';
-        for (INT32 i = 0; i < pad; ++i)
-            if (!writer(context, pch))
-                return 3 + i;
         return 3 + pad;
     }
 
@@ -486,23 +484,56 @@ INT32 StringFormatter::FormatDouble(
         }
     }
 
-    // Emit number
+    // Right-align: pad BEFORE the number
     INT32 written = 0;
-    for (INT32 i = 0; i < len; ++i)
+    if (width > len)
     {
-        if (!writer(context, tmp[i]))
-            return written;
-        written++;
-    }
-
-    // Pad AFTER (matches your original intent)
-    if (width > written)
-    {
-        INT32 pad = width - written;
-        TChar pch = zeroPad ? (TChar)'0' : (TChar)' ';
-        for (INT32 i = 0; i < pad; ++i)
+        INT32 pad = width - len;
+        if (zeroPad)
         {
-            if (!writer(context, pch))
+            // Zero-pad: emit sign first, then zeros, then digits
+            INT32 signLen = isNegative ? 1 : 0;
+            if (signLen)
+            {
+                if (!writer(context, tmp[0]))
+                    return written;
+                written++;
+            }
+            for (INT32 i = 0; i < pad; ++i)
+            {
+                if (!writer(context, (TChar)'0'))
+                    return written;
+                written++;
+            }
+            for (INT32 i = signLen; i < len; ++i)
+            {
+                if (!writer(context, tmp[i]))
+                    return written;
+                written++;
+            }
+        }
+        else
+        {
+            // Space-pad before the number
+            for (INT32 i = 0; i < pad; ++i)
+            {
+                if (!writer(context, (TChar)' '))
+                    return written;
+                written++;
+            }
+            for (INT32 i = 0; i < len; ++i)
+            {
+                if (!writer(context, tmp[i]))
+                    return written;
+                written++;
+            }
+        }
+    }
+    else
+    {
+        for (INT32 i = 0; i < len; ++i)
+        {
+            if (!writer(context, tmp[i]))
                 return written;
             written++;
         }
@@ -549,49 +580,54 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
             i++;           // Skip '%'
             precision = 6; // Reset default precision
 
-            // Handle precision for floating-point numbers (e.g. "%.3f")
-            if (format[i] == (TChar)'.')
-            {
-                i++;           // Skip '.'
-                precision = 0; // Reset precision to 0 before parsing
-                while (format[i] >= (TChar)'0' && format[i] <= (TChar)'9')
-                {                                                          // Parse precision value
-                    precision = precision * 10 + (format[i] - (TChar)'0'); // Convert character to integer
-                    i++;                                                   // Move to the next character
-                }
-            }
-
-            INT32 addPrefix = 0; // Flag for adding '0x' prefix to hex numbers
-            if (format[i] == (TChar)'#')
-            {
-                addPrefix = 1; // Set flag to add prefix
-                i++;           // Skip '#'
-            }
-            // Check for an optional zero flag and field width
+            // Parse flags: '-', '0', '#'
+            INT32 addPrefix = 0;
             INT32 leftAlign = 0;
             INT32 zeroPad = 0;
             INT32 fieldWidth = 0;
 
-            // Check for optional flags: '-' for left align, '0' for zero padding
-            while (format[i] == (TChar)'-' || format[i] == (TChar)'0')
+            BOOL parsingFlags = TRUE;
+            while (parsingFlags)
             {
                 if (format[i] == (TChar)'-')
                 {
-                    leftAlign = 1; // Set left alignment flag
+                    leftAlign = 1;
                     zeroPad = 0;   // '-' overrides '0'
+                    i++;
                 }
                 else if (format[i] == (TChar)'0' && !leftAlign)
                 {
-                    zeroPad = 1; // Set zero padding flag only if not left aligned
+                    zeroPad = 1;
+                    i++;
                 }
-                i++;
+                else if (format[i] == (TChar)'#')
+                {
+                    addPrefix = 1;
+                    i++;
+                }
+                else
+                {
+                    parsingFlags = FALSE;
+                }
             }
 
-            // Parse any numeric field width
+            // Parse field width
             while (format[i] >= (TChar)'0' && format[i] <= (TChar)'9')
             {
                 fieldWidth = fieldWidth * 10 + (format[i] - (TChar)'0');
                 i++;
+            }
+
+            // Parse precision (e.g. "%.3f")
+            if (format[i] == (TChar)'.')
+            {
+                i++;           // Skip '.'
+                precision = 0;
+                while (format[i] >= (TChar)'0' && format[i] <= (TChar)'9')
+                {
+                    precision = precision * 10 + (format[i] - (TChar)'0');
+                    i++;
+                }
             }
 
             // Now switch based on the conversion specifier
@@ -655,16 +691,28 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
             }
             else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'c')
             { // Handle %c (character)
-                // Loop through the field width to ensure proper spacing
-                for (INT32 k = 0; k < fieldWidth - 1; k++)
+                if (currentArg >= argCount) { i++; continue; }
+                TChar ch = (TChar)args[currentArg++].i32;
+                INT32 padding = fieldWidth > 1 ? fieldWidth - 1 : 0;
+
+                if (!leftAlign)
                 {
-                    writer(context, (TChar)' '); // Add spaces for field width
-                    j++;
+                    for (INT32 k = 0; k < padding; k++)
+                    {
+                        writer(context, (TChar)' ');
+                        j++;
+                    }
                 }
-                if (currentArg < argCount) {
-                    writer(context, (TChar)args[currentArg++].i32); // Get the next argument as an INT32 (character) and add it to the string
-                }
+                writer(context, ch);
                 j++;
+                if (leftAlign)
+                {
+                    for (INT32 k = 0; k < padding; k++)
+                    {
+                        writer(context, (TChar)' ');
+                        j++;
+                    }
+                }
                 i++; // Skip 'c'
                 continue;
             }
@@ -672,40 +720,42 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
             {                                     // Handle %s (narrow string)
                 i++;                              // Skip 's'
                 if (currentArg >= argCount) continue;
-                CHAR *str = (CHAR*)args[currentArg++].cstr; // Get the next argument as a PWCHAR (narrow string)
-                // C standard does not allow NULL strings, so if the string is NULL, handle it by printing '?'.
+                const CHAR *str = args[currentArg++].cstr;
                 if (str == NULL)
                 {
-                    writer(context, '?');
-                    writer(context, '\0');
-                    j += 2;
+                    writer(context, (TChar)'?');
+                    j++;
                     continue;
                 }
-                INT32 len = 0; // Length of the string to be printed
-
-                // Checking the string is not NULL and calculating its length
-                if (str)
+                INT32 len = 0;
+                const CHAR *temp = str;
+                while (*temp)
                 {
-                    CHAR *temp = str;
-                    while (*temp)
-                    {
-                        len++;
-                        temp++;
-                    }
-                    INT32 padding = fieldWidth - len; // Calculate padding based on field width and string length
-                    if (padding < 0)
-                        padding = 0; // Ensure padding is non-negative
+                    len++;
+                    temp++;
+                }
+                INT32 padding = fieldWidth - len;
+                if (padding < 0)
+                    padding = 0;
 
-                    // If left-aligned, copy the string directly
+                if (!leftAlign)
+                {
                     for (INT32 k = 0; k < padding; k++)
                     {
-                        writer(context, (TChar)' '); // Add spaces for padding
+                        writer(context, (TChar)' ');
                         j++;
                     }
-                    // Copy the string to the output
-                    while (*str)
+                }
+                while (*str)
+                {
+                    writer(context, (TChar)*str++);
+                    j++;
+                }
+                if (leftAlign)
+                {
+                    for (INT32 k = 0; k < padding; k++)
                     {
-                        writer(context, (TChar)*str++); // Copy each character from the string to the output
+                        writer(context, (TChar)' ');
                         j++;
                     }
                 }
@@ -772,20 +822,36 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                     j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign); // Convert the unsigned long long int to string with specified formatting
                     continue;
                 }
+                else if (format[i + 1] == (TChar)'X')
+                {                                                                            // long uppercase hex (%lX)
+                    i += 2;                                                                  // Skip over "lX"
+                    if (currentArg >= argCount) continue;
+                    UINT64 num = args[currentArg++].u64;
+                    j += StringFormatter::FormatUInt64AsHex(writer, context, num);
+                    continue;
+                }
                 else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'x')
                 {                                                                            // long hex (%lx)
                     i += 2;                                                                  // Skip over "lx"
                     if (currentArg >= argCount) continue;
-                    UINT64 num = args[currentArg++].u64;                                     // Get the next argument as UINT64
-                    j += StringFormatter::FormatUInt64AsHex(writer, context, num);           // Convert to hex
+                    UINT64 num = args[currentArg++].u64;
+                    j += StringFormatter::FormatUInt64AsHex(writer, context, num);
+                    continue;
+                }
+                else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'l' && format[i + 2] == (TChar)'X')
+                {                                                                            // long long uppercase hex (%llX)
+                    i += 3;                                                                  // Skip over "llX"
+                    if (currentArg >= argCount) continue;
+                    UINT64 num = args[currentArg++].u64;
+                    j += StringFormatter::FormatUInt64AsHex(writer, context, num);
                     continue;
                 }
                 else if (String::ToLowerCase<TChar>(format[i + 1]) == (TChar)'l' && String::ToLowerCase<TChar>(format[i + 2]) == (TChar)'x')
                 {                                                                            // long long hex (%llx)
                     i += 3;                                                                  // Skip over "llx"
                     if (currentArg >= argCount) continue;
-                    UINT64 num = args[currentArg++].u64;                                     // Get the next argument as UINT64
-                    j += StringFormatter::FormatUInt64AsHex(writer, context, num);           // Convert to hex
+                    UINT64 num = args[currentArg++].u64;
+                    j += StringFormatter::FormatUInt64AsHex(writer, context, num);
                     continue;
                 }
                 else

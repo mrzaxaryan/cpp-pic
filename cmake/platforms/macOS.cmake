@@ -27,7 +27,7 @@ if(PIR_ARCH STREQUAL "x86_64")
     # syscall buffers in the red zone. This flag is already used for UEFI x86_64
     # (where interrupts clobber the red zone) and is standard practice for
     # freestanding / position-independent code that makes direct syscalls.
-    list(APPEND PIR_BASE_FLAGS -msoft-float)
+    list(APPEND PIR_BASE_FLAGS -mno-red-zone)
 elseif(PIR_ARCH STREQUAL "aarch64")
     list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 endif()

@@ -84,10 +84,8 @@ BOOL WebSocketClient::Close()
 	if (isConnected)
 	{
 		// Send a WebSocket CLOSE frame (status code 1000 = normal closure, big-endian)
-		UINT8 closePayload[2];
-		closePayload[0] = 0x03;
-		closePayload[1] = 0xE8;
-		(void)Write(closePayload, sizeof(closePayload), OPCODE_CLOSE);
+		UINT16 statusCode = UINT16SwapByteOrder(1000);
+		(void)Write(&statusCode, sizeof(statusCode), OPCODE_CLOSE);
 	}
 
 	isConnected = FALSE;
@@ -190,7 +188,7 @@ VOID WebSocketClient::MaskFrame(WebSocketFrame &frame, UINT32 maskKey)
 	UINT32 i = 0;
 	for (; i + 4 <= len; i += 4)
 	{
-		d[i]     ^= mask[0];
+		d[i] ^= mask[0];
 		d[i + 1] ^= mask[1];
 		d[i + 2] ^= mask[2];
 		d[i + 3] ^= mask[3];
@@ -277,7 +275,7 @@ BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 Result<WebSocketMessage, WebSocketError> WebSocketClient::Read()
 {
 	if (!isConnected)
-		return Result<WebSocketMessage, WebSocketError>::Err(WS_ERROR_NOT_CONNECTED);
+		return Result::Err(WS_ERROR_NOT_CONNECTED);
 
 	WebSocketFrame frame;
 	WebSocketMessage message;

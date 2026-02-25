@@ -88,6 +88,8 @@ public:
             other.privateEccKeys[i] = nullptr;
         }
         Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
+        // Zero sensitive key material in the moved-from object immediately after copying
+        Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
     }
 
     TlsCipher &operator=(TlsCipher &&other)
@@ -110,6 +112,8 @@ public:
                 other.privateEccKeys[i] = nullptr;
             }
             Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
+            // Zero sensitive key material in the moved-from object immediately after copying
+            Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
         }
         return *this;
     }
@@ -120,18 +124,18 @@ public:
     VOID Destroy();
     PINT8 CreateClientRand();
     // Function to update server information
-    BOOL UpdateServerInfo();
+    [[nodiscard]] BOOL UpdateServerInfo();
     // Function to get and update the current handshake hash
     VOID GetHash(CHAR *out);
     VOID UpdateHash(const CHAR *in, UINT32 len);
     // Key computation functions
-    BOOL ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
-    BOOL ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer &premasterKey);
-    BOOL ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash);
+    [[nodiscard]] BOOL ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
+    [[nodiscard]] BOOL ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer &premasterKey);
+    [[nodiscard]] BOOL ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash);
     VOID ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
     // Functions for encoding and decoding TLS records
     VOID Encode(TlsBuffer &sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal);
-    BOOL Decode(TlsBuffer &inout, INT32 version);
+    [[nodiscard]] BOOL Decode(TlsBuffer &inout, INT32 version);
     VOID SetEncoding(BOOL encoding);
     // Function to reset sequence numbers
     VOID ResetSequenceNumber();

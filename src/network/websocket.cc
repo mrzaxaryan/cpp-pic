@@ -50,7 +50,8 @@ Result<void, WebSocketError> WebSocketClient::Open()
 	auto writeStr = [&](PCCHAR s) -> BOOL
 	{
 		UINT32 len = String::Length(s);
-		return tlsContext.Write(s, len) == len;
+		auto r = tlsContext.Write(s, len);
+		return r && r.Value() == len;
 	};
 
 	if (!writeStr("GET "_embed) ||
@@ -148,14 +149,16 @@ Result<UINT32, WebSocketError> WebSocketClient::Write(PCVOID buffer, UINT32 buff
 			dst[i] = src[i] ^ maskKey[i & 3];
 
 		UINT32 frameLength = headerLength + bufferLength;
-		if (tlsContext.Write(chunk, frameLength) != frameLength)
+		auto smallWrite = tlsContext.Write(chunk, frameLength);
+		if (!smallWrite || smallWrite.Value() != frameLength)
 			return Result<UINT32, WebSocketError>::Err(WS_ERROR_WRITE_FAILED);
 
 		return Result<UINT32, WebSocketError>::Ok(bufferLength);
 	}
 
 	// Large frames: write header, then mask and write payload in chunks
-	if (tlsContext.Write(header, headerLength) != headerLength)
+	auto headerWrite = tlsContext.Write(header, headerLength);
+	if (!headerWrite || headerWrite.Value() != headerLength)
 		return Result<UINT32, WebSocketError>::Err(WS_ERROR_WRITE_FAILED);
 
 	PUINT8 src = (PUINT8)buffer;
@@ -168,7 +171,8 @@ Result<UINT32, WebSocketError> WebSocketClient::Write(PCVOID buffer, UINT32 buff
 		for (UINT32 i = 0; i < chunkSize; i++)
 			chunk[i] = src[offset + i] ^ maskKey[(offset + i) & 3];
 
-		if (tlsContext.Write(chunk, chunkSize) != chunkSize)
+		auto chunkWrite = tlsContext.Write(chunk, chunkSize);
+		if (!chunkWrite || chunkWrite.Value() != chunkSize)
 			return Result<UINT32, WebSocketError>::Err(WS_ERROR_WRITE_FAILED);
 
 		offset += chunkSize;
@@ -184,10 +188,10 @@ BOOL WebSocketClient::ReceiveRestrict(PVOID buffer, UINT32 size)
 	UINT32 totalBytesRead = 0;
 	while (totalBytesRead < size)
 	{
-		SSIZE bytesRead = tlsContext.Read((PCHAR)buffer + totalBytesRead, size - totalBytesRead);
-		if (bytesRead <= 0)
+		auto readResult = tlsContext.Read((PCHAR)buffer + totalBytesRead, size - totalBytesRead);
+		if (!readResult || readResult.Value() <= 0)
 			return false;
-		totalBytesRead += (UINT32)bytesRead;
+		totalBytesRead += (UINT32)readResult.Value();
 	}
 	return true;
 }

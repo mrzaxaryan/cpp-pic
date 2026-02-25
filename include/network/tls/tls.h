@@ -4,6 +4,31 @@
 #include "tls_buffer.h"
 #include "tls_cipher.h"
 
+// TLS error codes
+struct TlsError
+{
+	enum Kind : UINT32
+	{
+		// Open errors
+		OpenFailed_Socket    = 1, // underlying socket Open() failed
+		OpenFailed_Handshake = 2, // TLS handshake (ClientHello / ProcessReceive) failed
+
+		// Close errors
+		CloseFailed_Socket = 3, // underlying socket Close() failed
+
+		// Read errors
+		ReadFailed_NotReady = 4, // connection not established (stateIndex < 6)
+		ReadFailed_Receive  = 5, // ProcessReceive() failed
+
+		// Write errors
+		WriteFailed_NotReady = 6, // connection not established (stateIndex < 6)
+		WriteFailed_Send     = 7, // SendPacket() failed
+	} kind;
+
+	// SocketError::Kind cast to UINT32 when triggered by a socket failure; 0 otherwise
+	UINT32 nativeError;
+};
+
 // TLS state
 typedef struct _tlsstate
 {
@@ -25,17 +50,17 @@ private:
     TlsBuffer channelBuffer; // Channel buffer for received data
     INT32 channelBytesRead;  // Number of bytes read from channel buffer
     INT32 ReadChannel(PCHAR out, INT32 size);
-    BOOL ProcessReceive();
-    BOOL OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader);
-    BOOL OnServerFinished();
-    BOOL VerifyFinished(TlsBuffer &TlsReader);
-    BOOL OnServerHelloDone();
-    BOOL OnServerHello(TlsBuffer &TlsReader);
-    BOOL SendChangeCipherSpec();
-    BOOL SendClientExchange();
-    BOOL SendClientFinished();
-    BOOL SendClientHello(const CHAR *host);
-    BOOL SendPacket(INT32 packetType, INT32 ver, TlsBuffer &TlsBuffer);
+    [[nodiscard]] BOOL ProcessReceive();
+    [[nodiscard]] BOOL OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader);
+    [[nodiscard]] BOOL OnServerFinished();
+    [[nodiscard]] BOOL VerifyFinished(TlsBuffer &TlsReader);
+    [[nodiscard]] BOOL OnServerHelloDone();
+    [[nodiscard]] BOOL OnServerHello(TlsBuffer &TlsReader);
+    [[nodiscard]] BOOL SendChangeCipherSpec();
+    [[nodiscard]] BOOL SendClientExchange();
+    [[nodiscard]] BOOL SendClientFinished();
+    [[nodiscard]] BOOL SendClientHello(const CHAR *host);
+    [[nodiscard]] BOOL SendPacket(INT32 packetType, INT32 ver, TlsBuffer &TlsBuffer);
 
 public:
     VOID *operator new(USIZE) = delete;
@@ -85,8 +110,8 @@ public:
 
     BOOL IsValid() const { return context.IsValid(); }
     BOOL IsSecure() const { return secure; }
-    BOOL Open();
-    BOOL Close();
-    SSIZE Read(PVOID buffer, UINT32 bufferLength);
-    UINT32 Write(PCVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<void, TlsError> Open();
+    [[nodiscard]] Result<void, TlsError> Close();
+    [[nodiscard]] Result<SSIZE, TlsError> Read(PVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<UINT32, TlsError> Write(PCVOID buffer, UINT32 bufferLength);
 };

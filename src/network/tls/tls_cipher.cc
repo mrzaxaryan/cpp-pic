@@ -101,7 +101,7 @@ VOID TlsCipher::UpdateHash(const CHAR *in, UINT32 len)
 
 BOOL TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 {
-    if (this->privateEccKeys[eccIndex] == 0)
+    if (this->privateEccKeys[eccIndex] == nullptr)
     {
         LOG_DEBUG("Allocating memory for private ECC key at index %d", eccIndex);
         this->privateEccKeys[eccIndex] = new Ecc();
@@ -225,10 +225,11 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
         }
         LOG_DEBUG("Computed pre-master key for ECC group %d, size: %d bytes", ecc, premaster_key.GetSize());
 
-        UCHAR dummyLabel[1] = {0};
-        UINT32 saltLen = 1;
+        // RFC 8446 §7.1: the initial Extract uses a salt of HashLen zero bytes
+        UCHAR zeroSalt[MAX_HASH_LEN];
+        Memory::Zero(zeroSalt, hashLen);
 
-        TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, dummyLabel, saltLen, earlysecret, hashLen);
+        TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, zeroSalt, hashLen, earlysecret, hashLen);
         TlsHKDF::ExpandLabel(salt, hashLen, this->data13.pseudoRandomKey, hashLen, "derived"_embed, 7, hash, hashLen);
         TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, salt, hashLen, (UINT8 *)premaster_key.GetBuffer(), premaster_key.GetSize());
 

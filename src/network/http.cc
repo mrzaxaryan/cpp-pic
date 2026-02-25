@@ -54,7 +54,7 @@ HttpClient::HttpClient(PCCHAR url)
 
 BOOL HttpClient::Open()
 {
-    return tlsContext.Open();
+    return tlsContext.Open(); // implicit operator BOOL() on Result<void, TlsError>
 }
 
 /// @brief Closes the connection to the server and cleans up resources
@@ -62,27 +62,29 @@ BOOL HttpClient::Open()
 
 BOOL HttpClient::Close()
 {
-    return tlsContext.Close();
+    return tlsContext.Close(); // implicit operator BOOL() on Result<void, TlsError>
 }
 
 /// @brief Read data from the server into the provided buffer, handling decryption if the connection is secure
 /// @param buffer The buffer to store the read data
 /// @param bufferLength The maximum number of bytes to read into the buffer
-/// @return The number of bytes read from the server
+/// @return The number of bytes read from the server, or -1 on error
 
 SSIZE HttpClient::Read(PVOID buffer, UINT32 bufferLength)
 {
-    return tlsContext.Read(buffer, bufferLength);
+    auto r = tlsContext.Read(buffer, bufferLength);
+    return r ? r.Value() : -1;
 }
 
 /// @brief Write data to the server
 /// @param buffer Pointer to the data to be sent to the server
 /// @param bufferLength The length of the data to be sent in bytes
-/// @return The number of bytes written to the server
+/// @return The number of bytes written to the server, or 0 on error
 
 UINT32 HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
 {
-    return tlsContext.Write(buffer, bufferLength);
+    auto r = tlsContext.Write(buffer, bufferLength);
+    return r ? r.Value() : 0;
 }
 
 /// @brief Send an HTTP GET request to the server
@@ -301,8 +303,8 @@ BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, I
     for (;;)
     {
         CHAR c;
-        SSIZE bytesRead = client.Read(&c, 1);
-        if (bytesRead <= 0)
+        auto readResult = client.Read(&c, 1);
+        if (!readResult || readResult.Value() <= 0)
             return false;
 
         tail = (tail << 8) | (UINT8)c;

@@ -95,17 +95,29 @@ VOID TlsBuffer::CheckSize(INT32 appendSize)
         newLen = 256;
     }
 
-    buffer = (PCHAR) new CHAR[newLen];
+    PCHAR newBuffer = (PCHAR) new CHAR[newLen];
+    if (!newBuffer)
+    {
+        // Allocation failed: restore invariant so the buffer stays valid (empty)
+        this->size = 0;
+        this->capacity = 0;
+        if (oldBuffer && this->ownsMemory)
+            delete[] oldBuffer;
+        this->buffer = nullptr;
+        this->ownsMemory = true;
+        return;
+    }
     if (this->size > 0)
     {
         LOG_DEBUG("Resizing buffer from %d to %d bytes\n", this->capacity, newLen);
-        Memory::Copy(buffer, oldBuffer, this->size);
+        Memory::Copy(newBuffer, oldBuffer, this->size);
     }
     if (oldBuffer && this->ownsMemory)
     {
         delete[] oldBuffer;
         oldBuffer = nullptr;
     }
+    buffer = newBuffer;
     this->capacity = newLen;
     this->ownsMemory = true;
 }

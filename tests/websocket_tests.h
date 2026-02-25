@@ -23,39 +23,7 @@ private:
 		return true;
 	}
 
-	// Test 2: WebSocket connection with explicit DNS resolution
-	static BOOL TestWebSocketConnectionWithDns()
-	{
-		LOG_INFO("Test: WebSocket Connection with Explicit DNS");
-
-		// Force IPv4 resolution since CI environments may not have IPv6 connectivity
-		auto domain = "echo.websocket.org"_embed;
-		auto dnsResult = DNS::CloudflareResolve((PCCHAR)domain, A);
-		if (!dnsResult)
-		{
-			LOG_ERROR("DNS resolution failed for %s (error: %u)", (PCCHAR)domain, dnsResult.Error());
-			LOG_ERROR("WebSocket tests require network connectivity");
-			return false;
-		}
-		LOG_INFO("DNS resolved: %s successfully (IPv4)", (PCCHAR)domain);
-
-		// Use hardcoded IPv4 to avoid IPv6 connectivity issues in CI
-		auto wssUrl = "wss://echo.websocket.org/"_embed;
-		WebSocketClient wsClient((PCCHAR)wssUrl);
-
-		auto openResult = wsClient.Open();
-		if (!openResult)
-		{
-			LOG_ERROR("WebSocket handshake failed - check if echo.websocket.org is accessible (error: %u)", openResult.Error());
-			return false;
-		}
-
-		LOG_INFO("WebSocket connection established successfully");
-		(void)wsClient.Close();
-		return true;
-	}
-
-	// Test 3: Basic secure WebSocket connection and handshake (wss://)
+	// Test 2: Basic secure WebSocket connection and handshake (wss://)
 	static BOOL TestSecureWebSocketConnection()
 	{
 		LOG_INFO("Test: Basic Secure WebSocket Connection (wss://)");
@@ -416,7 +384,6 @@ public:
 		LOG_INFO("  Test Server: echo.websocket.org (wss://)");
 
 		RunTest(allPassed, EMBED_FUNC(TestWebSocketCreation), L"WebSocket client creation"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWebSocketConnectionWithDns), L"WebSocket connection with DNS"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestSecureWebSocketConnection), L"Secure WebSocket connection"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestWebSocketTextEcho), L"WebSocket text echo"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestWebSocketBinaryEcho), L"WebSocket binary echo"_embed);

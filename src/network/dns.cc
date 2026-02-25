@@ -350,7 +350,8 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
     auto writeStr = [&tlsClient](PCCHAR s) -> BOOL
     {
         UINT32 len = String::Length(s);
-        return tlsClient.Write(s, len) == len;
+        auto r = tlsClient.Write(s, len);
+        return r && r.Value() == len;
     };
 
     CHAR sizeBuf[8];
@@ -360,8 +361,14 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
         !writeStr(DNSServerName) ||
         !writeStr("\r\nContent-Type: application/dns-message\r\nAccept: application/dns-message\r\nContent-Length: "_embed) ||
         !writeStr(sizeBuf) ||
-        !writeStr("\r\n\r\n"_embed) ||
-        tlsClient.Write(queryBuffer, querySize) != querySize)
+        !writeStr("\r\n\r\n"_embed))
+    {
+        LOG_WARNING("Failed to send DNS query");
+        return Result<IPAddress, DnsError>::Err(DNS_ERROR_SEND_FAILED);
+    }
+
+    auto writeBody = tlsClient.Write(queryBuffer, querySize);
+    if (!writeBody || writeBody.Value() != querySize)
     {
         LOG_WARNING("Failed to send DNS query");
         return Result<IPAddress, DnsError>::Err(DNS_ERROR_SEND_FAILED);
@@ -385,13 +392,13 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
     UINT32 totalRead = 0;
     while (totalRead < (UINT32)contentLength)
     {
-        SSIZE bytesRead = tlsClient.Read(binaryResponse + totalRead, (UINT32)contentLength - totalRead);
-        if (bytesRead <= 0)
+        auto readResult = tlsClient.Read(binaryResponse + totalRead, (UINT32)contentLength - totalRead);
+        if (!readResult || readResult.Value() <= 0)
         {
             LOG_WARNING("Failed to read DNS binary response");
             return Result<IPAddress, DnsError>::Err(DNS_ERROR_RESPONSE_FAILED);
         }
-        totalRead += (UINT32)bytesRead;
+        totalRead += (UINT32)readResult.Value();
     }
 
     IPAddress ipAddress;

@@ -171,13 +171,13 @@ BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
 
 /// @brief Parse a URL into its components (host, path, port, secure) and validate the format
 /// @param url The URL to be parsed
-/// @param host Buffer to store the parsed host
-/// @param path Buffer to store the parsed path
-/// @param port Pointer to store the parsed port
-/// @param secure Pointer to store whether the connection is secure (TRUE) or not (FALSE)
+/// @param host Reference to array to store the parsed host (RFC 1035: max 253 chars + null)
+/// @param path Reference to array to store the parsed path (max 2048 chars)
+/// @param port Reference to store the parsed port
+/// @param secure Reference to store whether the connection is secure (TRUE) or not (FALSE)
 /// @return Indicates whether the URL was parsed successfully (TRUE) or if there was an error (FALSE)
 
-BOOL HttpClient::ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL &secure)
+BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure)
 {
     CHAR portBuffer[6];
 

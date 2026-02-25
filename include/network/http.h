@@ -37,5 +37,5 @@ public:
     BOOL SendGetRequest();
     BOOL SendPostRequest(PCVOID data, UINT32 dataLength);
     // Static method to parse a URL into its components (host, path, port, secure) and validate the format
-    static BOOL ParseUrl(PCCHAR url, PCHAR host, PCHAR path, UINT16 &port, BOOL &secure);
+    static BOOL ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
 };

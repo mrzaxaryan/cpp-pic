@@ -43,9 +43,10 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("WebSocket handshake failed - check if echo.websocket.org is accessible");
+			LOG_ERROR("WebSocket handshake failed - check if echo.websocket.org is accessible (error: %u)", openResult.Error());
 			return FALSE;
 		}
 
@@ -62,9 +63,10 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("Secure WebSocket handshake failed");
+			LOG_ERROR("Secure WebSocket handshake failed (error: %u)", openResult.Error());
 			return FALSE;
 		}
 
@@ -81,59 +83,53 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed");
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error());
 			return FALSE;
 		}
 
 		// Note: echo.websocket.org sends an initial "Request served by..." message
 		// We need to read and discard it before sending our test data
-		USIZE initialLength = 0;
-		WebSocketOpcode initialOpcode = OPCODE_BINARY;
-		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
-		if (initialMsg != NULL)
-		{
-			LOG_INFO("Received initial server message (%d bytes), discarding", initialLength);
-			delete[] (PCHAR)initialMsg;
-		}
+		auto initialMsg = wsClient.Read();
+		if (initialMsg)
+			LOG_INFO("Received initial server message (%d bytes), discarding", initialMsg.Value().length);
 
 		// Send text message
 		auto testMessage = "Hello, WebSocket!"_embed;
-		UINT32 bytesSent = wsClient.Write((PCVOID)(PCCHAR)testMessage, testMessage.Length(), OPCODE_TEXT);
+		auto writeResult = wsClient.Write((PCVOID)(PCCHAR)testMessage, testMessage.Length(), OPCODE_TEXT);
 
-		if (bytesSent != testMessage.Length())
+		if (!writeResult)
 		{
-			LOG_ERROR("Failed to send complete message (sent %d/%d bytes)", bytesSent, testMessage.Length());
+			LOG_ERROR("Failed to send message (error: %u)", writeResult.Error());
 			wsClient.Close();
 			return FALSE;
 		}
 
 		// Receive echo response
-		USIZE responseLength = 0;
-		WebSocketOpcode opcode = OPCODE_BINARY;
-		PVOID response = wsClient.Read(responseLength, opcode);
+		auto readResult = wsClient.Read();
 
-		if (response == NULL || responseLength == 0)
+		if (!readResult)
 		{
-			LOG_ERROR("Failed to receive echo response");
+			LOG_ERROR("Failed to receive echo response (error: %u)", readResult.Error());
 			wsClient.Close();
 			return FALSE;
 		}
 
-		if (opcode != OPCODE_TEXT)
+		WebSocketMessage &response = readResult.Value();
+
+		if (response.opcode != OPCODE_TEXT)
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", OPCODE_TEXT, opcode);
-			delete[] (PCHAR)response;
+			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", OPCODE_TEXT, response.opcode);
 			wsClient.Close();
 			return FALSE;
 		}
 
 		// Verify echo matches sent message
-		BOOL matches = (responseLength == testMessage.Length()) &&
-					   (Memory::Compare(response, (PCVOID)(PCCHAR)testMessage, testMessage.Length()) == 0);
+		BOOL matches = (response.length == testMessage.Length()) &&
+					   (Memory::Compare(response.data, (PCVOID)(PCCHAR)testMessage, testMessage.Length()) == 0);
 
-		delete[] (PCHAR)response;
 		wsClient.Close();
 
 		if (!matches)
@@ -154,20 +150,15 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed");
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error());
 			return FALSE;
 		}
 
 		// Discard initial server message
-		USIZE initialLength = 0;
-		WebSocketOpcode initialOpcode = OPCODE_BINARY;
-		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
-		if (initialMsg != NULL)
-		{
-			delete[] (PCHAR)initialMsg;
-		}
+		(void)wsClient.Read();
 
 		// Send binary message - generate data at runtime to avoid .rdata
 		UINT8 binaryData[11];
@@ -181,44 +172,42 @@ private:
 		}
 		UINT32 dataLength = sizeof(binaryData);
 
-		UINT32 bytesSent = wsClient.Write((PCVOID)binaryData, dataLength, OPCODE_BINARY);
+		auto writeResult = wsClient.Write((PCVOID)binaryData, dataLength, OPCODE_BINARY);
 
-		if (bytesSent != dataLength)
+		if (!writeResult)
 		{
-			LOG_ERROR("Failed to send complete binary message (sent %d/%d bytes)", bytesSent, dataLength);
+			LOG_ERROR("Failed to send binary message (error: %u)", writeResult.Error());
 			wsClient.Close();
 			return FALSE;
 		}
 
-		LOG_INFO("Sent binary message (%d bytes)", bytesSent);
+		LOG_INFO("Sent binary message (%d bytes)", writeResult.Value());
 
 		// Receive echo response
-		USIZE responseLength = 0;
-		WebSocketOpcode opcode = OPCODE_BINARY;
-		PVOID response = wsClient.Read(responseLength, opcode);
+		auto readResult = wsClient.Read();
 
-		if (response == NULL || responseLength == 0)
+		if (!readResult)
 		{
-			LOG_ERROR("Failed to receive echo response");
+			LOG_ERROR("Failed to receive echo response (error: %u)", readResult.Error());
 			wsClient.Close();
 			return FALSE;
 		}
 
-		if (opcode != OPCODE_BINARY)
+		WebSocketMessage &response = readResult.Value();
+
+		if (response.opcode != OPCODE_BINARY)
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", OPCODE_BINARY, opcode);
-			delete[] (PCHAR)response;
+			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", OPCODE_BINARY, response.opcode);
 			wsClient.Close();
 			return FALSE;
 		}
 
-		LOG_INFO("Received binary echo (opcode: %d, length: %d)", opcode, responseLength);
+		LOG_INFO("Received binary echo (opcode: %d, length: %d)", response.opcode, response.length);
 
 		// Verify echo matches sent data
-		BOOL matches = (responseLength == dataLength) &&
-					   (Memory::Compare(response, (PCVOID)binaryData, dataLength) == 0);
+		BOOL matches = (response.length == dataLength) &&
+					   (Memory::Compare(response.data, (PCVOID)binaryData, dataLength) == 0);
 
-		delete[] (PCHAR)response;
 		wsClient.Close();
 
 		if (!matches)
@@ -239,20 +228,15 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed");
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error());
 			return FALSE;
 		}
 
 		// Discard initial server message
-		USIZE initialLength = 0;
-		WebSocketOpcode initialOpcode = OPCODE_BINARY;
-		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
-		if (initialMsg != NULL)
-		{
-			delete[] (PCHAR)initialMsg;
-		}
+		(void)wsClient.Read();
 
 		// Test messages
 		auto msg1 = "First message"_embed;
@@ -260,70 +244,55 @@ private:
 		auto msg3 = "Third message"_embed;
 
 		// Send and receive message 1
-		UINT32 sent1 = wsClient.Write((PCVOID)(PCCHAR)msg1, msg1.Length(), OPCODE_TEXT);
-		if (sent1 != msg1.Length())
+		auto write1 = wsClient.Write((PCVOID)(PCCHAR)msg1, msg1.Length(), OPCODE_TEXT);
+		if (!write1)
 		{
 			LOG_ERROR("Failed to send message 1");
 			wsClient.Close();
 			return FALSE;
 		}
 
-		USIZE len1 = 0;
-		WebSocketOpcode op1 = OPCODE_BINARY;
-		PVOID resp1 = wsClient.Read(len1, op1);
-		if (resp1 == NULL || len1 != msg1.Length())
+		auto read1 = wsClient.Read();
+		if (!read1 || read1.Value().length != msg1.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 1");
-			if (resp1)
-				delete[] (PCHAR)resp1;
 			wsClient.Close();
 			return FALSE;
 		}
-		delete[] (PCHAR)resp1;
 
 		// Send and receive message 2
-		UINT32 sent2 = wsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length(), OPCODE_TEXT);
-		if (sent2 != msg2.Length())
+		auto write2 = wsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length(), OPCODE_TEXT);
+		if (!write2)
 		{
 			LOG_ERROR("Failed to send message 2");
 			wsClient.Close();
 			return FALSE;
 		}
 
-		USIZE len2 = 0;
-		WebSocketOpcode op2 = OPCODE_BINARY;
-		PVOID resp2 = wsClient.Read(len2, op2);
-		if (resp2 == NULL || len2 != msg2.Length())
+		auto read2 = wsClient.Read();
+		if (!read2 || read2.Value().length != msg2.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 2");
-			if (resp2)
-				delete[] (PCHAR)resp2;
 			wsClient.Close();
 			return FALSE;
 		}
-		delete[] (PCHAR)resp2;
 
 		// Send and receive message 3
-		UINT32 sent3 = wsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length(), OPCODE_TEXT);
-		if (sent3 != msg3.Length())
+		auto write3 = wsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length(), OPCODE_TEXT);
+		if (!write3)
 		{
 			LOG_ERROR("Failed to send message 3");
 			wsClient.Close();
 			return FALSE;
 		}
 
-		USIZE len3 = 0;
-		WebSocketOpcode op3 = OPCODE_BINARY;
-		PVOID resp3 = wsClient.Read(len3, op3);
-		if (resp3 == NULL || len3 != msg3.Length())
+		auto read3 = wsClient.Read();
+		if (!read3 || read3.Value().length != msg3.Length())
 		{
 			LOG_ERROR("Failed to receive echo for message 3");
-			if (resp3)
-				delete[] (PCHAR)resp3;
 			wsClient.Close();
 			return FALSE;
 		}
-		delete[] (PCHAR)resp3;
 
 		LOG_INFO("Multiple message test passed");
 		wsClient.Close();
@@ -338,20 +307,15 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed");
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error());
 			return FALSE;
 		}
 
 		// Discard initial server message
-		USIZE initialLength = 0;
-		WebSocketOpcode initialOpcode = OPCODE_BINARY;
-		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
-		if (initialMsg != NULL)
-		{
-			delete[] (PCHAR)initialMsg;
-		}
+		(void)wsClient.Read();
 
 		// Create a large message (1KB)
 		UINT32 largeMessageSize = 1024;
@@ -371,39 +335,38 @@ private:
 		largeMessage[largeMessageSize] = '\0';
 
 		// Send large message
-		UINT32 bytesSent = wsClient.Write((PCVOID)largeMessage, largeMessageSize, OPCODE_TEXT);
+		auto writeResult = wsClient.Write((PCVOID)largeMessage, largeMessageSize, OPCODE_TEXT);
 
-		if (bytesSent != largeMessageSize)
+		if (!writeResult)
 		{
-			LOG_ERROR("Failed to send complete large message (sent %d/%d bytes)", bytesSent, largeMessageSize);
+			LOG_ERROR("Failed to send large message (error: %u)", writeResult.Error());
 			delete[] largeMessage;
 			wsClient.Close();
 			return FALSE;
 		}
 
-		LOG_INFO("Sent large message (%d bytes)", bytesSent);
+		LOG_INFO("Sent large message (%d bytes)", writeResult.Value());
 
 		// Receive echo response
-		USIZE responseLength = 0;
-		WebSocketOpcode opcode = OPCODE_BINARY;
-		PVOID response = wsClient.Read(responseLength, opcode);
+		auto readResult = wsClient.Read();
 
-		if (response == NULL || responseLength == 0)
+		if (!readResult)
 		{
-			LOG_ERROR("Failed to receive large echo response");
+			LOG_ERROR("Failed to receive large echo response (error: %u)", readResult.Error());
 			delete[] largeMessage;
 			wsClient.Close();
 			return FALSE;
 		}
 
-		LOG_INFO("Received large echo response (opcode: %d, length: %d)", opcode, responseLength);
+		WebSocketMessage &response = readResult.Value();
+
+		LOG_INFO("Received large echo response (opcode: %d, length: %d)", response.opcode, response.length);
 
 		// Verify echo matches sent message
-		BOOL matches = (responseLength == largeMessageSize) &&
-					   (Memory::Compare(response, (PCVOID)largeMessage, largeMessageSize) == 0);
+		BOOL matches = (response.length == largeMessageSize) &&
+					   (Memory::Compare(response.data, (PCVOID)largeMessage, largeMessageSize) == 0);
 
 		delete[] largeMessage;
-		delete[] (PCHAR)response;
 		wsClient.Close();
 
 		if (!matches)
@@ -424,9 +387,10 @@ private:
 		auto wssUrl = "wss://echo.websocket.org/"_embed;
 		WebSocketClient wsClient((PCCHAR)wssUrl);
 
-		if (!wsClient.Open())
+		auto openResult = wsClient.Open();
+		if (!openResult)
 		{
-			LOG_ERROR("WebSocket connection failed");
+			LOG_ERROR("WebSocket connection failed (error: %u)", openResult.Error());
 			return FALSE;
 		}
 

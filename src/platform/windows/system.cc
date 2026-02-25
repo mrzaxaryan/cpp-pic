@@ -88,16 +88,33 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
         }
 #elif defined(ARCHITECTURE_I386)
         {
-            // i386 stubs: B8 [SSN:4] BA [addr:4] {FF12|FFD2} C2 [cleanup:2]
+            // i386 stubs have two known formats, both starting with B8 [SSN:4]:
+            //
+            // Old format: B8 [SSN:4] BA [addr:4] {FF12|FFD2} C2 [cleanup:2]
+            //   Direct mov edx,addr then call [edx] or call edx.
+            //
+            // New format (Windows 11 WoW64): B8 [SSN:4] E8 00000000 5A ...
+            //   Uses call $+5; pop edx to get EIP, conditional branch, then
+            //   falls through or jumps to BA [addr:4] {FF12|FFD2} at offset 0x1F.
             UINT8* funcAddr = base + funcRva;
-            if (funcAddr[0] != 0xB8 || funcAddr[5] != 0xBA)
+            if (funcAddr[0] != 0xB8)
                 return result;
 
-            PVOID rawAddr = *(PVOID*)(funcAddr + 6);
+            // Locate the "mov edx, addr" (BA) instruction
+            INT32 baOffset;
+            if (funcAddr[5] == 0xBA)
+                baOffset = 5;   // old format
+            else if (funcAddr[5] == 0xE8 && *(UINT32*)(funcAddr + 6) == 0
+                     && funcAddr[0xA] == 0x5A && funcAddr[0x1F] == 0xBA)
+                baOffset = 0x1F; // new conditional format
+            else
+                return result;
 
-            if (funcAddr[10] == 0xFF && funcAddr[11] == 0x12)
+            PVOID rawAddr = *(PVOID*)(funcAddr + baOffset + 1);
+
+            if (funcAddr[baOffset + 5] == 0xFF && funcAddr[baOffset + 6] == 0x12)
                 result.syscallAddress = *(PVOID*)rawAddr;   // native: dereference pointer to KiFastSystemCall
-            else if (funcAddr[10] == 0xFF && funcAddr[11] == 0xD2)
+            else if (funcAddr[baOffset + 5] == 0xFF && funcAddr[baOffset + 6] == 0xD2)
                 result.syscallAddress = rawAddr;            // WoW64: direct trampoline address
             else
                 return result;

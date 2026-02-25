@@ -505,7 +505,7 @@ BOOL DirectoryIterator::Next()
 
     // --- MODE 1: Drive Bitmask Mode (first is TRUE and handle is small) ---
     // We treat handles < 0x1000000 as bitmasks (drives)
-    if (isBitMaskMode && first)
+    if (isBitMaskMode)
     {
         USIZE mask = (USIZE)handle;
 
@@ -532,7 +532,6 @@ BOOL DirectoryIterator::Next()
                     &info,
                     sizeof(info),
                     FileFsDeviceInformation);
-                NTDLL::ZwClose(handle);
 
                 switch (info.DeviceType)
                 {
@@ -557,14 +556,14 @@ BOOL DirectoryIterator::Next()
                     currentEntry.type = DRIVE_UNKNOWN;
                     break;
                 }
+
+                // Update mask for next time (remove the bit we just processed)
+                mask &= ~(1 << i);
+                handle = (PVOID)mask;
+                first = FALSE;
+
+                return TRUE;
             }
-
-            // Update mask for next time (remove the bit we just processed)
-            mask &= ~(1 << i);
-            handle = (PVOID)mask;
-            first = FALSE;
-
-            return TRUE;
         }
 
         return FALSE;

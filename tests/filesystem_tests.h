@@ -40,7 +40,7 @@ private:
 		//   │   └── level2_dir4/
 		//   └── level1_dir3/
 		//       └── level2_dir5/
-       
+
 		// Create root directory
 		if (!FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root"_embed)))
 			return FALSE;
@@ -78,7 +78,7 @@ private:
 			return FALSE;
 		if (!FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2"_embed)))
 			return FALSE;
-		if (!FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3"_embed)))   
+		if (!FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3"_embed)))
 			return FALSE;
 		if (!FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4"_embed)))
 			return FALSE;
@@ -93,70 +93,70 @@ private:
 		// Create files in various directories at different levels
 		// Root level file
 		File rootFile = FileSystem::Open(Path::NormalizePath(L"test_io_root\\root_file.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+										 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!rootFile.IsValid())
 			return FALSE;
 		rootFile.Close();
 
 		// Files in first level directories
 		File file1 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\file1.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file1.IsValid())
 			return FALSE;
 		file1.Close();
 
 		File file2 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\file2.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file2.IsValid())
 			return FALSE;
 		file2.Close();
 
 		File file3 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir3\\file3.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file3.IsValid())
 			return FALSE;
 		file3.Close();
 
 		// Files in second level directories
 		File file4 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file4.IsValid())
 			return FALSE;
 		file4.Close();
 
 		File file5 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2\\deep_file2.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file5.IsValid())
 			return FALSE;
 		file5.Close();
 
 		File file6 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3\\deep_file3.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file6.IsValid())
 			return FALSE;
 		file6.Close();
 
 		File file7 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4\\deep_file4.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file7.IsValid())
 			return FALSE;
 		file7.Close();
 
 		File file8 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir3\\level2_dir5\\deep_file5.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!file8.IsValid())
 			return FALSE;
 		file8.Close();
 
 		// Create multiple files in one directory
 		File extra1 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\extra1.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									   FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!extra1.IsValid())
 			return FALSE;
 		extra1.Close();
 
 		File extra2 = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\extra2.txt"_embed),
-			FileSystem::FS_CREATE | FileSystem::FS_WRITE);
+									   FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!extra2.IsValid())
 			return FALSE;
 		extra2.Close();
@@ -171,12 +171,12 @@ private:
 		// Test 1: Simple text
 		{
 			File file = FileSystem::Open(Path::NormalizePath(L"test_io_root\\test_write_read.txt"_embed),
-				FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
+										 FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
 			if (!file.IsValid())
 				return FALSE;
 
 			auto testData = "Hello, File System!"_embed;
-			UINT32 bytesWritten = file.Write((const CHAR*)testData, 20);
+			UINT32 bytesWritten = file.Write((const CHAR *)testData, 20);
 			if (bytesWritten != 20)
 				return FALSE;
 
@@ -196,7 +196,7 @@ private:
 			// Verify content
 			for (INT32 i = 0; i < 20; i++)
 			{
-				if (buffer[i] != ((const CHAR*)testData)[i])
+				if (buffer[i] != ((const CHAR *)testData)[i])
 					return FALSE;
 			}
 
@@ -206,7 +206,7 @@ private:
 		// Test 2: Binary data
 		{
 			File file = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\binary_test.dat"_embed),
-				FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
+										 FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
 			if (!file.IsValid())
 				return FALSE;
 
@@ -246,12 +246,12 @@ private:
 		// Test 3: File offset operations
 		{
 			File file = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\offset_test.dat"_embed),
-				FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
+										 FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
 			if (!file.IsValid())
 				return FALSE;
 
 			auto data = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"_embed;
-			file.Write((const CHAR*)data, 26);
+			file.Write((const CHAR *)data, 26);
 
 			// Test SetOffset
 			file.SetOffset(10);
@@ -295,6 +295,12 @@ private:
 
 	static BOOL TestDirectoryIteration()
 	{
+		DirectoryIterator rootIter(Path::NormalizePath(L""_embed));
+		if (!rootIter.IsValid())
+		{
+			LOG_ERROR("Failed to create DirectoryIterator for root");
+			return FALSE;
+		}
 		// Test iterating through a directory with multiple files
 		DirectoryIterator iter(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
 		if (!iter.IsValid())
@@ -305,7 +311,7 @@ private:
 
 		while (iter.Next())
 		{
-			const DirectoryEntry& entry = iter.Get();
+			const DirectoryEntry &entry = iter.Get();
 
 			// Skip "." and ".." entries
 			if (entry.name[0] == L'.' &&

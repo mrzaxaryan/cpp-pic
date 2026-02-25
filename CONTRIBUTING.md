@@ -150,6 +150,18 @@ UINT32 val = embedded[0]; // Unpacked at runtime
 - **Use `NOINLINE`** when you need to prevent inlining (e.g., for function pointer embedding)
 - **Cast to `USIZE`** when passing pointer arguments to syscall wrappers
 - **Prefer `constexpr`** for variables and functions that can be evaluated at compile time. Use `consteval` when evaluation *must* happen at compile time (e.g., embedded type constructors, hash computations). This moves work from runtime to compile time, reducing code size and eliminating potential `.rdata` generation
+- **Use `[[nodiscard]]`** on functions whose return value must not be ignored. Since PIR has no exceptions, return codes are the only way to signal failure -- a missed check means a silent bug. Apply it to all functions returning `BOOL` success/failure, `NTSTATUS`, `SSIZE` (where negative means error), and factory methods returning objects that must be used:
+
+```cpp
+// GOOD -- compiler warns if caller ignores the result
+[[nodiscard]] BOOL Open();
+[[nodiscard]] NTSTATUS ZwCreateFile(PPVOID FileHandle, ...);
+[[nodiscard]] static IPAddress FromIPv4(UINT32 address);
+
+// NOT needed -- void functions, pure setters, or functions called only for side effects
+VOID Close();
+VOID SetPort(UINT16 port);
+```
 
 ### Naming Conventions
 

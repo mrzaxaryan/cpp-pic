@@ -79,7 +79,7 @@ Result<void, WebSocketError> WebSocketClient::Open()
 	return Result<void, WebSocketError>::Ok();
 }
 
-BOOL WebSocketClient::Close()
+Result<void, WebSocketError> WebSocketClient::Close()
 {
 	if (isConnected)
 	{
@@ -91,7 +91,7 @@ BOOL WebSocketClient::Close()
 	isConnected = FALSE;
 	(void)tlsContext.Close();
 	LOG_DEBUG("WebSocket client to %s:%u%s closed", hostName, port, path);
-	return TRUE;
+	return Result<void, WebSocketError>::Ok();
 }
 
 Result<UINT32, WebSocketError> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode)

@@ -99,7 +99,7 @@ public:
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	WebSocketClient(PCCHAR url);
-	~WebSocketClient() { if (IsValid()) (void)Close(); }
+	~WebSocketClient() { if (IsValid()) { [[maybe_unused]] auto _ = Close(); } }
 
 	WebSocketClient(const WebSocketClient &) = delete;
 	WebSocketClient &operator=(const WebSocketClient &) = delete;
@@ -110,7 +110,7 @@ public:
 	[[nodiscard]] BOOL IsSecure() const { return tlsContext.IsSecure(); }
 	[[nodiscard]] BOOL IsConnected() const { return isConnected; }
 	[[nodiscard]] Result<void, WebSocketError> Open();
-	[[nodiscard]] BOOL Close();
+	[[nodiscard]] Result<void, WebSocketError> Close();
 	[[nodiscard]] Result<WebSocketMessage, WebSocketError> Read();
 	[[nodiscard]] Result<UINT32, WebSocketError> Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
 };

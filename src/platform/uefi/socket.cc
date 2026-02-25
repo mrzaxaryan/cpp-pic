@@ -369,21 +369,23 @@ Socket::Socket(const IPAddress &ipAddress, UINT16 portNum)
 // Open (Connect)
 // =============================================================================
 
-Result<void, SocketError> Socket::Open()
+Result<void, NetworkError> Socket::Open()
 {
 	LOG_DEBUG("Socket: Open() starting...");
 
 	if (!IsValid())
 	{
 		LOG_DEBUG("Socket: Open() failed - invalid socket");
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_HandleInvalid, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_OpenFailed_HandleInvalid);
+		return Result<void, NetworkError>::Err(err);
 	}
 
 	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
 	if (sockCtx->IsConnected)
 	{
 		LOG_DEBUG("Socket: Open() - already connected");
-		return Result<void, SocketError>::Ok();
+		return Result<void, NetworkError>::Ok();
 	}
 
 	EFI_CONTEXT *ctx = GetEfiContext();
@@ -397,7 +399,9 @@ Result<void, SocketError> Socket::Open()
 	if (EFI_ERROR_CHECK(bs->CreateEvent(EVT_NOTIFY_SIGNAL, TPL_CALLBACK, EmptyNotify, nullptr, &ConnectEvent)))
 	{
 		LOG_DEBUG("Socket: CreateEvent failed");
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_EventCreate, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_OpenFailed_EventCreate);
+		return Result<void, NetworkError>::Err(err);
 	}
 
 	EFI_STATUS Status;
@@ -419,7 +423,9 @@ Result<void, SocketError> Socket::Open()
 		{
 			LOG_DEBUG("Socket: TCP6 Configure failed");
 			bs->CloseEvent(ConnectEvent);
-			return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_Connect, 0});
+			NetworkError err;
+			err.Push(NetworkError::Socket_OpenFailed_Connect);
+			return Result<void, NetworkError>::Err(err);
 		}
 		sockCtx->IsConfigured = true;
 		LOG_DEBUG("Socket: TCP6 configured, connecting...");
@@ -475,7 +481,9 @@ Result<void, SocketError> Socket::Open()
 		{
 			LOG_DEBUG("Socket: TCP4 Configure failed: 0x%lx", (UINT64)Status);
 			bs->CloseEvent(ConnectEvent);
-			return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_Connect, 0});
+			NetworkError err;
+			err.Push(NetworkError::Socket_OpenFailed_Connect);
+			return Result<void, NetworkError>::Err(err);
 		}
 		sockCtx->IsConfigured = true;
 		LOG_DEBUG("Socket: TCP4 configured, connecting...");
@@ -509,22 +517,28 @@ Result<void, SocketError> Socket::Open()
 	LOG_DEBUG("Socket: Open() done, connected=%d", (INT32)success);
 
 	if (!success)
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_Connect, 0});
-	return Result<void, SocketError>::Ok();
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_OpenFailed_Connect);
+		return Result<void, NetworkError>::Err(err);
+	}
+	return Result<void, NetworkError>::Ok();
 }
 
 // =============================================================================
 // Close
 // =============================================================================
 
-Result<void, SocketError> Socket::Close()
+Result<void, NetworkError> Socket::Close()
 {
 	LOG_DEBUG("Socket: Close() starting...");
 
 	if (!IsValid())
 	{
 		LOG_DEBUG("Socket: Close() invalid socket");
-		return Result<void, SocketError>::Err(SocketError{SocketError::CloseFailed_Close, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_CloseFailed_Close);
+		return Result<void, NetworkError>::Err(err);
 	}
 
 	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
@@ -670,41 +684,55 @@ Result<void, SocketError> Socket::Close()
 	bs->FreePool(sockCtx);
 	m_socket = nullptr;
 	LOG_DEBUG("Socket: Close() completed");
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
 // =============================================================================
 // Bind (not used on UEFI - TCP protocol handles addressing via Configure)
 // =============================================================================
 
-Result<void, SocketError> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
+Result<void, NetworkError> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 {
 	(VOID)SocketAddress;
 	(VOID)ShareType;
-	return Result<void, SocketError>::Err(SocketError{SocketError::BindFailed_Bind, 0});
+	NetworkError err;
+	err.Push(NetworkError::Socket_BindFailed_Bind);
+	return Result<void, NetworkError>::Err(err);
 }
 
 // =============================================================================
 // Read
 // =============================================================================
 
-Result<SSIZE, SocketError> Socket::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, NetworkError> Socket::Read(PVOID buffer, UINT32 bufferLength)
 {
 	LOG_DEBUG("Socket: Read(%u bytes) starting...", bufferLength);
 
 	if (!IsValid() || buffer == nullptr || bufferLength == 0)
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_ReadFailed_HandleInvalid);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
 	if (!sockCtx->IsConnected)
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_ReadFailed_HandleInvalid);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	EFI_CONTEXT *ctx = GetEfiContext();
 	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
 
 	EFI_EVENT RxEvent;
 	if (EFI_ERROR_CHECK(bs->CreateEvent(EVT_NOTIFY_SIGNAL, TPL_CALLBACK, EmptyNotify, nullptr, &RxEvent)))
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_EventCreate, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_ReadFailed_EventCreate);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	SSIZE bytesRead = -1;
 
@@ -766,31 +794,39 @@ Result<SSIZE, SocketError> Socket::Read(PVOID buffer, UINT32 bufferLength)
 	bs->CloseEvent(RxEvent);
 
 	if (bytesRead < 0)
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_Recv, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_ReadFailed_Recv);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	LOG_DEBUG("Socket: Read() done, bytesRead=%d", (INT32)bytesRead);
-	return Result<SSIZE, SocketError>::Ok(bytesRead);
+	return Result<SSIZE, NetworkError>::Ok(bytesRead);
 }
 
 // =============================================================================
 // Write
 // =============================================================================
 
-Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, NetworkError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 {
 	LOG_DEBUG("Socket: Write(%u bytes) starting...", bufferLength);
 
 	if (!IsValid() || buffer == nullptr || bufferLength == 0)
 	{
 		LOG_DEBUG("Socket: Write() invalid params");
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_Send, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_WriteFailed_Send);
+		return Result<UINT32, NetworkError>::Err(err);
 	}
 
 	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
 	if (!sockCtx->IsConnected)
 	{
 		LOG_DEBUG("Socket: Write() not connected");
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_Send, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_WriteFailed_Send);
+		return Result<UINT32, NetworkError>::Err(err);
 	}
 
 	EFI_CONTEXT *ctx = GetEfiContext();
@@ -800,7 +836,9 @@ Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 	if (EFI_ERROR_CHECK(bs->CreateEvent(EVT_NOTIFY_SIGNAL, TPL_CALLBACK, EmptyNotify, nullptr, &TxEvent)))
 	{
 		LOG_DEBUG("Socket: Write() CreateEvent failed");
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_EventCreate, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_WriteFailed_EventCreate);
+		return Result<UINT32, NetworkError>::Err(err);
 	}
 
 	BOOL sent = false;
@@ -865,8 +903,10 @@ Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 	if (!sent)
 	{
 		LOG_DEBUG("Socket: Write() failed");
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_Send, 0});
+		NetworkError err;
+		err.Push(NetworkError::Socket_WriteFailed_Send);
+		return Result<UINT32, NetworkError>::Err(err);
 	}
 	LOG_DEBUG("Socket: Write() done, bytesSent=%u", bufferLength);
-	return Result<UINT32, SocketError>::Ok(bufferLength);
+	return Result<UINT32, NetworkError>::Ok(bufferLength);
 }

@@ -642,7 +642,7 @@ INT32 TLSClient::ReadChannel(PCHAR out, INT32 size)
 /// @brief Open a TLS connection to the server, perform the TLS handshake by sending the ClientHello message and processing the server's responses
 /// @return Result indicating whether the TLS connection was opened and the handshake completed successfully
 
-Result<void, TlsError> TLSClient::Open()
+Result<void, NetworkError> TLSClient::Open()
 {
     LOG_DEBUG("Connecting to host: %s for client: %p, secure: %d", host, this, secure);
 
@@ -650,20 +650,24 @@ Result<void, TlsError> TLSClient::Open()
     if (!openResult)
     {
         LOG_DEBUG("Failed to connect to host: %s, for client: %p", host, this);
-        return Result<void, TlsError>::Err({TlsError::OpenFailed_Socket, (UINT32)openResult.Error().kind});
+        NetworkError err = openResult.Error();
+        err.Push(NetworkError::Tls_OpenFailed_Socket);
+        return Result<void, NetworkError>::Err(err);
     }
     LOG_DEBUG("Connected to host: %s, for client: %p", host, this);
 
     if (!secure)
     {
         LOG_DEBUG("Non-secure connection opened for client: %p", this);
-        return Result<void, TlsError>::Ok();
+        return Result<void, NetworkError>::Ok();
     }
 
     if (!SendClientHello(host))
     {
         LOG_DEBUG("Failed to send Client Hello for client: %p", this);
-        return Result<void, TlsError>::Err({TlsError::OpenFailed_Handshake, 0});
+        NetworkError err;
+        err.Push(NetworkError::Tls_OpenFailed_Handshake);
+        return Result<void, NetworkError>::Err(err);
     }
     LOG_DEBUG("Client Hello sent successfully for client: %p", this);
 
@@ -672,17 +676,19 @@ Result<void, TlsError> TLSClient::Open()
         if (!ProcessReceive())
         {
             LOG_DEBUG("Failed to process received data for client: %p", this);
-            return Result<void, TlsError>::Err({TlsError::OpenFailed_Handshake, 0});
+            NetworkError err;
+            err.Push(NetworkError::Tls_OpenFailed_Handshake);
+            return Result<void, NetworkError>::Err(err);
         }
     }
 
-    return Result<void, TlsError>::Ok();
+    return Result<void, NetworkError>::Ok();
 }
 
 /// @brief Close connection to the server, clean up buffers and cryptographic context
 /// @return Result indicating whether the connection was closed successfully
 
-Result<void, TlsError> TLSClient::Close()
+Result<void, NetworkError> TLSClient::Close()
 {
     stateIndex = 0;
     channelBytesRead = 0;
@@ -698,8 +704,12 @@ Result<void, TlsError> TLSClient::Close()
     LOG_DEBUG("Closing socket for client: %p", this);
     auto closeResult = context.Close();
     if (!closeResult)
-        return Result<void, TlsError>::Err({TlsError::CloseFailed_Socket, (UINT32)closeResult.Error().kind});
-    return Result<void, TlsError>::Ok();
+    {
+        NetworkError err = closeResult.Error();
+        err.Push(NetworkError::Tls_CloseFailed_Socket);
+        return Result<void, NetworkError>::Err(err);
+    }
+    return Result<void, NetworkError>::Ok();
 }
 
 /// @brief Write data to the TLS channel, encrypting it if the handshake is complete and the encoding is enabled
@@ -707,7 +717,7 @@ Result<void, TlsError> TLSClient::Close()
 /// @param bufferLength Length of the input buffer in bytes
 /// @return Result with the number of bytes written, or an error
 
-Result<UINT32, TlsError> TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, NetworkError> TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
 {
     LOG_DEBUG("Sending data for client: %p, size: %d bytes", this, bufferLength);
 
@@ -715,14 +725,20 @@ Result<UINT32, TlsError> TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
     {
         auto writeResult = context.Write(buffer, bufferLength);
         if (!writeResult)
-            return Result<UINT32, TlsError>::Err({TlsError::WriteFailed_Send, (UINT32)writeResult.Error().kind});
-        return Result<UINT32, TlsError>::Ok(writeResult.Value());
+        {
+            NetworkError err = writeResult.Error();
+            err.Push(NetworkError::Tls_WriteFailed_Send);
+            return Result<UINT32, NetworkError>::Err(err);
+        }
+        return Result<UINT32, NetworkError>::Ok(writeResult.Value());
     }
 
     if (stateIndex < 6)
     {
         LOG_DEBUG("send error, state index is %d", stateIndex);
-        return Result<UINT32, TlsError>::Err({TlsError::WriteFailed_NotReady, 0});
+        NetworkError err;
+        err.Push(NetworkError::Tls_WriteFailed_NotReady);
+        return Result<UINT32, NetworkError>::Err(err);
     }
 
     sendBuffer.Clear();
@@ -734,14 +750,16 @@ Result<UINT32, TlsError> TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
         if (!SendPacket(CONTENT_APPLICATION_DATA, 0x303, sendBuffer))
         {
             LOG_DEBUG("Failed to send packet for client: %p, size: %d bytes", this, send_size);
-            return Result<UINT32, TlsError>::Err({TlsError::WriteFailed_Send, 0});
+            NetworkError err;
+            err.Push(NetworkError::Tls_WriteFailed_Send);
+            return Result<UINT32, NetworkError>::Err(err);
         }
 
         i += send_size;
     }
 
     LOG_DEBUG("Data sent successfully for client: %p, total size: %d bytes", this, bufferLength);
-    return Result<UINT32, TlsError>::Ok(bufferLength);
+    return Result<UINT32, NetworkError>::Ok(bufferLength);
 }
 
 /// @brief Read from the TLS channel, decrypting data if the handshake is complete and the encoding is enabled, and store it in the provided buffer
@@ -749,20 +767,26 @@ Result<UINT32, TlsError> TLSClient::Write(PCVOID buffer, UINT32 bufferLength)
 /// @param bufferLength Length of the buffer in bytes, indicating the maximum number of bytes to read from the TLS channel
 /// @return Result with the number of bytes read, or an error
 
-Result<SSIZE, TlsError> TLSClient::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, NetworkError> TLSClient::Read(PVOID buffer, UINT32 bufferLength)
 {
     if (!secure)
     {
         auto readResult = context.Read(buffer, bufferLength);
         if (!readResult)
-            return Result<SSIZE, TlsError>::Err({TlsError::ReadFailed_Receive, (UINT32)readResult.Error().kind});
-        return Result<SSIZE, TlsError>::Ok(readResult.Value());
+        {
+            NetworkError err = readResult.Error();
+            err.Push(NetworkError::Tls_ReadFailed_Receive);
+            return Result<SSIZE, NetworkError>::Err(err);
+        }
+        return Result<SSIZE, NetworkError>::Ok(readResult.Value());
     }
 
     if (stateIndex < 6)
     {
         LOG_DEBUG("recv error, state index is %d", stateIndex);
-        return Result<SSIZE, TlsError>::Err({TlsError::ReadFailed_NotReady, 0});
+        NetworkError err;
+        err.Push(NetworkError::Tls_ReadFailed_NotReady);
+        return Result<SSIZE, NetworkError>::Err(err);
     }
     LOG_DEBUG("Reading data for client: %p, requested size: %d", this, bufferLength);
     while (channelBuffer.GetSize() <= channelBytesRead)
@@ -770,11 +794,13 @@ Result<SSIZE, TlsError> TLSClient::Read(PVOID buffer, UINT32 bufferLength)
         if (!ProcessReceive())
         {
             LOG_DEBUG("recv error, maybe close socket");
-            return Result<SSIZE, TlsError>::Err({TlsError::ReadFailed_Receive, 0});
+            NetworkError err;
+            err.Push(NetworkError::Tls_ReadFailed_Receive);
+            return Result<SSIZE, NetworkError>::Err(err);
         }
     }
 
-    return Result<SSIZE, TlsError>::Ok(ReadChannel((PCHAR)buffer, bufferLength));
+    return Result<SSIZE, NetworkError>::Ok(ReadChannel((PCHAR)buffer, bufferLength));
 }
 
 /// @brief Constructor for the TLSClient class

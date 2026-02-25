@@ -12,20 +12,6 @@ enum WebSocketOpcode : INT8
 	OPCODE_PONG     = 0xA
 };
 
-enum WebSocketError : UINT32
-{
-	WS_ERROR_TRANSPORT_FAILED  = 1,
-	WS_ERROR_DNS_FAILED        = 2,
-	WS_ERROR_HANDSHAKE_FAILED  = 3,
-	WS_ERROR_WRITE_FAILED      = 4,
-	WS_ERROR_NOT_CONNECTED     = 5,
-	WS_ERROR_ALLOCATION_FAILED = 6,
-	WS_ERROR_RECEIVE_FAILED    = 7,
-	WS_ERROR_CONNECTION_CLOSED = 8,
-	WS_ERROR_INVALID_FRAME     = 9,
-	WS_ERROR_FRAME_TOO_LARGE   = 10
-};
-
 struct WebSocketFrame
 {
 	PCHAR data;
@@ -91,8 +77,8 @@ private:
 	TLSClient tlsContext;
 	BOOL isConnected;
 
-	BOOL ReceiveRestrict(PVOID buffer, UINT32 size);
-	BOOL ReceiveFrame(WebSocketFrame &frame);
+	[[nodiscard]] BOOL ReceiveRestrict(PVOID buffer, UINT32 size);
+	[[nodiscard]] BOOL ReceiveFrame(WebSocketFrame &frame);
 	static VOID MaskFrame(WebSocketFrame &frame, UINT32 maskKey);
 
 public:
@@ -109,8 +95,8 @@ public:
 	[[nodiscard]] BOOL IsValid() const { return tlsContext.IsValid(); }
 	[[nodiscard]] BOOL IsSecure() const { return tlsContext.IsSecure(); }
 	[[nodiscard]] BOOL IsConnected() const { return isConnected; }
-	[[nodiscard]] Result<void, WebSocketError> Open();
-	[[nodiscard]] Result<void, WebSocketError> Close();
-	[[nodiscard]] Result<WebSocketMessage, WebSocketError> Read();
-	[[nodiscard]] Result<UINT32, WebSocketError> Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
+	[[nodiscard]] Result<void, NetworkError> Open();
+	[[nodiscard]] Result<void, NetworkError> Close();
+	[[nodiscard]] Result<WebSocketMessage, NetworkError> Read();
+	[[nodiscard]] Result<UINT32, NetworkError> Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
 };

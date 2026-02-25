@@ -67,26 +67,39 @@ Socket::Socket(const IPAddress &ipAddress, UINT16 port)
 	m_socket = (PVOID)fd;
 }
 
-Result<void, SocketError> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
+Result<void, NetworkError> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 {
 	(VOID)shareType; // not used on Linux
 
 	if (!IsValid())
-		return Result<void, SocketError>::Err(SocketError{SocketError::BindFailed_Bind, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_BindFailed_Bind);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	SSIZE sockfd  = (SSIZE)m_socket;
 	UINT32 addrLen = (socketAddress.sin_family == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
 	SSIZE  result  = linux_bind(sockfd, &socketAddress, addrLen);
 	if (result != 0)
-		return Result<void, SocketError>::Err(SocketError{SocketError::BindFailed_Bind, (UINT32)(-result)});
+	{
+		NetworkError err;
+		err.Push((UINT32)(-result));
+		err.Push(NetworkError::Socket_BindFailed_Bind);
+		return Result<void, NetworkError>::Err(err);
+	}
 
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
-Result<void, SocketError> Socket::Open()
+Result<void, NetworkError> Socket::Open()
 {
 	if (!IsValid())
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_OpenFailed_HandleInvalid);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	SSIZE sockfd = (SSIZE)m_socket;
 
@@ -98,43 +111,69 @@ Result<void, SocketError> Socket::Open()
 
 	UINT32 addrLen = SocketAddressHelper::PrepareAddress(ip, port, &addrBuffer, sizeof(addrBuffer));
 	if (addrLen == 0)
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_Connect, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_OpenFailed_Connect);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	SSIZE result = linux_connect(sockfd, (SockAddr *)&addrBuffer, addrLen);
 	if (result != 0)
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_Connect, (UINT32)(-result)});
+	{
+		NetworkError err;
+		err.Push((UINT32)(-result));
+		err.Push(NetworkError::Socket_OpenFailed_Connect);
+		return Result<void, NetworkError>::Err(err);
+	}
 
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
-Result<void, SocketError> Socket::Close()
+Result<void, NetworkError> Socket::Close()
 {
 	if (!IsValid())
-		return Result<void, SocketError>::Err(SocketError{SocketError::CloseFailed_Close, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_CloseFailed_Close);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	SSIZE sockfd = (SSIZE)m_socket;
 	System::Call(SYS_CLOSE, sockfd);
 	m_socket = (PVOID)INVALID_FD;
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
-Result<SSIZE, SocketError> Socket::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, NetworkError> Socket::Read(PVOID buffer, UINT32 bufferLength)
 {
 	if (!IsValid())
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_ReadFailed_HandleInvalid);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	SSIZE sockfd = (SSIZE)m_socket;
 	SSIZE result = linux_recv(sockfd, buffer, bufferLength, 0);
 	if (result < 0)
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_Recv, (UINT32)(-result)});
+	{
+		NetworkError err;
+		err.Push((UINT32)(-result));
+		err.Push(NetworkError::Socket_ReadFailed_Recv);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
-	return Result<SSIZE, SocketError>::Ok(result);
+	return Result<SSIZE, NetworkError>::Ok(result);
 }
 
-Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, NetworkError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 {
 	if (!IsValid())
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_WriteFailed_HandleInvalid);
+		return Result<UINT32, NetworkError>::Err(err);
+	}
 
 	SSIZE  sockfd    = (SSIZE)m_socket;
 	UINT32 totalSent = 0;
@@ -144,10 +183,16 @@ Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		SSIZE sent = linux_send(sockfd, (const CHAR *)buffer + totalSent,
 		                        bufferLength - totalSent, 0);
 		if (sent <= 0)
-			return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_Send, sent < 0 ? (UINT32)(-sent) : 0});
+		{
+			NetworkError err;
+			if (sent < 0)
+				err.Push((UINT32)(-sent));
+			err.Push(NetworkError::Socket_WriteFailed_Send);
+			return Result<UINT32, NetworkError>::Err(err);
+		}
 
 		totalSent += (UINT32)sent;
 	}
 
-	return Result<UINT32, SocketError>::Ok(totalSent);
+	return Result<UINT32, NetworkError>::Ok(totalSent);
 }

@@ -4,31 +4,6 @@
 #include "tls_buffer.h"
 #include "tls_cipher.h"
 
-// TLS error codes
-struct TlsError
-{
-	enum Kind : UINT32
-	{
-		// Open errors
-		OpenFailed_Socket    = 1, // underlying socket Open() failed
-		OpenFailed_Handshake = 2, // TLS handshake (ClientHello / ProcessReceive) failed
-
-		// Close errors
-		CloseFailed_Socket = 3, // underlying socket Close() failed
-
-		// Read errors
-		ReadFailed_NotReady = 4, // connection not established (stateIndex < 6)
-		ReadFailed_Receive  = 5, // ProcessReceive() failed
-
-		// Write errors
-		WriteFailed_NotReady = 6, // connection not established (stateIndex < 6)
-		WriteFailed_Send     = 7, // SendPacket() failed
-	} kind;
-
-	// SocketError::Kind cast to UINT32 when triggered by a socket failure; 0 otherwise
-	UINT32 nativeError;
-};
-
 // TLS state
 typedef struct _tlsstate
 {
@@ -110,8 +85,8 @@ public:
 
     BOOL IsValid() const { return context.IsValid(); }
     BOOL IsSecure() const { return secure; }
-    [[nodiscard]] Result<void, TlsError> Open();
-    [[nodiscard]] Result<void, TlsError> Close();
-    [[nodiscard]] Result<SSIZE, TlsError> Read(PVOID buffer, UINT32 bufferLength);
-    [[nodiscard]] Result<UINT32, TlsError> Write(PCVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<void, NetworkError> Open();
+    [[nodiscard]] Result<void, NetworkError> Close();
+    [[nodiscard]] Result<SSIZE, NetworkError> Read(PVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<UINT32, NetworkError> Write(PCVOID buffer, UINT32 bufferLength);
 };

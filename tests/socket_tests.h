@@ -36,8 +36,8 @@ private:
 		auto openResult = sock.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("Socket connection failed (kind=%u nativeError=0x%08X)",
-			          (UINT32)openResult.Error().kind, openResult.Error().nativeError);
+			LOG_ERROR("Socket connection failed (error: %u 0x%08X)",
+			          openResult.Error().ErrorCode[0], openResult.Error().ErrorCode[1]);
 			(void)sock.Close();
 			return false;
 		}
@@ -77,9 +77,9 @@ private:
 
 		if (!readResult || readResult.Value() <= 0)
 		{
-			LOG_ERROR("Failed to receive HTTP response (kind=%u nativeError=0x%08X)",
-			          readResult ? 0u : (UINT32)readResult.Error().kind,
-			          readResult ? 0u : readResult.Error().nativeError);
+			LOG_ERROR("Failed to receive HTTP response (error: %u 0x%08X)",
+			          readResult ? 0u : readResult.Error().ErrorCode[0],
+			          readResult ? 0u : readResult.Error().ErrorCode[1]);
 			(void)sock.Close();
 			return false;
 		}

@@ -90,7 +90,7 @@ static NTSTATUS AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, NTSTATUS &Status
 	return waitStatus;
 }
 
-Result<void, SocketError> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
+Result<void, NetworkError> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 {
 	LOG_DEBUG("Bind(handle: 0x%p, family: %d, ShareType: %d)\n", m_socket, SocketAddress.sin_family, ShareType);
 
@@ -101,7 +101,12 @@ Result<void, SocketError> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	                                       SynchronizationEvent,
 	                                       false);
 	if (!NT_SUCCESS(Status))
-		return Result<void, SocketError>::Err(SocketError{SocketError::BindFailed_EventCreate, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_BindFailed_EventCreate);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	IO_STATUS_BLOCK IOSB;
 	Memory::Zero(&IOSB, sizeof(IOSB));
@@ -140,17 +145,26 @@ Result<void, SocketError> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	(void)NTDLL::ZwClose(SockEvent);
 
 	if (!NT_SUCCESS(Status))
-		return Result<void, SocketError>::Err(SocketError{SocketError::BindFailed_Bind, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_BindFailed_Bind);
+		return Result<void, NetworkError>::Err(err);
+	}
 
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
-Result<void, SocketError> Socket::Open()
+Result<void, NetworkError> Socket::Open()
 {
 	LOG_DEBUG("Open(handle: 0x%p, port: %d)\n", this, port);
 
 	if (!IsValid())
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_OpenFailed_HandleInvalid);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	// AFD requires an explicit bind to a wildcard local address before connect
 	union
@@ -172,7 +186,12 @@ Result<void, SocketError> Socket::Open()
 	                                       SynchronizationEvent,
 	                                       false);
 	if (!NT_SUCCESS(Status))
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_EventCreate, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_OpenFailed_EventCreate);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	IO_STATUS_BLOCK IOSB;
 	Memory::Zero(&IOSB, sizeof(IOSB));
@@ -214,13 +233,18 @@ Result<void, SocketError> Socket::Open()
 	(void)NTDLL::ZwClose(SockEvent);
 
 	if (!NT_SUCCESS(Status))
-		return Result<void, SocketError>::Err(SocketError{SocketError::OpenFailed_Connect, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_OpenFailed_Connect);
+		return Result<void, NetworkError>::Err(err);
+	}
 
 	LOG_DEBUG("Open: connected successfully\n");
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
-Result<void, SocketError> Socket::Close()
+Result<void, NetworkError> Socket::Close()
 {
 	LOG_DEBUG("Close(handle: 0x%p)\n", this);
 
@@ -228,17 +252,26 @@ Result<void, SocketError> Socket::Close()
 	m_socket = nullptr;
 
 	if (!NT_SUCCESS(Status))
-		return Result<void, SocketError>::Err(SocketError{SocketError::CloseFailed_Close, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_CloseFailed_Close);
+		return Result<void, NetworkError>::Err(err);
+	}
 
-	return Result<void, SocketError>::Ok();
+	return Result<void, NetworkError>::Ok();
 }
 
-Result<SSIZE, SocketError> Socket::Read(PVOID buffer, UINT32 bufferSize)
+Result<SSIZE, NetworkError> Socket::Read(PVOID buffer, UINT32 bufferSize)
 {
 	LOG_DEBUG("Read(handle: 0x%p, bufferSize: %d)\n", this, bufferSize);
 
 	if (!IsValid())
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_ReadFailed_HandleInvalid);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	PVOID SockEvent = nullptr;
 	NTSTATUS Status = NTDLL::ZwCreateEvent(&SockEvent,
@@ -247,7 +280,12 @@ Result<SSIZE, SocketError> Socket::Read(PVOID buffer, UINT32 bufferSize)
 	                                       SynchronizationEvent,
 	                                       false);
 	if (!NT_SUCCESS(Status))
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_EventCreate, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_ReadFailed_EventCreate);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
 	AfdWsaBuf RecvBuffer;
 	RecvBuffer.Length = bufferSize;
@@ -276,24 +314,36 @@ Result<SSIZE, SocketError> Socket::Read(PVOID buffer, UINT32 bufferSize)
 		if (AfdWait(SockEvent, IOSB, Status, &Timeout) == (NTSTATUS)STATUS_TIMEOUT)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_Timeout, (UINT32)STATUS_TIMEOUT});
+			NetworkError err;
+			err.Push((UINT32)STATUS_TIMEOUT);
+			err.Push(NetworkError::Socket_ReadFailed_Timeout);
+			return Result<SSIZE, NetworkError>::Err(err);
 		}
 	}
 
 	(void)NTDLL::ZwClose(SockEvent);
 
 	if (!NT_SUCCESS(Status))
-		return Result<SSIZE, SocketError>::Err(SocketError{SocketError::ReadFailed_Recv, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_ReadFailed_Recv);
+		return Result<SSIZE, NetworkError>::Err(err);
+	}
 
-	return Result<SSIZE, SocketError>::Ok((SSIZE)IOSB.Information);
+	return Result<SSIZE, NetworkError>::Ok((SSIZE)IOSB.Information);
 }
 
-Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, NetworkError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 {
 	LOG_DEBUG("Write(handle: 0x%p, length: %d)\n", this, bufferLength);
 
 	if (!IsValid())
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_HandleInvalid, 0});
+	{
+		NetworkError err;
+		err.Push(NetworkError::Socket_WriteFailed_HandleInvalid);
+		return Result<UINT32, NetworkError>::Err(err);
+	}
 
 	PVOID SockEvent = nullptr;
 	NTSTATUS Status = NTDLL::ZwCreateEvent(&SockEvent,
@@ -302,7 +352,12 @@ Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 	                                       SynchronizationEvent,
 	                                       false);
 	if (!NT_SUCCESS(Status))
-		return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_EventCreate, (UINT32)Status});
+	{
+		NetworkError err;
+		err.Push((UINT32)Status);
+		err.Push(NetworkError::Socket_WriteFailed_EventCreate);
+		return Result<UINT32, NetworkError>::Err(err);
+	}
 
 	AfdSendRecvInfo SendInfo;
 	Memory::Zero(&SendInfo, sizeof(SendInfo));
@@ -333,14 +388,20 @@ Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 			if (AfdWait(SockEvent, IOSB, Status, &Timeout) == (NTSTATUS)STATUS_TIMEOUT)
 			{
 				(void)NTDLL::ZwClose(SockEvent);
-				return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_Timeout, (UINT32)STATUS_TIMEOUT});
+				NetworkError err;
+				err.Push((UINT32)STATUS_TIMEOUT);
+				err.Push(NetworkError::Socket_WriteFailed_Timeout);
+				return Result<UINT32, NetworkError>::Err(err);
 			}
 		}
 
 		if (!NT_SUCCESS(Status))
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			return Result<UINT32, SocketError>::Err(SocketError{SocketError::WriteFailed_Send, (UINT32)Status});
+			NetworkError err;
+			err.Push((UINT32)Status);
+			err.Push(NetworkError::Socket_WriteFailed_Send);
+			return Result<UINT32, NetworkError>::Err(err);
 		}
 
 		totalSent += (UINT32)IOSB.Information;
@@ -348,7 +409,7 @@ Result<UINT32, SocketError> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 
 	(void)NTDLL::ZwClose(SockEvent);
 	LOG_DEBUG("Write: sent %d bytes\n", totalSent);
-	return Result<UINT32, SocketError>::Ok(totalSent);
+	return Result<UINT32, NetworkError>::Ok(totalSent);
 }
 
 Socket::Socket(const IPAddress &ipAddress, UINT16 port) : ip(ipAddress), port(port), m_socket(nullptr)

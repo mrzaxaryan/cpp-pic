@@ -28,7 +28,7 @@ extern "C" COMPILER_RUNTIME PVOID memcpy(PVOID dest, const VOID *src, USIZE coun
     return dest;
 }
 
-extern "C" INT32 memcmp(const VOID *ptr1, const VOID *ptr2, USIZE num)
+extern "C" COMPILER_RUNTIME INT32 memcmp(const VOID *ptr1, const VOID *ptr2, USIZE num)
 {
     const UCHAR *p1 = (const UCHAR *)ptr1;
     const UCHAR *p2 = (const UCHAR *)ptr2;

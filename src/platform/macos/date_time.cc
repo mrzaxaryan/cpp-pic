@@ -8,8 +8,10 @@ DateTime DateTime::Now()
 	timeval tv;
 
 	// Get current time using gettimeofday syscall
+	// Note: macOS gettimeofday returns seconds in RAX (retval[0]) on success,
+	// not 0. On error, System::Call returns negative (carry flag convention).
 	SSIZE result = System::Call(SYS_GETTIMEOFDAY, (USIZE)&tv, (USIZE)0);
-	if (result != 0)
+	if (result < 0)
 	{
 		// If syscall fails, return epoch time (1970-01-01 00:00:00)
 		dt.Years = 1970;
@@ -33,20 +35,11 @@ DateTime DateTime::Now()
 
 UINT64 DateTime::GetMonotonicNanoseconds()
 {
-	timespec ts;
-
-	// Use clock_gettime with CLOCK_MONOTONIC (macOS 10.12+)
-	SSIZE result = System::Call(SYS_CLOCK_GETTIME, CLOCK_MONOTONIC, (USIZE)&ts);
-	if (result != 0)
-	{
-		// Fallback to gettimeofday if clock_gettime not available
-		timeval tv;
-		result = System::Call(SYS_GETTIMEOFDAY, (USIZE)&tv, (USIZE)0);
-		if (result != 0)
-			return 0;
-		return ((UINT64)tv.tv_sec * 1000000000ULL) + ((UINT64)tv.tv_usec * 1000ULL);
-	}
-
-	UINT64 nanoseconds = ((UINT64)ts.tv_sec * 1000000000ULL) + (UINT64)ts.tv_nsec;
-	return nanoseconds;
+	// macOS has no clock_gettime BSD syscall — it's userspace-only via commpage.
+	// Use gettimeofday instead (not truly monotonic, but functional).
+	timeval tv;
+	SSIZE result = System::Call(SYS_GETTIMEOFDAY, (USIZE)&tv, (USIZE)0);
+	if (result < 0)
+		return 0;
+	return ((UINT64)tv.tv_sec * 1000000000ULL) + ((UINT64)tv.tv_usec * 1000ULL);
 }

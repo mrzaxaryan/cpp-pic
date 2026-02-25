@@ -38,4 +38,8 @@ public:
     BOOL SendPostRequest(PCVOID data, UINT32 dataLength);
     // Static method to parse a URL into its components (host, path, port, secure) and validate the format
     static BOOL ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
+    // Read HTTP response headers using a rolling window (no buffer needed).
+    // Returns TRUE if headers were read and status matches expectedStatus.
+    // contentLength is set to the Content-Length value or -1 if not present.
+    static BOOL ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, INT64 &contentLength);
 };

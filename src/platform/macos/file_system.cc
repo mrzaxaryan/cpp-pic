@@ -267,6 +267,7 @@ BOOL DirectoryIterator::Next()
 	currentEntry.isReadOnly = FALSE;
 	currentEntry.size = 0;
 	currentEntry.creationTime = 0;
+	currentEntry.lastModifiedTime = 0;
 
 	bpos += d->d_reclen;
 

@@ -47,6 +47,11 @@
 #include "types/primitives.h"
 /// @}
 
+/// @name Result Type
+/// @{
+#include "types/result.h"
+/// @}
+
 /// @name Numeric Types
 /// @{
 #include "types/numeric/double.h"

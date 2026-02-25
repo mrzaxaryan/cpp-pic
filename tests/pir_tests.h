@@ -19,6 +19,7 @@
  *   EccTests               - Elliptic Curve Cryptography tests (ECDH key exchange)
  *   DnsTests               - DNS resolution tests (DoT, DoH JSON, DoH binary)
  *   WebSocketTests         - WebSocket client implementation tests (ws:// and wss://)
+ *   ResultTests            - Result<T,E> type tests
  *
  * USAGE:
  *   #include "tests.h"
@@ -54,6 +55,7 @@
 #include "dns_tests.h"
 #include "websocket_tests.h"
 #include "filesystem_tests.h"
+#include "result_tests.h"
 
 static BOOL RunPIRTests()
 {
@@ -62,7 +64,8 @@ static BOOL RunPIRTests()
 	LOG_INFO("=== CPP-PIC Test Suite ===");
 	LOG_INFO("");
 
-	// CORE - Embedded Types and Numeric Primitives
+	// CORE - Result Type and Embedded Types
+	RunTestSuite<ResultTests>(allPassed);
 	RunTestSuite<DoubleTests>(allPassed);
 	RunTestSuite<StringTests>(allPassed);
 

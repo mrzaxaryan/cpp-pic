@@ -511,6 +511,7 @@ BOOL DirectoryIterator::Next()
 	currentEntry.isReadOnly = (FileInfo->Attribute & EFI_FILE_READ_ONLY) != 0;
 	currentEntry.type = 0;
 	currentEntry.creationTime = 0;
+	currentEntry.lastModifiedTime = 0;
 
 	return TRUE;
 }

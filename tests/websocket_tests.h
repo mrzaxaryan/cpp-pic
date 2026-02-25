@@ -90,7 +90,7 @@ private:
 		// Note: echo.websocket.org sends an initial "Request served by..." message
 		// We need to read and discard it before sending our test data
 		USIZE initialLength = 0;
-		INT8 initialOpcode = 0;
+		WebSocketOpcode initialOpcode = OPCODE_BINARY;
 		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
@@ -111,7 +111,7 @@ private:
 
 		// Receive echo response
 		USIZE responseLength = 0;
-		INT8 opcode = 0;
+		WebSocketOpcode opcode = OPCODE_BINARY;
 		PVOID response = wsClient.Read(responseLength, opcode);
 
 		if (response == NULL || responseLength == 0)
@@ -162,7 +162,7 @@ private:
 
 		// Discard initial server message
 		USIZE initialLength = 0;
-		INT8 initialOpcode = 0;
+		WebSocketOpcode initialOpcode = OPCODE_BINARY;
 		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
@@ -194,7 +194,7 @@ private:
 
 		// Receive echo response
 		USIZE responseLength = 0;
-		INT8 opcode = 0;
+		WebSocketOpcode opcode = OPCODE_BINARY;
 		PVOID response = wsClient.Read(responseLength, opcode);
 
 		if (response == NULL || responseLength == 0)
@@ -247,7 +247,7 @@ private:
 
 		// Discard initial server message
 		USIZE initialLength = 0;
-		INT8 initialOpcode = 0;
+		WebSocketOpcode initialOpcode = OPCODE_BINARY;
 		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
@@ -269,7 +269,7 @@ private:
 		}
 
 		USIZE len1 = 0;
-		INT8 op1 = 0;
+		WebSocketOpcode op1 = OPCODE_BINARY;
 		PVOID resp1 = wsClient.Read(len1, op1);
 		if (resp1 == NULL || len1 != msg1.Length())
 		{
@@ -291,7 +291,7 @@ private:
 		}
 
 		USIZE len2 = 0;
-		INT8 op2 = 0;
+		WebSocketOpcode op2 = OPCODE_BINARY;
 		PVOID resp2 = wsClient.Read(len2, op2);
 		if (resp2 == NULL || len2 != msg2.Length())
 		{
@@ -313,7 +313,7 @@ private:
 		}
 
 		USIZE len3 = 0;
-		INT8 op3 = 0;
+		WebSocketOpcode op3 = OPCODE_BINARY;
 		PVOID resp3 = wsClient.Read(len3, op3);
 		if (resp3 == NULL || len3 != msg3.Length())
 		{
@@ -346,7 +346,7 @@ private:
 
 		// Discard initial server message
 		USIZE initialLength = 0;
-		INT8 initialOpcode = 0;
+		WebSocketOpcode initialOpcode = OPCODE_BINARY;
 		PVOID initialMsg = wsClient.Read(initialLength, initialOpcode);
 		if (initialMsg != NULL)
 		{
@@ -385,7 +385,7 @@ private:
 
 		// Receive echo response
 		USIZE responseLength = 0;
-		INT8 opcode = 0;
+		WebSocketOpcode opcode = OPCODE_BINARY;
 		PVOID response = wsClient.Read(responseLength, opcode);
 
 		if (response == NULL || responseLength == 0)

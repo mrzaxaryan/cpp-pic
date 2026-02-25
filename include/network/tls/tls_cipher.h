@@ -33,8 +33,8 @@ class TlsCipher
 {
 private:
     INT32 cipherCount;              // Number of supported ciphers
-    INT32 clientSeqNum;             // Client sequence number
-    INT32 serverSeqNum;             // Server sequence number
+    UINT64 clientSeqNum;            // Client sequence number
+    UINT64 serverSeqNum;            // Server sequence number
     Ecc *privateEccKeys[ECC_COUNT]; // Private ECC keys
     TlsBuffer publicKey;            // Public key buffer
     TlsBuffer decodeBuffer;         // Buffer for decoded data
@@ -138,8 +138,8 @@ public:
     // Check if the cipher is in a valid state
     BOOL IsValid() const { return cipherCount > 0; }
     // Accessor functions
-    BOOL GetEncoding() { return isEncoding; };
-    INT32 GetCipherCount() { return cipherCount; };
-    TlsBuffer &GetPubKey() { return publicKey; };
-    VOID SetCipherCount(INT32 count) { cipherCount = count; };
+    BOOL GetEncoding() const { return isEncoding; }
+    INT32 GetCipherCount() const { return cipherCount; }
+    TlsBuffer &GetPubKey() { return publicKey; }
+    VOID SetCipherCount(INT32 count) { cipherCount = count; }
 };

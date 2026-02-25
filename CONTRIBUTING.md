@@ -137,9 +137,35 @@ auto embedded = MakeEmbedArray(table);
 UINT32 val = embedded[0]; // Unpacked at runtime
 ```
 
-## Naming Conventions
+## Code Style
 
-### Types
+- **Indentation:** Tabs
+- **Braces:** Allman style (opening brace on its own line) for classes, functions, and control flow
+- **Include guard:** `#pragma once` in all headers
+- **No namespaces:** Use static class methods instead of free functions in namespaces
+- **No STL:** Everything is implemented from scratch
+- **No exceptions:** Use `Result<T, E>` for fallible operations
+- **Prefer `static` methods** on classes over free functions
+- **Use `FORCE_INLINE`** for force inline functions
+- **Use `NOINLINE`** when you need to prevent inlining (e.g., for function pointer embedding)
+- **Cast to `USIZE`** when passing pointer arguments to syscall wrappers
+- **Prefer `constexpr`** for variables and functions that can be evaluated at compile time. Use `consteval` when evaluation *must* happen at compile time (e.g., embedded type constructors, hash computations). This moves work from runtime to compile time, reducing code size and eliminating potential `.rdata` generation
+- **Use `[[nodiscard]]`** on functions whose return value must not be ignored. Since PIR has no exceptions, return codes are the only way to signal failure -- a missed check means a silent bug. Apply it to all functions returning `BOOL` success/failure, `NTSTATUS`, `SSIZE` (where negative means error), and factory methods returning objects that must be used:
+
+```cpp
+// GOOD -- compiler warns if caller ignores the result
+[[nodiscard]] BOOL Open();
+[[nodiscard]] NTSTATUS ZwCreateFile(PPVOID FileHandle, ...);
+[[nodiscard]] static IPAddress FromIPv4(UINT32 address);
+
+// NOT needed -- void functions, pure setters, or functions called only for side effects
+VOID Close();
+VOID SetPort(UINT16 port);
+```
+
+### Naming Conventions
+
+#### Types
 
 | Kind | Convention | Examples |
 |------|-----------|----------|
@@ -150,7 +176,7 @@ UINT32 val = embedded[0]; // Unpacked at runtime
 | Template types | `UPPER_CASE` with template params | `EMBEDDED_STRING<CHAR, 'H', 'e', 'l', 'l', 'o'>` |
 | Enums | `UPPER_CASE` | `EVENT_TYPE` |
 
-### Functions and Variables
+#### Functions and Variables
 
 | Kind | Convention | Examples |
 |------|-----------|----------|
@@ -159,7 +185,7 @@ UINT32 val = embedded[0]; // Unpacked at runtime
 | Macro constants | `UPPER_CASE` | `HANDLE_FLAG_INHERIT`, `STARTF_USESTDHANDLES` |
 | Attributes/macros | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `STDCALL`, `ENTRYPOINT` |
 
-### Files
+#### Files
 
 | Kind | Convention | Examples |
 |------|-----------|----------|
@@ -167,6 +193,236 @@ UINT32 val = embedded[0]; // Unpacked at runtime
 | Source files | `snake_case.cc` | `kernel32.cc`, `entry_point.cc` |
 | Platform-specific | `name.platform.cc` | `allocator.windows.cc`, `syscall.linux.h` |
 | Test files | `snake_case_tests.h` | `djb2_tests.h`, `socket_tests.h` |
+
+### Include Order
+
+```cpp
+#include "runtime.h"     // or "platform.h" or specific core headers
+#include "tests.h"       // (test files only)
+```
+
+- `runtime.h` includes everything (CORE + PLATFORM + RUNTIME)
+- `platform.h` includes CORE + PLATFORM
+- For implementation files, include your own header first, then `platform.h` or `runtime.h` as needed
+
+### Parameter Passing
+
+Follow these rules for passing data between functions.
+
+**Pass by value** for small types that fit in registers:
+
+```cpp
+UINT32 ComputeHash(UINT32 input);
+BOOL IsValid(PVOID handle);
+IPAddress FromIPv4(UINT32 address);       // Return small structs by value
+IPAddress addr = DNS::Resolve(hostName);  // Factory methods return by value
+```
+
+**Pass by pointer** for output parameters, nullable parameters, and Windows API compatibility:
+
+```cpp
+NTSTATUS ZwCreateFile(PPVOID FileHandle, ...);           // Output parameter
+NTSTATUS ZwCreateEvent(PPVOID EventHandle, UINT32 Access,
+                       POBJECT_ATTRIBUTES ObjectAttributes,  // Nullable (may be NULL)
+                       EVENT_TYPE EventType, INT8 InitialState);
+BOOL Read(PVOID buffer, UINT32 bufferSize);              // Buffer pointer
+```
+
+**Pass by reference** whenever a parameter must not be null. References enforce non-null at compile time, eliminating an entire class of null-pointer bugs. Only use pointers when `nullptr` is a valid, meaningful value (output parameters, optional arguments, Windows API compatibility):
+
+```cpp
+// GOOD -- reference guarantees non-null
+Socket(const IPAddress &ipAddress, UINT16 port);
+BOOL operator==(const IPAddress &other) const;
+BOOL Send(const TlsBuffer &buffer);
+
+// BAD -- pointer allows null when null is never valid
+Socket(const IPAddress *ipAddress, UINT16 port);  // Caller could pass nullptr
+BOOL Send(const TlsBuffer *buffer);               // Would crash on nullptr
+```
+
+## Memory & Resource Management
+
+PIR executes in constrained environments -- injected shellcode, early boot, or loaderless contexts -- where neither heap nor stack can be assumed large or reliable. All code must be written with strict memory discipline.
+
+### Keep Code Heap-Free
+
+Avoid heap allocation entirely unless there is no alternative. The vast majority of PIR code must run without touching the heap:
+
+- **Prefer stack-local variables and fixed-size buffers** over dynamically allocated memory
+- **Embed objects as class members by value** rather than holding pointers to heap-allocated objects:
+
+```cpp
+class HttpClient
+{
+private:
+    IPAddress ipAddress;    // Embedded by value, not IPAddress*
+    TLSClient tlsContext;   // Embedded by value, not TLSClient*
+    Socket socketContext;   // Embedded by value, not Socket*
+    CHAR hostName[254];     // Fixed-size buffer, sized to actual need
+};
+```
+
+When heap allocation is unavoidable, keep it localized: allocate as late as possible, release as early as possible, and never let allocated memory leak across abstraction boundaries.
+
+### Minimize Stack Usage
+
+Shellcode often runs on a small or foreign stack. Excessive stack consumption causes silent corruption or crashes:
+
+- **Avoid large local arrays** -- if you need a large buffer, use `Allocator::AllocateMemory` instead of putting kilobytes on the stack
+- **Be mindful of `EMBEDDED_STRING` temporaries** -- each one materializes packed words on the stack. Avoid deeply nested or repeated `_embed` literals in a single function; extract them to separate helper functions if needed
+- **Avoid deep recursion** -- prefer iterative algorithms. Every call frame adds to stack pressure
+- **Watch aggregate sizes** -- classes with large fixed-size member buffers (e.g., `CHAR hostName[1024]`) consume that space on the stack when instantiated as locals. Keep buffer sizes as small as practical
+- **Profile with `-Oz`** -- size-optimized builds omit frame pointers, making stack overflows harder to diagnose. Test your code under `-Oz` to catch stack issues early
+
+### RAII Pattern
+
+PIR uses RAII for resource management, adapted for a freestanding environment with no exceptions and no STL. Acquire resources in constructors, release them in destructors:
+
+```cpp
+class MyResource
+{
+private:
+    PVOID handle;
+
+public:
+    MyResource() : handle(nullptr) {}
+    ~MyResource() { Close(); }
+
+    // Non-copyable -- prevent double-close
+    MyResource(const MyResource &) = delete;
+    MyResource &operator=(const MyResource &) = delete;
+
+    // Movable -- transfer ownership
+    MyResource(MyResource &&other) noexcept
+        : handle(other.handle)
+    {
+        other.handle = nullptr;
+    }
+
+    MyResource &operator=(MyResource &&other) noexcept
+    {
+        if (this != &other)
+        {
+            Close();
+            handle = other.handle;
+            other.handle = nullptr;
+        }
+        return *this;
+    }
+
+    BOOL IsValid() const { return handle != nullptr && handle != (PVOID)(SSIZE)(-1); }
+
+    VOID Close()
+    {
+        if (IsValid())
+        {
+            NTDLL::ZwClose(handle);
+            handle = nullptr;
+        }
+    }
+};
+```
+
+**Key rules:**
+
+1. **Destructor calls `Close()`** -- resources released automatically when the object leaves scope
+2. **Delete copy operations** -- prevents double-close
+3. **Implement move semantics** -- allows transferring ownership (nullify source after move)
+4. **`IsValid()` checks both `nullptr` and `-1`** -- Windows uses `INVALID_HANDLE_VALUE` as an error sentinel
+5. **Delete `new`/`delete` for stack-only types** -- forces stack allocation where RAII cleanup is guaranteed:
+
+```cpp
+class Socket
+{
+public:
+    VOID *operator new(USIZE) = delete;
+    VOID operator delete(VOID *) = delete;
+};
+```
+
+### Result Pattern
+
+Use `Result<T, E>` for functions that can fail and need to return a value or an error. It acts as a tagged union — either `Ok(value)` or `Err(error)` — with RAII: the active member's destructor runs automatically when the `Result` goes out of scope.
+
+```cpp
+// Return a value or error
+[[nodiscard]] Result<IPAddress, UINT32> Resolve(PCCHAR host)
+{
+    // ...
+    if (failed)
+        return Result<IPAddress, UINT32>::Err(errorCode);
+    return Result<IPAddress, UINT32>::Ok(address);
+}
+
+// Caller
+auto result = Resolve(hostName);
+if (result.IsErr())
+    return;                     // error path — no value to clean up
+IPAddress &ip = result.Value(); // borrow the value; Result still owns it
+
+// Use Result<void, E> when there is no value to return
+[[nodiscard]] Result<void, UINT32> Open()
+{
+    if (failed)
+        return Result<void, UINT32>::Err(errorCode);
+    return Result<void, UINT32>::Ok();
+}
+```
+
+**Key rules:**
+- `Value()` returns a reference — the `Result` owns the object and destroys it at scope exit
+- For non-trivially destructible types (e.g., `Socket`), the destructor is called automatically
+- For trivially destructible types (e.g., `UINT32`), the destructor is a no-op (zero codegen)
+- `operator BOOL()` is implicit, so `if (result)` and `if (!result)` work naturally
+
+### Secure Cleanup for Sensitive Data
+
+Cryptographic classes zero their memory on destruction to prevent key material from lingering:
+
+```cpp
+ChaCha20Encoder::~ChaCha20Encoder()
+{
+    Memory::Zero(this, sizeof(ChaCha20Encoder));
+    this->initialized = FALSE;
+}
+```
+
+### Conditional Ownership
+
+When a class may or may not own its buffer, use an ownership flag:
+
+```cpp
+class TlsBuffer
+{
+private:
+    PCHAR buffer;
+    BOOL ownsMemory;
+
+public:
+    TlsBuffer() : buffer(nullptr), ownsMemory(true) {}
+    TlsBuffer(PCHAR buf, INT32 size) : buffer(buf), ownsMemory(false) {}
+
+    ~TlsBuffer() { if (ownsMemory) Clear(); }
+};
+```
+
+### Manual Allocation with `Allocator`
+
+For dynamic memory, use `Allocator::AllocateMemory` / `Allocator::ReleaseMemory`. You must track the size yourself:
+
+```cpp
+USIZE size = 4096;
+PVOID buffer = Allocator::AllocateMemory(size);
+if (buffer == nullptr)
+    return FALSE;
+
+// ... use buffer ...
+
+Allocator::ReleaseMemory(buffer, size);
+```
+
+You are responsible for matching every allocation with a release. Since there are no exceptions, the only way to skip cleanup is an early `return` -- make sure every return path releases its resources.
 
 ## Platform-Specific Code
 
@@ -276,7 +532,6 @@ public:
 private:
     static BOOL TestSomething()
     {
-        // Use _embed for all string/float literals
         auto msg = "test input"_embed;
         // ... test logic ...
         return TRUE; // TRUE = pass, FALSE = fail
@@ -294,248 +549,10 @@ Then register it:
 1. Add `#include "my_feature_tests.h"` in `tests/pir_tests.h`
 2. Add `RunTestSuite<MyFeatureTests>(allPassed);` in the `RunPIRTests()` function under the appropriate layer comment (CORE, PLATFORM, or RAL)
 
-## Include Order
-
-```cpp
-#include "runtime.h"     // or "platform.h" or specific core headers
-#include "tests.h"       // (test files only)
-```
-
-- `runtime.h` includes everything (CORE + PLATFORM + RUNTIME)
-- `platform.h` includes CORE + PLATFORM
-- For implementation files, include your own header first, then `platform.h` or `runtime.h` as needed
-
-Use `#pragma once` as the include guard in all headers.
-
-## Code Style
-
-- **Indentation:** Tabs
-- **Braces:** Allman style (opening brace on its own line) for classes, functions, and control flow
-- **No namespaces:** Use static class methods instead of free functions in namespaces
-- **No STL:** Everything is implemented from scratch
-- **No exceptions:** Return error codes (`NTSTATUS`, `BOOL`, etc.)
-- **Prefer `static` methods** on classes over free functions
-- **Use `FORCE_INLINE`** for force inline functions
-- **Use `NOINLINE`** when you need to prevent inlining (e.g., for function pointer embedding)
-- **Cast to `USIZE`** when passing pointer arguments to syscall wrappers
-
-## Reference Style
-
-PIR has no heap-allocated smart pointers and no STL. Follow these rules for passing data between functions.
-
-### Pass by Value
-
-Use for small types that fit in registers. This is the default for primitives and small structs:
-
-```cpp
-UINT32 ComputeHash(UINT32 input);
-BOOL IsValid(PVOID handle);
-IPAddress FromIPv4(UINT32 address);       // Return small structs by value
-IPAddress addr = DNS::Resolve(hostName);  // Factory methods return by value
-```
-
-### Pass by Pointer
-
-Use for output parameters, nullable parameters, and Windows API compatibility:
-
-```cpp
-// Output parameter -- caller provides storage, callee fills it
-NTSTATUS ZwCreateFile(PPVOID FileHandle, ...);
-
-// Nullable parameter -- NULL means "not provided"
-NTSTATUS ZwCreateEvent(PPVOID EventHandle, UINT32 Access,
-                       POBJECT_ATTRIBUTES ObjectAttributes,  // may be NULL
-                       EVENT_TYPE EventType, INT8 InitialState);
-
-// Buffer pointers -- raw memory the callee reads/writes
-BOOL Read(PVOID buffer, UINT32 bufferSize);
-```
-
-### Pass by const Reference
-
-Use for larger objects that the callee only needs to read:
-
-```cpp
-Socket(const IPAddress &ipAddress, UINT16 port);
-BOOL operator==(const IPAddress &other) const;
-```
-
-### Never Use
-
-| Pattern | Why |
-|---------|-----|
-| `std::unique_ptr` / `std::shared_ptr` | No STL |
-| `new` / `delete` for resource classes | Many classes delete these operators to enforce stack allocation |
-| Raw `&function` pointers | Generates relocations; use `EMBED_FUNC(Function)` |
-| Heap-allocated wrappers | Prefer embedding objects as class members by value |
-
-### Embedding Objects as Members
-
-Prefer embedding resources directly as class members rather than holding pointers to heap-allocated objects:
-
-```cpp
-class HttpClient
-{
-private:
-    IPAddress ipAddress;    // Embedded by value, not IPAddress*
-    TLSClient tlsContext;   // Embedded by value, not TLSClient*
-    Socket socketContext;   // Embedded by value, not Socket*
-    CHAR hostName[1024];    // Fixed-size buffer on the stack
-};
-```
-
-This avoids heap allocation, simplifies lifetime management, and ensures automatic cleanup when the parent goes out of scope.
-
-## RAII Pattern
-
-PIR uses RAII (Resource Acquisition Is Initialization) for resource management, but adapted for a freestanding environment with **no exceptions** and **no STL**. The core idea remains: acquire resources in constructors, release them in destructors.
-
-### Basic RAII Class Template
-
-```cpp
-class MyResource
-{
-private:
-    PVOID handle;
-
-public:
-    MyResource() : handle(nullptr) {}
-    ~MyResource() { Close(); }
-
-    // Non-copyable -- prevent double-close
-    MyResource(const MyResource &) = delete;
-    MyResource &operator=(const MyResource &) = delete;
-
-    // Movable -- transfer ownership
-    MyResource(MyResource &&other) noexcept
-        : handle(other.handle)
-    {
-        other.handle = nullptr;
-    }
-
-    MyResource &operator=(MyResource &&other) noexcept
-    {
-        if (this != &other)
-        {
-            Close();                    // Release current resource
-            handle = other.handle;      // Take ownership
-            other.handle = nullptr;     // Nullify source
-        }
-        return *this;
-    }
-
-    BOOL IsValid() const { return handle != nullptr && handle != (PVOID)(SSIZE)(-1); }
-
-    VOID Close()
-    {
-        if (IsValid())
-        {
-            NTDLL::ZwClose(handle);
-            handle = nullptr;
-        }
-    }
-};
-```
-
-### Key Rules
-
-1. **Destructor calls `Close()`** -- Resources are released automatically when the object leaves scope
-2. **Delete copy operations** -- Prevents two objects from owning the same handle
-3. **Implement move semantics** -- Allows transferring ownership (nullify the source after move)
-4. **`IsValid()` checks both `nullptr` and `-1`** -- Windows uses `(PVOID)-1` (`INVALID_HANDLE_VALUE`) as an error sentinel
-5. **No exceptions** -- Every function returns an error code (`BOOL`, `NTSTATUS`). The caller must check
-6. **Delete `new`/`delete` for stack-only types** -- Forces callers to use stack allocation
-
-### Deleting Heap Allocation
-
-Network and I/O classes enforce stack-only usage:
-
-```cpp
-class Socket
-{
-public:
-    VOID *operator new(USIZE) = delete;
-    VOID operator delete(VOID *) = delete;
-    // ... rest of class
-};
-```
-
-This prevents `new Socket(...)` and forces all instances onto the stack, where RAII cleanup is guaranteed.
-
-### Secure Cleanup for Sensitive Data
-
-Cryptographic classes zero their memory on destruction to prevent key material from lingering:
-
-```cpp
-ChaCha20Encoder::~ChaCha20Encoder()
-{
-    Memory::Zero(this, sizeof(ChaCha20Encoder));
-    this->initialized = FALSE;
-}
-```
-
-### Conditional Ownership
-
-When a class may or may not own its buffer, use an ownership flag:
-
-```cpp
-class TlsBuffer
-{
-private:
-    PCHAR buffer;
-    BOOL ownsMemory;
-
-public:
-    TlsBuffer() : buffer(nullptr), ownsMemory(true) {}
-    TlsBuffer(PCHAR buf, INT32 size) : buffer(buf), ownsMemory(false) {}
-
-    ~TlsBuffer() { if (ownsMemory) Clear(); }
-};
-```
-
-### Temporary Scoped Resources
-
-For resources that don't warrant a full RAII wrapper (e.g., a one-off event handle), use explicit create-use-close with validation on every path:
-
-```cpp
-PVOID event = NULL;
-NTSTATUS status = NTDLL::ZwCreateEvent(&event, EVENT_ALL_ACCESS, NULL, SynchronizationEvent, FALSE);
-if (!NT_SUCCESS(status))
-    return FALSE;
-
-// ... use event ...
-
-NTDLL::ZwClose(event);
-return TRUE;
-```
-
-Since there are no exceptions, the only way to skip the `ZwClose` is an early `return` -- make sure every return path cleans up.
-
-### Manual Allocation with `Allocator`
-
-For dynamic memory, use `Allocator::AllocateMemory` / `Allocator::ReleaseMemory`. You must track the size yourself:
-
-```cpp
-USIZE size = 4096;
-PVOID buffer = Allocator::AllocateMemory(size);
-if (buffer == nullptr)
-    return FALSE;
-
-// ... use buffer ...
-
-Allocator::ReleaseMemory(buffer, size);
-```
-
-There are no smart pointers. You are responsible for matching every allocation with a release.
-
 ## Common Pitfalls
 
-1. **Forgetting `_embed`** -- Writing `"hello"` instead of `"hello"_embed` will put the string in `.rdata` and break the build
-2. **Global/static variables** -- Any variable with static storage duration generates `.data` or `.bss`. Use stack locals instead
-3. **Implicit float constants** -- Even `0.0` generates `.rdata`. Always use `0.0_embed`
-4. **ARM64 syscalls** -- `System::Call` does not work on ARM64 Windows. ARM64 Zw* functions must resolve via `ResolveNtdllExportAddress` and call the ntdll function directly
-5. **Inline asm register clobbers** -- On x86_64, all volatile registers (RAX, RCX, RDX, R8-R11) must be declared as outputs or clobbers in inline assembly
-6. **Memory operands with RSP modification** -- Never use `"m"` (memory) constraints in asm blocks that modify RSP. Under `-Oz`, the compiler uses RSP-relative addressing which breaks after `sub rsp`
+1. **Inline asm register clobbers** -- On x86_64, all volatile registers (RAX, RCX, RDX, R8-R11) must be declared as outputs or clobbers in inline assembly
+2. **Memory operands with RSP modification** -- Never use `"m"` (memory) constraints in asm blocks that modify RSP. Under `-Oz`, the compiler uses RSP-relative addressing which breaks after `sub rsp`
 
 ## Submitting Changes
 

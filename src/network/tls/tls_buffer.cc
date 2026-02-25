@@ -156,3 +156,15 @@ VOID TlsBuffer::Read(PCHAR buf, INT32 size)
     Memory::Copy(buf, this->buffer + this->readPos, size);
     this->readPos += size;
 }
+
+/// @brief Read a 24-bit big-endian unsigned integer from the TLS buffer
+/// @return The 24-bit value read from the buffer
+
+UINT32 TlsBuffer::ReadU24BE()
+{
+    UINT8 b0 = (UINT8)this->buffer[this->readPos];
+    UINT8 b1 = (UINT8)this->buffer[this->readPos + 1];
+    UINT8 b2 = (UINT8)this->buffer[this->readPos + 2];
+    this->readPos += 3;
+    return ((UINT32)b0 << 16) | ((UINT32)b1 << 8) | (UINT32)b2;
+}

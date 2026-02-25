@@ -1,6 +1,7 @@
 #include "http.h"
 #include "dns.h"
 #include "logger.h"
+#include "embedded_string.h"
 
 // Helper to append an embedded string to a buffer
 static USIZE AppendStr(CHAR* buf, USIZE pos, USIZE maxPos, const CHAR* str) noexcept
@@ -232,20 +233,6 @@ BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UIN
 
         Memory::Copy(host, pHostStart, hostLen);
         host[hostLen] = '\0';
-
-        if (*pathStart == '\0')
-        {
-            path[0] = '/';
-            path[1] = '\0';
-        }
-        else
-        {
-            USIZE pLen = (USIZE)String::Length(pathStart);
-            if (pLen > 2047)
-                return FALSE;
-            Memory::Copy(path, pathStart, pLen);
-            path[pLen] = '\0';
-        }
     }
     else
     {
@@ -271,21 +258,99 @@ BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UIN
         if (pnum == 0 || pnum > 65535)
             return FALSE;
         port = (UINT16)pnum;
+    }
 
-        if (*pathStart == '\0')
-        {
-            path[0] = '/';
-            path[1] = '\0';
-        }
-        else
-        {
-            USIZE pLen = (USIZE)String::Length(pathStart);
-            if (pLen > 2047)
-                return FALSE;
-            Memory::Copy(path, pathStart, pLen);
-            path[pLen] = '\0';
-        }
+    // Extract path (common to both branches)
+    if (*pathStart == '\0')
+    {
+        path[0] = '/';
+        path[1] = '\0';
+    }
+    else
+    {
+        USIZE pLen = (USIZE)String::Length(pathStart);
+        if (pLen > 2047)
+            return FALSE;
+        Memory::Copy(path, pathStart, pLen);
+        path[pLen] = '\0';
     }
 
     return TRUE;
+}
+
+BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, INT64 &contentLength)
+{
+    // Compute expected "XYZ " pattern for the rolling window (big-endian byte order)
+    UINT32 expectedTail =
+        ((UINT32)('0' + expectedStatus / 100) << 24) |
+        ((UINT32)('0' + (expectedStatus / 10) % 10) << 16) |
+        ((UINT32)('0' + expectedStatus % 10) << 8) |
+        0x20;
+
+    UINT32 tail = 0;
+    UINT32 bytesConsumed = 0;
+    BOOL statusValid = FALSE;
+    contentLength = -1;
+
+    // Content-Length state machine
+    auto clHeader = "Content-Length: "_embed;
+    UINT32 matchIndex = 0;
+    BOOL parsingValue = FALSE;
+    BOOL atLineStart = TRUE;
+
+    for (;;)
+    {
+        CHAR c;
+        SSIZE bytesRead = client.Read(&c, 1);
+        if (bytesRead <= 0)
+            return FALSE;
+
+        tail = (tail << 8) | (UINT8)c;
+        bytesConsumed++;
+
+        // After 13 bytes, tail holds bytes 9-12: check status code
+        if (bytesConsumed == 13)
+            statusValid = (tail == expectedTail);
+
+        // Content-Length extraction state machine
+        if (parsingValue)
+        {
+            if (c >= '0' && c <= '9')
+                contentLength = contentLength * 10 + (c - '0');
+            else
+                parsingValue = FALSE;
+        }
+        else if (atLineStart)
+        {
+            matchIndex = 0;
+            if (c == ((PCCHAR)clHeader)[0])
+                matchIndex = 1;
+            atLineStart = FALSE;
+        }
+        else if (matchIndex > 0 && matchIndex < 16)
+        {
+            if (c == ((PCCHAR)clHeader)[matchIndex])
+            {
+                matchIndex++;
+                if (matchIndex == 16)
+                {
+                    parsingValue = TRUE;
+                    contentLength = 0;
+                }
+            }
+            else
+            {
+                matchIndex = 0;
+            }
+        }
+
+        if (c == '\n')
+            atLineStart = TRUE;
+
+        // Check for \r\n\r\n end-of-headers (0x0D0A0D0A)
+        if (tail == 0x0D0A0D0A)
+            break;
+    }
+
+    return statusValid;
 }

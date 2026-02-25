@@ -401,7 +401,10 @@ static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &da
     // 4. Timestamps
     entry.creationTime = data.CreationTime.QuadPart;
 
-    // 5. IsDrive
+    // 5. lastModifiedTime
+    entry.lastModifiedTime = data.LastWriteTime.QuadPart;
+
+    // 6. IsDrive
     entry.isDrive = (entry.name[1] == ':' && entry.name[2] == L'\0');
 
     entry.type = 3; // Default to Fixed

@@ -53,7 +53,6 @@ constexpr USIZE SYS_SETSOCKOPT = SYSCALL_CLASS_UNIX | 105;
 
 // Time operations
 constexpr USIZE SYS_GETTIMEOFDAY   = SYSCALL_CLASS_UNIX | 116;
-constexpr USIZE SYS_CLOCK_GETTIME  = SYSCALL_CLASS_UNIX | 0x55;
 
 // Process operations
 constexpr USIZE SYS_EXECVE     = SYSCALL_CLASS_UNIX | 59;
@@ -117,10 +116,6 @@ constexpr INT32 MAP_PRIVATE   = 0x0002;
 constexpr INT32 MAP_ANONYMOUS = 0x1000;
 #define MAP_FAILED ((PVOID)(-1))
 
-// Clock IDs (macOS values)
-constexpr INT32 CLOCK_REALTIME  = 0;
-constexpr INT32 CLOCK_MONOTONIC = 6;
-
 // Socket options (BSD values -- differ from Linux!)
 constexpr INT32 SOL_SOCKET   = 0xFFFF;
 constexpr INT32 SO_RCVTIMEO  = 0x1006;
@@ -146,17 +141,13 @@ struct bsd_dirent64
 	CHAR d_name[];
 };
 
-// Timespec structure
-struct timespec
-{
-	SSIZE tv_sec;
-	SSIZE tv_nsec;
-};
-
 // Timeval structure (for gettimeofday and socket timeouts)
-// macOS uses int (4 bytes) for tv_usec, unlike Linux which uses long (8 bytes)
+// macOS kernel gettimeofday copies out user64_timeval for 64-bit processes:
+// both tv_sec and tv_usec are 8 bytes (int64_t), unlike the standard
+// userspace timeval where tv_usec is 4 bytes (__darwin_suseconds_t).
+// Since PIR calls the raw syscall (bypassing libc), we match the kernel layout.
 struct timeval
 {
 	SSIZE tv_sec;
-	INT32 tv_usec;
+	SSIZE tv_usec;
 };

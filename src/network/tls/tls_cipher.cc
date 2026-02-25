@@ -11,9 +11,6 @@ TlsCipher::TlsCipher()
 {
     this->SetCipherCount(1);
     Memory::Zero(this->privateEccKeys, sizeof(this->privateEccKeys));
-    Memory::Zero(&this->publicKey, sizeof(TlsBuffer));
-    Memory::Zero(&this->decodeBuffer, sizeof(TlsBuffer));
-    this->handshakeHash.Reset();
     this->Reset();
 }
 
@@ -22,9 +19,6 @@ TlsCipher::TlsCipher()
 
 VOID TlsCipher::Reset()
 {
-    // PMEMORY pMemory = GetMemory();
-
-    //	CLock lock(lockdata);
     this->publicKey.Clear();
     this->decodeBuffer.Clear();
     LOG_DEBUG("Resetting tls_cipher structure for cipher: %p", this);
@@ -32,21 +26,17 @@ VOID TlsCipher::Reset()
     this->clientSeqNum = 0;
     this->serverSeqNum = 0;
     this->handshakeHash.Reset();
-
-    // cipher->hash
-    this->handshakeHash.Reset();
     this->cipherIndex = -1;
     this->isEncoding = FALSE;
-    // cipher->chacha20_ctx.Clear();
     for (INT32 i = 0; i < ECC_COUNT; i++)
+    {
         if (this->privateEccKeys[i])
         {
             LOG_DEBUG("Freeing ECC key: %p", this->privateEccKeys[i]);
             delete this->privateEccKeys[i];
             this->privateEccKeys[i] = nullptr;
         }
-    LOG_DEBUG("Resetting private ECC keys to zero");
-    Memory::Zero(this->privateEccKeys, sizeof(this->privateEccKeys));
+    }
 }
 
 /// @brief Destroy the TlsCipher object and clean up resources
@@ -66,12 +56,9 @@ PINT8 TlsCipher::CreateClientRand()
 {
     Random random;
 
-    // random.SetSeed(0);
-
     LOG_DEBUG("Creating client random data for cipher: %p", this);
     for (UINT64 i = 0; i < (UINT64)sizeof(this->data12.clientRandom); i++)
     {
-
         this->data12.clientRandom[i] = random.Get() & 0xff;
     }
     LOG_DEBUG("Client random data created: %p", this->data12.clientRandom);
@@ -94,7 +81,6 @@ BOOL TlsCipher::UpdateServerInfo()
 
 VOID TlsCipher::GetHash(CHAR *out)
 {
-    //	CLock lock(lockdata);
     this->handshakeHash.GetHash(out, CIPHER_HASH_SIZE);
 }
 
@@ -105,7 +91,6 @@ VOID TlsCipher::GetHash(CHAR *out)
 
 VOID TlsCipher::UpdateHash(const CHAR *in, UINT32 len)
 {
-    //	CLock lock(lockdata);
     this->handshakeHash.Append(in, len);
 }
 
@@ -116,8 +101,6 @@ VOID TlsCipher::UpdateHash(const CHAR *in, UINT32 len)
 
 BOOL TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 {
-    //	CLock lock(lockdata);
-
     if (this->privateEccKeys[eccIndex] == 0)
     {
         LOG_DEBUG("Allocating memory for private ECC key at index %d", eccIndex);
@@ -200,7 +183,6 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
         return FALSE;
     }
     LOG_DEBUG("Computing TLS key for cipher: %p, ECC group: %d", this, ecc);
-    //	CLock lock(lockdata);
 
     INT32 keyLen = CIPHER_KEY_SIZE;
     INT32 hashLen = CIPHER_HASH_SIZE;
@@ -236,7 +218,6 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
     else
     {
         TlsBuffer premaster_key;
-        Memory::Zero(&premaster_key, sizeof(TlsBuffer));
         if (!this->ComputePreKey(ecc, serverKey, serverKeyLen, premaster_key))
         {
             LOG_DEBUG("Failed to compute pre-master key for ECC group %d", ecc);
@@ -252,8 +233,6 @@ BOOL TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKey
         TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, salt, hashLen, (UINT8 *)premaster_key.GetBuffer(), premaster_key.GetSize());
 
         this->GetHash((PCHAR)hash);
-
-        premaster_key.Clear();
     }
 
     TlsHKDF::ExpandLabel(this->data13.handshakeSecret, hashLen, this->data13.pseudoRandomKey, hashLen, client_key, 12, hash, hashLen);
@@ -289,22 +268,22 @@ VOID TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRem
         LOG_DEBUG("tls_cipher_compute_verify: cipher_index is -1, cannot compute verify data");
         return;
     }
-    //	CLock lock(lockdata);
     CHAR hash[MAX_HASH_LEN];
     INT32 hashLen = CIPHER_HASH_SIZE;
     LOG_DEBUG("tls_cipher_compute_verify: Getting handshake hash, hash_len=%d", hashLen);
     this->GetHash(hash);
 
     UINT8 finished_key[MAX_HASH_LEN];
+    auto finishedLabel = "finished"_embed;
     if (localOrRemote)
     {
         LOG_DEBUG("tls_cipher_compute_verify: Using server finished key");
-        TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.mainSecret, hashLen, (CHAR[]){'f', 'i', 'n', 'i', 's', 'h', 'e', 'd', '\0'}, 8, NULL, 0);
+        TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.mainSecret, hashLen, finishedLabel, 8, NULL, 0);
     }
     else
     {
         LOG_DEBUG("tls_cipher_compute_verify: Using client finished key");
-        TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.handshakeSecret, hashLen, (CHAR[]){'f', 'i', 'n', 'i', 's', 'h', 'e', 'd', '\0'}, 8, NULL, 0);
+        TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.handshakeSecret, hashLen, finishedLabel, 8, NULL, 0);
     }
     out.SetSize(verifySize);
     LOG_DEBUG("tls_cipher_compute_verify: Calculating HMAC for verify, verify_size=%d", verifySize);
@@ -325,7 +304,6 @@ VOID TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRem
 
 VOID TlsCipher::Encode(TlsBuffer &sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal)
 {
-    //	CLock lock(lockdata);
     if (!this->isEncoding || !this->chacha20Context.IsValid() || keepOriginal)
     {
         LOG_DEBUG("Encoding not enabled or encoder is NULL, appending packet directly to sendbuf");

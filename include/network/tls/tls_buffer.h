@@ -68,12 +68,13 @@ public:
     template <typename T>
     T Read();
     VOID Read(PCHAR buf, INT32 size);
+    UINT32 ReadU24BE();
 
     // Accessors
-    INT32 GetSize() { return size; }
-    PCHAR GetBuffer() { return buffer; }
+    INT32 GetSize() const { return size; }
+    PCHAR GetBuffer() const { return buffer; }
     VOID SetBuffer(PCHAR buf) { buffer = buf; if (!ownsMemory) size = 0; }
-    INT32 GetReaded() { return readPos; }
+    INT32 GetReaded() const { return readPos; }
     VOID AppendReaded(INT32 sz) { readPos += sz; }
     VOID ResetReadPos() { readPos = 0; }
 };

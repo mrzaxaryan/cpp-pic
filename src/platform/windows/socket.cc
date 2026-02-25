@@ -92,7 +92,7 @@ BOOL Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 {
     LOG_DEBUG("Bind(pNTSocket: 0x%p, SocketAddress: 0x%p, ShareType: %d)\n", m_socket, &SocketAddress, ShareType);
 
-    if (m_socket == 0)
+    if (!IsValid())
     {
         LOG_ERROR("Socket not initialized\n");
         return FALSE;
@@ -279,7 +279,7 @@ SSIZE Socket::Read(PVOID buffer, UINT32 bufferSize)
 
     SSIZE lpNumberOfBytesRead = 0;
 
-    if (m_socket == 0)
+    if (!IsValid())
     {
         LOG_ERROR("Socket not initialized\n");
         return lpNumberOfBytesRead;
@@ -354,10 +354,10 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
 
     UINT32 lpNumberOfBytesAlreadySend = 0;
 
-    if (m_socket == 0)
+    if (!IsValid())
     {
         LOG_ERROR("Socket not initialized\n");
-        return FALSE;
+        return 0;
     }
 
     PVOID SockEvent = NULL;
@@ -371,7 +371,7 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
     if (!NT_SUCCESS(Status))
     {
         LOG_ERROR("Failed to create event for socket write: 0x%08X\n", Status);
-        return FALSE;
+        return 0;
     }
     LOG_DEBUG("Event successfully created for socket write\n");
 
@@ -409,14 +409,15 @@ UINT32 Socket::Write(PCVOID buffer, UINT32 bufferLength)
         }
 
         Status = IOSB.Status;
-        lpNumberOfBytesAlreadySend = IOSB.Information;
 
         if (!NT_SUCCESS(Status))
         {
             NTDLL::ZwClose(SockEvent);
             LOG_ERROR("Failed to write to socket: 0x%08X\n", Status);
-            return FALSE;
+            return 0;
         }
+
+        lpNumberOfBytesAlreadySend += (UINT32)IOSB.Information;
     } while (lpNumberOfBytesAlreadySend < bufferLength);
 
     NTDLL::ZwClose(SockEvent);

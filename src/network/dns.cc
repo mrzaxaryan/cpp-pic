@@ -355,12 +355,6 @@ static USIZE DNS_GenerateQuery(PCCHAR host, RequestType dnstype, PCHAR buffer, B
     return dnsPacketSize;
 }
 
-BOOL DNS::FormatterCallback(PVOID context, CHAR ch)
-{
-    TLSClient *tlsClient = (TLSClient *)context;
-    return tlsClient->Write(&ch, 1);
-}
-
 IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
     IPAddress result;
@@ -374,17 +368,20 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR
         return IPAddress::Invalid();
     }
 
-    auto format = "POST /dns-query HTTP/1.1\r\n"_embed
-                  "Host: %s\r\n"_embed
-                  "Content-Type: application/dns-message\r\n"_embed
-                  "Accept: application/dns-message\r\n"_embed
-                  "Content-Length: %d\r\n"_embed
-                  "\r\n"_embed;
-
     UINT8 queryBuffer[0xff];
     UINT16 querySize = DNS_GenerateQuery(host, dnstype, (PCHAR)queryBuffer, false);
-    auto fixed = EMBED_FUNC(FormatterCallback);
-    StringFormatter::Format<CHAR>(fixed, &tlsClient, (PCCHAR)format, DNSServerName, querySize);
+
+    // Write HTTP POST header directly to TLS (avoids StringFormatter<CHAR> instantiation)
+    auto writeStr = [&tlsClient](PCCHAR s) { tlsClient.Write(s, String::Length(s)); };
+
+    CHAR sizeBuf[8];
+    String::UIntToStr(querySize, sizeBuf, sizeof(sizeBuf));
+
+    writeStr("POST /dns-query HTTP/1.1\r\nHost: "_embed);
+    writeStr(DNSServerName);
+    writeStr("\r\nContent-Type: application/dns-message\r\nAccept: application/dns-message\r\nContent-Length: "_embed);
+    writeStr(sizeBuf);
+    writeStr("\r\n\r\n"_embed);
 
     tlsClient.Write(queryBuffer, querySize);
 

@@ -24,8 +24,6 @@ class DNS
 private:
     // Function to resolve a hostname using HTTP POST (defaults to IPv6/AAAA)
     static IPAddress ResolveOverHttp(PCCHAR host, const IPAddress& DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
-    // Callback function for formatting DNS queries
-    static BOOL FormatterCallback(PVOID context, CHAR ch);
 
 public:
     // Function to resolve a hostname to an IP address (tries IPv6 first, then IPv4)

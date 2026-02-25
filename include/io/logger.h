@@ -69,7 +69,7 @@ private:
 	 *   Args  - Variadic template arguments (deduced automatically)
 	 */
 	template <TCHAR TChar, typename... Args>
-	static VOID TimestampedLogOutput(const WCHAR *colorPrefix, const TChar *format, Args &&...args)
+	static NOINLINE VOID TimestampedLogOutput(const WCHAR *colorPrefix, const TChar *format, Args &&...args)
 	{
 		// Get current time
 		DateTime now = DateTime::Now();

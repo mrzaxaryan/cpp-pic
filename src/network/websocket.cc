@@ -7,12 +7,6 @@
 #include "http.h"
 #include "embedded_string.h"
 
-BOOL WebSocketClient::FormatterCallback(PVOID context, CHAR ch)
-{
-    WebSocketClient *wsClient = (WebSocketClient *)context;
-    return wsClient->tlsContext.Write(&ch, 1);
-}
-
 BOOL WebSocketClient::Open()
 {
     BOOL isSecure = tlsContext.IsSecure();
@@ -55,22 +49,30 @@ BOOL WebSocketClient::Open()
     PCHAR secureKey = new CHAR[Base64::GetEncodeOutSize(16)];
     Base64::Encode(key, 16, secureKey);
 
-    // Send WebSocket upgrade request
-    auto format = "GET %s HTTP/1.1\r\n"_embed
-                  "Host: %s\r\n"_embed
-                  "Upgrade: WebSocket\r\n"_embed
-                  "Connection: Upgrade\r\n"_embed
-                  "Sec-WebSocket-Key: %s\r\n"_embed
-                  "Sec-WebSocket-Version: 13\r\n"_embed;
+    // Send WebSocket upgrade request by writing segments directly to TLS
+    auto writeStr = [this](PCCHAR s) { tlsContext.Write(s, String::Length(s)); };
 
-    auto fixed = EMBED_FUNC(FormatterCallback);
-    StringFormatter::Format<CHAR>(fixed, this, format, path, hostName, secureKey);
+    writeStr("GET "_embed);
+    writeStr(path);
+    writeStr(" HTTP/1.1\r\nHost: "_embed);
+    writeStr(hostName);
+    writeStr("\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: "_embed);
+    writeStr(secureKey);
+    writeStr("\r\nSec-WebSocket-Version: 13\r\n"_embed);
     delete[] secureKey;
 
     if (isSecure)
-        StringFormatter::Format<CHAR>(fixed, this, "Origin: https://%s\r\n\r\n"_embed, hostName);
+    {
+        writeStr("Origin: https://"_embed);
+        writeStr(hostName);
+        writeStr("\r\n\r\n"_embed);
+    }
     else
-        StringFormatter::Format<CHAR>(fixed, this, "Origin: http://%s\r\n\r\n"_embed, hostName);
+    {
+        writeStr("Origin: http://"_embed);
+        writeStr(hostName);
+        writeStr("\r\n\r\n"_embed);
+    }
 
     // Read handshake response (extra byte for null terminator)
     constexpr UINT32 maxHandshakeSize = 4096;

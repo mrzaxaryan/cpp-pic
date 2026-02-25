@@ -41,14 +41,14 @@ static VOID EFIAPI EmptyNotify(EFI_EVENT Event, PVOID Context)
 	(VOID) Context;
 }
 
-static BOOL InitializeNetworkInterface(EFI_CONTEXT *ctx)
+static BOOL InitializeNetworkInterface(EFI_CONTEXT &ctx)
 {
-	if (ctx->NetworkInitialized)
+	if (ctx.NetworkInitialized)
 		return TRUE;
 
 	LOG_DEBUG("Socket: InitializeNetworkInterface starting...");
 
-	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
+	EFI_BOOT_SERVICES *bs = ctx.SystemTable->BootServices;
 	// Initialize GUID field-by-field to avoid .rdata section on aarch64
 	// {A19832B9-AC25-11D3-9A2D-0090273FC14D}
 	EFI_GUID SnpGuid;
@@ -77,7 +77,7 @@ static BOOL InitializeNetworkInterface(EFI_CONTEXT *ctx)
 	for (USIZE i = 0; i < HandleCount; i++)
 	{
 		EFI_SIMPLE_NETWORK_PROTOCOL *Snp = NULL;
-		if (EFI_ERROR_CHECK(bs->OpenProtocol(HandleBuffer[i], &SnpGuid, (PVOID *)&Snp, ctx->ImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL)) || Snp == NULL)
+		if (EFI_ERROR_CHECK(bs->OpenProtocol(HandleBuffer[i], &SnpGuid, (PVOID *)&Snp, ctx.ImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL)) || Snp == NULL)
 			continue;
 
 		if (Snp->Mode != NULL)
@@ -95,25 +95,25 @@ static BOOL InitializeNetworkInterface(EFI_CONTEXT *ctx)
 			if (Snp->Mode->State == EfiSimpleNetworkInitialized)
 			{
 				LOG_DEBUG("Socket: SNP[%u] Initialized successfully", (UINT32)i);
-				ctx->NetworkInitialized = TRUE;
+				ctx.NetworkInitialized = TRUE;
 				break;
 			}
 		}
 	}
 
 	bs->FreePool(HandleBuffer);
-	LOG_DEBUG("Socket: InitializeNetworkInterface done, success=%d", (INT32)ctx->NetworkInitialized);
-	return ctx->NetworkInitialized;
+	LOG_DEBUG("Socket: InitializeNetworkInterface done, success=%d", (INT32)ctx.NetworkInitialized);
+	return ctx.NetworkInitialized;
 }
 
-static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
+static BOOL InitializeDhcp(EFI_CONTEXT &ctx)
 {
-	if (ctx->DhcpConfigured)
+	if (ctx.DhcpConfigured)
 		return TRUE;
 
 	LOG_DEBUG("Socket: InitializeDhcp starting...");
 
-	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
+	EFI_BOOT_SERVICES *bs = ctx.SystemTable->BootServices;
 	// Initialize GUID field-by-field to avoid .rdata section on aarch64
 	// {5B446ED1-E30B-4FAA-871A-3654ECA36080}
 	EFI_GUID Ip4Config2Guid;
@@ -142,7 +142,7 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 	for (USIZE i = 0; i < HandleCount; i++)
 	{
 		EFI_IP4_CONFIG2_PROTOCOL *Ip4Config2 = NULL;
-		if (EFI_ERROR_CHECK(bs->OpenProtocol(HandleBuffer[i], &Ip4Config2Guid, (PVOID *)&Ip4Config2, ctx->ImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL)) || Ip4Config2 == NULL)
+		if (EFI_ERROR_CHECK(bs->OpenProtocol(HandleBuffer[i], &Ip4Config2Guid, (PVOID *)&Ip4Config2, ctx.ImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL)) || Ip4Config2 == NULL)
 			continue;
 
 		// Check if gateway exists (DHCP already completed)
@@ -151,7 +151,7 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 		if (Status == EFI_BUFFER_TOO_SMALL && DataSize >= sizeof(EFI_IPv4_ADDRESS))
 		{
 			LOG_DEBUG("Socket: DHCP already configured (gateway exists, size=%u)", (UINT32)DataSize);
-			ctx->DhcpConfigured = TRUE;
+			ctx.DhcpConfigured = TRUE;
 			break;
 		}
 
@@ -174,16 +174,16 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 			if (Status == EFI_BUFFER_TOO_SMALL && DataSize >= sizeof(EFI_IPv4_ADDRESS))
 			{
 				LOG_DEBUG("Socket: DHCP completed after %ums", retry * 100);
-				ctx->DhcpConfigured = TRUE;
+				ctx.DhcpConfigured = TRUE;
 				break;
 			}
 			bs->Stall(100000); // 100ms
 		}
 
-		if (!ctx->DhcpConfigured)
+		if (!ctx.DhcpConfigured)
 		{
 			LOG_DEBUG("Socket: DHCP timeout after 5s, proceeding anyway");
-			ctx->DhcpConfigured = TRUE; // Allow TCP to try with whatever config exists
+			ctx.DhcpConfigured = TRUE; // Allow TCP to try with whatever config exists
 		}
 		break;
 	}
@@ -191,15 +191,15 @@ static BOOL InitializeDhcp(EFI_CONTEXT *ctx)
 	bs->FreePool(HandleBuffer);
 
 	// One-time delay for TCP stack readiness on first network init
-	if (ctx->DhcpConfigured && !ctx->TcpStackReady)
+	if (ctx.DhcpConfigured && !ctx.TcpStackReady)
 	{
 		LOG_DEBUG("Socket: First connection - waiting 500ms for TCP stack readiness...");
 		bs->Stall(500000); // 500ms
-		ctx->TcpStackReady = TRUE;
+		ctx.TcpStackReady = TRUE;
 	}
 
-	LOG_DEBUG("Socket: InitializeDhcp done, success=%d", (INT32)ctx->DhcpConfigured);
-	return ctx->DhcpConfigured;
+	LOG_DEBUG("Socket: InitializeDhcp done, success=%d", (INT32)ctx.DhcpConfigured);
+	return ctx.DhcpConfigured;
 }
 
 // Wait for async operation with Poll to drive network stack
@@ -387,8 +387,8 @@ BOOL Socket::Open()
 	EFI_CONTEXT *ctx = GetEfiContext();
 	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
 
-	InitializeNetworkInterface(ctx);
-	InitializeDhcp(ctx);
+	InitializeNetworkInterface(*ctx);
+	InitializeDhcp(*ctx);
 
 	LOG_DEBUG("Socket: Creating connect event...");
 	EFI_EVENT ConnectEvent;

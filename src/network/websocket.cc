@@ -22,10 +22,9 @@ BOOL WebSocketClient::Open()
 
     if (!result && ipAddress.IsIPv6())
     {
+        LOG_DEBUG("Failed to open network transport for WebSocket client using IPv6 address, attempting IPv4 fallback");
 
         // IPv6 failed, fall back to IPv4
-        result = TRUE; // Reset result to attempt IPv4 connection
-
         IPAddress ipv4Address = DNS::Resolve(hostName, A);
         if (!ipv4Address.IsValid())
         {
@@ -33,31 +32,16 @@ BOOL WebSocketClient::Open()
             return FALSE;
         }
 
+        ipAddress = ipv4Address;
 
-        if (isSecure)
-        {
-            tlsContext.Close(); // Close previous TLS context before creating a new one
-            tlsContext = TLSClient(hostName, ipv4Address, port);
-        tlsContext = TLSClient(hostName, ipv4Address, port, isSecure);
+        tlsContext.Close();
+        tlsContext = TLSClient(hostName, ipAddress, port, isSecure);
         result = tlsContext.Open();
-
-
-        if (!result)
-        {
-
-            socketContext.Close(); // Close previous socket context before creating a new one
-            socketContext = Socket(ipv4Address, port);
-            if (!socketContext.Open())
-            {
-                LOG_DEBUG("Failed to open network transport for WebSocket client");
-                result = FALSE;
-            }
-        }
     }
 
     if (!result)
     {
-
+        LOG_DEBUG("Failed to open network transport for WebSocket client");
         return FALSE;
     }
 

@@ -48,18 +48,32 @@ BOOL WebSocketClient::Open()
     CHAR secureKey[25]; // Base64 of 16 bytes = 24 chars + null
     Base64::Encode(key, 16, secureKey);
 
-    auto writeStr = [this](PCCHAR s) { tlsContext.Write(s, String::Length(s)); };
+    // Build the entire HTTP upgrade request in a single buffer to minimize TLS records
+    auto appendStr = [](CHAR *buf, USIZE pos, PCCHAR s) -> USIZE
+    {
+        UINT32 len = String::Length(s);
+        Memory::Copy(buf + pos, s, len);
+        return pos + len;
+    };
 
-    writeStr("GET "_embed);
-    writeStr(path);
-    writeStr(" HTTP/1.1\r\nHost: "_embed);
-    writeStr(hostName);
-    writeStr("\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: "_embed);
-    writeStr(secureKey);
-    writeStr("\r\nSec-WebSocket-Version: 13\r\nOrigin: "_embed);
-    writeStr(isSecure ? "https://"_embed : "http://"_embed);
-    writeStr(hostName);
-    writeStr("\r\n\r\n"_embed);
+    CHAR request[3072];
+    USIZE pos = 0;
+    pos = appendStr(request, pos, "GET "_embed);
+    pos = appendStr(request, pos, path);
+    pos = appendStr(request, pos, " HTTP/1.1\r\nHost: "_embed);
+    pos = appendStr(request, pos, hostName);
+    pos = appendStr(request, pos, "\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: "_embed);
+    pos = appendStr(request, pos, secureKey);
+    pos = appendStr(request, pos, "\r\nSec-WebSocket-Version: 13\r\nOrigin: "_embed);
+    pos = appendStr(request, pos, isSecure ? "https://"_embed : "http://"_embed);
+    pos = appendStr(request, pos, hostName);
+    pos = appendStr(request, pos, "\r\n\r\n"_embed);
+
+    if (tlsContext.Write(request, (UINT32)pos) != pos)
+    {
+        Close();
+        return FALSE;
+    }
 
     INT64 contentLength = -1;
     if (!HttpClient::ReadResponseHeaders(tlsContext, 101, contentLength))
@@ -89,7 +103,7 @@ BOOL WebSocketClient::Close()
     return TRUE;
 }
 
-UINT32 WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode)
+UINT32 WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode)
 {
     // Frame layout: [opcode+FIN][length+MASK][ext length?][mask key][payload]
     // Header sizes: <=125 -> 6, 126..65535 -> 8, >65535 -> 14
@@ -103,8 +117,8 @@ UINT32 WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode)
 
     UINT32 frameLength = headerLength + bufferLength;
 
-    // Stack buffer for small frames (<=125 payload = 131 bytes max), heap for larger
-    UINT8 stackFrame[131];
+    // Stack buffer for small/medium frames, heap for larger
+    UINT8 stackFrame[1024];
     PUINT8 frame = (frameLength <= sizeof(stackFrame)) ? stackFrame : new UINT8[frameLength];
     if (!frame)
         return 0;
@@ -148,7 +162,7 @@ UINT32 WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode)
     if (frame != stackFrame)
         delete[] frame;
 
-    return (result > 0) ? bufferLength : 0;
+    return (result == frameLength) ? bufferLength : 0;
 }
 
 // Read exactly `size` bytes from the TLS transport
@@ -169,7 +183,20 @@ VOID WebSocketClient::MaskFrame(WebSocketFrame &frame, UINT32 maskKey)
 {
     PUINT8 mask = (PUINT8)&maskKey;
     PUINT8 d = (PUINT8)frame.data;
-    for (UINT32 i = 0; i < (UINT32)frame.length; i++)
+    UINT32 len = (UINT32)frame.length;
+
+    // Process 4 bytes at a time (unrolled, no modulo in main loop)
+    UINT32 i = 0;
+    for (; i + 4 <= len; i += 4)
+    {
+        d[i]     ^= mask[0];
+        d[i + 1] ^= mask[1];
+        d[i + 2] ^= mask[2];
+        d[i + 3] ^= mask[3];
+    }
+
+    // Remaining 0-3 bytes
+    for (; i < len; i++)
         d[i] ^= mask[i & 3];
 }
 
@@ -186,8 +213,12 @@ BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
     frame.rsv1 = (b1 >> 6) & 1;
     frame.rsv2 = (b1 >> 5) & 1;
     frame.rsv3 = (b1 >> 4) & 1;
-    frame.opcode = b1 & 0x0F;
+    frame.opcode = (WebSocketOpcode)(b1 & 0x0F);
     frame.mask = (b2 >> 7) & 1;
+
+    // RFC 6455 Section 5.2: RSV1-3 must be 0 unless extensions are negotiated
+    if (frame.rsv1 || frame.rsv2 || frame.rsv3)
+        return FALSE;
 
     UINT8 lengthBits = b2 & 0x7F;
 
@@ -242,12 +273,12 @@ BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
     return TRUE;
 }
 
-PVOID WebSocketClient::Read(USIZE &dwBufferLength, INT8 &opcode)
+PVOID WebSocketClient::Read(USIZE &dwBufferLength, WebSocketOpcode &opcode)
 {
     WebSocketFrame frame;
     PVOID pvBuffer = NULL;
     dwBufferLength = 0;
-    INT8 messageOpcode = 0;
+    WebSocketOpcode messageOpcode = OPCODE_BINARY;
     BOOL messageComplete = FALSE;
 
     while (isConnected)

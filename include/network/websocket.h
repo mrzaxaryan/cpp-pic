@@ -16,7 +16,7 @@ struct WebSocketFrame
 {
     PCHAR data;
     UINT64 length;
-    INT8 opcode;
+    WebSocketOpcode opcode;
     UINT8 fin;
     UINT8 mask;
     UINT8 rsv1;
@@ -54,6 +54,6 @@ public:
     BOOL IsConnected() const { return isConnected; }
     BOOL Open();
     BOOL Close();
-    PVOID Read(USIZE &dwBufferLength, INT8 &opcode);
-    UINT32 Write(PCVOID buffer, UINT32 bufferLength, INT8 opcode = OPCODE_BINARY);
+    PVOID Read(USIZE &dwBufferLength, WebSocketOpcode &opcode);
+    UINT32 Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
 };

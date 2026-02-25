@@ -329,7 +329,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
         (void)NTDLL::ZwClose(hDir);
         return true;
     }
-    LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", createResult.Error().PlatformCode, path);
+    LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", createResult.Bottom().Code, path);
     return false;
 }
 

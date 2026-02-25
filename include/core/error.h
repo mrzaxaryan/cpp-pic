@@ -1,15 +1,14 @@
 #pragma once
 
 #include "primitives.h"
-#include "memory.h"
 
-// Unified error — all network/platform layers push codes onto a call-stack array.
-// Each layer appends its code after any codes pushed by lower layers.
+// Unified error code — identifies a single failure point.
+// Result<T, Error> stores up to MaxChainDepth of these in a chain (innermost first).
 struct Error
 {
 	// PIR runtime failure points — one unique value per failure site.
 	// OS error codes (NTSTATUS, errno, EFI_STATUS) are stored directly in
-	// ErrorCode.Code when Platform != Runtime; they are not listed here.
+	// Error.Code when Platform != Runtime; they are not listed here.
 	enum ErrorCodes : UINT32
 	{
 		None = 0, // no error / empty slot
@@ -59,7 +58,7 @@ struct Error
 		Ws_FrameTooLarge = 32,	  // received frame exceeds size limit
 	};
 
-	// Which OS layer an ErrorCode entry came from.
+	// Which OS layer this code came from.
 	// When Platform != Runtime, Code holds the raw OS error value.
 	enum class PlatformKind : UINT8
 	{
@@ -69,91 +68,18 @@ struct Error
 		Uefi    = 3, // EFI_STATUS — Code holds the raw EFI_STATUS value
 	};
 
-	// A single entry pushed onto the Error call-stack.
-	// When Platform == Runtime: Code is one of the ErrorCodes enumerators above.
-	// When Platform != Runtime: Code holds the raw OS error value cast to UINT32.
-	struct ErrorCode
+	// Result uses this to enable chain storage (up to MaxChainDepth codes).
+	static constexpr UINT32 MaxChainDepth = 8;
+
+	// Backward-compat alias: Error::ErrorCode(...) still compiles.
+	using ErrorCode = Error;
+
+	// Fields — Error IS a single error code.
+	ErrorCodes   Code;
+	PlatformKind Platform;
+
+	Error(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
+		: Code((ErrorCodes)code), Platform(platform)
 	{
-		ErrorCodes   Code;
-		PlatformKind Platform;
-
-		ErrorCode(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
-			: Code((ErrorCodes)code), Platform(platform)
-		{
-		}
-	};
-
-	static constexpr UINT32 MaxDepth = 8;
-
-	UINT32    m_depth;				 // push count; may exceed MaxDepth on overflow
-	ErrorCode RuntimeCode[MaxDepth]; // call stack, innermost first; None = empty slot
-
-	Error() { Memory::Zero(this, sizeof(Error)); }
-
-	// -- Static factory --
-
-	// Build an Error from one or more codes (innermost first).
-	// For OS failures: pass ErrorCode((UINT32)status, PlatformKind::Windows/Posix/Uefi) as the first arg.
-	// For guard failures: pass the ErrorCodes enumerator directly (Platform defaults to Runtime).
-	// Multiple codes: Error::FromCode(osCode, Socket_Xxx) — no Push() needed.
-	template <typename... Codes>
-	[[nodiscard]] static Error FromCode(Codes... codes)
-	{
-		Error err;
-		(err.Push(codes), ...);
-		return err;
-	}
-
-	// -- Mutation --
-
-	// Push a code onto the call stack (innermost layer pushes first).
-	// Codes pushed past MaxDepth are counted but not stored; check Overflow() to detect.
-	// Returns *this to enable chaining: err.Push(A).Push(B)
-	Error& Push(ErrorCode code)
-	{
-		if (m_depth < MaxDepth)
-			RuntimeCode[m_depth] = code;
-		m_depth++;
-		return *this;
-	}
-
-	// -- Queries --
-
-	// Returns the OS kind from the innermost (bottom) code's Platform field.
-	// Meaningful only when !IsEmpty(). Returns PlatformKind::Runtime for guard failures.
-	[[nodiscard]] PlatformKind Kind()     const { return Bottom().Platform; }
-	[[nodiscard]] UINT32       Depth()    const { return m_depth; }
-	[[nodiscard]] BOOL         IsEmpty()  const { return m_depth == 0; }
-	[[nodiscard]] BOOL         Overflow() const { return m_depth > MaxDepth; }
-
-	// Returns the innermost (first pushed, lowest-layer) code, or None if empty.
-	[[nodiscard]] ErrorCode Bottom() const { return m_depth > 0 ? RuntimeCode[0] : ErrorCode(); }
-
-	// Returns the outermost (last pushed, highest-layer) code, or None if empty.
-	[[nodiscard]] ErrorCode Top() const
-	{
-		if (m_depth == 0)
-			return ErrorCode();
-		UINT32 stored = m_depth < MaxDepth ? m_depth : MaxDepth;
-		return RuntimeCode[stored - 1];
-	}
-
-	// Returns true if any stored code matches the given ErrorCodes enumerator.
-	// Only meaningful for Runtime-platform entries; OS error values are not enumerated.
-	[[nodiscard]] BOOL HasCode(ErrorCodes code) const
-	{
-		UINT32 stored = m_depth < MaxDepth ? m_depth : MaxDepth;
-		for (UINT32 i = 0; i < stored; i++)
-		{
-			if (RuntimeCode[i].Code == code)
-				return true;
-		}
-		return false;
-	}
-
-	// Returns the code at position index (0 = innermost). Returns None if out of range.
-	[[nodiscard]] ErrorCode operator[](UINT32 index) const
-	{
-		return (index < MaxDepth && index < m_depth) ? RuntimeCode[index] : ErrorCode();
 	}
 };

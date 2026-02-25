@@ -25,7 +25,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 	(VOID)shareType; // not used on macOS
 
 	if (!IsValid())
-		return Result<void, Error>::Err(Error::FromCode(Error::Socket_BindFailed_Bind));
+		return Result<void, Error>::Err(Error::Socket_BindFailed_Bind);
 
 	SSIZE  sockfd  = (SSIZE)m_socket;
 	UINT32 addrLen = (socketAddress.sin_family == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
@@ -33,8 +33,8 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 	if (result != 0)
 	{
 		return Result<void, Error>::Err(
-			Error::FromCode(Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
-			                Error::Socket_BindFailed_Bind));
+			Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
+			Error::Socket_BindFailed_Bind);
 	}
 
 	return Result<void, Error>::Ok();
@@ -43,7 +43,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 Result<void, Error> Socket::Open()
 {
 	if (!IsValid())
-		return Result<void, Error>::Err(Error::FromCode(Error::Socket_OpenFailed_HandleInvalid));
+		return Result<void, Error>::Err(Error::Socket_OpenFailed_HandleInvalid);
 
 	SSIZE sockfd = (SSIZE)m_socket;
 
@@ -55,14 +55,14 @@ Result<void, Error> Socket::Open()
 
 	UINT32 addrLen = SocketAddressHelper::PrepareAddress(ip, port, &addrBuffer, sizeof(addrBuffer));
 	if (addrLen == 0)
-		return Result<void, Error>::Err(Error::FromCode(Error::Socket_OpenFailed_Connect));
+		return Result<void, Error>::Err(Error::Socket_OpenFailed_Connect);
 
 	SSIZE result = System::Call(SYS_CONNECT, sockfd, (USIZE)&addrBuffer, addrLen);
 	if (result != 0)
 	{
 		return Result<void, Error>::Err(
-			Error::FromCode(Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
-			                Error::Socket_OpenFailed_Connect));
+			Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
+			Error::Socket_OpenFailed_Connect);
 	}
 
 	return Result<void, Error>::Ok();
@@ -71,7 +71,7 @@ Result<void, Error> Socket::Open()
 Result<void, Error> Socket::Close()
 {
 	if (!IsValid())
-		return Result<void, Error>::Err(Error::FromCode(Error::Socket_CloseFailed_Close));
+		return Result<void, Error>::Err(Error::Socket_CloseFailed_Close);
 
 	SSIZE sockfd = (SSIZE)m_socket;
 	System::Call(SYS_CLOSE, sockfd);
@@ -82,15 +82,15 @@ Result<void, Error> Socket::Close()
 Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 {
 	if (!IsValid())
-		return Result<SSIZE, Error>::Err(Error::FromCode(Error::Socket_ReadFailed_HandleInvalid));
+		return Result<SSIZE, Error>::Err(Error::Socket_ReadFailed_HandleInvalid);
 
 	SSIZE sockfd = (SSIZE)m_socket;
 	SSIZE result = System::Call(SYS_RECVFROM, sockfd, (USIZE)buffer, bufferLength, 0, 0, 0);
 	if (result < 0)
 	{
 		return Result<SSIZE, Error>::Err(
-			Error::FromCode(Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
-			                Error::Socket_ReadFailed_Recv));
+			Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
+			Error::Socket_ReadFailed_Recv);
 	}
 
 	return Result<SSIZE, Error>::Ok(result);
@@ -99,7 +99,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 {
 	if (!IsValid())
-		return Result<UINT32, Error>::Err(Error::FromCode(Error::Socket_WriteFailed_HandleInvalid));
+		return Result<UINT32, Error>::Err(Error::Socket_WriteFailed_HandleInvalid);
 
 	SSIZE  sockfd    = (SSIZE)m_socket;
 	UINT32 totalSent = 0;
@@ -113,10 +113,10 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		{
 			if (sent < 0)
 				return Result<UINT32, Error>::Err(
-					Error::FromCode(Error::ErrorCode((UINT32)(-sent), Error::PlatformKind::Posix),
-					                Error::Socket_WriteFailed_Send));
+					Error::ErrorCode((UINT32)(-sent), Error::PlatformKind::Posix),
+					Error::Socket_WriteFailed_Send);
 			return Result<UINT32, Error>::Err(
-				Error::FromCode(Error::Socket_WriteFailed_Send));
+				Error::Socket_WriteFailed_Send);
 		}
 
 		totalSent += (UINT32)sent;

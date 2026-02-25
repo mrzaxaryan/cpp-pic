@@ -22,7 +22,7 @@ Result<void, Error> WebSocketClient::Open()
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve IPv4 address for %s, cannot connect to WebSocket server", hostName);
-			return Result<void, Error>::Err(Error::FromCode(Error::Ws_DnsFailed));
+			return Result<void, Error>::Err(Error::Ws_DnsFailed);
 		}
 
 		ipAddress = dnsResult.Value();
@@ -35,9 +35,7 @@ Result<void, Error> WebSocketClient::Open()
 	if (!openResult)
 	{
 		LOG_DEBUG("Failed to open network transport for WebSocket client");
-		Error err = openResult.Error();
-		err.Push(Error::Ws_TransportFailed);
-		return Result<void, Error>::Err(err);
+		return Result<void, Error>::Err(openResult, Error::Ws_TransportFailed);
 	}
 
 	// Generate random 16-byte WebSocket key (RFC 6455: 16 random bytes, base64-encoded)
@@ -68,14 +66,14 @@ Result<void, Error> WebSocketClient::Open()
 		!writeStr("\r\n\r\n"_embed))
 	{
 		(void)Close();
-		return Result<void, Error>::Err(Error::FromCode(Error::Ws_WriteFailed));
+		return Result<void, Error>::Err(Error::Ws_WriteFailed);
 	}
 
 	INT64 contentLength = -1;
 	if (!HttpClient::ReadResponseHeaders(tlsContext, 101, contentLength))
 	{
 		(void)Close();
-		return Result<void, Error>::Err(Error::FromCode(Error::Ws_HandshakeFailed));
+		return Result<void, Error>::Err(Error::Ws_HandshakeFailed);
 	}
 
 	isConnected = true;
@@ -101,7 +99,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 {
 	if (!isConnected && opcode != OPCODE_CLOSE)
 	{
-		return Result<UINT32, Error>::Err(Error::FromCode(Error::Ws_NotConnected));
+		return Result<UINT32, Error>::Err(Error::Ws_NotConnected);
 	}
 
 	// Build frame header on stack (max 14 bytes: 2 base + 8 ext length + 4 mask key)
@@ -156,7 +154,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 		auto smallWrite = tlsContext.Write(chunk, frameLength);
 		if (!smallWrite || smallWrite.Value() != frameLength)
 		{
-			return Result<UINT32, Error>::Err(Error::FromCode(Error::Ws_WriteFailed));
+			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 		}
 
 		return Result<UINT32, Error>::Ok(bufferLength);
@@ -166,7 +164,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 	auto headerWrite = tlsContext.Write(header, headerLength);
 	if (!headerWrite || headerWrite.Value() != headerLength)
 	{
-		return Result<UINT32, Error>::Err(Error::FromCode(Error::Ws_WriteFailed));
+		return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 	}
 
 	PUINT8 src = (PUINT8)buffer;
@@ -182,7 +180,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 		auto chunkWrite = tlsContext.Write(chunk, chunkSize);
 		if (!chunkWrite || chunkWrite.Value() != chunkSize)
 		{
-			return Result<UINT32, Error>::Err(Error::FromCode(Error::Ws_WriteFailed));
+			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 		}
 
 		offset += chunkSize;
@@ -304,7 +302,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 {
 	if (!isConnected)
 	{
-		return Result<WebSocketMessage, Error>::Err(Error::FromCode(Error::Ws_NotConnected));
+		return Result<WebSocketMessage, Error>::Err(Error::Ws_NotConnected);
 	}
 
 	WebSocketFrame frame;
@@ -367,7 +365,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 			(void)Write(frame.data, (frame.length >= 2) ? 2 : 0, OPCODE_CLOSE);
 			delete[] frame.data;
 			isConnected = false;
-			return Result<WebSocketMessage, Error>::Err(Error::FromCode(Error::Ws_ConnectionClosed));
+			return Result<WebSocketMessage, Error>::Err(Error::Ws_ConnectionClosed);
 		}
 		else if (frame.opcode == OPCODE_PING)
 		{
@@ -387,7 +385,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 
 	if (!messageComplete)
 	{
-		return Result<WebSocketMessage, Error>::Err(Error::FromCode(Error::Ws_ReceiveFailed));
+		return Result<WebSocketMessage, Error>::Err(Error::Ws_ReceiveFailed);
 	}
 
 	return Result<WebSocketMessage, Error>::Ok(static_cast<WebSocketMessage &&>(message));

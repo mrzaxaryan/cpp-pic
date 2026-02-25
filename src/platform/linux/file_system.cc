@@ -12,7 +12,7 @@ File::File(PVOID handle) : fileHandle(handle), fileSize(0)
     // TODO: Get file size using fstat if needed
 }
 
-File::File(File&& other) noexcept : fileHandle(nullptr), fileSize(0)
+File::File(File &&other) noexcept : fileHandle(nullptr), fileSize(0)
 {
     fileHandle = other.fileHandle;
     fileSize = other.fileSize;
@@ -20,7 +20,7 @@ File::File(File&& other) noexcept : fileHandle(nullptr), fileSize(0)
     other.fileSize = 0;
 }
 
-File& File::operator=(File&& other) noexcept
+File &File::operator=(File &&other) noexcept
 {
     if (this != &other)
     {
@@ -58,7 +58,7 @@ UINT32 File::Read(PVOID buffer, UINT32 size)
     return (result >= 0) ? (UINT32)result : 0;
 }
 
-UINT32 File::Write(const VOID* buffer, USIZE size)
+UINT32 File::Write(const VOID *buffer, USIZE size)
 {
     if (!IsValid())
         return 0;
@@ -282,7 +282,7 @@ BOOL DirectoryIterator::Next()
         bpos = 0;
     }
 
-    linux_dirent64* d = (linux_dirent64*)(buffer + bpos);
+    linux_dirent64 *d = (linux_dirent64 *)(buffer + bpos);
 
     String::Utf8ToWide(d->d_name, currentEntry.name, 256);
 
@@ -294,6 +294,7 @@ BOOL DirectoryIterator::Next()
     currentEntry.isReadOnly = FALSE;
     currentEntry.size = 0;
     currentEntry.creationTime = 0;
+    currentEntry.lastModifiedTime = 0;
 
     bpos += d->d_reclen;
 

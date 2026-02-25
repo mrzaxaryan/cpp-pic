@@ -49,7 +49,6 @@ BOOL WebSocketClient::Open()
     PCHAR secureKey = new CHAR[Base64::GetEncodeOutSize(16)];
     Base64::Encode(key, 16, secureKey);
 
-    // Send WebSocket upgrade request by writing segments directly to TLS
     auto writeStr = [this](PCCHAR s) { tlsContext.Write(s, String::Length(s)); };
 
     writeStr("GET "_embed);

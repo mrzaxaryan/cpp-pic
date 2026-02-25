@@ -371,7 +371,6 @@ IPAddress DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR
     UINT8 queryBuffer[0xff];
     UINT16 querySize = DNS_GenerateQuery(host, dnstype, (PCHAR)queryBuffer, false);
 
-    // Write HTTP POST header directly to TLS (avoids StringFormatter<CHAR> instantiation)
     auto writeStr = [&tlsClient](PCCHAR s) { tlsClient.Write(s, String::Length(s)); };
 
     CHAR sizeBuf[8];

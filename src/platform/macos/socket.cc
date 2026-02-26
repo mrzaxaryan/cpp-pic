@@ -33,7 +33,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 	if (result != 0)
 	{
 		return Result<void, Error>::Err(
-			Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
+			Error::Posix((UINT32)(-result)),
 			Error::Socket_BindFailed_Bind);
 	}
 
@@ -61,7 +61,7 @@ Result<void, Error> Socket::Open()
 	if (result != 0)
 	{
 		return Result<void, Error>::Err(
-			Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
+			Error::Posix((UINT32)(-result)),
 			Error::Socket_OpenFailed_Connect);
 	}
 
@@ -89,7 +89,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 	if (result < 0)
 	{
 		return Result<SSIZE, Error>::Err(
-			Error::ErrorCode((UINT32)(-result), Error::PlatformKind::Posix),
+			Error::Posix((UINT32)(-result)),
 			Error::Socket_ReadFailed_Recv);
 	}
 
@@ -113,7 +113,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		{
 			if (sent < 0)
 				return Result<UINT32, Error>::Err(
-					Error::ErrorCode((UINT32)(-sent), Error::PlatformKind::Posix),
+					Error::Posix((UINT32)(-sent)),
 					Error::Socket_WriteFailed_Send);
 			return Result<UINT32, Error>::Err(
 				Error::Socket_WriteFailed_Send);

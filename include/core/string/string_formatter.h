@@ -19,6 +19,7 @@
  * - %lld, %llu - Long long integers
  * - %lx, %lX, %llx, %llX - Long/long long hex
  * - %zu, %zd - Size_t variants
+ * - %e, %E - Error chain (ErrorChainView from Result::Errors())
  * - %% - Literal percent sign
  *
  * Format flags:
@@ -41,6 +42,7 @@
 
 #include "primitives.h"
 #include "string.h"
+#include "error.h"
 
 /**
  * @class StringFormatter
@@ -97,7 +99,8 @@ private:
             DOUBLE,
             CSTR,
             WSTR,
-            PTR
+            PTR,
+            ERROR_CHAIN
         };
 
         Type type; ///< Type of stored value
@@ -109,8 +112,9 @@ private:
             UINT64 u64;        ///< Unsigned 64-bit integer
             DOUBLE dbl;        ///< Floating-point value
             const CHAR *cstr;  ///< Narrow string pointer
-            const WCHAR *wstr; ///< Wide string pointer
-            PVOID ptr;         ///< Generic pointer
+            const WCHAR *wstr;              ///< Wide string pointer
+            PVOID ptr;                      ///< Generic pointer
+            const ErrorChainView *errChain; ///< Error chain view pointer
         };
 
         /// @name Constructors
@@ -125,6 +129,7 @@ private:
         Argument(WCHAR *v) : type(Type::WSTR), wstr(v) {}
         Argument(PVOID v) : type(Type::PTR), ptr(v) {}
         Argument(const void *v) : type(Type::PTR), ptr(const_cast<PVOID>(v)) {}
+        Argument(const ErrorChainView &v) : type(Type::ERROR_CHAIN), errChain(&v) {}
         Argument(INT64 v) : type(Type::INT64), i64(v) {}
         Argument(UINT64 v) : type(Type::UINT64), u64(v) {}
 #if defined(__LP64__) || defined(_LP64)
@@ -155,6 +160,8 @@ private:
     static INT32 FormatUInt32AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT32 num, INT32 fieldWidth = 0, INT32 uppercase = 0, INT32 zeroPad = 0, BOOL addPrefix = false);
     template <TCHAR TChar>
     static INT32 FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID context, const WCHAR *wstr, INT32 fieldWidth = 0, INT32 leftAlign = 0);
+    template <TCHAR TChar>
+    static INT32 FormatErrorChain(BOOL (*writer)(PVOID, TChar), PVOID context, const ErrorChainView *chain);
     /// @}
 
 public:
@@ -496,6 +503,76 @@ INT32 StringFormatter::FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID cont
                 return j;
             j++;
         }
+    }
+
+    return j;
+}
+
+template <TCHAR TChar>
+INT32 StringFormatter::FormatErrorChain(BOOL (*writer)(PVOID, TChar), PVOID context, const ErrorChainView *chain)
+{
+    INT32 j = 0;
+
+    if (chain == nullptr || chain->count == 0)
+    {
+        if (!writer(context, (TChar)'0'))
+            return j;
+        return 1;
+    }
+
+    for (UINT32 i = 0; i < chain->count; i++)
+    {
+        // Separator between entries
+        if (i > 0)
+        {
+            if (!writer(context, (TChar)' ')) return j; j++;
+            if (!writer(context, (TChar)'>')) return j; j++;
+            if (!writer(context, (TChar)' ')) return j; j++;
+        }
+
+        UINT32 code = (UINT32)chain->codes[i].Code;
+        Error::PlatformKind platform = chain->codes[i].Platform;
+
+        // Windows/UEFI: hex with 0x prefix (uppercase digits). Runtime/Posix: decimal.
+        if (platform == Error::PlatformKind::Windows || platform == Error::PlatformKind::Uefi)
+        {
+            if (!writer(context, (TChar)'0')) return j; j++;
+            if (!writer(context, (TChar)'x')) return j; j++;
+            j += FormatUInt32AsHex<TChar>(writer, context, code, 0, 1, 0, false);
+        }
+        else
+            j += FormatUInt64<TChar>(writer, context, (UINT64)code, 0, 0, 0);
+
+        // Platform tag for non-Runtime
+        if (platform == Error::PlatformKind::Windows)
+        {
+            if (!writer(context, (TChar)'[')) return j; j++;
+            if (!writer(context, (TChar)'W')) return j; j++;
+            if (!writer(context, (TChar)']')) return j; j++;
+        }
+        else if (platform == Error::PlatformKind::Posix)
+        {
+            if (!writer(context, (TChar)'[')) return j; j++;
+            if (!writer(context, (TChar)'P')) return j; j++;
+            if (!writer(context, (TChar)']')) return j; j++;
+        }
+        else if (platform == Error::PlatformKind::Uefi)
+        {
+            if (!writer(context, (TChar)'[')) return j; j++;
+            if (!writer(context, (TChar)'U')) return j; j++;
+            if (!writer(context, (TChar)']')) return j; j++;
+        }
+    }
+
+    // Overflow indicator
+    if (chain->overflow)
+    {
+        if (!writer(context, (TChar)' ')) return j; j++;
+        if (!writer(context, (TChar)'>')) return j; j++;
+        if (!writer(context, (TChar)' ')) return j; j++;
+        if (!writer(context, (TChar)'.')) return j; j++;
+        if (!writer(context, (TChar)'.')) return j; j++;
+        if (!writer(context, (TChar)'.')) return j; j++;
     }
 
     return j;
@@ -1063,6 +1140,14 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                     j++;
                     continue;
                 }
+            }
+            else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'e')
+            {        // Handle %e (error chain)
+                i++; // Skip 'e'
+                if (currentArg >= argCount)
+                    continue;
+                j += FormatErrorChain<TChar>(writer, context, args[currentArg++].errChain);
+                continue;
             }
             else if (format[i] == (TChar)'%')
             { // Handle literal "%%"

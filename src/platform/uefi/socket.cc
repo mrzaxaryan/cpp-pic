@@ -399,7 +399,7 @@ Result<void, Error> Socket::Open()
 	{
 		LOG_DEBUG("Socket: CreateEvent failed");
 		return Result<void, Error>::Err(
-			Error::ErrorCode((UINT32)efiStatus, Error::PlatformKind::Uefi),
+			Error::Uefi((UINT32)efiStatus),
 			Error::Socket_OpenFailed_EventCreate);
 	}
 
@@ -424,7 +424,7 @@ Result<void, Error> Socket::Open()
 			LOG_DEBUG("Socket: TCP6 Configure failed");
 			bs->CloseEvent(ConnectEvent);
 			return Result<void, Error>::Err(
-				Error::ErrorCode((UINT32)efiStatus, Error::PlatformKind::Uefi),
+				Error::Uefi((UINT32)efiStatus),
 				Error::Socket_OpenFailed_Connect);
 		}
 		sockCtx->IsConfigured = true;
@@ -482,7 +482,7 @@ Result<void, Error> Socket::Open()
 			LOG_DEBUG("Socket: TCP4 Configure failed: 0x%lx", (UINT64)Status);
 			bs->CloseEvent(ConnectEvent);
 			return Result<void, Error>::Err(
-				Error::ErrorCode((UINT32)Status, Error::PlatformKind::Uefi),
+				Error::Uefi((UINT32)Status),
 				Error::Socket_OpenFailed_Connect);
 		}
 		sockCtx->IsConfigured = true;
@@ -722,7 +722,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 	if (EFI_ERROR_CHECK(efiStatus))
 	{
 		return Result<SSIZE, Error>::Err(
-			Error::ErrorCode((UINT32)efiStatus, Error::PlatformKind::Uefi),
+			Error::Uefi((UINT32)efiStatus),
 			Error::Socket_ReadFailed_EventCreate);
 	}
 
@@ -825,7 +825,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 	{
 		LOG_DEBUG("Socket: Write() CreateEvent failed");
 		return Result<UINT32, Error>::Err(
-			Error::ErrorCode((UINT32)efiStatus, Error::PlatformKind::Uefi),
+			Error::Uefi((UINT32)efiStatus),
 			Error::Socket_WriteFailed_EventCreate);
 	}
 

@@ -161,7 +161,7 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	if (!NT_SUCCESS(Status))
 	{
 		return Result<void, Error>::Err(
-			Error::ErrorCode((UINT32)Status, Error::PlatformKind::Windows),
+			Error::Windows((UINT32)Status),
 			Error::Socket_BindFailed_Bind);
 	}
 
@@ -248,7 +248,7 @@ Result<void, Error> Socket::Open()
 	if (!NT_SUCCESS(Status))
 	{
 		return Result<void, Error>::Err(
-			Error::ErrorCode((UINT32)Status, Error::PlatformKind::Windows),
+			Error::Windows((UINT32)Status),
 			Error::Socket_OpenFailed_Connect);
 	}
 
@@ -315,7 +315,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
 			return Result<SSIZE, Error>::Err(
-				Error::ErrorCode((UINT32)STATUS_TIMEOUT, Error::PlatformKind::Windows),
+				Error::Windows((UINT32)STATUS_TIMEOUT),
 				Error::Socket_ReadFailed_Timeout);
 		}
 	}
@@ -325,7 +325,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 	if (!NT_SUCCESS(Status))
 	{
 		return Result<SSIZE, Error>::Err(
-			Error::ErrorCode((UINT32)Status, Error::PlatformKind::Windows),
+			Error::Windows((UINT32)Status),
 			Error::Socket_ReadFailed_Recv);
 	}
 
@@ -380,7 +380,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 			{
 				(void)NTDLL::ZwClose(SockEvent);
 				return Result<UINT32, Error>::Err(
-					Error::ErrorCode((UINT32)STATUS_TIMEOUT, Error::PlatformKind::Windows),
+					Error::Windows((UINT32)STATUS_TIMEOUT),
 					Error::Socket_WriteFailed_Timeout);
 			}
 		}
@@ -389,7 +389,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
 			return Result<UINT32, Error>::Err(
-				Error::ErrorCode((UINT32)Status, Error::PlatformKind::Windows),
+				Error::Windows((UINT32)Status),
 				Error::Socket_WriteFailed_Send);
 		}
 

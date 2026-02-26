@@ -350,6 +350,18 @@ public:
 		return false;
 	}
 
+	/// Returns a snapshot of the error chain for formatting with %e.
+	[[nodiscard]] FORCE_INLINE auto Errors() const noexcept
+		requires(CHAINABLE)
+	{
+		ErrorChainView view;
+		view.count = m_error.depth < CHAIN_DEPTH ? m_error.depth : CHAIN_DEPTH;
+		view.overflow = m_error.depth > CHAIN_DEPTH;
+		for (UINT32 i = 0; i < view.count; i++)
+			view.codes[i] = m_error.codes[i];
+		return view;
+	}
+
 private:
 	Result() noexcept {}
 };

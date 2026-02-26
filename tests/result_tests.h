@@ -25,6 +25,8 @@ public:
 		RunTest(allPassed, EMBED_FUNC(TestVoidMoveConstruction), L"Void move construction"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestNonTrivialDestructor), L"Non-trivial destructor"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestTypeAliases), L"Type aliases"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestErrorFactoryMethods), L"Error factory methods"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestErrorChaining), L"Error chaining"_embed);
 
 		if (allPassed)
 			LOG_INFO("All Result tests passed!");
@@ -251,6 +253,89 @@ private:
 		static_assert(__is_same(Result<UINT32, UINT64>::ErrorType, UINT64), "ErrorType mismatch");
 		static_assert(__is_same(Result<void, UINT32>::ValueType, void), "void ValueType mismatch");
 		static_assert(__is_same(Result<void, UINT32>::ErrorType, UINT32), "void ErrorType mismatch");
+
+		return true;
+	}
+
+	static BOOL TestErrorFactoryMethods()
+	{
+		// Test Error::Windows factory
+		Error winErr = Error::Windows(0xC0000034);
+		if (winErr.Code != (Error::ErrorCodes)0xC0000034)
+			return false;
+		if (winErr.Platform != Error::PlatformKind::Windows)
+			return false;
+
+		// Test Error::Posix factory
+		Error posixErr = Error::Posix(111);
+		if (posixErr.Code != (Error::ErrorCodes)111)
+			return false;
+		if (posixErr.Platform != Error::PlatformKind::Posix)
+			return false;
+
+		// Test Error::Uefi factory
+		Error uefiErr = Error::Uefi(0x80000001);
+		if (uefiErr.Code != (Error::ErrorCodes)0x80000001)
+			return false;
+		if (uefiErr.Platform != Error::PlatformKind::Uefi)
+			return false;
+
+		// Test default constructor (Runtime)
+		Error runtimeErr(Error::Socket_WriteFailed_Send);
+		if (runtimeErr.Platform != Error::PlatformKind::Runtime)
+			return false;
+		if (runtimeErr.Code != Error::Socket_WriteFailed_Send)
+			return false;
+
+		return true;
+	}
+
+	static BOOL TestErrorChaining()
+	{
+		// Test single-code chainable Result
+		auto single = Result<UINT32, Error>::Err(Error::Dns_ConnectFailed);
+		if (!single.IsErr())
+			return false;
+		if (single.ErrorDepth() != 1)
+			return false;
+		if (single.Bottom().Code != Error::Dns_ConnectFailed)
+			return false;
+		if (single.Kind() != Error::PlatformKind::Runtime)
+			return false;
+
+		// Test two-code chain: OS error + runtime code
+		auto twoCode = Result<UINT32, Error>::Err(
+			Error::Windows(0xC0000034),
+			Error::Socket_OpenFailed_Connect);
+		if (twoCode.ErrorDepth() != 2)
+			return false;
+		if (twoCode.Bottom().Code != (Error::ErrorCodes)0xC0000034)
+			return false;
+		if (twoCode.Bottom().Platform != Error::PlatformKind::Windows)
+			return false;
+		if (twoCode.Top().Code != Error::Socket_OpenFailed_Connect)
+			return false;
+		if (twoCode.Kind() != Error::PlatformKind::Windows)
+			return false;
+
+		// Test propagation: copy chain from source + append
+		auto propagated = Result<void, Error>::Err(twoCode, Error::Tls_OpenFailed_Socket);
+		if (propagated.ErrorDepth() != 3)
+			return false;
+		if (propagated.ErrorAt(0).Code != (Error::ErrorCodes)0xC0000034)
+			return false;
+		if (propagated.ErrorAt(1).Code != Error::Socket_OpenFailed_Connect)
+			return false;
+		if (propagated.ErrorAt(2).Code != Error::Tls_OpenFailed_Socket)
+			return false;
+
+		// Test HasCode
+		if (!propagated.HasCode(Error::Tls_OpenFailed_Socket))
+			return false;
+		if (!propagated.HasCode(Error::Socket_OpenFailed_Connect))
+			return false;
+		if (propagated.HasCode(Error::Dns_ConnectFailed))
+			return false;
 
 		return true;
 	}

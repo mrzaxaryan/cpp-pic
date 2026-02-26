@@ -56,6 +56,16 @@ struct Error
 		Ws_ConnectionClosed = 30, // server sent CLOSE frame
 		Ws_InvalidFrame = 31,	  // received frame with invalid RSV bits or opcode
 		Ws_FrameTooLarge = 32,	  // received frame exceeds size limit
+
+		// -------------------------
+		// DNS errors (33–38)
+		// -------------------------
+		Dns_ConnectFailed  = 33, // TLS connection to DNS server failed
+		Dns_QueryFailed    = 34, // DNS query generation failed
+		Dns_SendFailed     = 35, // failed to send DNS query
+		Dns_ResponseFailed = 36, // DNS server returned non-200 or bad content-length
+		Dns_ParseFailed    = 37, // failed to parse DNS binary response
+		Dns_ResolveFailed  = 38, // all DNS servers/fallbacks exhausted
 	};
 
 	// Which OS layer this code came from.
@@ -71,9 +81,6 @@ struct Error
 	// Result uses this to enable chain storage (up to MaxChainDepth codes).
 	static constexpr UINT32 MaxChainDepth = 8;
 
-	// Backward-compat alias: Error::ErrorCode(...) still compiles.
-	using ErrorCode = Error;
-
 	// Fields — Error IS a single error code.
 	ErrorCodes   Code;
 	PlatformKind Platform;
@@ -82,4 +89,18 @@ struct Error
 		: Code((ErrorCodes)code), Platform(platform)
 	{
 	}
+
+	// Platform-specific factory methods — concise alternative to the constructor.
+	static Error Windows(UINT32 ntstatus) { return Error(ntstatus, PlatformKind::Windows); }
+	static Error Posix(UINT32 errnoVal)   { return Error(errnoVal, PlatformKind::Posix); }
+	static Error Uefi(UINT32 efiStatus)   { return Error(efiStatus, PlatformKind::Uefi); }
+};
+
+/// Lightweight read-only snapshot of an error chain for %e formatting.
+/// Produced by Result::Errors(). Stores copies of each Error in the chain.
+struct ErrorChainView
+{
+	Error codes[Error::MaxChainDepth];
+	UINT32 count;    // number of valid entries in codes[]
+	BOOL overflow;   // true if original chain had more than MaxChainDepth entries
 };

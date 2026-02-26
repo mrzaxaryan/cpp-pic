@@ -8,7 +8,6 @@
 // Public domain.
 
 // Constants
-#define POLY1305_MAX_AAD 32
 #define U8C(v) (v##U)
 
 #define U8V(v) ((UINT8)(v) & U8C(0xFF))
@@ -586,20 +585,19 @@ VOID ChaChaPoly1305::Block(PUCHAR c, UINT32 len)
     }
 
     for (i = 0; i < 16; i++)
-        this->input[i] = PLUS(this->input[i], state[i]);
+        state[i] = PLUS(state[i], this->input[i]);
 
     for (i = 0; i < len; i += 4)
     {
-        _private_tls_U32TO8_LITTLE(c + i, this->input[i / 4]);
+        _private_tls_U32TO8_LITTLE(c + i, state[i / 4]);
     }
+    this->input[12] = PLUSONE(this->input[12]);
 }
 
 INT32 ChaChaPoly1305::Poly1305Aead(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad_len, PUCHAR poly_key, PUCHAR out)
 {
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
-    if (aad_len > POLY1305_MAX_AAD)
-        return -1;
 
     UINT32 counter = 1;
     this->IVSetup96BitNonce(nullptr, (PUCHAR)&counter);
@@ -634,7 +632,7 @@ INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 a
     len -= POLY1305_TAGLEN;
 
     // Authenticate BEFORE decrypting (AEAD requirement)
-    this->Poly1305Key(poly_key);
+    // poly_key is already computed by the caller; use it directly
     Poly1305 poly(poly_key);
     poly.Update(aad, aad_len);
     UCHAR zeropad[15];

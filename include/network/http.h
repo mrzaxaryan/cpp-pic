@@ -27,8 +27,8 @@ public:
 
     HttpClient(const HttpClient &) = delete;
     HttpClient &operator=(const HttpClient &) = delete;
-    HttpClient(HttpClient &&) = default;
-    HttpClient &operator=(HttpClient &&) = default;
+    HttpClient(HttpClient &&) = delete;
+    HttpClient &operator=(HttpClient &&) = delete;
 
     BOOL IsValid() const { return tlsContext.IsValid(); }
     BOOL IsSecure() const { return tlsContext.IsSecure(); }

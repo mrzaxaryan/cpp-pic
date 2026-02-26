@@ -325,6 +325,9 @@ Result<INT64, Error> HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 e
         tail = (tail << 8) | (UINT8)c;
         bytesConsumed++;
 
+        if (bytesConsumed > 16384)
+            return Result<INT64, Error>::Err(Error::Http_ReadHeadersFailed_Read);
+
         // After 13 bytes, tail holds bytes 9-12: check status code
         if (bytesConsumed == 13)
             statusValid = (tail == expectedTail);
@@ -333,7 +336,12 @@ Result<INT64, Error> HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 e
         if (parsingValue)
         {
             if (c >= '0' && c <= '9')
-                contentLength = contentLength * 10 + (c - '0');
+            {
+                if (contentLength > (INT64)0xFFFFFFFFFFFFF / 10)
+                    parsingValue = false;
+                else
+                    contentLength = contentLength * 10 + (c - '0');
+            }
             else
                 parsingValue = false;
         }

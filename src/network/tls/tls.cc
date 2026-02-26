@@ -391,6 +391,8 @@ Result<void, Error> TLSClient::OnServerHelloDone()
 Result<void, Error> TLSClient::VerifyFinished(TlsBuffer &reader)
 {
     INT32 server_finished_size = reader.ReadU24BE();
+    if (server_finished_size < 0 || server_finished_size > reader.GetSize() - reader.GetReaded())
+        return Result<void, Error>::Err(Error::Tls_VerifyFinishedFailed);
     LOG_DEBUG("Verifying Finished for client: %p, size: %d bytes", this, server_finished_size);
     TlsBuffer verify;
     crypto.ComputeVerify(verify, server_finished_size, 1);
@@ -472,8 +474,13 @@ Result<void, Error> TLSClient::OnPacket(INT32 packetType, INT32 version, TlsBuff
         INT32 seg_size;
         if (packetType == CONTENT_HANDSHAKE)
         {
+            INT32 remaining = TlsReader.GetSize() - TlsReader.GetReaded();
+            if (remaining < 4)
+                return Result<void, Error>::Err(Error::Tls_OnPacketFailed);
             PUCHAR seg = (PUCHAR)(TlsReader.GetBuffer() + TlsReader.GetReaded());
             seg_size = 4 + (((UINT32)seg[1] << 16) | ((UINT32)seg[2] << 8) | (UINT32)seg[3]);
+            if (seg_size > remaining)
+                return Result<void, Error>::Err(Error::Tls_OnPacketFailed);
         }
         else
         {
@@ -605,8 +612,10 @@ Result<void, Error> TLSClient::ProcessReceive()
         return Result<void, Error>::Err(readResult, Error::Tls_ProcessReceiveFailed);
     }
     INT64 len = readResult.Value();
+    if (len > 0x7FFFFFFF)
+        return Result<void, Error>::Err(Error::Tls_ProcessReceiveFailed);
     LOG_DEBUG("Received %lld bytes from socket for client: %p", len, this);
-    recvBuffer.AppendSize(len);
+    recvBuffer.AppendSize((INT32)len);
 
     INT32 cur_index = 0;
     while (cur_index + 5 <= recvBuffer.GetSize())

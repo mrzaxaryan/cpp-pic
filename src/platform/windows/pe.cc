@@ -45,6 +45,12 @@ PVOID GetExportAddress(PVOID hModule, USIZE functionNameHash)
             // Use ordinal as index into AddressOfFunctions
             UINT32 funcRva = funcRvas[ordinal];
 
+            // Skip forwarded exports (RVA points inside export directory)
+            UINT32 exportSize = ntHeader->OptionalHeader
+                .DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+            if (funcRva >= exportRva && funcRva < (exportRva + exportSize))
+                return nullptr;
+
             // Convert RVA → VA and return
             return (PVOID)((PCHAR)hModule + funcRva);
         }

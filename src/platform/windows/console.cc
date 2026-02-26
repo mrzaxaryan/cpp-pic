@@ -26,6 +26,11 @@ UINT32 Console::Write(const WCHAR *text, USIZE length)
 	{
 		CHAR bytes[4];
 		USIZE n = UTF16::CodepointToUTF8(text, length, inputIndex, bytes);
+		if (n == 0)
+		{
+			inputIndex++;
+			continue;
+		}
 
 		if (bufIndex + n > BUFFER_SIZE)
 		{

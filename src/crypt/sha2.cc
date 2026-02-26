@@ -378,6 +378,8 @@ VOID HMACBase<SHAType, Traits>::Final(PUCHAR mac, UINT32 mac_size)
     this->ctx_outside.Update(digest_inside, Traits::DIGEST_SIZE);
     this->ctx_outside.Final(mac_temp);
     Memory::Copy(mac, mac_temp, mac_size);
+    Memory::Zero(digest_inside, sizeof(digest_inside));
+    Memory::Zero(mac_temp, sizeof(mac_temp));
 }
 
 template<typename SHAType, typename Traits>

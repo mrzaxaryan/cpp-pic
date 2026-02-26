@@ -284,7 +284,7 @@ Result<void, Error> WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 	frame.data = nullptr;
 	if (frame.length > 0)
 	{
-		frame.data = new CHAR[(UINT32)frame.length];
+		frame.data = new CHAR[(USIZE)frame.length];
 		if (!frame.data)
 			return Result<void, Error>::Err(Error::Ws_AllocFailed);
 
@@ -337,7 +337,15 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 			{
 				if (message.data)
 				{
-					PCHAR tempBuffer = new CHAR[message.length + (UINT32)frame.length];
+					UINT32 newLength = message.length + (UINT32)frame.length;
+					if (newLength < message.length)
+					{
+						delete[] frame.data;
+						delete[] message.data;
+						message.data = nullptr;
+						break;
+					}
+					PCHAR tempBuffer = new CHAR[newLength];
 					if (!tempBuffer)
 					{
 						delete[] frame.data;
@@ -349,7 +357,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 					Memory::Copy(tempBuffer + message.length, frame.data, (UINT32)frame.length);
 					delete[] message.data;
 					message.data = tempBuffer;
-					message.length += (UINT32)frame.length;
+					message.length = newLength;
 					delete[] frame.data;
 				}
 				else

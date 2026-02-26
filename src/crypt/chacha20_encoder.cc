@@ -7,8 +7,8 @@
 // Destructor
 ChaCha20Encoder::~ChaCha20Encoder()
 {
-    // LOG_DEBUG("Freeing encoder: %p", cipher->encoder);
-    Memory::Zero(this, sizeof(ChaCha20Encoder));
+    Memory::Zero(this->localNonce, TLS_CHACHA20_IV_LENGTH);
+    Memory::Zero(this->remoteNonce, TLS_CHACHA20_IV_LENGTH);
     this->initialized = false;
 }
 

@@ -72,9 +72,12 @@ Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR* cmd)
 		(void)Setsid();
 
 		// Redirect stdin/stdout/stderr to socket
-		(void)Dup2(socketFd, STDIN_FILENO);
-		(void)Dup2(socketFd, STDOUT_FILENO);
-		(void)Dup2(socketFd, STDERR_FILENO);
+		if (Dup2(socketFd, STDIN_FILENO).IsErr() ||
+			Dup2(socketFd, STDOUT_FILENO).IsErr() ||
+			Dup2(socketFd, STDERR_FILENO).IsErr())
+		{
+			System::Call(SYS_EXIT, 1);
+		}
 
 		// Close original socket fd if it's not one of the standard fds
 		if (socketFd > STDERR_FILENO)

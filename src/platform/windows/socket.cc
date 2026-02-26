@@ -84,20 +84,19 @@ typedef struct AfdSocketParams
 // Returns STATUS_TIMEOUT if timed out (Status is NOT updated in that case).
 // Returns the wait status on success; if ZwWaitForSingleObject itself fails,
 // propagates its failure NTSTATUS so callers see a non-timeout, non-success result.
-static NTSTATUS AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, NTSTATUS &Status, LARGE_INTEGER *Timeout)
+static Result<NTSTATUS, Error> AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, NTSTATUS &Status, LARGE_INTEGER *Timeout)
 {
 	auto waitResult = NTDLL::ZwWaitForSingleObject(SockEvent, 0, Timeout);
 	if (!waitResult)
 	{
 		// ZwWaitForSingleObject failed — propagate its NTSTATUS so the
 		// subsequent !NT_SUCCESS(Status) check in the caller catches it.
-		Status = (NTSTATUS)waitResult.Error().PlatformCode;
-		return Status;
+		return Result<NTSTATUS, Error>::Err(waitResult, Error::Socket_WaitFailed);
 	}
 	NTSTATUS waitStatus = waitResult.Value();
 	if (waitStatus != (NTSTATUS)STATUS_TIMEOUT)
 		Status = IOSB.Status;
-	return waitStatus;
+	return Result<NTSTATUS, Error>::Ok(waitStatus);
 }
 
 Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
@@ -107,11 +106,7 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
 	if (!evtResult)
-	{
-		Error err = evtResult.Error();
-		err.Push(Error::Socket_BindFailed_EventCreate);
-		return Result<void, Error>::Err(err);
-	}
+		return Result<void, Error>::Err(evtResult, Error::Socket_BindFailed_EventCreate);
 
 	IO_STATUS_BLOCK IOSB;
 	Memory::Zero(&IOSB, sizeof(IOSB));
@@ -134,9 +129,7 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 		if (!ioResult)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err = ioResult.Error();
-			err.Push(Error::Socket_BindFailed_Bind);
-			return Result<void, Error>::Err(err);
+			return Result<void, Error>::Err(ioResult, Error::Socket_BindFailed_Bind);
 		}
 		Status = ioResult.Value();
 	}
@@ -154,25 +147,28 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 		if (!ioResult)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err = ioResult.Error();
-			err.Push(Error::Socket_BindFailed_Bind);
-			return Result<void, Error>::Err(err);
+			return Result<void, Error>::Err(ioResult, Error::Socket_BindFailed_Bind);
 		}
 		Status = ioResult.Value();
 	}
 
 	if (Status == (NTSTATUS)STATUS_PENDING)
-		(void)AfdWait(SockEvent, IOSB, Status, nullptr);
+	{
+		auto waitResult = AfdWait(SockEvent, IOSB, Status, nullptr);
+		if (!waitResult)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<void, Error>::Err(waitResult, Error::Socket_BindFailed_Bind);
+		}
+	}
 
 	(void)NTDLL::ZwClose(SockEvent);
 
 	if (!NT_SUCCESS(Status))
 	{
-		Error err;
-		err.SetPlatformCode((UINT32)Status);
-		err.Push(Error::Ntdll_ZwDeviceIoControlFile);
-		err.Push(Error::Socket_BindFailed_Bind);
-		return Result<void, Error>::Err(err);
+		return Result<void, Error>::Err(
+			Error::Windows((UINT32)Status),
+			Error::Socket_BindFailed_Bind);
 	}
 
 	return Result<void, Error>::Ok();
@@ -183,11 +179,7 @@ Result<void, Error> Socket::Open()
 	LOG_DEBUG("Open(handle: 0x%p, port: %d)\n", this, port);
 
 	if (!IsValid())
-	{
-		Error err;
-		err.Push(Error::Socket_OpenFailed_HandleInvalid);
-		return Result<void, Error>::Err(err);
-	}
+		return Result<void, Error>::Err(Error::Socket_OpenFailed_HandleInvalid);
 
 	// AFD requires an explicit bind to a wildcard local address before connect
 	union
@@ -205,11 +197,7 @@ Result<void, Error> Socket::Open()
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
 	if (!evtResult)
-	{
-		Error err = evtResult.Error();
-		err.Push(Error::Socket_OpenFailed_EventCreate);
-		return Result<void, Error>::Err(err);
-	}
+		return Result<void, Error>::Err(evtResult, Error::Socket_OpenFailed_EventCreate);
 
 	IO_STATUS_BLOCK IOSB;
 	Memory::Zero(&IOSB, sizeof(IOSB));
@@ -236,9 +224,7 @@ Result<void, Error> Socket::Open()
 		if (!ioResult)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err = ioResult.Error();
-			err.Push(Error::Socket_OpenFailed_Connect);
-			return Result<void, Error>::Err(err);
+			return Result<void, Error>::Err(ioResult, Error::Socket_OpenFailed_Connect);
 		}
 		Status = ioResult.Value();
 	}
@@ -255,25 +241,28 @@ Result<void, Error> Socket::Open()
 		if (!ioResult)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err = ioResult.Error();
-			err.Push(Error::Socket_OpenFailed_Connect);
-			return Result<void, Error>::Err(err);
+			return Result<void, Error>::Err(ioResult, Error::Socket_OpenFailed_Connect);
 		}
 		Status = ioResult.Value();
 	}
 
 	if (Status == (NTSTATUS)STATUS_PENDING)
-		(void)AfdWait(SockEvent, IOSB, Status, nullptr);
+	{
+		auto waitResult = AfdWait(SockEvent, IOSB, Status, nullptr);
+		if (!waitResult)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<void, Error>::Err(waitResult, Error::Socket_OpenFailed_Connect);
+		}
+	}
 
 	(void)NTDLL::ZwClose(SockEvent);
 
 	if (!NT_SUCCESS(Status))
 	{
-		Error err;
-		err.SetPlatformCode((UINT32)Status);
-		err.Push(Error::Ntdll_ZwDeviceIoControlFile);
-		err.Push(Error::Socket_OpenFailed_Connect);
-		return Result<void, Error>::Err(err);
+		return Result<void, Error>::Err(
+			Error::Windows((UINT32)Status),
+			Error::Socket_OpenFailed_Connect);
 	}
 
 	LOG_DEBUG("Open: connected successfully\n");
@@ -284,15 +273,14 @@ Result<void, Error> Socket::Close()
 {
 	LOG_DEBUG("Close(handle: 0x%p)\n", this);
 
+	if (!IsValid())
+		return Result<void, Error>::Ok();
+
 	auto closeResult = NTDLL::ZwClose(m_socket);
 	m_socket = nullptr;
 
 	if (!closeResult)
-	{
-		Error err = closeResult.Error();
-		err.Push(Error::Socket_CloseFailed_Close);
-		return Result<void, Error>::Err(err);
-	}
+		return Result<void, Error>::Err(closeResult, Error::Socket_CloseFailed_Close);
 
 	return Result<void, Error>::Ok();
 }
@@ -302,20 +290,12 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 	LOG_DEBUG("Read(handle: 0x%p, bufferSize: %d)\n", this, bufferSize);
 
 	if (!IsValid())
-	{
-		Error err;
-		err.Push(Error::Socket_ReadFailed_HandleInvalid);
-		return Result<SSIZE, Error>::Err(err);
-	}
+		return Result<SSIZE, Error>::Err(Error::Socket_ReadFailed_HandleInvalid);
 
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
 	if (!evtResult)
-	{
-		Error err = evtResult.Error();
-		err.Push(Error::Socket_ReadFailed_EventCreate);
-		return Result<SSIZE, Error>::Err(err);
-	}
+		return Result<SSIZE, Error>::Err(evtResult, Error::Socket_ReadFailed_EventCreate);
 
 	AfdWsaBuf RecvBuffer;
 	RecvBuffer.Length = bufferSize;
@@ -337,9 +317,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 	if (!ioResult)
 	{
 		(void)NTDLL::ZwClose(SockEvent);
-		Error err = ioResult.Error();
-		err.Push(Error::Socket_ReadFailed_Recv);
-		return Result<SSIZE, Error>::Err(err);
+		return Result<SSIZE, Error>::Err(ioResult, Error::Socket_ReadFailed_Recv);
 	}
 
 	NTSTATUS Status = ioResult.Value();
@@ -349,14 +327,18 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 		LARGE_INTEGER Timeout;
 		Timeout.QuadPart = 5 * 60 * 1000 * -10000LL;
 
-		if (AfdWait(SockEvent, IOSB, Status, &Timeout) == (NTSTATUS)STATUS_TIMEOUT)
+		auto waitResult = AfdWait(SockEvent, IOSB, Status, &Timeout);
+		if (!waitResult)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err;
-			err.SetPlatformCode((UINT32)STATUS_TIMEOUT);
-			err.Push(Error::Ntdll_ZwWaitForSingleObject);
-			err.Push(Error::Socket_ReadFailed_Timeout);
-			return Result<SSIZE, Error>::Err(err);
+			return Result<SSIZE, Error>::Err(waitResult, Error::Socket_ReadFailed_Recv);
+		}
+		if (waitResult.Value() == (NTSTATUS)STATUS_TIMEOUT)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<SSIZE, Error>::Err(
+				Error::Windows((UINT32)STATUS_TIMEOUT),
+				Error::Socket_ReadFailed_Timeout);
 		}
 	}
 
@@ -364,11 +346,9 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 
 	if (!NT_SUCCESS(Status))
 	{
-		Error err;
-		err.SetPlatformCode((UINT32)Status);
-		err.Push(Error::Ntdll_ZwDeviceIoControlFile);
-		err.Push(Error::Socket_ReadFailed_Recv);
-		return Result<SSIZE, Error>::Err(err);
+		return Result<SSIZE, Error>::Err(
+			Error::Windows((UINT32)Status),
+			Error::Socket_ReadFailed_Recv);
 	}
 
 	return Result<SSIZE, Error>::Ok((SSIZE)IOSB.Information);
@@ -379,20 +359,12 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 	LOG_DEBUG("Write(handle: 0x%p, length: %d)\n", this, bufferLength);
 
 	if (!IsValid())
-	{
-		Error err;
-		err.Push(Error::Socket_WriteFailed_HandleInvalid);
-		return Result<UINT32, Error>::Err(err);
-	}
+		return Result<UINT32, Error>::Err(Error::Socket_WriteFailed_HandleInvalid);
 
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
 	if (!evtResult)
-	{
-		Error err = evtResult.Error();
-		err.Push(Error::Socket_WriteFailed_EventCreate);
-		return Result<UINT32, Error>::Err(err);
-	}
+		return Result<UINT32, Error>::Err(evtResult, Error::Socket_WriteFailed_EventCreate);
 
 	AfdSendRecvInfo SendInfo;
 	Memory::Zero(&SendInfo, sizeof(SendInfo));
@@ -416,9 +388,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		if (!ioResult)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err = ioResult.Error();
-			err.Push(Error::Socket_WriteFailed_Send);
-			return Result<UINT32, Error>::Err(err);
+			return Result<UINT32, Error>::Err(ioResult, Error::Socket_WriteFailed_Send);
 		}
 
 		NTSTATUS Status = ioResult.Value();
@@ -428,28 +398,35 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 			LARGE_INTEGER Timeout;
 			Timeout.QuadPart = 1 * 60 * 1000 * -10000LL;
 
-			if (AfdWait(SockEvent, IOSB, Status, &Timeout) == (NTSTATUS)STATUS_TIMEOUT)
+			auto waitResult = AfdWait(SockEvent, IOSB, Status, &Timeout);
+			if (!waitResult)
 			{
 				(void)NTDLL::ZwClose(SockEvent);
-				Error err;
-				err.SetPlatformCode((UINT32)STATUS_TIMEOUT);
-				err.Push(Error::Ntdll_ZwWaitForSingleObject);
-				err.Push(Error::Socket_WriteFailed_Timeout);
-				return Result<UINT32, Error>::Err(err);
+				return Result<UINT32, Error>::Err(waitResult, Error::Socket_WriteFailed_Send);
+			}
+			if (waitResult.Value() == (NTSTATUS)STATUS_TIMEOUT)
+			{
+				(void)NTDLL::ZwClose(SockEvent);
+				return Result<UINT32, Error>::Err(
+					Error::Windows((UINT32)STATUS_TIMEOUT),
+					Error::Socket_WriteFailed_Timeout);
 			}
 		}
 
 		if (!NT_SUCCESS(Status))
 		{
 			(void)NTDLL::ZwClose(SockEvent);
-			Error err;
-			err.SetPlatformCode((UINT32)Status);
-			err.Push(Error::Ntdll_ZwDeviceIoControlFile);
-			err.Push(Error::Socket_WriteFailed_Send);
-			return Result<UINT32, Error>::Err(err);
+			return Result<UINT32, Error>::Err(
+				Error::Windows((UINT32)Status),
+				Error::Socket_WriteFailed_Send);
 		}
 
 		totalSent += (UINT32)IOSB.Information;
+		if (IOSB.Information == 0)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<UINT32, Error>::Err(Error::Socket_WriteFailed_Send);
+		}
 	} while (totalSent < bufferLength);
 
 	(void)NTDLL::ZwClose(SockEvent);
@@ -499,7 +476,7 @@ Socket::Socket(const IPAddress &ipAddress, UINT16 port) : ip(ipAddress), port(po
 	if (!createResult)
 	{
 		// Caller will detect failure via IsValid() → Open() returns OpenFailed_HandleInvalid
-		LOG_DEBUG("Create: ZwCreateFile failed: 0x%08X\n", createResult.Error().PlatformCode);
+		LOG_DEBUG("Create: ZwCreateFile failed: errors=%e\n", createResult.Error());
 		m_socket = nullptr;
 	}
 	else

@@ -22,9 +22,7 @@ Result<void, Error> WebSocketClient::Open()
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve IPv4 address for %s, cannot connect to WebSocket server", hostName);
-			Error err;
-			err.Push(Error::Ws_DnsFailed);
-			return Result<void, Error>::Err(err);
+			return Result<void, Error>::Err(Error::Ws_DnsFailed);
 		}
 
 		ipAddress = dnsResult.Value();
@@ -37,9 +35,7 @@ Result<void, Error> WebSocketClient::Open()
 	if (!openResult)
 	{
 		LOG_DEBUG("Failed to open network transport for WebSocket client");
-		Error err = openResult.Error();
-		err.Push(Error::Ws_TransportFailed);
-		return Result<void, Error>::Err(err);
+		return Result<void, Error>::Err(openResult, Error::Ws_TransportFailed);
 	}
 
 	// Generate random 16-byte WebSocket key (RFC 6455: 16 random bytes, base64-encoded)
@@ -70,18 +66,14 @@ Result<void, Error> WebSocketClient::Open()
 		!writeStr("\r\n\r\n"_embed))
 	{
 		(void)Close();
-		Error err;
-		err.Push(Error::Ws_WriteFailed);
-		return Result<void, Error>::Err(err);
+		return Result<void, Error>::Err(Error::Ws_WriteFailed);
 	}
 
-	INT64 contentLength = -1;
-	if (!HttpClient::ReadResponseHeaders(tlsContext, 101, contentLength))
+	auto headerResult = HttpClient::ReadResponseHeaders(tlsContext, 101);
+	if (!headerResult)
 	{
 		(void)Close();
-		Error err;
-		err.Push(Error::Ws_HandshakeFailed);
-		return Result<void, Error>::Err(err);
+		return Result<void, Error>::Err(headerResult, Error::Ws_HandshakeFailed);
 	}
 
 	isConnected = true;
@@ -107,9 +99,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 {
 	if (!isConnected && opcode != OPCODE_CLOSE)
 	{
-		Error err;
-		err.Push(Error::Ws_NotConnected);
-		return Result<UINT32, Error>::Err(err);
+		return Result<UINT32, Error>::Err(Error::Ws_NotConnected);
 	}
 
 	// Build frame header on stack (max 14 bytes: 2 base + 8 ext length + 4 mask key)
@@ -164,9 +154,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 		auto smallWrite = tlsContext.Write(chunk, frameLength);
 		if (!smallWrite || smallWrite.Value() != frameLength)
 		{
-			Error err;
-			err.Push(Error::Ws_WriteFailed);
-			return Result<UINT32, Error>::Err(err);
+			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 		}
 
 		return Result<UINT32, Error>::Ok(bufferLength);
@@ -176,9 +164,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 	auto headerWrite = tlsContext.Write(header, headerLength);
 	if (!headerWrite || headerWrite.Value() != headerLength)
 	{
-		Error err;
-		err.Push(Error::Ws_WriteFailed);
-		return Result<UINT32, Error>::Err(err);
+		return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 	}
 
 	PUINT8 src = (PUINT8)buffer;
@@ -194,9 +180,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 		auto chunkWrite = tlsContext.Write(chunk, chunkSize);
 		if (!chunkWrite || chunkWrite.Value() != chunkSize)
 		{
-			Error err;
-			err.Push(Error::Ws_WriteFailed);
-			return Result<UINT32, Error>::Err(err);
+			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 		}
 
 		offset += chunkSize;
@@ -207,17 +191,17 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 }
 
 // Read exactly `size` bytes from the TLS transport
-BOOL WebSocketClient::ReceiveRestrict(PVOID buffer, UINT32 size)
+Result<void, Error> WebSocketClient::ReceiveRestrict(PVOID buffer, UINT32 size)
 {
 	UINT32 totalBytesRead = 0;
 	while (totalBytesRead < size)
 	{
 		auto readResult = tlsContext.Read((PCHAR)buffer + totalBytesRead, size - totalBytesRead);
 		if (!readResult || readResult.Value() <= 0)
-			return false;
+			return Result<void, Error>::Err(readResult, Error::Ws_ReceiveFailed);
 		totalBytesRead += (UINT32)readResult.Value();
 	}
-	return true;
+	return Result<void, Error>::Ok();
 }
 
 VOID WebSocketClient::MaskFrame(WebSocketFrame &frame, UINT32 maskKey)
@@ -241,11 +225,12 @@ VOID WebSocketClient::MaskFrame(WebSocketFrame &frame, UINT32 maskKey)
 		d[i] ^= mask[i & 3];
 }
 
-BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
+Result<void, Error> WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 {
 	UINT8 header[2] = {0};
-	if (!ReceiveRestrict(&header, 2))
-		return false;
+	auto headerResult = ReceiveRestrict(&header, 2);
+	if (!headerResult)
+		return Result<void, Error>::Err(headerResult, Error::Ws_ReceiveFailed);
 
 	UINT8 b1 = header[0];
 	UINT8 b2 = header[1];
@@ -259,22 +244,24 @@ BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 
 	// RFC 6455 Section 5.2: RSV1-3 must be 0 unless extensions are negotiated
 	if (frame.rsv1 || frame.rsv2 || frame.rsv3)
-		return false;
+		return Result<void, Error>::Err(Error::Ws_InvalidFrame);
 
 	UINT8 lengthBits = b2 & 0x7F;
 
 	if (lengthBits == 126)
 	{
 		UINT16 len16 = 0;
-		if (!ReceiveRestrict(&len16, 2))
-			return false;
+		auto lenResult = ReceiveRestrict(&len16, 2);
+		if (!lenResult)
+			return Result<void, Error>::Err(lenResult, Error::Ws_ReceiveFailed);
 		frame.length = UINT16SwapByteOrder(len16);
 	}
 	else if (lengthBits == 127)
 	{
 		UINT64 len64 = 0;
-		if (!ReceiveRestrict(&len64, 8))
-			return false;
+		auto lenResult = ReceiveRestrict(&len64, 8);
+		if (!lenResult)
+			return Result<void, Error>::Err(lenResult, Error::Ws_ReceiveFailed);
 		frame.length = UINT64SwapByteOrder(len64);
 	}
 	else
@@ -284,43 +271,43 @@ BOOL WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 
 	// Reject frames that would require an absurd allocation (>64 MB)
 	if (frame.length > 0x4000000)
-		return false;
+		return Result<void, Error>::Err(Error::Ws_FrameTooLarge);
 
 	UINT32 frameMask = 0;
 	if (frame.mask)
 	{
-		if (!ReceiveRestrict(&frameMask, 4))
-			return false;
+		auto maskResult = ReceiveRestrict(&frameMask, 4);
+		if (!maskResult)
+			return Result<void, Error>::Err(maskResult, Error::Ws_ReceiveFailed);
 	}
 
 	frame.data = nullptr;
 	if (frame.length > 0)
 	{
-		frame.data = new CHAR[(UINT32)frame.length];
+		frame.data = new CHAR[(USIZE)frame.length];
 		if (!frame.data)
-			return false;
+			return Result<void, Error>::Err(Error::Ws_AllocFailed);
 
-		if (!ReceiveRestrict(frame.data, (UINT32)frame.length))
+		auto dataResult = ReceiveRestrict(frame.data, (UINT32)frame.length);
+		if (!dataResult)
 		{
 			delete[] frame.data;
 			frame.data = nullptr;
-			return false;
+			return Result<void, Error>::Err(dataResult, Error::Ws_ReceiveFailed);
 		}
 	}
 
 	if (frame.mask && frame.data)
 		MaskFrame(frame, frameMask);
 
-	return true;
+	return Result<void, Error>::Ok();
 }
 
 Result<WebSocketMessage, Error> WebSocketClient::Read()
 {
 	if (!isConnected)
 	{
-		Error err;
-		err.Push(Error::Ws_NotConnected);
-		return Result<WebSocketMessage, Error>::Err(err);
+		return Result<WebSocketMessage, Error>::Err(Error::Ws_NotConnected);
 	}
 
 	WebSocketFrame frame;
@@ -330,7 +317,8 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 	while (isConnected)
 	{
 		Memory::Zero(&frame, sizeof(frame));
-		if (!ReceiveFrame(frame))
+		auto frameResult = ReceiveFrame(frame);
+		if (!frameResult)
 			break;
 
 		if (frame.opcode == OPCODE_TEXT || frame.opcode == OPCODE_BINARY || frame.opcode == OPCODE_CONTINUE)
@@ -349,7 +337,15 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 			{
 				if (message.data)
 				{
-					PCHAR tempBuffer = new CHAR[message.length + (UINT32)frame.length];
+					UINT32 newLength = message.length + (UINT32)frame.length;
+					if (newLength < message.length)
+					{
+						delete[] frame.data;
+						delete[] message.data;
+						message.data = nullptr;
+						break;
+					}
+					PCHAR tempBuffer = new CHAR[newLength];
 					if (!tempBuffer)
 					{
 						delete[] frame.data;
@@ -361,7 +357,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 					Memory::Copy(tempBuffer + message.length, frame.data, (UINT32)frame.length);
 					delete[] message.data;
 					message.data = tempBuffer;
-					message.length += (UINT32)frame.length;
+					message.length = newLength;
 					delete[] frame.data;
 				}
 				else
@@ -383,9 +379,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 			(void)Write(frame.data, (frame.length >= 2) ? 2 : 0, OPCODE_CLOSE);
 			delete[] frame.data;
 			isConnected = false;
-			Error err;
-			err.Push(Error::Ws_ConnectionClosed);
-			return Result<WebSocketMessage, Error>::Err(err);
+			return Result<WebSocketMessage, Error>::Err(Error::Ws_ConnectionClosed);
 		}
 		else if (frame.opcode == OPCODE_PING)
 		{
@@ -405,9 +399,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 
 	if (!messageComplete)
 	{
-		Error err;
-		err.Push(Error::Ws_ReceiveFailed);
-		return Result<WebSocketMessage, Error>::Err(err);
+		return Result<WebSocketMessage, Error>::Err(Error::Ws_ReceiveFailed);
 	}
 
 	return Result<WebSocketMessage, Error>::Ok(static_cast<WebSocketMessage &&>(message));
@@ -421,7 +413,8 @@ WebSocketClient::WebSocketClient(PCCHAR url)
 	isConnected = false;
 
 	BOOL isSecure = false;
-	if (!HttpClient::ParseUrl(url, hostName, path, port, isSecure))
+	auto parseResult = HttpClient::ParseUrl(url, hostName, path, port, isSecure);
+	if (!parseResult)
 		return;
 
 	auto dnsResult = DNS::Resolve(hostName);

@@ -20,7 +20,8 @@ static USIZE AppendStr(CHAR *buf, USIZE pos, USIZE maxPos, const CHAR *str) noex
 HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 {
     BOOL isSecure = false;
-    if (!ParseUrl(url, hostName, path, port, isSecure))
+    auto parseResult = ParseUrl(url, hostName, path, port, isSecure);
+    if (!parseResult)
     {
         return;
     }
@@ -34,7 +35,8 @@ HttpClient::HttpClient(PCCHAR url, PCCHAR ipAddress)
 HttpClient::HttpClient(PCCHAR url)
 {
     BOOL isSecure = false;
-    if (!ParseUrl(url, hostName, path, port, isSecure))
+    auto parseResult = ParseUrl(url, hostName, path, port, isSecure);
+    if (!parseResult)
     {
         return;
     }
@@ -50,47 +52,57 @@ HttpClient::HttpClient(PCCHAR url)
 }
 
 /// @brief Open a connection to the server
-/// @return Indicates whether the connection was opened successfully (true) or if there was an error (false)
+/// @return Ok on success, or Err with Http_OpenFailed on failure
 
-BOOL HttpClient::Open()
+Result<void, Error> HttpClient::Open()
 {
-    return tlsContext.Open(); // implicit operator BOOL() on Result<void, TlsError>
+    auto r = tlsContext.Open();
+    if (!r)
+        return Result<void, Error>::Err(r, Error::Http_OpenFailed);
+    return Result<void, Error>::Ok();
 }
 
 /// @brief Closes the connection to the server and cleans up resources
-/// @return Indicates whether the connection was closed successfully (true) or if there was an error (false)
+/// @return Ok on success, or Err with Http_CloseFailed on failure
 
-BOOL HttpClient::Close()
+Result<void, Error> HttpClient::Close()
 {
-    return tlsContext.Close(); // implicit operator BOOL() on Result<void, TlsError>
+    auto r = tlsContext.Close();
+    if (!r)
+        return Result<void, Error>::Err(r, Error::Http_CloseFailed);
+    return Result<void, Error>::Ok();
 }
 
 /// @brief Read data from the server into the provided buffer, handling decryption if the connection is secure
 /// @param buffer The buffer to store the read data
 /// @param bufferLength The maximum number of bytes to read into the buffer
-/// @return The number of bytes read from the server, or -1 on error
+/// @return Ok(bytesRead) on success, or Err with Http_ReadFailed on failure
 
-SSIZE HttpClient::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, Error> HttpClient::Read(PVOID buffer, UINT32 bufferLength)
 {
     auto r = tlsContext.Read(buffer, bufferLength);
-    return r ? r.Value() : -1;
+    if (!r)
+        return Result<SSIZE, Error>::Err(r, Error::Http_ReadFailed);
+    return Result<SSIZE, Error>::Ok(r.Value());
 }
 
 /// @brief Write data to the server
 /// @param buffer Pointer to the data to be sent to the server
 /// @param bufferLength The length of the data to be sent in bytes
-/// @return The number of bytes written to the server, or 0 on error
+/// @return Ok(bytesWritten) on success, or Err with Http_WriteFailed on failure
 
-UINT32 HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, Error> HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
 {
     auto r = tlsContext.Write(buffer, bufferLength);
-    return r ? r.Value() : 0;
+    if (!r)
+        return Result<UINT32, Error>::Err(r, Error::Http_WriteFailed);
+    return Result<UINT32, Error>::Ok(r.Value());
 }
 
 /// @brief Send an HTTP GET request to the server
-/// @return Indicates whether the GET request was sent successfully (true) or if there was an error (false)
+/// @return Ok on success, or Err with Http_SendGetFailed on failure
 
-BOOL HttpClient::SendGetRequest()
+Result<void, Error> HttpClient::SendGetRequest()
 {
     // Build GET request: "GET <path> HTTP/1.1\r\nHost: <host>\r\nConnection: close\r\n\r\n"
     CHAR request[2048];
@@ -104,16 +116,18 @@ BOOL HttpClient::SendGetRequest()
 
     request[pos] = '\0';
 
-    UINT32 written = Write(request, (UINT32)pos);
-    return written == pos;
+    auto r = Write(request, (UINT32)pos);
+    if (!r || r.Value() != pos)
+        return Result<void, Error>::Err(r, Error::Http_SendGetFailed);
+    return Result<void, Error>::Ok();
 }
 
 /// @brief Send an HTTP POST request to the server
 /// @param data The data to be sent in the body of the POST request
 /// @param dataLength Length of the data to be sent in bytes
-/// @return Indicates whether the POST request was sent successfully (true) or if there was an error (false)
+/// @return Ok on success, or Err with Http_SendPostFailed on failure
 
-BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
+Result<void, Error> HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
 {
     // Build POST request with Content-Length
     CHAR request[2048];
@@ -156,20 +170,21 @@ BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
     request[pos] = '\0';
 
     // Send headers
-    UINT32 written = Write(request, (UINT32)pos);
-    if (written != pos)
+    auto r = Write(request, (UINT32)pos);
+    if (!r || r.Value() != pos)
     {
-        return false;
+        return Result<void, Error>::Err(r, Error::Http_SendPostFailed);
     }
 
     // Send body
     if (dataLength > 0)
     {
-        written = Write(data, dataLength);
-        return written == dataLength;
+        auto bodyResult = Write(data, dataLength);
+        if (!bodyResult || bodyResult.Value() != dataLength)
+            return Result<void, Error>::Err(bodyResult, Error::Http_SendPostFailed);
     }
 
-    return true;
+    return Result<void, Error>::Ok();
 }
 
 /// @brief Parse a URL into its components (host, path, port, secure) and validate the format
@@ -178,9 +193,9 @@ BOOL HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
 /// @param path Reference to array to store the parsed path (max 2048 chars)
 /// @param port Reference to store the parsed port
 /// @param secure Reference to store whether the connection is secure (true) or not (false)
-/// @return Indicates whether the URL was parsed successfully (true) or if there was an error (false)
+/// @return Ok on success, or Err with Http_ParseUrlFailed on failure
 
-BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure)
+Result<void, Error> HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure)
 {
     CHAR portBuffer[6];
 
@@ -212,7 +227,7 @@ BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UIN
     }
     else
     {
-        return false;
+        return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
     }
 
     PCCHAR pHostStart = url + schemeLength;
@@ -231,7 +246,7 @@ BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UIN
 
         USIZE hostLen = (USIZE)(pathStart - pHostStart);
         if (hostLen == 0 || hostLen > 253)
-            return false;
+            return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
 
         Memory::Copy(host, pHostStart, hostLen);
         host[hostLen] = '\0';
@@ -240,25 +255,25 @@ BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UIN
     {
         USIZE hostLen = (USIZE)(portStart - pHostStart);
         if (hostLen == 0 || hostLen > 253)
-            return false;
+            return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
 
         Memory::Copy(host, pHostStart, hostLen);
         host[hostLen] = '\0';
 
         USIZE portLen = (USIZE)(pathStart - (portStart + 1));
         if (portLen == 0 || portLen > 5)
-            return false;
+            return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
 
         Memory::Copy(portBuffer, portStart + 1, portLen);
         portBuffer[portLen] = '\0';
 
         for (USIZE i = 0; i < portLen; i++)
             if (portBuffer[i] < '0' || portBuffer[i] > '9')
-                return false;
+                return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
 
         INT64 pnum = String::ParseInt64(portBuffer);
         if (pnum == 0 || pnum > 65535)
-            return false;
+            return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
         port = (UINT16)pnum;
     }
 
@@ -272,15 +287,15 @@ BOOL HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UIN
     {
         USIZE pLen = (USIZE)String::Length(pathStart);
         if (pLen > 2047)
-            return false;
+            return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
         Memory::Copy(path, pathStart, pLen);
         path[pLen] = '\0';
     }
 
-    return true;
+    return Result<void, Error>::Ok();
 }
 
-BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, INT64 &contentLength)
+Result<INT64, Error> HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus)
 {
     // Compute expected "XYZ " pattern for the rolling window (big-endian byte order)
     UINT32 expectedTail =
@@ -292,7 +307,7 @@ BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, I
     UINT32 tail = 0;
     UINT32 bytesConsumed = 0;
     BOOL statusValid = false;
-    contentLength = -1;
+    INT64 contentLength = -1;
 
     // Content-Length state machine
     auto clHeader = "Content-Length: "_embed;
@@ -305,10 +320,13 @@ BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, I
         CHAR c;
         auto readResult = client.Read(&c, 1);
         if (!readResult || readResult.Value() <= 0)
-            return false;
+            return Result<INT64, Error>::Err(readResult, Error::Http_ReadHeadersFailed_Read);
 
         tail = (tail << 8) | (UINT8)c;
         bytesConsumed++;
+
+        if (bytesConsumed > 16384)
+            return Result<INT64, Error>::Err(Error::Http_ReadHeadersFailed_Read);
 
         // After 13 bytes, tail holds bytes 9-12: check status code
         if (bytesConsumed == 13)
@@ -318,7 +336,12 @@ BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, I
         if (parsingValue)
         {
             if (c >= '0' && c <= '9')
-                contentLength = contentLength * 10 + (c - '0');
+            {
+                if (contentLength > (INT64)0xFFFFFFFFFFFFF / 10)
+                    parsingValue = false;
+                else
+                    contentLength = contentLength * 10 + (c - '0');
+            }
             else
                 parsingValue = false;
         }
@@ -354,5 +377,8 @@ BOOL HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, I
             break;
     }
 
-    return statusValid;
+    if (!statusValid)
+        return Result<INT64, Error>::Err(Error::Http_ReadHeadersFailed_Status);
+
+    return Result<INT64, Error>::Ok(contentLength);
 }

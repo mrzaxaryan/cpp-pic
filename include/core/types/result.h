@@ -1,10 +1,17 @@
 /**
  * @file result.h
- * @brief Lightweight Result Type for Error Handling
+ * @brief Zero-Cost Result Type for Error Handling
  *
  * @details Tagged union `Result<T, E>` — either a success value (T) or error (E).
  * When T is void, a trivial sentinel replaces the value member so a single
  * template handles both cases without a separate specialization.
+ *
+ * E is stored directly — no chain, no overhead beyond sizeof(E).
+ * Compile-time safety via `[[nodiscard]]` and `operator BOOL` ensures callers
+ * check results without any runtime cost.
+ *
+ * Backward-compatible multi-arg and propagation Err() overloads are provided
+ * for source compatibility; they store only the outermost error code.
  *
  * @note Uses Clang builtin __is_trivially_destructible for zero-overhead destruction.
  *
@@ -52,7 +59,7 @@ class [[nodiscard]] Result
 	};
 	BOOL m_isOk;
 
-	FORCE_INLINE void DestroyActive() noexcept
+	void DestroyActive() noexcept
 	{
 		if constexpr (!__is_trivially_destructible(STORED_TYPE) || !__is_trivially_destructible(E))
 		{
@@ -73,6 +80,10 @@ public:
 	using ValueType = T;
 	using ErrorType = E;
 
+	// =====================================================================
+	// Ok factories
+	// =====================================================================
+
 	[[nodiscard]] static FORCE_INLINE Result Ok(STORED_TYPE value) noexcept
 		requires(!IS_VOID)
 	{
@@ -90,6 +101,11 @@ public:
 		return r;
 	}
 
+	// =====================================================================
+	// Err factories
+	// =====================================================================
+
+	/// Single error — stores E directly (zero-cost)
 	[[nodiscard]] static FORCE_INLINE Result Err(E error) noexcept
 	{
 		Result r;
@@ -98,9 +114,30 @@ public:
 		return r;
 	}
 
-	FORCE_INLINE ~Result() noexcept { DestroyActive(); }
+	/// Backward-compatible 2-arg Err — stores only the last (outermost) code.
+	/// Keeps source compatibility with Err(osError, runtimeCode) pattern.
+	template <typename First>
+		requires(requires(First f) { E(f); })
+	[[nodiscard]] static FORCE_INLINE Result Err(First, E last) noexcept
+	{
+		return Err(static_cast<E &&>(last));
+	}
 
-	FORCE_INLINE Result(Result &&other) noexcept : m_isOk(other.m_isOk)
+	/// Backward-compatible propagation Err — stores only the appended code.
+	/// Keeps source compatibility with Err(failedResult, runtimeCode) pattern.
+	template <typename OtherT>
+	[[nodiscard]] static FORCE_INLINE Result Err(const Result<OtherT, E> &, E code) noexcept
+	{
+		return Err(static_cast<E &&>(code));
+	}
+
+	// =====================================================================
+	// Destructor + move semantics
+	// =====================================================================
+
+	~Result() noexcept { DestroyActive(); }
+
+	Result(Result &&other) noexcept : m_isOk(other.m_isOk)
 	{
 		if (m_isOk)
 			new (&m_value) STORED_TYPE(static_cast<STORED_TYPE &&>(other.m_value));
@@ -108,7 +145,7 @@ public:
 			new (&m_error) E(static_cast<E &&>(other.m_error));
 	}
 
-	FORCE_INLINE Result &operator=(Result &&other) noexcept
+	Result &operator=(Result &&other) noexcept
 	{
 		if (this != &other)
 		{
@@ -125,6 +162,10 @@ public:
 	Result(const Result &) = delete;
 	Result &operator=(const Result &) = delete;
 
+	// =====================================================================
+	// Value / error queries
+	// =====================================================================
+
 	[[nodiscard]] FORCE_INLINE BOOL IsOk() const noexcept { return m_isOk; }
 	[[nodiscard]] FORCE_INLINE BOOL IsErr() const noexcept { return !m_isOk; }
 	[[nodiscard]] FORCE_INLINE operator BOOL() const noexcept { return m_isOk; }
@@ -139,7 +180,8 @@ public:
 	{
 		return m_value;
 	}
-	[[nodiscard]] FORCE_INLINE E &Error() noexcept { return m_error; }
+
+	/// Returns the stored error for inspection and %e formatting.
 	[[nodiscard]] FORCE_INLINE const E &Error() const noexcept { return m_error; }
 
 private:

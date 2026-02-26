@@ -9,7 +9,7 @@
  * - Position-independent code (PIC)
  * - Environments where .rdata is not accessible
  *
- * Characters are packed into UINT64 words (sizeof(UINT64)/sizeof(TChar) chars per
+ * Characters are packed into machine words (sizeof(USIZE)/sizeof(TChar) chars per
  * word) at compile time and written as immediate values, reducing instruction count
  * compared to character-by-character writes.
  *
@@ -54,9 +54,9 @@ concept TCHAR = __is_same_as(TChar, CHAR) || __is_same_as(TChar, WCHAR);
  * references to .rdata or other data sections.
  *
  * @par Memory Layout:
- * Characters are packed into UINT64 words:
- * - CHAR: 8 characters per word
- * - WCHAR: sizeof(UINT64)/sizeof(WCHAR) characters per word
+ * Characters are packed into USIZE (machine-word) words:
+ * - CHAR: sizeof(USIZE) characters per word
+ * - WCHAR: sizeof(USIZE)/sizeof(WCHAR) characters per word
  *
  * @par Assembly Output Example (x86_64):
  * @code
@@ -77,22 +77,22 @@ class EMBEDDED_STRING
 {
 private:
     static constexpr USIZE N = sizeof...(Cs) + 1;           ///< String length + null terminator
-    static constexpr USIZE CharsPerWord = sizeof(UINT64) / sizeof(TChar);  ///< Characters per 64-bit word
+    static constexpr USIZE CharsPerWord = sizeof(USIZE) / sizeof(TChar);  ///< Characters per machine word
     static constexpr USIZE NumWords = (N + CharsPerWord - 1) / CharsPerWord;  ///< Number of words needed
     static constexpr USIZE AllocN = NumWords * CharsPerWord;  ///< Allocated character count
 
-    alignas(UINT64) TChar data[AllocN];  ///< String storage aligned for word access
+    alignas(USIZE) TChar data[AllocN];  ///< String storage aligned for word access
 
     /**
-     * @brief Packs characters into a 64-bit word at compile time
+     * @brief Packs characters into a machine word at compile time
      * @tparam WordIndex Index of word to pack
-     * @return Packed 64-bit word containing up to 8 characters
+     * @return Packed USIZE word containing CharsPerWord characters
      */
     template <USIZE WordIndex>
-    static consteval UINT64 GetPackedWord() noexcept
+    static consteval USIZE GetPackedWord() noexcept
     {
         constexpr TChar chars[N] = {Cs..., TChar(0)};
-        UINT64 result = 0;
+        USIZE result = 0;
         constexpr USIZE base = WordIndex * CharsPerWord;
         constexpr USIZE shift = sizeof(TChar) * 8;
 
@@ -100,8 +100,8 @@ private:
         {
             USIZE idx = base + i;
             TChar c = (idx < N) ? chars[idx] : TChar(0);
-            constexpr UINT64 charMask = (1ULL << (sizeof(TChar) * 8)) - 1;
-            result |= (static_cast<UINT64>(c) & charMask) << (i * shift);
+            constexpr USIZE charMask = (sizeof(TChar) >= sizeof(USIZE)) ? ~(USIZE)0 : (((USIZE)1 << (sizeof(TChar) * 8)) - 1);
+            result |= (static_cast<USIZE>(c) & charMask) << (i * shift);
         }
         return result;
     }
@@ -110,13 +110,17 @@ private:
      * @brief Recursively writes packed words to the data array
      * @tparam I Current word index (starts at 0)
      * @details Uses if constexpr recursion to write all words as immediate values.
+     * The "+r" asm barrier per word forces each constant into a register as an
+     * immediate operand and prevents LLVM from coalescing stores into .rdata + memcpy.
      */
     template <USIZE I = 0>
     FORCE_INLINE void WritePackedWord() noexcept
     {
         if constexpr (I < NumWords)
         {
-            reinterpret_cast<UINT64 *>(data)[I] = GetPackedWord<I>();
+            USIZE word = GetPackedWord<I>();
+            __asm__ volatile("" : "+r"(word));
+            reinterpret_cast<USIZE *>(data)[I] = word;
             WritePackedWord<I + 1>();
         }
     }
@@ -130,10 +134,13 @@ public:
 
     /**
      * @brief Constructor that materializes the string on the stack
-     * @details Marked NOINLINE and DISABLE_OPTIMIZATION to prevent the compiler
-     * from moving the string data to .rdata.
+     * @details FORCE_INLINE eliminates per-string function overhead. Each packed
+     * word is laundered through a register via an asm barrier in WritePackedWord(),
+     * preventing LLVM from coalescing stores into a .rdata constant + memcpy.
+     * Zero-initialization is omitted because WritePackedWord() writes every byte
+     * (padding positions are already zero in the packed words).
      */
-    NOINLINE DISABLE_OPTIMIZATION EMBEDDED_STRING() noexcept : data{}
+    FORCE_INLINE EMBEDDED_STRING() noexcept
     {
         WritePackedWord();
     }

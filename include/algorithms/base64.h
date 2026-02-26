@@ -23,6 +23,8 @@
 #pragma once
 
 #include "primitives.h"
+#include "error.h"
+#include "result.h"
 
 /**
  * @class Base64
@@ -53,24 +55,23 @@ public:
      * @param input Pointer to input binary data
      * @param inputSize Size of input data in bytes
      * @param output Pointer to output buffer (must be at least GetEncodeOutSize() bytes)
-     * @return true on success, false on failure
      *
      * @note Output buffer must be large enough to hold the encoded data.
      * Use GetEncodeOutSize() to determine required buffer size.
      */
-    static BOOL Encode(PCCHAR input, UINT32 inputSize, PCHAR output);
+    static void Encode(PCCHAR input, UINT32 inputSize, PCHAR output);
 
     /**
      * @brief Decodes Base64 formatted data back to binary
      * @param input Pointer to Base64 encoded string
      * @param inputSize Size of input string in bytes (including padding)
      * @param output Pointer to output buffer (must be at least GetDecodeOutSize() bytes)
-     * @return true on success, false on failure (invalid Base64 input)
+     * @return Result<void, Error> — Ok on success, Err(Base64_DecodeFailed) on failure
      *
      * @note Output buffer must be large enough to hold the decoded data.
      * Use GetDecodeOutSize() to determine required buffer size.
      */
-    static BOOL Decode(PCCHAR input, UINT32 inputSize, PCHAR output);
+    [[nodiscard]] static Result<void, Error> Decode(PCCHAR input, UINT32 inputSize, PCHAR output);
 
     /**
      * @brief Calculates required output buffer size for encoding

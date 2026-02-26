@@ -49,22 +49,26 @@ VOID File::Close()
     }
 }
 
-UINT32 File::Read(PVOID buffer, UINT32 size)
+Result<UINT32, Error> File::Read(PVOID buffer, UINT32 size)
 {
     if (!IsValid())
-        return 0;
+        return Result<UINT32, Error>::Err(Error::Fs_ReadFailed);
 
     SSIZE result = System::Call(SYS_READ, (USIZE)fileHandle, (USIZE)buffer, size);
-    return (result >= 0) ? (UINT32)result : 0;
+    if (result >= 0)
+        return Result<UINT32, Error>::Ok((UINT32)result);
+    return Result<UINT32, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_ReadFailed);
 }
 
-UINT32 File::Write(const VOID *buffer, USIZE size)
+Result<UINT32, Error> File::Write(const VOID *buffer, USIZE size)
 {
     if (!IsValid())
-        return 0;
+        return Result<UINT32, Error>::Err(Error::Fs_WriteFailed);
 
     SSIZE result = System::Call(SYS_WRITE, (USIZE)fileHandle, (USIZE)buffer, size);
-    return (result >= 0) ? (UINT32)result : 0;
+    if (result >= 0)
+        return Result<UINT32, Error>::Ok((UINT32)result);
+    return Result<UINT32, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_WriteFailed);
 }
 
 USIZE File::GetOffset() const
@@ -139,7 +143,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     return File((PVOID)fd);
 }
 
-BOOL FileSystem::Delete(PCWCHAR path)
+Result<void, Error> FileSystem::Delete(PCWCHAR path)
 {
     CHAR utf8Path[1024];
     USIZE pathLen = String::Length(path);
@@ -147,10 +151,13 @@ BOOL FileSystem::Delete(PCWCHAR path)
     utf8Path[utf8Len] = '\0';
 
 #if defined(ARCHITECTURE_AARCH64)
-    return System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)utf8Path, 0) == 0;
+    SSIZE result = System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)utf8Path, 0);
 #else
-    return System::Call(SYS_UNLINK, (USIZE)utf8Path) == 0;
+    SSIZE result = System::Call(SYS_UNLINK, (USIZE)utf8Path);
 #endif
+    if (result == 0)
+        return Result<void, Error>::Ok();
+    return Result<void, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_DeleteFailed);
 }
 
 BOOL FileSystem::Exists(PCWCHAR path)
@@ -169,7 +176,7 @@ BOOL FileSystem::Exists(PCWCHAR path)
 #endif
 }
 
-BOOL FileSystem::CreateDirectory(PCWCHAR path)
+Result<void, Error> FileSystem::CreateDirectory(PCWCHAR path)
 {
     CHAR utf8Path[1024];
     USIZE pathLen = String::Length(path);
@@ -184,10 +191,12 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 #else
     SSIZE result = System::Call(SYS_MKDIR, (USIZE)utf8Path, mode);
 #endif
-    return result == 0 || result == -17; // -EEXIST: directory already exists
+    if (result == 0 || result == -17) // -EEXIST: directory already exists
+        return Result<void, Error>::Ok();
+    return Result<void, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_CreateDirFailed);
 }
 
-BOOL FileSystem::DeleteDirectory(PCWCHAR path)
+Result<void, Error> FileSystem::DeleteDirectory(PCWCHAR path)
 {
     CHAR utf8Path[1024];
     USIZE pathLen = String::Length(path);
@@ -195,10 +204,13 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
     utf8Path[utf8Len] = '\0';
 
 #if defined(ARCHITECTURE_AARCH64)
-    return System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)utf8Path, AT_REMOVEDIR) == 0;
+    SSIZE result = System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)utf8Path, AT_REMOVEDIR);
 #else
-    return System::Call(SYS_RMDIR, (USIZE)utf8Path) == 0;
+    SSIZE result = System::Call(SYS_RMDIR, (USIZE)utf8Path);
 #endif
+    if (result == 0)
+        return Result<void, Error>::Ok();
+    return Result<void, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_DeleteDirFailed);
 }
 
 // --- DirectoryIterator Implementation ---

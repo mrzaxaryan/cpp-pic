@@ -17,19 +17,21 @@ USIZE String::IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept
 	if (value < 0)
 	{
 		negative = true;
-		value = -value;
 	}
 
-	if (value == 0)
+	// Use unsigned to handle INT64_MIN correctly (negating INT64_MIN is UB)
+	UINT64 uval = negative ? (UINT64)0 - (UINT64)value : (UINT64)value;
+
+	if (uval == 0)
 	{
 		temp[pos++] = '0';
 	}
 	else
 	{
-		while (value > 0 && pos < 22)
+		while (uval > 0 && pos < 22)
 		{
-			temp[pos++] = '0' + (CHAR)(value % 10);
-			value = value / 10;
+			temp[pos++] = '0' + (CHAR)(uval % 10);
+			uval = uval / 10;
 		}
 	}
 
@@ -143,12 +145,11 @@ USIZE String::FloatToStr(DOUBLE value, CHAR *buffer, USIZE bufSize, UINT8 precis
 	return pos;
 }
 
-BOOL String::ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept
+Result<INT64, Error> String::ParseInt64(const CHAR *str, USIZE len) noexcept
 {
 	if (!str || len == 0)
 	{
-		result = 0;
-		return false;
+		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
 	}
 
 	USIZE i = 0;
@@ -169,40 +170,44 @@ BOOL String::ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept
 		i++;
 	}
 
-	INT64 value = 0;
+	UINT64 value = 0;
 	BOOL hasDigits = false;
+	constexpr UINT64 maxPositive = 0x7FFFFFFFFFFFFFFFULL;
+	constexpr UINT64 maxNegative = 0x8000000000000000ULL;
+	UINT64 limit = negative ? maxNegative : maxPositive;
+
 	while (i < len && str[i] >= '0' && str[i] <= '9')
 	{
-		value = value * 10 + (str[i] - '0');
+		UINT64 digit = (UINT64)(str[i] - '0');
+		if (value > (limit - digit) / 10)
+			return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
+		value = value * 10 + digit;
 		hasDigits = true;
 		i++;
 	}
 
 	if (!hasDigits)
 	{
-		result = 0;
-		return false;
+		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
 	}
 
-	result = negative ? -value : value;
-	return true;
+	INT64 result = negative ? -(INT64)value : (INT64)value;
+	return Result<INT64, Error>::Ok(result);
 }
 
 INT64 String::ParseInt64(PCCHAR str) noexcept
 {
-	INT64 result = 0;
 	if (!str)
 		return 0;
-	ParseInt64(str, Length(str), result);
-	return result;
+	auto r = ParseInt64(str, Length(str));
+	return r.IsOk() ? r.Value() : 0;
 }
 
-BOOL String::StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept
+Result<DOUBLE, Error> String::StrToFloat(const CHAR *str, USIZE len) noexcept
 {
 	if (!str || len == 0)
 	{
-		result = DOUBLE(INT32(0));
-		return false;
+		return Result<DOUBLE, Error>::Err(Error::String_ParseFloatFailed);
 	}
 
 	CHAR buffer[64];
@@ -213,8 +218,8 @@ BOOL String::StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept
 	}
 	buffer[copyLen] = '\0';
 
-	result = DOUBLE::Parse(buffer);
-	return true;
+	DOUBLE result = DOUBLE::Parse(buffer);
+	return Result<DOUBLE, Error>::Ok(result);
 }
 
 UINT32 String::ParseHex(PCCHAR str) noexcept
@@ -291,12 +296,16 @@ PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) noexcept
 // Returns the number of wide characters written (excluding null terminator)
 USIZE String::Utf8ToWide(PCCHAR utf8, PWCHAR wide, USIZE wideBufferSize)
 {
-	if (!utf8 || !wide || wideBufferSize == 0)
+	if (!utf8 || !wide || wideBufferSize < 3)
+	{
+		if (wide && wideBufferSize > 0)
+			wide[0] = L'\0';
 		return 0;
+	}
 
 	USIZE wideLen = 0;
 
-	while (*utf8 && wideLen < wideBufferSize - 2)
+	while (*utf8 && wideLen + 2 < wideBufferSize)
 	{
 		UINT32 ch;
 		UINT8 byte = (UINT8)*utf8++;

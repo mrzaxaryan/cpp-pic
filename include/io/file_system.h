@@ -1,6 +1,8 @@
 #pragma once
 
 #include "primitives.h"
+#include "error.h"
+#include "result.h"
 
 // Offset origin for file seeking
 enum class OffsetOrigin : INT32
@@ -40,7 +42,21 @@ private:
 
 public:
     // Default constructor and destructor
-    File() : fileHandle(nullptr), fileSize(0) {}
+    File() : fileHandle(InvalidFileHandle()), fileSize(0) {}
+
+    // Platform-neutral invalid handle sentinel.
+    // Windows: nullptr (INVALID_HANDLE_VALUE is -1, but nullptr is the "never opened" state).
+    // POSIX/UEFI: (PVOID)(SSIZE)-1, because fd 0 is a valid descriptor (stdin).
+    // Note: FORCE_INLINE function instead of constexpr because integer-to-pointer
+    // casts are not allowed in constant expressions.
+    static FORCE_INLINE PVOID InvalidFileHandle()
+    {
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS)
+        return (PVOID)(SSIZE)-1;
+#else
+        return nullptr;
+#endif
+    }
     ~File() { Close(); }
 
     // Disable copying to prevent double-close bugs
@@ -61,8 +77,8 @@ public:
     VOID Close();
 
     // Read and write methods
-    UINT32 Read(PVOID buffer, UINT32 size);
-    UINT32 Write(const VOID *buffer, USIZE size);
+    [[nodiscard]] Result<UINT32, Error> Read(PVOID buffer, UINT32 size);
+    [[nodiscard]] Result<UINT32, Error> Write(const VOID *buffer, USIZE size);
 
     // Get the size of the file
     USIZE GetSize() const { return fileSize; }
@@ -131,10 +147,10 @@ public:
 
     // File operations
     static File Open(PCWCHAR path, INT32 flags = 0);
-    static BOOL Delete(PCWCHAR path);
+    [[nodiscard]] static Result<void, Error> Delete(PCWCHAR path);
     static BOOL Exists(PCWCHAR path);
 
     // New Directory Methods
-    static BOOL CreateDirectory(PCWCHAR path);
-    static BOOL DeleteDirectory(PCWCHAR path);
+    [[nodiscard]] static Result<void, Error> CreateDirectory(PCWCHAR path);
+    [[nodiscard]] static Result<void, Error> DeleteDirectory(PCWCHAR path);
 };

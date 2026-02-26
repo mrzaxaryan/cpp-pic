@@ -789,29 +789,31 @@ Ecc::~Ecc()
     Memory::Zero(this, sizeof(Ecc));
 }
 
-INT32 Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UINT8 *secret)
+Result<UINT32, Error> Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UINT8 *secret)
 {
     if (publicKeySize != this->eccBytes * 2 + 1 || publicKey[0] != 0x04)
-        return -1;
+        return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
 
     Random random;
     EccPoint l_public;
     UINT64 l_random[MAX_NUM_ECC_DIGITS];
 
     if (!random.GetArray((USIZE)(this->numEccDigits * sizeof(UINT64)), (UINT8 *)l_random))
-    {
-        return 0;
-    }
+        return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
+
     this->Bytes2Native(l_public.x, publicKey + 1);
     this->Bytes2Native(l_public.y, publicKey + 1 + this->eccBytes);
 
     EccPoint l_product;
     this->Mult(l_product, l_public, this->privateKey, l_random);
     this->Native2Bytes(secret, l_product.x);
-    return this->IsZero(l_product) ? -1 : 0;
+
+    if (this->IsZero(l_product))
+        return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
+    return Result<UINT32, Error>::Ok(this->eccBytes);
 }
 
-INT32 Ecc::Initialize(INT32 curve)
+Result<void, Error> Ecc::Initialize(INT32 curve)
 {
     this->eccBytes = curve;
     this->numEccDigits = curve >> 3;
@@ -832,7 +834,7 @@ INT32 Ecc::Initialize(INT32 curve)
         Memory::Copy(this->curveN, MakeEmbedArray(Curve_N_48), sizeof(Curve_N_48));
     }
     else
-        return -1;
+        return Result<void, Error>::Err(Error::Ecc_InitFailed);
 
     UINT32 l_tries = 0;
 
@@ -840,7 +842,7 @@ INT32 Ecc::Initialize(INT32 curve)
     {
         Random random;
         if (!random.GetArray((USIZE)(this->numEccDigits * sizeof(UINT64)), (UINT8 *)this->privateKey) || (l_tries++ >= MAX_TRIES))
-            return -1;
+            return Result<void, Error>::Err(Error::Ecc_InitFailed);
         if (this->VliIsZero(this->privateKey))
             continue;
 
@@ -851,15 +853,15 @@ INT32 Ecc::Initialize(INT32 curve)
 
         this->Mult(this->publicKey, this->curveG, this->privateKey, nullptr);
     } while (this->IsZero(this->publicKey));
-    return 0;
-};
+    return Result<void, Error>::Ok();
+}
 
-INT32 Ecc::ExportPublicKey(UINT8 *publicKey, UINT32 publicKeySize)
+Result<UINT32, Error> Ecc::ExportPublicKey(UINT8 *publicKey, UINT32 publicKeySize)
 {
     if (publicKey == 0 || publicKeySize < this->eccBytes * 2 + 1)
-        return 0;
+        return Result<UINT32, Error>::Err(Error::Ecc_ExportKeyFailed);
     publicKey[0] = 0x04;
     this->Native2Bytes(publicKey + 1, this->publicKey.x);
     this->Native2Bytes(publicKey + 1 + this->eccBytes, this->publicKey.y);
-    return this->eccBytes * 2 + 1;
+    return Result<UINT32, Error>::Ok(this->eccBytes * 2 + 1);
 }

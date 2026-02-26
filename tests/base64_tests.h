@@ -156,8 +156,8 @@ private:
 	{
 		CHAR output[10];
 		auto input = ""_embed;
-		Base64::Decode(static_cast<PCCHAR>(input), 0, output);
-		return true; // Empty decode should succeed
+		auto r = Base64::Decode(static_cast<PCCHAR>(input), 0, output);
+		return r.IsOk(); // Empty decode should succeed
 	}
 
 	// Test: Decode "Zg==" to "f"
@@ -165,7 +165,9 @@ private:
 	{
 		CHAR output[10];
 		auto input = "Zg=="_embed;
-		Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		auto r = Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		if (!r)
+			return false;
 		return Memory::Compare(output, static_cast<PCCHAR>("f"_embed), 1) == 0;
 	}
 
@@ -174,7 +176,9 @@ private:
 	{
 		CHAR output[10];
 		auto input = "Zm8="_embed;
-		Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		auto r = Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		if (!r)
+			return false;
 		return Memory::Compare(output, static_cast<PCCHAR>("fo"_embed), 2) == 0;
 	}
 
@@ -183,7 +187,9 @@ private:
 	{
 		CHAR output[10];
 		auto input = "Zm9v"_embed;
-		Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		auto r = Base64::Decode(static_cast<PCCHAR>(input), 4, output);
+		if (!r)
+			return false;
 		return Memory::Compare(output, static_cast<PCCHAR>("foo"_embed), 3) == 0;
 	}
 
@@ -192,7 +198,9 @@ private:
 	{
 		CHAR output[30];
 		auto input = "SGVsbG8sIFdvcmxkIQ=="_embed;
-		Base64::Decode(static_cast<PCCHAR>(input), 20, output);
+		auto r = Base64::Decode(static_cast<PCCHAR>(input), 20, output);
+		if (!r)
+			return false;
 		return Memory::Compare(output, static_cast<PCCHAR>("Hello, World!"_embed), 13) == 0;
 	}
 
@@ -201,7 +209,9 @@ private:
 	{
 		CHAR output[20];
 		auto input = "AAECAwQF"_embed;
-		Base64::Decode(static_cast<PCCHAR>(input), 8, output);
+		auto r = Base64::Decode(static_cast<PCCHAR>(input), 8, output);
+		if (!r)
+			return false;
 
 		auto expected = MakeEmbedArray((const UINT8[]){0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
 
@@ -218,22 +228,22 @@ private:
 		auto test1 = "The quick brown fox jumps over the lazy dog"_embed;
 		UINT32 len1 = 44;
 		Base64::Encode(static_cast<PCCHAR>(test1), len1, encoded);
-		Base64::Decode(encoded, Base64::GetEncodeOutSize(len1) - 1, decoded);
-		if (Memory::Compare(decoded, static_cast<PCCHAR>(test1), len1) != 0)
+		auto r1 = Base64::Decode(encoded, Base64::GetEncodeOutSize(len1) - 1, decoded);
+		if (!r1 || Memory::Compare(decoded, static_cast<PCCHAR>(test1), len1) != 0)
 			return false;
 
 		auto test2 = "1234567890"_embed;
 		UINT32 len2 = 10;
 		Base64::Encode(static_cast<PCCHAR>(test2), len2, encoded);
-		Base64::Decode(encoded, Base64::GetEncodeOutSize(len2) - 1, decoded);
-		if (Memory::Compare(decoded, static_cast<PCCHAR>(test2), len2) != 0)
+		auto r2 = Base64::Decode(encoded, Base64::GetEncodeOutSize(len2) - 1, decoded);
+		if (!r2 || Memory::Compare(decoded, static_cast<PCCHAR>(test2), len2) != 0)
 			return false;
 
 		auto test3 = "!@#$%^&*()_+-=[]{}|;:,.<>?"_embed;
 		UINT32 len3 = 26;
 		Base64::Encode(static_cast<PCCHAR>(test3), len3, encoded);
-		Base64::Decode(encoded, Base64::GetEncodeOutSize(len3) - 1, decoded);
-		if (Memory::Compare(decoded, static_cast<PCCHAR>(test3), len3) != 0)
+		auto r3 = Base64::Decode(encoded, Base64::GetEncodeOutSize(len3) - 1, decoded);
+		if (!r3 || Memory::Compare(decoded, static_cast<PCCHAR>(test3), len3) != 0)
 			return false;
 
 		return true;

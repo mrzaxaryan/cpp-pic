@@ -79,6 +79,22 @@ if(_content MATCHES "__DATA_CONST[ \t]+__const")
     list(APPEND _found "__DATA_CONST,__const")
 endif()
 
+# macOS: Check for __TEXT segment constant sections that are NOT __text.
+# At -O1+ the compiler may emit __TEXT,__const (constant pools),
+# __TEXT,__literal* (float/double constants), or __TEXT,__cstring.
+# These are not extracted into output.bin and break PIC loading.
+# The -rename_section linker flags in macOS.cmake should prevent these,
+# but check as a safety net.
+if(_content MATCHES "__TEXT[ \t]+__const")
+    list(APPEND _found "__TEXT,__const")
+endif()
+if(_content MATCHES "__TEXT[ \t]+__literal")
+    list(APPEND _found "__TEXT,__literal*")
+endif()
+if(_content MATCHES "__TEXT[ \t]+__cstring")
+    list(APPEND _found "__TEXT,__cstring")
+endif()
+
 if(_found)
     list(JOIN _found ", " _list)
     message(FATAL_ERROR

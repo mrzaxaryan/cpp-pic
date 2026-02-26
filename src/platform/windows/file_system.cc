@@ -68,38 +68,39 @@ void File::Close()
 }
 
 // Read data from the file into the buffer
-UINT32 File::Read(PVOID buffer, UINT32 size)
+Result<UINT32, Error> File::Read(PVOID buffer, UINT32 size)
 {
     if (!IsValid())
-        return 0;
+        return Result<UINT32, Error>::Err(Error::Fs_ReadFailed);
 
-    // Properly initialize IO_STATUS_BLOCK with all fields
     IO_STATUS_BLOCK ioStatusBlock;
+    Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
     NTSTATUS status = NTDLL::ZwReadFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, buffer, (UINT32)size, nullptr, nullptr);
 
     if (NT_SUCCESS(status))
     {
-        return (UINT32)ioStatusBlock.Information;
+        return Result<UINT32, Error>::Ok((UINT32)ioStatusBlock.Information);
     }
-    return 0;
+    return Result<UINT32, Error>::Err(Error::Windows((UINT32)status), Error::Fs_ReadFailed);
 }
 
 // Write data from the buffer to the file
-UINT32 File::Write(PCVOID buffer, USIZE size)
+Result<UINT32, Error> File::Write(PCVOID buffer, USIZE size)
 {
     if (!IsValid())
-        return 0;
+        return Result<UINT32, Error>::Err(Error::Fs_WriteFailed);
 
     IO_STATUS_BLOCK ioStatusBlock;
+    Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
     NTSTATUS status = NTDLL::ZwWriteFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, (PVOID)buffer, (UINT32)size, nullptr, nullptr);
 
     if (NT_SUCCESS(status))
     {
-        return (UINT32)ioStatusBlock.Information;
+        return Result<UINT32, Error>::Ok((UINT32)ioStatusBlock.Information);
     }
-    return 0;
+    return Result<UINT32, Error>::Err(Error::Windows((UINT32)status), Error::Fs_WriteFailed);
 }
 
 // Get the current file offset
@@ -108,14 +109,16 @@ USIZE File::GetOffset() const
     if (!IsValid())
         return 0;
 
-    FILE_POSITION_INFORMATION posFIle;
+    FILE_POSITION_INFORMATION posFile;
     IO_STATUS_BLOCK ioStatusBlock;
-    // In Win32, moving 0 bytes from the current position returns the current offset
-    NTSTATUS status = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFIle, sizeof(posFIle), FilePositionInformation);
+    Memory::Zero(&posFile, sizeof(posFile));
+    Memory::Zero(&ioStatusBlock, sizeof(ioStatusBlock));
+
+    NTSTATUS status = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFile, sizeof(posFile), FilePositionInformation);
 
     if (NT_SUCCESS(status))
     {
-        return (USIZE)posFIle.CurrentByteOffset.QuadPart;
+        return (USIZE)posFile.CurrentByteOffset.QuadPart;
     }
     return 0;
 }
@@ -130,7 +133,7 @@ void File::SetOffset(USIZE absoluteOffset)
     IO_STATUS_BLOCK ioStatusBlock;
     Memory::Zero(&posInfo, sizeof(FILE_POSITION_INFORMATION));
     Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
-    posInfo.CurrentByteOffset.QuadPart = INT64((INT64)absoluteOffset);
+    posInfo.CurrentByteOffset.QuadPart = (INT64)absoluteOffset;
     // Set the file pointer to the specified absolute offset using ZwSetInformationFile
     (void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
 }
@@ -169,7 +172,7 @@ void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
         break;
     default:
         LOG_ERROR("Invalid OffsetOrigin specified in MoveOffset");
-        break;
+        return;
     }
     posInfo.CurrentByteOffset.QuadPart = distance;
     (void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
@@ -202,16 +205,11 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     }
     else if (flags & FS_TRUNCATE)
     {
-        LOG_ERROR("FS_TRUNCATE flag set.");
         dwCreationDisposition = FILE_OVERWRITE;
     }
 
-    // Map NT flags
-    if (!(flags & FILE_FLAG_OVERLAPPED))
-        ntFlags |= FILE_SYNCHRONOUS_IO_NONALERT;
-    if (flags & FILE_FLAG_WRITE_THROUGH)
-        ntFlags |= FILE_WRITE_THROUGH;
-    ntFlags |= FILE_NON_DIRECTORY_FILE;
+    // Synchronous I/O — PIR never uses overlapped file handles
+    ntFlags |= FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE;
 
     // Always allow waiting and querying attributes
     dwDesiredAccess |= SYNCHRONIZE | FILE_READ_ATTRIBUTES;
@@ -249,7 +247,7 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
 }
 
 // Delete a file at the specified path
-BOOL FileSystem::Delete(PCWCHAR path)
+Result<void, Error> FileSystem::Delete(PCWCHAR path)
 {
     UNICODE_STRING ntName;
     OBJECT_ATTRIBUTES attr;
@@ -257,19 +255,23 @@ BOOL FileSystem::Delete(PCWCHAR path)
     IO_STATUS_BLOCK io;
 
     if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &ntName, nullptr, nullptr))
-        return false;
+        return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_DeleteFailed);
 
     InitializeObjectAttributes(&attr, &ntName, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
     auto createResult = NTDLL::ZwCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, nullptr, 0,
                                             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                             FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, nullptr, 0);
-    BOOL ok = (BOOL)createResult;
-    if (ok)
-        ok = (BOOL)NTDLL::ZwClose(hFile);
 
+    if (!createResult)
+    {
+        NTDLL::RtlFreeUnicodeString(&ntName);
+        return Result<void, Error>::Err(createResult, Error::Fs_DeleteFailed);
+    }
+
+    (void)NTDLL::ZwClose(hFile);
     NTDLL::RtlFreeUnicodeString(&ntName);
-    return ok;
+    return Result<void, Error>::Ok();
 }
 
 // Check if a file exists at the specified path
@@ -296,7 +298,7 @@ BOOL FileSystem::Exists(PCWCHAR path)
 }
 
 // --- FileSystem Directory Management ---
-BOOL FileSystem::CreateDirectory(PCWCHAR path)
+Result<void, Error> FileSystem::CreateDirectory(PCWCHAR path)
 {
     // Returns non-zero on success
     PVOID hDir;
@@ -305,7 +307,7 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
     IO_STATUS_BLOCK ioStatusBlock;
 
     if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
-        return false;
+        return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_CreateDirFailed);
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
@@ -327,14 +329,14 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
     if (createResult)
     {
         (void)NTDLL::ZwClose(hDir);
-        return true;
+        return Result<void, Error>::Ok();
     }
-    LOG_ERROR("CreateDirectory failed: status=0x%08X path=%ls", createResult.Error().PlatformCode, path);
-    return false;
+    LOG_ERROR("CreateDirectory failed: errors=%e path=%ls", createResult.Error(), path);
+    return Result<void, Error>::Err(createResult, Error::Fs_CreateDirFailed);
 }
 
 // Delete a directory at the specified path
-BOOL FileSystem::DeleteDirectory(PCWCHAR path)
+Result<void, Error> FileSystem::DeleteDirectory(PCWCHAR path)
 {
     PVOID hDir;
     FILE_DISPOSITION_INFORMATION disp;
@@ -345,13 +347,16 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
     disp.DeleteFile = true;
 
     if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
-        return false;
+        return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_DeleteDirFailed);
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
     NTSTATUS status = NTDLL::ZwOpenFile(&hDir, DELETE | SYNCHRONIZE, &objAttr, &ioStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
     if (!NT_SUCCESS(status))
-        return false;
+    {
+        NTDLL::RtlFreeUnicodeString(&uniName);
+        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_DeleteDirFailed);
+    }
 
     status = NTDLL::ZwSetInformationFile(
         hDir,
@@ -363,7 +368,10 @@ BOOL FileSystem::DeleteDirectory(PCWCHAR path)
     (void)NTDLL::ZwClose(hDir);
     NTDLL::RtlFreeUnicodeString(&uniName);
 
-    return NT_SUCCESS(status);
+    if (!NT_SUCCESS(status))
+        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_DeleteDirFailed);
+
+    return Result<void, Error>::Ok();
 }
 // --- DirectoryIterator Implementation ---
 
@@ -372,8 +380,8 @@ static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &da
 {
     // 1. Copy Name (FileNameLength is in bytes, divide by sizeof(WCHAR))
     UINT32 nameLen = data.FileNameLength / sizeof(WCHAR);
-    if (nameLen > 259)
-        nameLen = 259;
+    if (nameLen > 255)
+        nameLen = 255;
     for (UINT32 j = 0; j < nameLen; j++)
     {
         entry.name[j] = data.FileName[j];
@@ -385,10 +393,10 @@ static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &da
 
     // 3. Attributes
     UINT32 attr = data.FileAttributes;
-    entry.isDirectory = (attr & 0x10); // FILE_ATTRIBUTE_DIRECTORY
-    entry.isHidden = (attr & 0x02);    // FILE_ATTRIBUTE_HIDDEN
-    entry.isSystem = (attr & 0x04);    // FILE_ATTRIBUTE_SYSTEM
-    entry.isReadOnly = (attr & 0x01);  // FILE_ATTRIBUTE_READONLY
+    entry.isDirectory = (attr & FILE_ATTRIBUTE_DIRECTORY);
+    entry.isHidden = (attr & FILE_ATTRIBUTE_HIDDEN);
+    entry.isSystem = (attr & FILE_ATTRIBUTE_SYSTEM);
+    entry.isReadOnly = (attr & FILE_ATTRIBUTE_READONLY);
 
     // 4. Timestamps
     entry.creationTime = data.CreationTime.QuadPart;
@@ -491,7 +499,6 @@ BOOL DirectoryIterator::Next()
     if (!IsValid())
         return false;
 
-    FILE_FS_DEVICE_INFORMATION info;
     IO_STATUS_BLOCK ioStatusBlock;
 
     // --- MODE 1: Drive Bitmask Mode (first is true and handle is small) ---
@@ -503,50 +510,35 @@ BOOL DirectoryIterator::Next()
         if (mask == 0)
             return false;
 
+        // Query the process device map to get drive types
+        PROCESS_DEVICEMAP_INFORMATION devMapInfo;
+        Memory::Zero(&devMapInfo, sizeof(devMapInfo));
+        NTSTATUS devMapStatus = NTDLL::ZwQueryInformationProcess(
+            NTDLL::NtCurrentProcess(),
+            ProcessDeviceMap,
+            &devMapInfo.Query,
+            sizeof(devMapInfo.Query),
+            nullptr);
+
         // Find the next set bit
         for (INT32 i = 0; i < 26; i++)
         {
             if (mask & (1 << i))
             {
                 // Found a drive! Format it as "X:\"
-                currentEntry.name[0] = (CHAR)('A' + i);
-                currentEntry.name[1] = ':';
-                currentEntry.name[2] = '\\';
-                currentEntry.name[3] = '\0';
+                currentEntry.name[0] = (WCHAR)(L'A' + i);
+                currentEntry.name[1] = L':';
+                currentEntry.name[2] = L'\\';
+                currentEntry.name[3] = L'\0';
 
                 currentEntry.isDirectory = true;
                 currentEntry.isDrive = true;
 
-                (void)NTDLL::ZwQueryVolumeInformationFile(
-                    NTDLL::NtCurrentProcess(),
-                    &ioStatusBlock,
-                    &info,
-                    sizeof(info),
-                    FileFsDeviceInformation);
-
-                switch (info.DeviceType)
-                {
-                case FILE_DEVICE_CD_ROM_FILE_SYSTEM:
-                    currentEntry.type = DRIVE_CDROM;
-                    break;
-                case FILE_DEVICE_VIRTUAL_DISK:
-                    currentEntry.type = DRIVE_RAMDISK;
-                    break;
-                case FILE_DEVICE_NETWORK_FILE_SYSTEM:
-                    currentEntry.type = DRIVE_REMOTE;
-                    break;
-                case FILE_DEVICE_DISK_FILE_SYSTEM:
-                    if (info.Characteristics & FILE_REMOTE_DEVICE)
-                        currentEntry.type = DRIVE_REMOTE;
-                    else if (info.Characteristics & FILE_REMOVABLE_MEDIA)
-                        currentEntry.type = DRIVE_REMOVABLE;
-                    else
-                        currentEntry.type = DRIVE_FIXED;
-                    break;
-                default:
+                // DriveType[] uses Win32 drive type constants directly
+                if (NT_SUCCESS(devMapStatus))
+                    currentEntry.type = (UINT32)devMapInfo.Query.DriveType[i];
+                else
                     currentEntry.type = DRIVE_UNKNOWN;
-                    break;
-                }
 
                 // Update mask for next time (remove the bit we just processed)
                 mask &= ~(1 << i);
@@ -593,7 +585,7 @@ BOOL DirectoryIterator::Next()
     return false;
 }
 
-// Destructor
+// Move constructor
 DirectoryIterator::DirectoryIterator(DirectoryIterator &&other) noexcept
     : handle(other.handle), currentEntry(other.currentEntry), first(other.first), isBitMaskMode(other.isBitMaskMode)
 {

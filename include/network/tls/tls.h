@@ -25,17 +25,17 @@ private:
     TlsBuffer channelBuffer; // Channel buffer for received data
     INT32 channelBytesRead;  // Number of bytes read from channel buffer
     INT32 ReadChannel(PCHAR out, INT32 size);
-    [[nodiscard]] BOOL ProcessReceive();
-    [[nodiscard]] BOOL OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader);
-    [[nodiscard]] BOOL OnServerFinished();
-    [[nodiscard]] BOOL VerifyFinished(TlsBuffer &TlsReader);
-    [[nodiscard]] BOOL OnServerHelloDone();
-    [[nodiscard]] BOOL OnServerHello(TlsBuffer &TlsReader);
-    [[nodiscard]] BOOL SendChangeCipherSpec();
-    [[nodiscard]] BOOL SendClientExchange();
-    [[nodiscard]] BOOL SendClientFinished();
-    [[nodiscard]] BOOL SendClientHello(const CHAR *host);
-    [[nodiscard]] BOOL SendPacket(INT32 packetType, INT32 ver, TlsBuffer &TlsBuffer);
+    [[nodiscard]] Result<void, Error> ProcessReceive();
+    [[nodiscard]] Result<void, Error> OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader);
+    [[nodiscard]] Result<void, Error> OnServerFinished();
+    [[nodiscard]] Result<void, Error> VerifyFinished(TlsBuffer &TlsReader);
+    [[nodiscard]] Result<void, Error> OnServerHelloDone();
+    [[nodiscard]] Result<void, Error> OnServerHello(TlsBuffer &TlsReader);
+    [[nodiscard]] Result<void, Error> SendChangeCipherSpec();
+    [[nodiscard]] Result<void, Error> SendClientExchange();
+    [[nodiscard]] Result<void, Error> SendClientFinished();
+    [[nodiscard]] Result<void, Error> SendClientHello(const CHAR *host);
+    [[nodiscard]] Result<void, Error> SendPacket(INT32 packetType, INT32 ver, TlsBuffer &TlsBuffer);
 
 public:
     VOID *operator new(USIZE) = delete;

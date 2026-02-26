@@ -20,6 +20,7 @@ public:
 		RunTest(allPassed, EMBED_FUNC(TestWidthPadding), L"Width and padding"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestFloatFormat), L"Float format"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestPercentLiteral), L"Percent literal"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestErrorFormat), L"Error format"_embed);
 		// RunTest(allPassed, TestSizeFormat, L"Size format"_embed);
 
 		if (allPassed)
@@ -337,6 +338,66 @@ private:
 		// Should be "100%"
 		auto expected_100pct = "100%"_embed;
 		if (Memory::Compare(buffer, (const CHAR *)expected_100pct, 4) != 0)
+			return false;
+
+		return true;
+	}
+
+	static BOOL TestErrorFormat()
+	{
+		CHAR buffer[128];
+		BufferContext ctx;
+		ctx.buffer = buffer;
+		ctx.index = 0;
+		ctx.maxSize = 128;
+		auto fixed = EMBED_FUNC(CharWriter);
+		auto fmt_e = "%e"_embed;
+
+		// Test 1: Single runtime error -> "1"
+		auto singleResult = Result<UINT32, Error>::Err(Error::Socket_CreateFailed_Open);
+		Memory::Zero(buffer, 128);
+		ctx.index = 0;
+		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_e, singleResult.Error());
+		auto expected_single = "1"_embed;
+		if (Memory::Compare(buffer, (const CHAR *)expected_single, 1) != 0)
+			return false;
+		if (buffer[1] != '\0')
+			return false;
+
+		// Test 2: Windows error -> "0xC0000034[W]"
+		auto winResult = Result<UINT32, Error>::Err(Error::Windows(0xC0000034));
+		Memory::Zero(buffer, 128);
+		ctx.index = 0;
+		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_e, winResult.Error());
+		auto expected_win = "0xC0000034[W]"_embed;
+		if (Memory::Compare(buffer, (const CHAR *)expected_win, 13) != 0)
+			return false;
+		if (buffer[13] != '\0')
+			return false;
+
+		// Test 3: Posix error -> "111[P]"
+		auto posixResult = Result<void, Error>::Err(Error::Posix(111));
+		Memory::Zero(buffer, 128);
+		ctx.index = 0;
+		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_e, posixResult.Error());
+		auto expected_posix = "111[P]"_embed;
+		if (Memory::Compare(buffer, (const CHAR *)expected_posix, 6) != 0)
+			return false;
+		if (buffer[6] != '\0')
+			return false;
+
+		// Test 4: 2-arg Err compatibility stores outermost -> "16"
+		auto twoCode = Result<UINT32, Error>::Err(
+			Error::Windows(0xC0000034),
+			Error::Socket_OpenFailed_Connect);
+		auto propagated = Result<void, Error>::Err(twoCode, Error::Tls_OpenFailed_Socket);
+		Memory::Zero(buffer, 128);
+		ctx.index = 0;
+		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_e, propagated.Error());
+		auto expected_prop = "16"_embed;
+		if (Memory::Compare(buffer, (const CHAR *)expected_prop, 2) != 0)
+			return false;
+		if (buffer[2] != '\0')
 			return false;
 
 		return true;

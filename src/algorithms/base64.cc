@@ -6,7 +6,7 @@
 
 // Macro to get the encoded character for a given 6-bit value
 #define BASE64_ENCODED_CHAR(v) ( \
-    'A' + (((UINT32)(v)) & 63u) + ((((UINT32)(v)) & 63u) >= 26u) * ('a' - 'A' - 26) + ((((UINT32)(v)) & 63u) >= 52u) * ('0' - 'a' - 26) + ((((UINT32)(v)) & 63u) >= 62u) * ('+' - '0' - 10) + ((((UINT32)(v)) & 63u) >= 63u) * ('/' - '+'))
+    'A' + (((UINT32)(v)) & 63u) + ((((UINT32)(v)) & 63u) >= 26u) * ('a' - 'A' - 26) + ((((UINT32)(v)) & 63u) >= 52u) * ('0' - 'a' - 26) + ((((UINT32)(v)) & 63u) >= 62u) * ('+' - '0' - 10) + ((((UINT32)(v)) & 63u) >= 63u) * ('/' - '+' - 1))
 
 // Macro to get the decoded value for a given Base64 character
 #define BASE64_DECODE_CHAR(c) (                     \
@@ -17,7 +17,7 @@
     ((c) == '/') * 63)
 
 // Encode input data to Base64 format
-BOOL Base64::Encode(PCCHAR input, UINT32 inputSize, PCHAR output)
+void Base64::Encode(PCCHAR input, UINT32 inputSize, PCHAR output)
 {
     UINT32 i, o;
 
@@ -28,9 +28,9 @@ BOOL Base64::Encode(PCCHAR input, UINT32 inputSize, PCHAR output)
     while (i + 2u < inputSize)
     {
         UINT32 v =
-            ((UINT32)input[i] << 16) |
-            ((UINT32)input[i + 1] << 8) |
-            ((UINT32)input[i + 2]);
+            ((UINT32)(UINT8)input[i] << 16) |
+            ((UINT32)(UINT8)input[i + 1] << 8) |
+            ((UINT32)(UINT8)input[i + 2]);
 
         output[o++] = (CHAR)BASE64_ENCODED_CHAR((v >> 18) & 63u);
         output[o++] = (CHAR)BASE64_ENCODED_CHAR((v >> 12) & 63u);
@@ -43,13 +43,13 @@ BOOL Base64::Encode(PCCHAR input, UINT32 inputSize, PCHAR output)
     /* tail (1 or 2 bytes) */
     if (i < inputSize)
     {
-        UINT32 v = ((UINT32)input[i] << 16);
+        UINT32 v = ((UINT32)(UINT8)input[i] << 16);
 
         output[o++] = (CHAR)BASE64_ENCODED_CHAR((v >> 18) & 63u);
 
         if (i + 1u < inputSize)
         {
-            v |= ((UINT32)input[i + 1] << 8);
+            v |= ((UINT32)(UINT8)input[i + 1] << 8);
 
             output[o++] = (CHAR)BASE64_ENCODED_CHAR((v >> 12) & 63u);
             output[o++] = (CHAR)BASE64_ENCODED_CHAR((v >> 6) & 63u);
@@ -64,11 +64,10 @@ BOOL Base64::Encode(PCCHAR input, UINT32 inputSize, PCHAR output)
     }
 
     output[o] = 0;
-    return true;
 }
 
 // Decoder for Base64 formatted data to original format
-BOOL Base64::Decode(PCCHAR input, UINT32 inputSize, PCHAR output)
+Result<void, Error> Base64::Decode(PCCHAR input, UINT32 inputSize, PCHAR output)
 {
     UINT32 i, o;
 
@@ -101,7 +100,7 @@ BOOL Base64::Decode(PCCHAR input, UINT32 inputSize, PCHAR output)
         i += 4u;
     }
 
-    return true;
+    return Result<void, Error>::Ok();
 }
 
 // Calculate the output size needed for Base64 encoding

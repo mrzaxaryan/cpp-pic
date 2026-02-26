@@ -29,6 +29,8 @@
 #include "primitives.h"
 #include "double.h"
 #include "embedded_string.h"
+#include "error.h"
+#include "result.h"
 
 /**
  * @class String
@@ -403,10 +405,9 @@ public:
      * @brief Parse string to INT64 (with explicit length)
      * @param str String to parse
      * @param len Length of string
-     * @param result Output parameter for parsed value
-     * @return true on success, false on failure
+     * @return Result containing parsed INT64 value, or Error::String_ParseIntFailed
      */
-    static BOOL ParseInt64(const CHAR *str, USIZE len, INT64 &result) noexcept;
+    [[nodiscard]] static Result<INT64, Error> ParseInt64(const CHAR *str, USIZE len) noexcept;
 
     /**
      * @brief Parse null-terminated string to INT64
@@ -419,10 +420,9 @@ public:
      * @brief Convert string to DOUBLE
      * @param str String to parse
      * @param len Length of string
-     * @param result Output parameter for parsed value
-     * @return true on success, false on failure
+     * @return Result containing parsed DOUBLE value, or Error::String_ParseFloatFailed
      */
-    static BOOL StrToFloat(const CHAR *str, USIZE len, DOUBLE &result) noexcept;
+    [[nodiscard]] static Result<DOUBLE, Error> StrToFloat(const CHAR *str, USIZE len) noexcept;
 
     /**
      * @brief Parse string to specified type

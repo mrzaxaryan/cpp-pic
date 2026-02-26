@@ -36,8 +36,7 @@ private:
 		auto openResult = sock.Open();
 		if (!openResult)
 		{
-			LOG_ERROR("Socket connection failed (error: %u 0x%08X)",
-			          openResult.Error().RuntimeCode[0], openResult.Error().RuntimeCode[1]);
+			LOG_ERROR("Socket connection failed (error: %e)", openResult.Error());
 			(void)sock.Close();
 			return false;
 		}
@@ -77,9 +76,10 @@ private:
 
 		if (!readResult || readResult.Value() <= 0)
 		{
-			LOG_ERROR("Failed to receive HTTP response (error: %u 0x%08X)",
-			          readResult ? 0u : readResult.Error().RuntimeCode[0],
-			          readResult ? 0u : readResult.Error().RuntimeCode[1]);
+			if (!readResult)
+				LOG_ERROR("Failed to receive HTTP response (error: %e)", readResult.Error());
+			else
+				LOG_ERROR("Failed to receive HTTP response (zero bytes)");
 			(void)sock.Close();
 			return false;
 		}
@@ -254,7 +254,7 @@ private:
 		auto dnsResult = DNS::Resolve("httpbin.org"_embed);
 		if (!dnsResult)
 		{
-			LOG_ERROR("Failed to resolve httpbin.org (error: %u)", dnsResult.Error());
+			LOG_ERROR("Failed to resolve httpbin.org (error: %e)", dnsResult.Error());
 			return false;
 		}
 

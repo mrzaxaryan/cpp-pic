@@ -5,7 +5,7 @@
  * All logging is performed via direct console syscalls with ANSI escape sequences.
  *
  * DESIGN PATTERN:
- *   - Template-based for compile-time log level optimization
+ *   - Type-erased arguments eliminate per-argument-type template instantiations
  *   - ANSI colors: Green (Info), Red (Error), Yellow (Warning/Debug)
  *   - Zero-overhead when LogLevel = None (code eliminated at compile-time)
  *
@@ -39,8 +39,10 @@
 /**
  * Logger - Static logging utility class
  *
- * All methods are static and use variadic templates for type-safe formatting.
- * Log level checks are performed at compile-time using `if constexpr`.
+ * Public methods are variadic templates that type-erase arguments into
+ * StringFormatter::Argument arrays, then forward to a single non-templated
+ * TimestampedLogOutput. This eliminates per-argument-type template
+ * instantiations that previously bloated the binary.
  */
 class Logger
 {
@@ -48,38 +50,33 @@ private:
 	/**
 	 * ConsoleCallback - Callback for console output (with ANSI colors)
 	 */
-	template <TCHAR TChar>
-	static BOOL ConsoleCallback(PVOID context, TChar ch)
+	static BOOL ConsoleCallbackW(PVOID context, WCHAR ch)
 	{
 		(VOID) context;
 		return Console::Write(&ch, 1);
 	}
 
 	/**
-	 * TimestampedLogOutput - Internal helper using variadic templates
+	 * TimestampedLogOutput - Single non-templated helper for all log levels.
+	 * Arguments are pre-erased into a StringFormatter::Argument array by
+	 * the public Info/Error/Warning/Debug methods, so this function is
+	 * instantiated only once regardless of how many argument-type
+	 * combinations appear across the codebase.
 	 *
-	 * Writes colored output to console.
-	 *
-	 * @param colorPrefix - ANSI-colored prefix for console (e.g., "\033[0;32m[INF] ")
-	 * @param format      - Format string with embedded specifiers
-	 * @param args        - Variadic template arguments
-	 *
-	 * TEMPLATE PARAMETERS:
-	 *   TChar - Character type for format string (CHAR or WCHAR)
-	 *   Args  - Variadic template arguments (deduced automatically)
+	 * @param colorPrefix - ANSI-colored prefix (e.g., "\033[0;32m[INF] ")
+	 * @param format      - Wide format string with embedded specifiers
+	 * @param args        - Pre-erased argument array (nullptr when argCount == 0)
+	 * @param argCount    - Number of arguments
 	 */
-	template <TCHAR TChar, typename... Args>
-	static NOINLINE VOID TimestampedLogOutput(const WCHAR *colorPrefix, const TChar *format, Args... args)
+	static NOINLINE VOID TimestampedLogOutput(const WCHAR *colorPrefix, const WCHAR *format, const StringFormatter::Argument *args, INT32 argCount)
 	{
-		// Get current time
 		DateTime now = DateTime::Now();
 		TimeOnlyString<WCHAR> timeStr = now.ToTimeOnlyString<WCHAR>();
 
-		auto consoleW = EMBED_FUNC(ConsoleCallback<WCHAR>);
-		auto consoleT = EMBED_FUNC(ConsoleCallback<TChar>);
+		auto consoleW = EMBED_FUNC(ConsoleCallbackW);
 
 		StringFormatter::Format<WCHAR>(consoleW, nullptr, L"%ls[%ls] "_embed, colorPrefix, (const WCHAR *)timeStr);
-		StringFormatter::Format<TChar>(consoleT, nullptr, format, args...);
+		StringFormatter::FormatWithArgs<WCHAR>(consoleW, nullptr, format, args, argCount);
 		StringFormatter::Format<WCHAR>(consoleW, nullptr, L"\033[0m\n"_embed);
 	}
 
@@ -88,108 +85,71 @@ public:
 	 * Info - Informational messages (green)
 	 *
 	 * Use for: Normal operation events, status updates, confirmations
-	 * Enabled when: LogLevel >= Default
 	 * Color: Green (ANSI: \033[0;32m)
-	 *
-	 * USAGE: Now supports custom types like DOUBLE directly!
-	 *   LOG_INFO("Temperature: %.2f degrees", 98.6_embed);
 	 */
 	template <TCHAR TChar, typename... Args>
-	static VOID Info(const TChar *format, Args... args);
+	static VOID Info(const TChar *format, Args... args)
+	{
+		if constexpr (sizeof...(Args) == 0)
+			TimestampedLogOutput(L"\033[0;32m[INF] "_embed, format, nullptr, 0);
+		else
+		{
+			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
+			TimestampedLogOutput(L"\033[0;32m[INF] "_embed, format, argArray, sizeof...(Args));
+		}
+	}
 
 	/**
 	 * Error - Error messages (red)
 	 *
 	 * Use for: Failures, exceptions, critical issues
-	 * Enabled when: LogLevel >= Default
 	 * Color: Red (ANSI: \033[0;31m)
-	 *
-	 * USAGE: Now supports custom types like DOUBLE directly!
-	 *   LOG_ERROR("Failed with code %d, value %.3f", errorCode, 1.234_embed);
 	 */
 	template <TCHAR TChar, typename... Args>
-	static VOID Error(const TChar *format, Args... args);
+	static VOID Error(const TChar *format, Args... args)
+	{
+		if constexpr (sizeof...(Args) == 0)
+			TimestampedLogOutput(L"\033[0;31m[ERR] "_embed, format, nullptr, 0);
+		else
+		{
+			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
+			TimestampedLogOutput(L"\033[0;31m[ERR] "_embed, format, argArray, sizeof...(Args));
+		}
+	}
 
 	/**
 	 * Warning - Warning messages (yellow)
 	 *
 	 * Use for: Non-critical issues, deprecation notices, potential problems
-	 * Enabled when: LogLevel >= Default
 	 * Color: Yellow (ANSI: \033[0;33m)
-	 *
-	 * USAGE: Now supports custom types like DOUBLE directly!
-	 *   LOG_WARNING("CPU usage at %.1f%%", 85.5_embed);
 	 */
 	template <TCHAR TChar, typename... Args>
-	static VOID Warning(const TChar *format, Args... args);
+	static VOID Warning(const TChar *format, Args... args)
+	{
+		if constexpr (sizeof...(Args) == 0)
+			TimestampedLogOutput(L"\033[0;33m[WRN] "_embed, format, nullptr, 0);
+		else
+		{
+			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
+			TimestampedLogOutput(L"\033[0;33m[WRN] "_embed, format, argArray, sizeof...(Args));
+		}
+	}
 
 	/**
 	 * Debug - Debug messages (yellow)
 	 *
 	 * Use for: Detailed diagnostic information, variable dumps, trace logs
-	 * Enabled when: LogLevel >= Debug
 	 * Color: Yellow (ANSI: \033[0;33m)
-	 *
-	 * USAGE: Now supports custom types like DOUBLE directly!
-	 *   LOG_DEBUG("Calculated value: %.6f", 3.141592_embed);
 	 */
 	template <TCHAR TChar, typename... Args>
-	static VOID Debug(const TChar *format, Args... args);
+	static VOID Debug(const TChar *format, Args... args)
+	{
+		if constexpr (sizeof...(Args) == 0)
+			TimestampedLogOutput(L"\033[0;33m[DBG] "_embed, format, nullptr, 0);
+		else
+		{
+			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
+			TimestampedLogOutput(L"\033[0;33m[DBG] "_embed, format, argArray, sizeof...(Args));
+		}
+	}
 };
-
-// ============================================================================
-// TEMPLATE IMPLEMENTATIONS
-// ============================================================================
-
-/**
- * Info - Informational logging (implementation)
- *
- * Compile-time optimization:
- *   - If LogLevel == None, entire function body is eliminated
- *   - No runtime overhead when logging is disabled
- *   - Type-safe variadic templates (no VA_LIST)
- */
-template <TCHAR TChar, typename... Args>
-VOID Logger::Info(const TChar *format, Args... args)
-{
-	TimestampedLogOutput<TChar>(L"\033[0;32m[INF] "_embed, format, args...);
-}
-
-/**
- * Error - Error logging (implementation)
- *
- * Enabled for Default and Debug log levels.
- * Uses red color to highlight critical issues.
- * Type-safe variadic templates (no VA_LIST).
- */
-template <TCHAR TChar, typename... Args>
-VOID Logger::Error(const TChar *format, Args... args)
-{
-	TimestampedLogOutput<TChar>(L"\033[0;31m[ERR] "_embed, format, args...);
-}
-
-/**
- * Warning - Warning logging (implementation)
- *
- * Enabled for Default and Debug log levels.
- * Uses yellow color for non-critical warnings.
- * Type-safe variadic templates (no VA_LIST).
- */
-template <TCHAR TChar, typename... Args>
-VOID Logger::Warning(const TChar *format, Args... args)
-{
-	TimestampedLogOutput<TChar>(L"\033[0;33m[WRN] "_embed, format, args...);
-}
-
-/**
- * Debug - Debug logging (implementation)
- *
- * Only enabled when LogLevel == Debug.
- * Compile-time check eliminates debug code in production builds.
- * Type-safe variadic templates (no VA_LIST).
- */
-template <TCHAR TChar, typename... Args>
-VOID Logger::Debug(const TChar *format, Args... args)
-{
-	TimestampedLogOutput<TChar>(L"\033[0;33m[DBG] "_embed, format, args...);
-}

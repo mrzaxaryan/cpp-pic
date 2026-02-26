@@ -35,9 +35,11 @@ Random::Random()
 // Function to get a random number in the range of 0 to RANDOM_MAX
 INT32 Random::Get()
 {
-    // simple linear congruential generator
-    seed = (seed * GetHardwareTimestamp() + 214013ULL) & 0x7FFFFFFF;
-    return static_cast<INT32>(seed % MAX);
+    // xorshift64 (Marsaglia)
+    seed ^= seed << 13;
+    seed ^= seed >> 7;
+    seed ^= seed << 17;
+    return static_cast<INT32>(seed & 0x7FFFFFFF);
 }
 
 // Function to fill a buffer with random bytes
@@ -45,6 +47,6 @@ INT32 Random::GetArray(USIZE size, PUINT8 buffer)
 {
     // Fill the buffer with random bytes
     for (USIZE i = 0; i < size; ++i)
-        buffer[i] = (UINT8)(Random::Get() % 0xFF); // Get random byte
+        buffer[i] = (UINT8)(Random::Get() & 0xFF); // Get random byte
     return 1;                                      // Indicate success
 }

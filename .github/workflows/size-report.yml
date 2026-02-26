@@ -204,37 +204,23 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: macos-13
-            llvm_tarball: "LLVM-21.1.0-macOS-X64.tar.xz"
+            runner: macos-15-intel
           - arch: aarch64
             runner: macos-14
-            llvm_tarball: "LLVM-21.1.0-macOS-ARM64.tar.xz"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v4
-        with:
-          path: /opt/llvm
-          key: llvm-${{ env.LLVM_VERSION }}-macos-${{ matrix.arch }}
-
-      - name: Install LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
+      - name: Install LLVM and build tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          set -e
-          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${{ matrix.llvm_tarball }}"
-          wget -q "$URL"
-          sudo mkdir -p /opt/llvm
-          sudo tar xf "${{ matrix.llvm_tarball }}" -C /opt/llvm --strip-components=1
-          rm "${{ matrix.llvm_tarball }}"
-
-      - name: Install build tools
-        run: brew install ninja cmake
-
-      - name: Add LLVM to PATH
-        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+          for i in 1 2 3; do
+            brew install llvm ninja cmake && break
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
       - name: Build with -Oz
         run: |
@@ -319,6 +305,7 @@ jobs:
             build/**/output.bin
 
   update-readme:
+    if: always()
     needs: [build-windows, build-windows-aarch64, build-linux, build-macos, build-uefi]
     runs-on: ubuntu-22.04
     permissions:
@@ -440,33 +427,35 @@ jobs:
 
           # Generate SVG chart
           if len(entries) < 2:
-              Path("size_chart.svg").write_text('''<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400">
-                <rect width="800" height="400" fill="#0d1117"/>
-                <text x="400" y="200" fill="#8b949e" text-anchor="middle" font-family="monospace">Collecting data... (need 2+ builds)</text>
+              Path("size_chart.svg").write_text('''<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520">
+                <rect width="960" height="520" fill="#0d1117"/>
+                <text x="480" y="260" fill="#8b949e" text-anchor="middle" font-family="monospace">Collecting data... (need 2+ builds)</text>
               </svg>''')
           else:
-              width, height = 800, 400
-              margin = {"top": 40, "right": 150, "bottom": 60, "left": 70}
+              width, height = 960, 520
+              margin = {"top": 45, "right": 210, "bottom": 65, "left": 80}
               chart_w = width - margin["left"] - margin["right"]
               chart_h = height - margin["top"] - margin["bottom"]
 
+              # (key, color, label, dash_pattern)
+              # Dash patterns by arch: solid=x86_64, short-dash=i386, dot=armv7a, long-dash=aarch64
               platforms = [
-                  ("windows_i386_bin", "#58a6ff", "Win i386"),
-                  ("windows_x86_64_bin", "#1f6feb", "Win x64"),
-                  ("windows_aarch64_bin", "#388bfd", "Win ARM64"),
-                  ("linux_i386_bin", "#3fb950", "Linux i386"),
-                  ("linux_x86_64_bin", "#238636", "Linux x64"),
-                  ("linux_armv7a_bin", "#2ea043", "Linux ARM"),
-                  ("linux_aarch64_bin", "#56d364", "Linux ARM64"),
-                  ("macos_x86_64_bin", "#bc8cff", "macOS x64"),
-                  ("macos_aarch64_bin", "#d2a8ff", "macOS ARM64"),
-                  ("uefi_x86_64_bin", "#f78166", "UEFI x64"),
-                  ("uefi_aarch64_bin", "#ffa657", "UEFI ARM64"),
+                  ("windows_i386_bin",    "#58a6ff", "Win i386",     "4,3"),
+                  ("windows_x86_64_bin",  "#1f6feb", "Win x64",      ""),
+                  ("windows_aarch64_bin", "#388bfd", "Win ARM64",    "8,4"),
+                  ("linux_i386_bin",      "#3fb950", "Linux i386",   "4,3"),
+                  ("linux_x86_64_bin",    "#238636", "Linux x64",    ""),
+                  ("linux_armv7a_bin",    "#2ea043", "Linux ARMv7",  "2,2"),
+                  ("linux_aarch64_bin",   "#56d364", "Linux ARM64",  "8,4"),
+                  ("macos_x86_64_bin",    "#bc8cff", "macOS x64",    ""),
+                  ("macos_aarch64_bin",   "#d2a8ff", "macOS ARM64",  "8,4"),
+                  ("uefi_x86_64_bin",     "#f78166", "UEFI x64",     ""),
+                  ("uefi_aarch64_bin",    "#ffa657", "UEFI ARM64",   "8,4"),
               ]
 
               all_sizes = []
               for e in entries:
-                  for key, _, _ in platforms:
+                  for key, _, _, _ in platforms:
                       if key in e["sizes"]:
                           all_sizes.append(e["sizes"][key])
 
@@ -488,96 +477,99 @@ jobs:
                   f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">',
                   '<defs>',
                   '<style>',
-                  '.axis-text { fill: #8b949e; font-family: monospace; font-size: 11px; }',
-                  '.title { fill: #c9d1d9; font-family: monospace; font-size: 14px; font-weight: bold; }',
-                  '.legend { fill: #8b949e; font-family: monospace; font-size: 10px; }',
-                  '.grid { stroke: #21262d; stroke-width: 1; }',
+                  '.ax { fill: #8b949e; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, monospace; font-size: 11px; }',
+                  '.tt { fill: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, monospace; font-size: 16px; font-weight: 600; }',
+                  '.lb { font-family: monospace; font-size: 11px; }',
+                  '.gd { stroke: #21262d; stroke-width: 1; }',
+                  '.gm { stroke: #161b22; stroke-width: 1; }',
+                  '.al { stroke: #30363d; stroke-width: 1.5; }',
                   '</style>',
                   '</defs>',
                   f'<rect width="{width}" height="{height}" fill="#0d1117"/>',
-                  f'<text x="{width/2}" y="25" class="title" text-anchor="middle">Binary Size Trend (.bin)</text>',
+                  f'<text x="{margin["left"]}" y="28" class="tt">Binary Size Trend (.bin)</text>',
               ]
 
-              num_ticks = 5
+              # Y-axis grid (8 ticks for finer granularity)
+              num_ticks = 8
               for i in range(num_ticks + 1):
                   y = margin["top"] + (i / num_ticks) * chart_h
                   val = max_size - (i / num_ticks) * (max_size - min_size)
-                  svg_parts.append(f'<line x1="{margin["left"]}" y1="{y}" x2="{margin["left"] + chart_w}" y2="{y}" class="grid"/>')
-                  svg_parts.append(f'<text x="{margin["left"] - 10}" y="{y + 4}" class="axis-text" text-anchor="end">{val/1024:.0f}KB</text>')
+                  svg_parts.append(f'<line x1="{margin["left"]}" y1="{y}" x2="{margin["left"] + chart_w}" y2="{y}" class="gd"/>')
+                  svg_parts.append(f'<text x="{margin["left"] - 10}" y="{y + 4}" class="ax" text-anchor="end">{val/1024:.1f} KB</text>')
 
-              step = max(1, len(entries) // 6)
-              for i in range(0, len(entries), step):
+              # X-axis date labels with subtle vertical grid
+              date_step = max(1, len(entries) // 8)
+              shown_dates = set()
+              for i in range(0, len(entries), date_step):
                   x = scale_x(i)
-                  svg_parts.append(f'<text x="{x}" y="{height - margin["bottom"] + 20}" class="axis-text" text-anchor="middle">{entries[i]["date"][5:]}</text>')
+                  svg_parts.append(f'<line x1="{x}" y1="{margin["top"]}" x2="{x}" y2="{margin["top"] + chart_h}" class="gm"/>')
+                  svg_parts.append(f'<text x="{x}" y="{margin["top"] + chart_h + 20}" class="ax" text-anchor="middle">{entries[i]["date"][5:]}</text>')
+                  shown_dates.add(i)
+              # Always show the last date
+              last_i = len(entries) - 1
+              if last_i not in shown_dates and len(entries) > 1:
+                  x = scale_x(last_i)
+                  svg_parts.append(f'<text x="{x}" y="{margin["top"] + chart_h + 20}" class="ax" text-anchor="middle">{entries[last_i]["date"][5:]}</text>')
 
-              # Collect all label positions first for collision detection
-              all_labels = []  # [(x, y, text, color), ...]
+              # Axis border lines
+              svg_parts.append(f'<line x1="{margin["left"]}" y1="{margin["top"]}" x2="{margin["left"]}" y2="{margin["top"] + chart_h}" class="al"/>')
+              svg_parts.append(f'<line x1="{margin["left"]}" y1="{margin["top"] + chart_h}" x2="{margin["left"] + chart_w}" y2="{margin["top"] + chart_h}" class="al"/>')
 
-              for key, color, label in platforms:
+              # Draw lines and collect endpoint labels
+              endpoints = []  # [(raw_y, size_bytes, label, color, line_end_x)]
+
+              for key, color, label, dash in platforms:
                   points = []
-                  sizes_at_points = []
+                  sizes_at = []
                   for i, e in enumerate(entries):
                       if key in e["sizes"]:
                           points.append((scale_x(i), scale_y(e["sizes"][key])))
-                          sizes_at_points.append(e["sizes"][key])
+                          sizes_at.append(e["sizes"][key])
 
                   if len(points) >= 2:
                       path_d = f'M {points[0][0]:.1f} {points[0][1]:.1f}'
                       for x, y in points[1:]:
                           path_d += f' L {x:.1f} {y:.1f}'
-                      svg_parts.append(f'<path d="{path_d}" fill="none" stroke="{color}" stroke-width="2" opacity="0.8"/>')
+                      dash_attr = f' stroke-dasharray="{dash}"' if dash else ''
+                      svg_parts.append(f'<path d="{path_d}" fill="none" stroke="{color}" stroke-width="2" opacity="0.85"{dash_attr}/>')
 
-                      # Add circles at regular intervals (exclude last point, handled separately)
-                      label_step = max(1, len(points) // 5)  # Show ~5 labels per line
-                      last_idx = len(points) - 1
-                      for idx in range(0, len(points), label_step):
-                          if idx == last_idx:
-                              continue  # Skip last point here, add it below with larger circle
-                          px, py = points[idx]
-                          size_val = sizes_at_points[idx]
-                          size_label = f"{size_val/1024:.1f}KB"
-                          svg_parts.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3" fill="{color}"/>')
-                          all_labels.append((px, py - 8, size_label, color))
-
-                      # Always show the last point with larger circle
+                      # Endpoint dot
                       last_x, last_y = points[-1]
-                      last_size = sizes_at_points[-1]
-                      size_label = f"{last_size/1024:.1f}KB"
-                      svg_parts.append(f'<circle cx="{last_x:.1f}" cy="{last_y:.1f}" r="4" fill="{color}"/>')
-                      all_labels.append((last_x, last_y - 8, size_label, color))
+                      svg_parts.append(f'<circle cx="{last_x:.1f}" cy="{last_y:.1f}" r="3.5" fill="{color}"/>')
+                      endpoints.append((last_y, sizes_at[-1], label, color, last_x))
 
-              # Sort labels by x position, then y position for consistent ordering
-              all_labels.sort(key=lambda l: (l[0], l[1]))
+              # Resolve endpoint label collisions (labels in right margin)
+              endpoints.sort(key=lambda e: e[0])
+              min_spacing = 15
+              label_x = margin["left"] + chart_w + 10
 
-              # Resolve label collisions with iterative adjustment
-              min_label_spacing = 18  # Minimum vertical spacing between labels
-              label_width = 45        # Approximate width of label text
-              placed_labels = []      # [(x, y, text, color), ...]
+              # Pass 1: greedy top-to-bottom with minimum spacing
+              placed = []
+              for raw_y, size_bytes, label, color, line_x in endpoints:
+                  final_y = raw_y
+                  for py in placed:
+                      if final_y - py < min_spacing:
+                          final_y = py + min_spacing
+                  placed.append(final_y)
 
-              for lx, ly, text, color in all_labels:
-                  final_y = ly
-                  # Iteratively resolve collisions (max 20 iterations to prevent infinite loops)
-                  for _ in range(20):
-                      collision = False
-                      for px, py, _, _ in placed_labels:
-                          # Check if labels overlap (similar x position and y too close)
-                          if abs(lx - px) < label_width and abs(final_y - py) < min_label_spacing:
-                              collision = True
-                              # Move label away from collision
-                              if final_y >= py:
-                                  final_y = py + min_label_spacing
-                              else:
-                                  final_y = py - min_label_spacing
-                      if not collision:
-                          break
-                  placed_labels.append((lx, final_y, text, color))
-                  svg_parts.append(f'<text x="{lx:.1f}" y="{final_y:.1f}" fill="{color}" font-family="monospace" font-size="8px" text-anchor="middle">{text}</text>')
+              # Pass 2: if labels overflow the chart bottom, shift everything up
+              chart_bottom = margin["top"] + chart_h
+              chart_top = margin["top"]
+              if placed and placed[-1] > chart_bottom:
+                  overflow = placed[-1] - chart_bottom
+                  placed = [y - overflow for y in placed]
+              # Clamp to chart top
+              if placed and placed[0] < chart_top:
+                  shift = chart_top - placed[0]
+                  placed = [y + shift for y in placed]
 
-              legend_x = width - margin["right"] + 15
-              for i, (key, color, label) in enumerate(platforms):
-                  y = margin["top"] + 10 + i * 18
-                  svg_parts.append(f'<rect x="{legend_x}" y="{y - 6}" width="12" height="12" fill="{color}"/>')
-                  svg_parts.append(f'<text x="{legend_x + 18}" y="{y + 4}" class="legend">{label}</text>')
+              # Draw leader lines and labels
+              for i, (raw_y, size_bytes, label, color, line_x) in enumerate(endpoints):
+                  final_y = placed[i]
+                  size_kb = f"{size_bytes/1024:.1f}"
+                  # Leader line from endpoint to label
+                  svg_parts.append(f'<line x1="{line_x + 4:.1f}" y1="{raw_y:.1f}" x2="{label_x - 3:.1f}" y2="{final_y:.1f}" stroke="{color}" stroke-width="0.8" opacity="0.35"/>')
+                  svg_parts.append(f'<text x="{label_x}" y="{final_y + 4:.1f}" class="lb" fill="{color}">{label}  {size_kb} KB</text>')
 
               svg_parts.append('</svg>')
               Path("size_chart.svg").write_text('\n'.join(svg_parts))

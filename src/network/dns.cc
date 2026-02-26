@@ -326,17 +326,17 @@ FORCE_INLINE static UINT16 ReadU16BE(const UINT8 *p, INT32 index)
     return (UINT32)(sizeof(DNS_REQUEST_HEADER) + nameLen + sizeof(DNS_REQUEST_QUESTION));
 }
 
-Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
+Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
 {
     IPAddress localhostResult;
     if (IsLocalhost(host, localhostResult, dnstype))
-        return Result<IPAddress, DnsError>::Ok(localhostResult);
+        return Result<IPAddress, Error>::Ok(localhostResult);
 
     TLSClient tlsClient(DNSServerName, DNSServerIp, 443);
     if (!tlsClient.Open())
     {
         LOG_WARNING("Failed to connect to DNS server");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_CONNECT_FAILED);
+        return Result<IPAddress, Error>::Err(Error::Dns_ConnectFailed);
     }
 
     UINT8 queryBuffer[256];
@@ -344,7 +344,7 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
     if (querySize == 0)
     {
         LOG_WARNING("Failed to generate DNS query");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_QUERY_FAILED);
+        return Result<IPAddress, Error>::Err(Error::Dns_QueryFailed);
     }
 
     auto writeStr = [&tlsClient](PCCHAR s) -> BOOL
@@ -364,28 +364,28 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
         !writeStr("\r\n\r\n"_embed))
     {
         LOG_WARNING("Failed to send DNS query");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_SEND_FAILED);
+        return Result<IPAddress, Error>::Err(Error::Dns_SendFailed);
     }
 
     auto writeBody = tlsClient.Write(queryBuffer, querySize);
     if (!writeBody || writeBody.Value() != querySize)
     {
         LOG_WARNING("Failed to send DNS query");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_SEND_FAILED);
+        return Result<IPAddress, Error>::Err(Error::Dns_SendFailed);
     }
 
-    INT64 contentLength = -1;
-
-    if (!HttpClient::ReadResponseHeaders(tlsClient, 200, contentLength))
+    auto headerResult = HttpClient::ReadResponseHeaders(tlsClient, 200);
+    if (!headerResult)
     {
         LOG_WARNING("DNS server returned non-200 response");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_RESPONSE_FAILED);
+        return Result<IPAddress, Error>::Err(headerResult, Error::Dns_ResponseFailed);
     }
+    INT64 contentLength = headerResult.Value();
 
     if (contentLength <= 0 || contentLength > 512)
     {
         LOG_WARNING("Invalid or missing Content-Length header");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_RESPONSE_FAILED);
+        return Result<IPAddress, Error>::Err(Error::Dns_ResponseFailed);
     }
 
     CHAR binaryResponse[512];
@@ -396,7 +396,7 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
         if (!readResult || readResult.Value() <= 0)
         {
             LOG_WARNING("Failed to read DNS binary response");
-            return Result<IPAddress, DnsError>::Err(DNS_ERROR_RESPONSE_FAILED);
+            return Result<IPAddress, Error>::Err(Error::Dns_ResponseFailed);
         }
         totalRead += (UINT32)readResult.Value();
     }
@@ -405,27 +405,27 @@ Result<IPAddress, DnsError> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &D
     if (!ParseDnsResponse((const UINT8 *)binaryResponse, (INT32)contentLength, ipAddress))
     {
         LOG_WARNING("Failed to parse DNS response");
-        return Result<IPAddress, DnsError>::Err(DNS_ERROR_PARSE_FAILED);
+        return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
     }
 
-    return Result<IPAddress, DnsError>::Ok(ipAddress);
+    return Result<IPAddress, Error>::Ok(ipAddress);
 }
 
-Result<IPAddress, DnsError> DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
+Result<IPAddress, Error> DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
 {
     auto serverName = "one.one.one.one"_embed;
     IPAddress ips[] = {IPAddress::FromIPv4(0x01010101), IPAddress::FromIPv4(0x01000001)};
     return ResolveWithFallback(host, ips, (PCCHAR)serverName, dnstype);
 }
 
-Result<IPAddress, DnsError> DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
+Result<IPAddress, Error> DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
 {
     auto serverName = "dns.google"_embed;
-    IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x04040808)};
+    IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x08080404)};
     return ResolveWithFallback(host, ips, (PCCHAR)serverName, dnstype);
 }
 
-Result<IPAddress, DnsError> DNS::Resolve(PCCHAR host, RequestType dnstype)
+Result<IPAddress, Error> DNS::Resolve(PCCHAR host, RequestType dnstype)
 {
     LOG_DEBUG("Resolve(host: %s) called", host);
 

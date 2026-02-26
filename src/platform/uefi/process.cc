@@ -7,38 +7,38 @@
 #include "process.h"
 
 // UEFI doesn't have fork
-SSIZE Process::Fork() noexcept
+Result<SSIZE, Error> Process::Fork() noexcept
 {
-    return PROCESS_INVALID_PID;
+	return Result<SSIZE, Error>::Err(Error::Process_ForkFailed);
 }
 
 // UEFI doesn't have dup2
-SSIZE Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
+Result<SSIZE, Error> Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
 {
-    (void)oldfd;
-    (void)newfd;
-    return PROCESS_INVALID_PID;
+	(void)oldfd;
+	(void)newfd;
+	return Result<SSIZE, Error>::Err(Error::Process_Dup2Failed);
 }
 
 // UEFI doesn't have execve
-SSIZE Process::Execve(const CHAR* pathname, CHAR* const argv[], CHAR* const envp[]) noexcept
+Result<SSIZE, Error> Process::Execve(const CHAR* pathname, CHAR* const argv[], CHAR* const envp[]) noexcept
 {
-    (void)pathname;
-    (void)argv;
-    (void)envp;
-    return PROCESS_INVALID_PID;
+	(void)pathname;
+	(void)argv;
+	(void)envp;
+	return Result<SSIZE, Error>::Err(Error::Process_ExecveFailed);
 }
 
 // UEFI doesn't have setsid
-SSIZE Process::Setsid() noexcept
+Result<SSIZE, Error> Process::Setsid() noexcept
 {
-    return PROCESS_INVALID_PID;
+	return Result<SSIZE, Error>::Err(Error::Process_SetsidFailed);
 }
 
 // UEFI doesn't support process creation
-SSIZE Process::BindSocketToShell(SSIZE socketFd, const CHAR* cmd) noexcept
+Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR* cmd) noexcept
 {
-    (void)socketFd;
-    (void)cmd;
-    return PROCESS_INVALID_PID;
+	(void)socketFd;
+	(void)cmd;
+	return Result<SSIZE, Error>::Err(Error::Process_BindShellFailed);
 }

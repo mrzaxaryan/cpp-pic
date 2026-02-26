@@ -22,6 +22,8 @@
 #pragma once
 
 #include "primitives.h"
+#include "error.h"
+#include "result.h"
 
 /**
  * @enum IPVersion
@@ -181,9 +183,9 @@ public:
      * @brief Convert to string representation
      * @param buffer Output buffer
      * @param bufferSize Size of output buffer
-     * @return true on success, false if buffer too small
+     * @return Result<void, Error> - Ok on success, Err(IpAddress_ToStringFailed) if buffer too small or invalid
      */
-    BOOL ToString(PCHAR buffer, UINT32 bufferSize) const;
+    [[nodiscard]] Result<void, Error> ToString(PCHAR buffer, UINT32 bufferSize) const;
 
     /// @}
     /// @name Operators

@@ -77,8 +77,8 @@ private:
 	TLSClient tlsContext;
 	BOOL isConnected;
 
-	[[nodiscard]] BOOL ReceiveRestrict(PVOID buffer, UINT32 size);
-	[[nodiscard]] BOOL ReceiveFrame(WebSocketFrame &frame);
+	[[nodiscard]] Result<void, Error> ReceiveRestrict(PVOID buffer, UINT32 size);
+	[[nodiscard]] Result<void, Error> ReceiveFrame(WebSocketFrame &frame);
 	static VOID MaskFrame(WebSocketFrame &frame, UINT32 maskKey);
 
 public:

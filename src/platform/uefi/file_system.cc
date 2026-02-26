@@ -166,21 +166,23 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
 	return File((PVOID)FileHandle);
 }
 
-BOOL FileSystem::Delete(PCWCHAR path)
+Result<void, Error> FileSystem::Delete(PCWCHAR path)
 {
 	EFI_FILE_PROTOCOL *Root = GetRootDirectory();
 	if (Root == nullptr)
-		return false;
+		return Result<void, Error>::Err(Error::Fs_DeleteFailed);
 
 	EFI_FILE_PROTOCOL *FileHandle = OpenFileFromRoot(Root, path, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
 	Root->Close(Root);
 
 	if (FileHandle == nullptr)
-		return false;
+		return Result<void, Error>::Err(Error::Fs_DeleteFailed);
 
 	// EFI_FILE_PROTOCOL.Delete closes the handle and deletes the file
 	EFI_STATUS Status = FileHandle->Delete(FileHandle);
-	return !EFI_ERROR_CHECK(Status);
+	if (EFI_ERROR_CHECK(Status))
+		return Result<void, Error>::Err(Error::Uefi((UINT32)Status), Error::Fs_DeleteFailed);
+	return Result<void, Error>::Ok();
 }
 
 BOOL FileSystem::Exists(PCWCHAR path)
@@ -199,18 +201,18 @@ BOOL FileSystem::Exists(PCWCHAR path)
 	return true;
 }
 
-BOOL FileSystem::CreateDirectory(PCWCHAR path)
+Result<void, Error> FileSystem::CreateDirectory(PCWCHAR path)
 {
 	EFI_FILE_PROTOCOL *Root = GetRootDirectory();
 	if (Root == nullptr)
-		return false;
+		return Result<void, Error>::Err(Error::Fs_CreateDirFailed);
 
 	// Normalize path separators (convert '/' to '\' for UEFI)
 	PWCHAR normalizedPath = Path::NormalizePath(path);
 	if (normalizedPath == nullptr)
 	{
 		Root->Close(Root);
-		return false;
+		return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_CreateDirFailed);
 	}
 
 	EFI_FILE_PROTOCOL *DirHandle = nullptr;
@@ -222,27 +224,29 @@ BOOL FileSystem::CreateDirectory(PCWCHAR path)
 	Root->Close(Root);
 
 	if (EFI_ERROR_CHECK(Status) || DirHandle == nullptr)
-		return false;
+		return Result<void, Error>::Err(Error::Uefi((UINT32)Status), Error::Fs_CreateDirFailed);
 
 	DirHandle->Close(DirHandle);
-	return true;
+	return Result<void, Error>::Ok();
 }
 
-BOOL FileSystem::DeleteDirectory(PCWCHAR path)
+Result<void, Error> FileSystem::DeleteDirectory(PCWCHAR path)
 {
 	EFI_FILE_PROTOCOL *Root = GetRootDirectory();
 	if (Root == nullptr)
-		return false;
+		return Result<void, Error>::Err(Error::Fs_DeleteDirFailed);
 
 	EFI_FILE_PROTOCOL *DirHandle = OpenFileFromRoot(Root, path, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
 	Root->Close(Root);
 
 	if (DirHandle == nullptr)
-		return false;
+		return Result<void, Error>::Err(Error::Fs_DeleteDirFailed);
 
 	// EFI_FILE_PROTOCOL.Delete works for both files and directories
 	EFI_STATUS Status = DirHandle->Delete(DirHandle);
-	return !EFI_ERROR_CHECK(Status);
+	if (EFI_ERROR_CHECK(Status))
+		return Result<void, Error>::Err(Error::Uefi((UINT32)Status), Error::Fs_DeleteDirFailed);
+	return Result<void, Error>::Ok();
 }
 
 // =============================================================================
@@ -308,32 +312,32 @@ VOID File::Close()
 	fileSize = 0;
 }
 
-UINT32 File::Read(PVOID buffer, UINT32 size)
+Result<UINT32, Error> File::Read(PVOID buffer, UINT32 size)
 {
 	if (fileHandle == nullptr || buffer == nullptr || size == 0)
-		return 0;
+		return Result<UINT32, Error>::Err(Error::Fs_ReadFailed);
 
 	EFI_FILE_PROTOCOL *fp = (EFI_FILE_PROTOCOL *)fileHandle;
 	USIZE readSize = size;
 
 	EFI_STATUS Status = fp->Read(fp, &readSize, buffer);
 	if (EFI_ERROR_CHECK(Status))
-		return 0;
+		return Result<UINT32, Error>::Err(Error::Uefi((UINT32)Status), Error::Fs_ReadFailed);
 
-	return (UINT32)readSize;
+	return Result<UINT32, Error>::Ok((UINT32)readSize);
 }
 
-UINT32 File::Write(const VOID *buffer, USIZE size)
+Result<UINT32, Error> File::Write(const VOID *buffer, USIZE size)
 {
 	if (fileHandle == nullptr || buffer == nullptr || size == 0)
-		return 0;
+		return Result<UINT32, Error>::Err(Error::Fs_WriteFailed);
 
 	EFI_FILE_PROTOCOL *fp = (EFI_FILE_PROTOCOL *)fileHandle;
 	USIZE writeSize = size;
 
 	EFI_STATUS Status = fp->Write(fp, &writeSize, (PVOID)buffer);
 	if (EFI_ERROR_CHECK(Status))
-		return 0;
+		return Result<UINT32, Error>::Err(Error::Uefi((UINT32)Status), Error::Fs_WriteFailed);
 
 	// Update file size if we wrote past the end
 	UINT64 pos = 0;
@@ -341,7 +345,7 @@ UINT32 File::Write(const VOID *buffer, USIZE size)
 	if (pos > fileSize)
 		fileSize = pos;
 
-	return (UINT32)writeSize;
+	return Result<UINT32, Error>::Ok((UINT32)writeSize);
 }
 
 USIZE File::GetOffset() const

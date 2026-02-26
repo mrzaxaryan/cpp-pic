@@ -3,6 +3,8 @@
 #include "primitives.h"
 #include "windows_types.h"
 #include "djb2.h"
+#include "error.h"
+#include "result.h"
 
 #define HANDLE_FLAG_INHERIT 0x00000001
 #define STARTF_USESTDHANDLES 0x00000100
@@ -47,9 +49,11 @@ class Kernel32
 private:
 public:
     // Creates a new process and its primary thread.
+    // Returns Ok() on success, Err(Error{Kernel32_CreateProcessFailed}) on failure.
     // Minimum supported client Windows Xp [desktop apps | UWP apps]
-    static BOOL CreateProcessW(PWCHAR lpApplicationName, PWCHAR lpCommandLine, PVOID lpProcessAttributes, PVOID lpThreadAttributes, BOOL bInheritHandles, UINT32 dwCreationFlags, PVOID lpEnvironment, PWCHAR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+    [[nodiscard]] static Result<void, Error> CreateProcessW(PWCHAR lpApplicationName, PWCHAR lpCommandLine, PVOID lpProcessAttributes, PVOID lpThreadAttributes, BOOL bInheritHandles, UINT32 dwCreationFlags, PVOID lpEnvironment, PWCHAR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
     // Sets certain properties of an object handle.
+    // Returns Ok() on success, Err(Error{Kernel32_SetHandleInfoFailed}) on failure.
     // Minimum supported client Windows 2000 Professional [desktop apps only]
-    static BOOL SetHandleInformation(PVOID hObject, UINT32 dwMask, UINT32 dwFlags);
+    [[nodiscard]] static Result<void, Error> SetHandleInformation(PVOID hObject, UINT32 dwMask, UINT32 dwFlags);
 };

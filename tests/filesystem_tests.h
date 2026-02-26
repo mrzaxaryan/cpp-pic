@@ -176,8 +176,8 @@ private:
 				return false;
 
 			auto testData = "Hello, File System!"_embed;
-			UINT32 bytesWritten = file.Write((const CHAR *)testData, 20);
-			if (bytesWritten != 20)
+			auto writeResult = file.Write((const CHAR *)testData, 20);
+			if (!writeResult || writeResult.Value() != 20)
 				return false;
 
 			file.Close();
@@ -189,8 +189,8 @@ private:
 
 			CHAR buffer[32];
 			Memory::Zero(buffer, 32);
-			UINT32 bytesRead = file.Read(buffer, 20);
-			if (bytesRead != 20)
+			auto readResult = file.Read(buffer, 20);
+			if (!readResult || readResult.Value() != 20)
 				return false;
 
 			// Verify content
@@ -216,8 +216,8 @@ private:
 				binaryData[i] = (UINT8)i;
 			}
 
-			UINT32 bytesWritten = file.Write(binaryData, 256);
-			if (bytesWritten != 256)
+			auto writeResult = file.Write(binaryData, 256);
+			if (!writeResult || writeResult.Value() != 256)
 				return false;
 
 			file.Close();
@@ -229,8 +229,8 @@ private:
 
 			UINT8 readBuffer[256];
 			Memory::Zero(readBuffer, 256);
-			UINT32 bytesRead = file.Read(readBuffer, 256);
-			if (bytesRead != 256)
+			auto readResult = file.Read(readBuffer, 256);
+			if (!readResult || readResult.Value() != 256)
 				return false;
 
 			// Verify content
@@ -251,7 +251,9 @@ private:
 				return false;
 
 			auto data = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"_embed;
-			file.Write((const CHAR *)data, 26);
+			auto writeResult = file.Write((const CHAR *)data, 26);
+			if (!writeResult)
+				return false;
 
 			// Test SetOffset
 			file.SetOffset(10);

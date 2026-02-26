@@ -24,10 +24,10 @@
  * @param description  - Human-readable description of the test (wide embedded string)
  * @return true if test passed, false otherwise
  */
+#if defined(ENABLE_LOGGING)
 template <typename TestFunc>
 inline BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc, PCWCHAR description)
 {
-	(VOID) description; // Suppress unused parameter warning if logging is disabled
 	if (!testFunc())
 	{
 		allPassedVar = false;
@@ -37,6 +37,20 @@ inline BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc, PCWCHAR description)
 	LOG_INFO("  PASSED: %ls", description);
 	return true;
 }
+#else
+template <typename TestFunc>
+inline BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc)
+{
+	if (!testFunc())
+	{
+		allPassedVar = false;
+		return false;
+	}
+	return true;
+}
+// Strip the description argument at the call site to prevent embedded string construction
+#define RunTest(allPassed, func, ...) RunTest(allPassed, func)
+#endif
 
 /**
  * RunTestSuite - Run a test suite's RunAll() method

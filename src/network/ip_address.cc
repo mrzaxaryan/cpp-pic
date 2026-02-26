@@ -325,69 +325,69 @@ const UINT8 *IPAddress::ToIPv6() const
 }
 
 // Convert IP address to string
-BOOL IPAddress::ToString(PCHAR buffer, UINT32 bufferSize) const
+Result<void, Error> IPAddress::ToString(PCHAR buffer, UINT32 bufferSize) const
 {
-    if (buffer == nullptr || bufferSize == 0)
-    {
-        return false;
-    }
+	if (buffer == nullptr || bufferSize == 0)
+	{
+		return Result<void, Error>::Err(Error::IpAddress_ToStringFailed);
+	}
 
-    if (version == IPVersion::IPv4)
-    {
-        // Convert IPv4 to string
-        if (bufferSize < 16) // Minimum size for "255.255.255.255\0"
-        {
-            return false;
-        }
+	if (version == IPVersion::IPv4)
+	{
+		// Convert IPv4 to string
+		if (bufferSize < 16) // Minimum size for "255.255.255.255\0"
+		{
+			return Result<void, Error>::Err(Error::IpAddress_ToStringFailed);
+		}
 
-        UINT8 octets[4];
-        Memory::Copy(octets, &address.ipv4, 4);
+		UINT8 octets[4];
+		Memory::Copy(octets, &address.ipv4, 4);
 
-        UINT32 offset = 0;
-        for (UINT32 i = 0; i < 4; i++)
-        {
-            if (i > 0)
-            {
-                buffer[offset++] = '.';
-            }
-            CHAR temp[4];
-            String::WriteDecimal(temp, octets[i]);
-            UINT32 len = String::Length(temp);
-            Memory::Copy(buffer + offset, temp, len);
-            offset += len;
-        }
-        buffer[offset] = '\0';
-        return true;
-    }
-    else if (version == IPVersion::IPv6)
-    {
-        // Convert IPv6 to string (simplified format)
-        if (bufferSize < 40) // Minimum size for full IPv6 address
-        {
-            return false;
-        }
+		UINT32 offset = 0;
+		for (UINT32 i = 0; i < 4; i++)
+		{
+			if (i > 0)
+			{
+				buffer[offset++] = '.';
+			}
+			CHAR temp[4];
+			String::WriteDecimal(temp, octets[i]);
+			UINT32 len = String::Length(temp);
+			Memory::Copy(buffer + offset, temp, len);
+			offset += len;
+		}
+		buffer[offset] = '\0';
+		return Result<void, Error>::Ok();
+	}
+	else if (version == IPVersion::IPv6)
+	{
+		// Convert IPv6 to string (simplified format)
+		if (bufferSize < 40) // Minimum size for full IPv6 address
+		{
+			return Result<void, Error>::Err(Error::IpAddress_ToStringFailed);
+		}
 
-        UINT32 offset = 0;
-        for (UINT32 i = 0; i < 8; i++)
-        {
-            if (i > 0)
-            {
-                buffer[offset++] = ':';
-            }
-            UINT16 group = ((UINT16)address.ipv6[i * 2] << 8) | address.ipv6[i * 2 + 1];
+		UINT32 offset = 0;
+		for (UINT32 i = 0; i < 8; i++)
+		{
+			if (i > 0)
+			{
+				buffer[offset++] = ':';
+			}
+			UINT16 group = ((UINT16)address.ipv6[i * 2] << 8) | address.ipv6[i * 2 + 1];
 
-            // Convert to hex
-            CHAR hexStr[5];
-            String::WriteHex(hexStr, group);
-            UINT32 hexLen = String::Length(hexStr);
-            Memory::Copy(buffer + offset, hexStr, hexLen);
-            offset += hexLen;
-        }
-        buffer[offset] = '\0';
-        return true;
-    }
+			// Convert to hex
+			CHAR hexStr[5];
+			String::WriteHex(hexStr, group);
+			UINT32 hexLen = String::Length(hexStr);
+			Memory::Copy(buffer + offset, hexStr, hexLen);
+			offset += hexLen;
+		}
+		buffer[offset] = '\0';
+		return Result<void, Error>::Ok();
+	}
 
-    return false;
+	return Result<void, Error>::Err(Error::IpAddress_ToStringFailed);
 }
 
 // Equality operator

@@ -102,9 +102,9 @@ class NTDLL
 {
 public:
     // This function converts a DOS path name to an NT path name.
-    // Returns true on success, false on failure.
+    // Returns Ok() on success, Err(Error{Ntdll_RtlPathResolveFailed}) on failure.
     // Minimum supported client Windows 2000 Professional [desktop apps only].
-    [[nodiscard]] static BOOL RtlDosPathNameToNtPathName_U(const WCHAR *DosName, UNICODE_STRING *NtName, WCHAR **FilePart, PRTL_RELATIVE_NAME_U RelativeName);
+    [[nodiscard]] static Result<void, Error> RtlDosPathNameToNtPathName_U(const WCHAR *DosName, UNICODE_STRING *NtName, WCHAR **FilePart, PRTL_RELATIVE_NAME_U RelativeName);
     // This function frees a Unicode string that was allocated.
     // Minimum supported client Windows 2000 Professional [desktop apps only].
     static VOID RtlFreeUnicodeString(PUNICODE_STRING UnicodeString);

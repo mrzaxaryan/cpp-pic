@@ -47,14 +47,14 @@
 #include "types/primitives.h"
 /// @}
 
-/// @name Result Type
-/// @{
-#include "types/result.h"
-/// @}
-
 /// @name Error Type
 /// @{
 #include "core/error.h"
+/// @}
+
+/// @name Result Type
+/// @{
+#include "types/result.h"
 /// @}
 
 /// @name Numeric Types

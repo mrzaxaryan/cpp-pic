@@ -122,13 +122,13 @@ public:
      * @param localIv IV for outgoing data (client_write_iv)
      * @param remoteIv IV for incoming data (server_write_iv)
      * @param keyLength Key length in bytes (must be 32 for ChaCha20)
-     * @return true on success, false on failure
+     * @return Result<void, Error>::Ok() on success, Result<void, Error>::Err() on failure
      *
      * @details Keys and IVs are derived from the TLS 1.3 key schedule.
      * For client: local = client_write, remote = server_write
      * For server: local = server_write, remote = client_write
      */
-    BOOL Initialize(PUCHAR localKey, PUCHAR remoteKey, const UCHAR (&localIv)[TLS_CHACHA20_IV_LENGTH], const UCHAR (&remoteIv)[TLS_CHACHA20_IV_LENGTH], INT32 keyLength);
+    [[nodiscard]] Result<void, Error> Initialize(PUCHAR localKey, PUCHAR remoteKey, const UCHAR (&localIv)[TLS_CHACHA20_IV_LENGTH], const UCHAR (&remoteIv)[TLS_CHACHA20_IV_LENGTH], INT32 keyLength);
 
     /**
      * @brief Encrypts and authenticates a TLS record
@@ -150,15 +150,15 @@ public:
      * @param out Output buffer for decrypted plaintext
      * @param aad Additional authenticated data (TLS record header)
      * @param aadSize Length of AAD in bytes
-     * @return true if decryption and authentication succeed, false otherwise
+     * @return Result<void, Error>::Ok() if decryption and authentication succeed, Error::ChaCha20_DecodeFailed otherwise
      *
      * @details Verifies Poly1305 tag over AAD and ciphertext, then decrypts
      * if authentication succeeds. Automatically increments the remote sequence number.
      *
-     * @warning Returns false if authentication fails - output buffer contents
+     * @warning Returns Err if authentication fails - output buffer contents
      * are undefined and MUST NOT be used.
      */
-    BOOL Decode(TlsBuffer &in, TlsBuffer &out, const UCHAR *aad, INT32 aadSize);
+    [[nodiscard]] Result<void, Error> Decode(TlsBuffer &in, TlsBuffer &out, const UCHAR *aad, INT32 aadSize);
 
     /**
      * @brief Computes output size for encoding or decoding

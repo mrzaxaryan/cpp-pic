@@ -22,28 +22,28 @@ public:
     ~HttpClient()
     {
         if (IsValid())
-            Close();
+            (void)Close();
     }
 
     HttpClient(const HttpClient &) = delete;
     HttpClient &operator=(const HttpClient &) = delete;
-    HttpClient(HttpClient &&) = default;
-    HttpClient &operator=(HttpClient &&) = default;
+    HttpClient(HttpClient &&) = delete;
+    HttpClient &operator=(HttpClient &&) = delete;
 
     BOOL IsValid() const { return tlsContext.IsValid(); }
     BOOL IsSecure() const { return tlsContext.IsSecure(); }
     // Operations with HttpClient
-    BOOL Open();
-    BOOL Close();
-    SSIZE Read(PVOID buffer, UINT32 bufferLength);
-    UINT32 Write(PCVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<void, Error> Open();
+    [[nodiscard]] Result<void, Error> Close();
+    [[nodiscard]] Result<SSIZE, Error> Read(PVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<UINT32, Error> Write(PCVOID buffer, UINT32 bufferLength);
 
-    BOOL SendGetRequest();
-    BOOL SendPostRequest(PCVOID data, UINT32 dataLength);
+    [[nodiscard]] Result<void, Error> SendGetRequest();
+    [[nodiscard]] Result<void, Error> SendPostRequest(PCVOID data, UINT32 dataLength);
     // Static method to parse a URL into its components (host, path, port, secure) and validate the format
-    static BOOL ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
+    [[nodiscard]] static Result<void, Error> ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
     // Read HTTP response headers using a rolling window (no buffer needed).
-    // Returns true if headers were read and status matches expectedStatus.
-    // contentLength is set to the Content-Length value or -1 if not present.
-    static BOOL ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus, INT64 &contentLength);
+    // Returns Ok(contentLength) if headers were read and status matches expectedStatus.
+    // contentLength is the Content-Length value or -1 if not present.
+    [[nodiscard]] static Result<INT64, Error> ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus);
 };

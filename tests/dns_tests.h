@@ -15,7 +15,7 @@ private:
 		auto result = DNS::CloudflareResolve("localhost"_embed, A);
 		if (!result)
 		{
-			LOG_ERROR("Localhost A resolution failed (error: %u)", result.Error());
+			LOG_ERROR("Localhost A resolution failed (error: %e)", result.Error());
 			return false;
 		}
 		IPAddress ip = result.Value();
@@ -30,7 +30,7 @@ private:
 		auto result6 = DNS::CloudflareResolve("localhost"_embed, AAAA);
 		if (!result6)
 		{
-			LOG_ERROR("Localhost AAAA resolution failed (error: %u)", result6.Error());
+			LOG_ERROR("Localhost AAAA resolution failed (error: %e)", result6.Error());
 			return false;
 		}
 		IPAddress ip6 = result6.Value();
@@ -56,7 +56,7 @@ private:
 		auto result = DNS::CloudflareResolve("dns.google"_embed, A);
 		if (!result)
 		{
-			LOG_ERROR("Cloudflare DNS resolution failed (error: %u)", result.Error());
+			LOG_ERROR("Cloudflare DNS resolution failed (error: %e)", result.Error());
 			return false;
 		}
 		IPAddress ip = result.Value();
@@ -82,7 +82,7 @@ private:
 		auto result = DNS::GoogleResolve("one.one.one.one"_embed, A);
 		if (!result)
 		{
-			LOG_ERROR("Google DNS resolution failed (error: %u)", result.Error());
+			LOG_ERROR("Google DNS resolution failed (error: %e)", result.Error());
 			return false;
 		}
 		IPAddress ip = result.Value();
@@ -108,7 +108,7 @@ private:
 		auto result = DNS::Resolve("example.com"_embed);
 		if (!result)
 		{
-			LOG_ERROR("Main DNS resolution failed (error: %u)", result.Error());
+			LOG_ERROR("Main DNS resolution failed (error: %e)", result.Error());
 			return false;
 		}
 
@@ -125,7 +125,7 @@ private:
 		auto result = DNS::Resolve("dns.google"_embed);
 		if (!result)
 		{
-			LOG_ERROR("DNS resolution for dns.google failed (error: %u)", result.Error());
+			LOG_ERROR("DNS resolution for dns.google failed (error: %e)", result.Error());
 			return false;
 		}
 

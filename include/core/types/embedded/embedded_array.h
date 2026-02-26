@@ -119,12 +119,18 @@ private:
      * @brief Gets a byte from the packed word storage
      * @param byteIndex Index of byte to get
      * @return Byte value
+     *
+     * @details The register barrier prevents the compiler from vectorizing
+     * the byte-unpacking loop, which would emit SIMD constants into
+     * __TEXT,__literal16 or __TEXT,__const sections at -O2/-O3/-Os.
      */
     UINT8 GetByte(USIZE byteIndex) const
     {
         const USIZE wi = byteIndex / WordBytes;
         const USIZE sh = (byteIndex % WordBytes) * 8u;
-        return (UINT8)((words[wi] >> sh) & (USIZE)0xFFu);
+        USIZE word = words[wi];
+        __asm__ volatile("" : "+r"(word));
+        return (UINT8)((word >> sh) & (USIZE)0xFFu);
     }
 
 public:
@@ -149,6 +155,16 @@ public:
                 SetByte(i * sizeof(TChar) + b, data);
             }
         }
+    }
+
+    /**
+     * @brief Destructor that prevents the compiler from reusing the stack
+     * storage after conversion to a raw pointer. The "+m" constraint tells
+     * the compiler the asm both reads and modifies the words array.
+     */
+    FORCE_INLINE ~EMBEDDED_ARRAY() noexcept
+    {
+        __asm__ volatile("" : "+m"(*(USIZE(*)[WordCount])words));
     }
 
     /**
@@ -177,7 +193,7 @@ public:
      * @brief Implicit conversion to const void pointer
      * @return Pointer to raw word storage
      */
-    constexpr operator const VOID *() const
+    operator const VOID *() const
     {
         return (const VOID *)words;
     }
@@ -186,7 +202,7 @@ public:
      * @brief Access raw word storage
      * @return Pointer to word array
      */
-    constexpr const USIZE *Words() const { return words; }
+    const USIZE *Words() const { return words; }
 
     static constexpr USIZE WordsCount = WordCount;  ///< Number of words in storage
 };

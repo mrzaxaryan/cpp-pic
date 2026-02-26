@@ -1,17 +1,20 @@
 #pragma once
 
 #include "primitives.h"
-#include "memory.h"
 
-// Unified error — all network/platform layers push codes onto a call-stack array.
-// Each layer appends its code after any codes pushed by lower layers.
-// Unique enum values across all layers identify which layer set each code.
+// Unified error code — identifies a single failure point.
+// Result<T, Error> stores a single Error directly (zero-cost, no chain overhead).
 struct Error
 {
-	enum Code : UINT32
+	// PIR runtime failure points — one unique value per failure site.
+	// OS error codes (NTSTATUS, errno, EFI_STATUS) are stored directly in
+	// Error.Code when Platform != Runtime; they are not listed here.
+	enum ErrorCodes : UINT32
 	{
+		None = 0, // no error / empty slot
+
 		// -------------------------
-		// Socket errors (1–15)
+		// Socket errors (1–15, 39)
 		// -------------------------
 		Socket_CreateFailed_Open = 1,		   // ZwCreateFile / socket() failed
 		Socket_BindFailed_EventCreate = 2,	   // ZwCreateEvent failed (Windows only)
@@ -28,6 +31,7 @@ struct Error
 		Socket_WriteFailed_EventCreate = 13,   // ZwCreateEvent failed (Windows only)
 		Socket_WriteFailed_Timeout = 14,	   // send timed out
 		Socket_WriteFailed_Send = 15,		   // AFD_SEND / send() syscall failed
+		Socket_WaitFailed = 39,				   // ZwWaitForSingleObject failed (Windows only)
 
 		// -------------------------
 		// TLS errors (16–22)
@@ -55,59 +59,112 @@ struct Error
 		Ws_FrameTooLarge = 32,	  // received frame exceeds size limit
 
 		// -------------------------
-		// Windows NTDLL operations (33–47)
-		// Pushed by the NTDLL layer automatically when a syscall fails.
-		// The Error arrives pre-packaged from NTDLL::Zw*; callers only push their own layer code on top.
+		// DNS errors (33–38)
 		// -------------------------
-		Ntdll_ZwCreateFile = 33,            // ZwCreateFile (socket object or file creation)
-		Ntdll_ZwCreateEvent = 34,           // ZwCreateEvent (async I/O event)
-		Ntdll_ZwDeviceIoControlFile = 35,   // ZwDeviceIoControlFile (AFD bind/connect/send/recv)
-		Ntdll_ZwWaitForSingleObject = 36,   // ZwWaitForSingleObject (async wait → timeout)
-		Ntdll_ZwClose = 37,                 // ZwClose (socket or event handle close)
+		Dns_ConnectFailed  = 33, // TLS connection to DNS server failed
+		Dns_QueryFailed    = 34, // DNS query generation failed
+		Dns_SendFailed     = 35, // failed to send DNS query
+		Dns_ResponseFailed = 36, // DNS server returned non-200 or bad content-length
+		Dns_ParseFailed    = 37, // failed to parse DNS binary response
+		Dns_ResolveFailed  = 38, // all DNS servers/fallbacks exhausted
 
 		// -------------------------
-		// POSIX syscalls – Linux / macOS (48–63)
-		// Pushed by the socket layer immediately before the Socket_* code
-		// to identify which syscall was invoked at the point of failure.
+		// HTTP errors (40–48)
 		// -------------------------
-		Syscall_Socket = 48,   // socket() – socket file descriptor creation
-		Syscall_Bind = 49,     // bind()
-		Syscall_Connect = 50,  // connect()
-		Syscall_Send = 51,     // send() / sendto()
-		Syscall_Recv = 52,     // recv() / recvfrom()
-		Syscall_Close = 53,    // close()
+		Http_OpenFailed             = 40, // TLS connection open failed
+		Http_CloseFailed            = 41, // TLS connection close failed
+		Http_ReadFailed             = 42, // TLS read failed
+		Http_WriteFailed            = 43, // TLS write failed
+		Http_SendGetFailed          = 44, // GET request write failed
+		Http_SendPostFailed         = 45, // POST request write failed
+		Http_ReadHeadersFailed_Read   = 46, // header read failed
+		Http_ReadHeadersFailed_Status = 47, // unexpected HTTP status code
+		Http_ParseUrlFailed         = 48, // URL format invalid
 
 		// -------------------------
-		// UEFI EFI Boot Services / TCP protocol (64–79)
-		// Pushed by the socket layer immediately before the Socket_* code
-		// to identify which EFI service or TCP operation failed.
+		// FileSystem errors (50–56)
 		// -------------------------
-		Efi_CreateEvent = 64,  // EFI_BOOT_SERVICES::CreateEvent
-		Efi_Transmit = 65,     // EFI_TCP4/6_PROTOCOL::Transmit
-		Efi_Receive = 66,      // EFI_TCP4/6_PROTOCOL::Receive
-		Efi_Configure = 67,    // EFI_TCP4/6_PROTOCOL::Configure
-		Efi_Connect = 68,      // EFI_TCP4/6_PROTOCOL::Connect
+		Fs_OpenFailed        = 50, // file open syscall failed
+		Fs_DeleteFailed      = 51, // file delete syscall failed
+		Fs_ReadFailed        = 52, // file read syscall failed
+		Fs_WriteFailed       = 53, // file write syscall failed
+		Fs_CreateDirFailed   = 54, // directory create syscall failed
+		Fs_DeleteDirFailed   = 55, // directory delete syscall failed
+		Fs_PathResolveFailed = 56, // path name resolution failed
+
+		// -------------------------
+		// Crypto errors (60–63)
+		// -------------------------
+		Ecc_InitFailed         = 60, // curve not recognized or random gen failed
+		Ecc_ExportKeyFailed    = 61, // null buffer or insufficient size
+		Ecc_SharedSecretFailed = 62, // invalid key format or point at infinity
+		ChaCha20_DecodeFailed  = 63, // Poly1305 authentication failed
+
+		// -------------------------
+		// TlsCipher errors (70–73)
+		// -------------------------
+		TlsCipher_ComputePublicKeyFailed = 70, // ECC key generation failed
+		TlsCipher_ComputePreKeyFailed    = 71, // premaster key computation failed
+		TlsCipher_ComputeKeyFailed       = 72, // key derivation failed
+		TlsCipher_DecodeFailed           = 73, // record decryption failed
+
+		// -------------------------
+		// TLS internal errors (74–84)
+		// -------------------------
+		Tls_SendPacketFailed       = 74, // packet send to socket failed
+		Tls_ClientHelloFailed      = 75, // ClientHello send failed
+		Tls_ServerHelloFailed      = 76, // ServerHello processing failed
+		Tls_ServerHelloDoneFailed  = 77, // ServerHelloDone processing failed
+		Tls_ServerFinishedFailed   = 78, // ServerFinished processing failed
+		Tls_VerifyFinishedFailed   = 79, // Finished verification failed
+		Tls_ClientExchangeFailed   = 80, // ClientKeyExchange send failed
+		Tls_ClientFinishedFailed   = 81, // ClientFinished send failed
+		Tls_ChangeCipherSpecFailed = 82, // ChangeCipherSpec send failed
+		Tls_ProcessReceiveFailed   = 83, // receive processing failed
+		Tls_OnPacketFailed         = 84, // packet handling failed
+
+		// -------------------------
+		// Process errors (90–94)
+		// -------------------------
+		Process_ForkFailed      = 90, // fork() syscall failed
+		Process_Dup2Failed      = 91, // dup2() syscall failed
+		Process_ExecveFailed    = 92, // execve() syscall failed
+		Process_SetsidFailed    = 93, // setsid() syscall failed
+		Process_BindShellFailed = 94, // shell binding failed
+
+		// -------------------------
+		// Misc errors (95–101)
+		// -------------------------
+		Base64_DecodeFailed           = 95,  // Base64 decoding failed
+		String_ParseIntFailed         = 96,  // integer parsing failed
+		String_ParseFloatFailed       = 97,  // float parsing failed
+		IpAddress_ToStringFailed      = 98,  // buffer too small for IP string
+		Kernel32_CreateProcessFailed  = 99,  // CreateProcessW failed
+		Kernel32_SetHandleInfoFailed  = 100, // SetHandleInformation failed
+		Ntdll_RtlPathResolveFailed    = 101, // RtlDosPathNameToNtPathName_U failed
 	};
 
-	UINT32 PlatformCode;	// raw OS error code (NTSTATUS, errno, EFI_STATUS); 0 = none
-	UINT32 RuntimeCode[16]; // Error::Code call stack, innermost first; 0 = empty slot
-
-	Error() { Memory::Zero(this, sizeof(Error)); }
-
-	// Set the raw platform error code (NTSTATUS, Linux errno, EFI_STATUS, etc.).
-	// Call this before Push() so the platform code sits beneath the runtime stack.
-	VOID SetPlatformCode(UINT32 code) { PlatformCode = code; }
-
-	// Push a runtime error code onto the call stack.
-	VOID Push(UINT32 code)
+	// Which OS layer this code came from.
+	// When Platform != Runtime, Code holds the raw OS error value.
+	enum class PlatformKind : UINT8
 	{
-		for (UINT32 i = 0; i < 16; i++)
-		{
-			if (RuntimeCode[i] == 0)
-			{
-				RuntimeCode[i] = code;
-				return;
-			}
-		}
+		Runtime = 0, // PIR runtime layer — Code is an ErrorCodes enumerator
+		Windows = 1, // NTSTATUS  — Code holds the raw NTSTATUS value
+		Posix   = 2, // errno     — Code holds errno as a positive UINT32
+		Uefi    = 3, // EFI_STATUS — Code holds the raw EFI_STATUS value
+	};
+
+	// Fields — Error IS a single error code.
+	ErrorCodes   Code;
+	PlatformKind Platform;
+
+	Error(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
+		: Code((ErrorCodes)code), Platform(platform)
+	{
 	}
+
+	// Platform-specific factory methods — concise alternative to the constructor.
+	[[nodiscard]] static Error Windows(UINT32 ntstatus) { return Error(ntstatus, PlatformKind::Windows); }
+	[[nodiscard]] static Error Posix(UINT32 errnoVal)   { return Error(errnoVal, PlatformKind::Posix); }
+	[[nodiscard]] static Error Uefi(UINT32 efiStatus)   { return Error(efiStatus, PlatformKind::Uefi); }
 };

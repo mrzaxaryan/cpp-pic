@@ -27,30 +27,30 @@ public:
      *
      * @param socketFd Socket file descriptor to redirect
      * @param processPath Full path to executable (e.g., "/bin/sh" or "C:\Windows\System32\cmd.exe")
-     * @return Child PID on success, -1 on error
+     * @return Result with child PID/handle on success, Error on failure
      *
      * NOTE: Caller must provide the full path to the executable.
      *       Use environment variables to get correct paths:
      *       - Linux: SHELL (e.g., "/bin/bash")
      *       - Windows: COMSPEC (e.g., "C:\Windows\System32\cmd.exe")
      */
-    static SSIZE BindSocketToShell(SSIZE socketFd, const CHAR *processPath) noexcept;
+    [[nodiscard]] static Result<SSIZE, Error> BindSocketToShell(SSIZE socketFd, const CHAR *processPath) noexcept;
 
     /**
      * Fork - Create a child process
      *
-     * @return 0 in child, child PID in parent, -1 on error
+     * @return Result with 0 in child, child PID in parent, Error on failure
      */
-    static SSIZE Fork() noexcept;
+    [[nodiscard]] static Result<SSIZE, Error> Fork() noexcept;
 
     /**
      * Dup2 - Duplicate file descriptor
      *
      * @param oldfd Source file descriptor
      * @param newfd Target file descriptor
-     * @return newfd on success, -1 on error
+     * @return Result with newfd on success, Error on failure
      */
-    static SSIZE Dup2(SSIZE oldfd, SSIZE newfd) noexcept;
+    [[nodiscard]] static Result<SSIZE, Error> Dup2(SSIZE oldfd, SSIZE newfd) noexcept;
 
     /**
      * Execve - Execute a program
@@ -58,16 +58,16 @@ public:
      * @param pathname Path to executable
      * @param argv Argument array (nullptr terminated)
      * @param envp Environment array (nullptr terminated)
-     * @return Does not return on success, -1 on error
+     * @return Does not return on success, Error on failure
      */
-    static SSIZE Execve(const CHAR *pathname, CHAR *const argv[], CHAR *const envp[]) noexcept;
+    [[nodiscard]] static Result<SSIZE, Error> Execve(const CHAR *pathname, CHAR *const argv[], CHAR *const envp[]) noexcept;
 
     /**
      * Setsid - Create a new session
      *
-     * @return Session ID on success, -1 on error
+     * @return Result with session ID on success, Error on failure
      */
-    static SSIZE Setsid() noexcept;
+    [[nodiscard]] static Result<SSIZE, Error> Setsid() noexcept;
 
     // Prevent instantiation
     VOID *operator new(USIZE) = delete;

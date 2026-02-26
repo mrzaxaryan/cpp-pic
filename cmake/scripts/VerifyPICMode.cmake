@@ -66,9 +66,8 @@ foreach(_sec ${_sections})
     endif()
 endforeach()
 
-# macOS (Mach-O format): Check for __DATA segment user data sections
+# macOS (Mach-O format): Check for __DATA segment sections
 # ld64.lld map uses tab-separated "Segment\tSection" format
-# Only flag user data sections, not linker-generated ones (__got, __la_symbol_ptr)
 if(_content MATCHES "__DATA[ \t]+__data")
     list(APPEND _found "__DATA,__data")
 endif()
@@ -77,6 +76,13 @@ if(_content MATCHES "__DATA[ \t]+__bss")
 endif()
 if(_content MATCHES "__DATA_CONST[ \t]+__const")
     list(APPEND _found "__DATA_CONST,__const")
+endif()
+# GOT section: The linker synthesizes __DATA_CONST,__got when the compiler
+# emits @GOTPCREL relocations. This section cannot be merged into __TEXT,__text
+# via -rename_section. The -fdirect-access-external-data compiler flag prevents
+# GOT generation; this check is a safety net to catch regressions.
+if(_content MATCHES "__DATA_CONST[ \t]+__got")
+    list(APPEND _found "__DATA_CONST,__got")
 endif()
 
 # macOS: Check for __TEXT segment constant sections that are NOT __text.

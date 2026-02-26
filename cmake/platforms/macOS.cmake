@@ -41,20 +41,6 @@ pir_add_link_flags(
     -map,${PIR_MAP_FILE}
 )
 
-# Merge constant pool sections into __TEXT,__text.
-# At -O1+ the compiler may place constants (float literals, merged constants)
-# into __TEXT,__const or __TEXT,__literal* sections. These are NOT extracted
-# into output.bin (only __TEXT,__text is), so any PC-relative reference from
-# code to these sections would crash the PIC loader. Renaming them into
-# __TEXT,__text ensures they are included in the flat binary.
-pir_add_link_flags(
-    -rename_section,__TEXT,__const,__TEXT,__text
-    -rename_section,__TEXT,__literal4,__TEXT,__text
-    -rename_section,__TEXT,__literal8,__TEXT,__text
-    -rename_section,__TEXT,__literal16,__TEXT,__text
-    -rename_section,__TEXT,__cstring,__TEXT,__text
-)
-
 if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(-dead_strip)
 endif()

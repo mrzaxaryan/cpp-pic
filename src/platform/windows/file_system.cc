@@ -73,8 +73,8 @@ Result<UINT32, Error> File::Read(PVOID buffer, UINT32 size)
     if (!IsValid())
         return Result<UINT32, Error>::Err(Error::Fs_ReadFailed);
 
-    // Properly initialize IO_STATUS_BLOCK with all fields
     IO_STATUS_BLOCK ioStatusBlock;
+    Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
     NTSTATUS status = NTDLL::ZwReadFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, buffer, (UINT32)size, nullptr, nullptr);
 
@@ -92,6 +92,7 @@ Result<UINT32, Error> File::Write(PCVOID buffer, USIZE size)
         return Result<UINT32, Error>::Err(Error::Fs_WriteFailed);
 
     IO_STATUS_BLOCK ioStatusBlock;
+    Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
     NTSTATUS status = NTDLL::ZwWriteFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, (PVOID)buffer, (UINT32)size, nullptr, nullptr);
 
@@ -108,14 +109,14 @@ USIZE File::GetOffset() const
     if (!IsValid())
         return 0;
 
-    FILE_POSITION_INFORMATION posFIle;
+    FILE_POSITION_INFORMATION posFile;
     IO_STATUS_BLOCK ioStatusBlock;
     // In Win32, moving 0 bytes from the current position returns the current offset
-    NTSTATUS status = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFIle, sizeof(posFIle), FilePositionInformation);
+    NTSTATUS status = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFile, sizeof(posFile), FilePositionInformation);
 
     if (NT_SUCCESS(status))
     {
-        return (USIZE)posFIle.CurrentByteOffset.QuadPart;
+        return (USIZE)posFile.CurrentByteOffset.QuadPart;
     }
     return 0;
 }
@@ -130,7 +131,7 @@ void File::SetOffset(USIZE absoluteOffset)
     IO_STATUS_BLOCK ioStatusBlock;
     Memory::Zero(&posInfo, sizeof(FILE_POSITION_INFORMATION));
     Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
-    posInfo.CurrentByteOffset.QuadPart = INT64((INT64)absoluteOffset);
+    posInfo.CurrentByteOffset.QuadPart = (INT64)absoluteOffset;
     // Set the file pointer to the specified absolute offset using ZwSetInformationFile
     (void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
 }
@@ -202,7 +203,6 @@ File FileSystem::Open(PCWCHAR path, INT32 flags)
     }
     else if (flags & FS_TRUNCATE)
     {
-        LOG_ERROR("FS_TRUNCATE flag set.");
         dwCreationDisposition = FILE_OVERWRITE;
     }
 
@@ -395,10 +395,10 @@ static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &da
 
     // 3. Attributes
     UINT32 attr = data.FileAttributes;
-    entry.isDirectory = (attr & 0x10); // FILE_ATTRIBUTE_DIRECTORY
-    entry.isHidden = (attr & 0x02);    // FILE_ATTRIBUTE_HIDDEN
-    entry.isSystem = (attr & 0x04);    // FILE_ATTRIBUTE_SYSTEM
-    entry.isReadOnly = (attr & 0x01);  // FILE_ATTRIBUTE_READONLY
+    entry.isDirectory = (attr & FILE_ATTRIBUTE_DIRECTORY);
+    entry.isHidden = (attr & FILE_ATTRIBUTE_HIDDEN);
+    entry.isSystem = (attr & FILE_ATTRIBUTE_SYSTEM);
+    entry.isReadOnly = (attr & FILE_ATTRIBUTE_READONLY);
 
     // 4. Timestamps
     entry.creationTime = data.CreationTime.QuadPart;
@@ -501,7 +501,6 @@ BOOL DirectoryIterator::Next()
     if (!IsValid())
         return false;
 
-    FILE_FS_DEVICE_INFORMATION info;
     IO_STATUS_BLOCK ioStatusBlock;
 
     // --- MODE 1: Drive Bitmask Mode (first is true and handle is small) ---
@@ -512,6 +511,16 @@ BOOL DirectoryIterator::Next()
 
         if (mask == 0)
             return false;
+
+        // Query the process device map to get drive types
+        PROCESS_DEVICEMAP_INFORMATION devMapInfo;
+        Memory::Zero(&devMapInfo, sizeof(devMapInfo));
+        NTSTATUS devMapStatus = NTDLL::ZwQueryInformationProcess(
+            NTDLL::NtCurrentProcess(),
+            ProcessDeviceMap,
+            &devMapInfo.Query,
+            sizeof(devMapInfo.Query),
+            nullptr);
 
         // Find the next set bit
         for (INT32 i = 0; i < 26; i++)
@@ -527,36 +536,11 @@ BOOL DirectoryIterator::Next()
                 currentEntry.isDirectory = true;
                 currentEntry.isDrive = true;
 
-                (void)NTDLL::ZwQueryVolumeInformationFile(
-                    NTDLL::NtCurrentProcess(),
-                    &ioStatusBlock,
-                    &info,
-                    sizeof(info),
-                    FileFsDeviceInformation);
-
-                switch (info.DeviceType)
-                {
-                case FILE_DEVICE_CD_ROM_FILE_SYSTEM:
-                    currentEntry.type = DRIVE_CDROM;
-                    break;
-                case FILE_DEVICE_VIRTUAL_DISK:
-                    currentEntry.type = DRIVE_RAMDISK;
-                    break;
-                case FILE_DEVICE_NETWORK_FILE_SYSTEM:
-                    currentEntry.type = DRIVE_REMOTE;
-                    break;
-                case FILE_DEVICE_DISK_FILE_SYSTEM:
-                    if (info.Characteristics & FILE_REMOTE_DEVICE)
-                        currentEntry.type = DRIVE_REMOTE;
-                    else if (info.Characteristics & FILE_REMOVABLE_MEDIA)
-                        currentEntry.type = DRIVE_REMOVABLE;
-                    else
-                        currentEntry.type = DRIVE_FIXED;
-                    break;
-                default:
+                // DriveType[] uses Win32 drive type constants directly
+                if (NT_SUCCESS(devMapStatus))
+                    currentEntry.type = (UINT32)devMapInfo.Query.DriveType[i];
+                else
                     currentEntry.type = DRIVE_UNKNOWN;
-                    break;
-                }
 
                 // Update mask for next time (remove the bit we just processed)
                 mask &= ~(1 << i);

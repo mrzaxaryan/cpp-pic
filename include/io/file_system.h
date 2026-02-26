@@ -42,7 +42,16 @@ private:
 
 public:
     // Default constructor and destructor
-    File() : fileHandle(nullptr), fileSize(0) {}
+    File() : fileHandle(INVALID_FILE_HANDLE), fileSize(0) {}
+
+    // Platform-neutral invalid handle sentinel.
+    // Windows: nullptr (INVALID_HANDLE_VALUE is -1, but nullptr is the "never opened" state).
+    // POSIX/UEFI: (PVOID)(SSIZE)-1, because fd 0 is a valid descriptor (stdin).
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS)
+    static constexpr PVOID INVALID_FILE_HANDLE = (PVOID)(SSIZE)-1;
+#else
+    static constexpr PVOID INVALID_FILE_HANDLE = nullptr;
+#endif
     ~File() { Close(); }
 
     // Disable copying to prevent double-close bugs

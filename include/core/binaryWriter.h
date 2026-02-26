@@ -1,7 +1,6 @@
 #include "primitives.h"
 #include "memory.h"
 
-
 class BinaryWriter{
     private:
         PVOID address;

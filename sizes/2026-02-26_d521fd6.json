@@ -1,0 +1,9 @@
+{
+  "date": "2026-02-26",
+  "commit": "d521fd6",
+  "sizes": {
+    "uefi_x86_64_bin": 85027,
+    "windows_x86_64_bin": 86312,
+    "windows_i386_bin": 89764
+  }
+}

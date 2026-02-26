@@ -153,7 +153,14 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	}
 
 	if (Status == (NTSTATUS)STATUS_PENDING)
-		(void)AfdWait(SockEvent, IOSB, Status, nullptr);
+	{
+		auto waitResult = AfdWait(SockEvent, IOSB, Status, nullptr);
+		if (!waitResult)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<void, Error>::Err(waitResult, Error::Socket_BindFailed_Bind);
+		}
+	}
 
 	(void)NTDLL::ZwClose(SockEvent);
 
@@ -240,7 +247,14 @@ Result<void, Error> Socket::Open()
 	}
 
 	if (Status == (NTSTATUS)STATUS_PENDING)
-		(void)AfdWait(SockEvent, IOSB, Status, nullptr);
+	{
+		auto waitResult = AfdWait(SockEvent, IOSB, Status, nullptr);
+		if (!waitResult)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<void, Error>::Err(waitResult, Error::Socket_OpenFailed_Connect);
+		}
+	}
 
 	(void)NTDLL::ZwClose(SockEvent);
 
@@ -258,6 +272,9 @@ Result<void, Error> Socket::Open()
 Result<void, Error> Socket::Close()
 {
 	LOG_DEBUG("Close(handle: 0x%p)\n", this);
+
+	if (!IsValid())
+		return Result<void, Error>::Ok();
 
 	auto closeResult = NTDLL::ZwClose(m_socket);
 	m_socket = nullptr;
@@ -405,6 +422,11 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		}
 
 		totalSent += (UINT32)IOSB.Information;
+		if (IOSB.Information == 0)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<UINT32, Error>::Err(Error::Socket_WriteFailed_Send);
+		}
 	} while (totalSent < bufferLength);
 
 	(void)NTDLL::ZwClose(SockEvent);

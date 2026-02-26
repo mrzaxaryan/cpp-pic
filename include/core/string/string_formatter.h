@@ -19,7 +19,7 @@
  * - %lld, %llu - Long long integers
  * - %lx, %lX, %llx, %llX - Long/long long hex
  * - %zu, %zd - Size_t variants
- * - %e, %E - Error chain (ErrorChainView from Result::Errors())
+ * - %e, %E - Error value (Error struct from Result::Error())
  * - %% - Literal percent sign
  *
  * Format flags:
@@ -81,11 +81,13 @@
  */
 class StringFormatter
 {
-private:
+public:
     /**
      * @brief Type-erased argument holder for variadic formatting
      * @details Uses PIC-safe types from primitives.h. Supports automatic
-     * type conversion from common C++ types.
+     * type conversion from common C++ types. Public so Logger can
+     * type-erase arguments before calling FormatWithArgs directly,
+     * eliminating per-argument-type template instantiations.
      */
     struct Argument
     {
@@ -112,9 +114,9 @@ private:
             UINT64 u64;        ///< Unsigned 64-bit integer
             DOUBLE dbl;        ///< Floating-point value
             const CHAR *cstr;  ///< Narrow string pointer
-            const WCHAR *wstr;              ///< Wide string pointer
-            PVOID ptr;                      ///< Generic pointer
-            Error errValue; ///< Single error value
+            const WCHAR *wstr; ///< Wide string pointer
+            PVOID ptr;         ///< Generic pointer
+            Error errValue;    ///< Single error value
         };
 
         /// @name Constructors
@@ -139,7 +141,7 @@ private:
         /// @}
     };
 
-    /** @brief Internal format implementation with argument array */
+    /** @brief Format with pre-erased argument array (public for Logger type-erasure) */
     template <TCHAR TChar>
     static INT32 FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID context, const TChar *format, const Argument *args, INT32 argCount);
 
@@ -156,8 +158,6 @@ private:
     static INT32 FormatDouble(BOOL (*writer)(PVOID, TChar), PVOID context, DOUBLE num, INT32 precision = 6, INT32 width = 0, INT32 zeroPad = 0);
     template <TCHAR TChar>
     static INT32 FormatPointerAsHex(BOOL (*writer)(PVOID, TChar), PVOID context, PVOID ptr);
-    template <TCHAR TChar>
-    static INT32 FormatUInt32AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT32 num, INT32 fieldWidth = 0, INT32 uppercase = 0, INT32 zeroPad = 0, BOOL addPrefix = false);
     template <TCHAR TChar>
     static INT32 FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID context, const WCHAR *wstr, INT32 fieldWidth = 0, INT32 leftAlign = 0);
     template <TCHAR TChar>
@@ -269,88 +269,6 @@ INT32 StringFormatter::FormatUInt64(BOOL (*writer)(PVOID, TChar), PVOID context,
 }
 
 template <TCHAR TChar>
-INT32 StringFormatter::FormatUInt32AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT32 num, INT32 fieldWidth, INT32 uppercase, INT32 zeroPad, BOOL addPrefix)
-{
-    TChar buffer[16];
-    INT32 buffIndex = 0;
-    INT32 index = 0;
-    INT32 startIdx = index;
-
-    // Convert number to hex (reversed)
-    if (num == 0)
-    {
-        buffer[buffIndex++] = (TChar)'0';
-    }
-    else
-    {
-        while (num)
-        {
-            UINT32 digit = num & 0xF; // num % 16
-            TChar c;
-
-            if (digit < 10)
-                c = (TChar)('0' + digit);
-            else
-                c = (TChar)((uppercase ? 'A' : 'a') + (digit - 10));
-
-            buffer[buffIndex++] = c;
-            num >>= 4; // num /= 16
-        }
-    }
-
-    INT32 prefixLen = addPrefix ? 2 : 0;
-    INT32 totalDigits = buffIndex + prefixLen;
-    INT32 pad = fieldWidth - totalDigits;
-    if (pad < 0)
-        pad = 0;
-
-    // Space padding (right aligned) must come BEFORE prefix
-    if (!zeroPad)
-    {
-        while (pad > 0)
-        {
-            if (!writer(context, (TChar)' '))
-                return index - startIdx;
-            index++;
-            pad--;
-        }
-    }
-
-    // Prefix
-    if (addPrefix)
-    {
-        if (!writer(context, (TChar)'0'))
-            return index - startIdx;
-        index++;
-        if (!writer(context, uppercase ? (TChar)'X' : (TChar)'x'))
-            return index - startIdx;
-        index++;
-    }
-
-    // Zero padding (after prefix, before digits)
-    if (zeroPad)
-    {
-        while (pad > 0)
-        {
-            if (!writer(context, (TChar)'0'))
-                return index - startIdx;
-            index++;
-            pad--;
-        }
-    }
-
-    // Copy digits (reverse order)
-    while (buffIndex)
-    {
-        if (!writer(context, buffer[--buffIndex]))
-            return index - startIdx;
-        index++;
-    }
-
-    return index - startIdx;
-}
-
-template <TCHAR TChar>
 INT32 StringFormatter::FormatUInt64AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT64 num, INT32 fieldWidth, INT32 uppercase, INT32 zeroPad, BOOL addPrefix)
 {
     TChar buffer[16]; // max 16 hex digits for UINT64
@@ -435,24 +353,7 @@ INT32 StringFormatter::FormatUInt64AsHex(BOOL (*writer)(PVOID, TChar), PVOID con
 template <TCHAR TChar>
 INT32 StringFormatter::FormatPointerAsHex(BOOL (*writer)(PVOID, TChar), PVOID context, PVOID ptr)
 {
-    INT32 index = 0;
-    INT32 startIndex = index;
-    USIZE addr = (USIZE)ptr;
-
-    if (!writer(context, (TChar)'0'))
-        return index - startIndex;
-    index++;
-    if (!writer(context, (TChar)'x'))
-        return index - startIndex;
-    index++;
-    for (INT32 i = (INT32)(sizeof(USIZE) * 2) - 1; i >= 0; --i)
-    {
-        UINT32 v = (addr >> (i * 4)) & 0xF;
-        if (!writer(context, (TChar)(v < 10 ? ('0' + v) : ('a' + (v - 10)))))
-            return index - startIndex;
-        index++;
-    }
-    return index - startIndex;
+    return FormatUInt64AsHex<TChar>(writer, context, (UINT64)(USIZE)ptr, (INT32)(sizeof(USIZE) * 2), 0, 1, true);
 }
 
 template <TCHAR TChar>
@@ -521,28 +422,21 @@ INT32 StringFormatter::FormatError(BOOL (*writer)(PVOID, TChar), PVOID context, 
     {
         if (!writer(context, (TChar)'0')) return j; j++;
         if (!writer(context, (TChar)'x')) return j; j++;
-        j += FormatUInt32AsHex<TChar>(writer, context, code, 0, 1, 0, false);
+        j += FormatUInt64AsHex<TChar>(writer, context, (UINT64)code, 0, 1, 0, false);
     }
     else
         j += FormatUInt64<TChar>(writer, context, (UINT64)code, 0, 0, 0);
 
-    // Platform tag for non-Runtime
-    if (platform == Error::PlatformKind::Windows)
+    // Platform tag for non-Runtime: [W], [P], or [U]
+    TChar tag = 0;
+    if (platform == Error::PlatformKind::Windows)      tag = (TChar)'W';
+    else if (platform == Error::PlatformKind::Posix)   tag = (TChar)'P';
+    else if (platform == Error::PlatformKind::Uefi)    tag = (TChar)'U';
+
+    if (tag)
     {
         if (!writer(context, (TChar)'[')) return j; j++;
-        if (!writer(context, (TChar)'W')) return j; j++;
-        if (!writer(context, (TChar)']')) return j; j++;
-    }
-    else if (platform == Error::PlatformKind::Posix)
-    {
-        if (!writer(context, (TChar)'[')) return j; j++;
-        if (!writer(context, (TChar)'P')) return j; j++;
-        if (!writer(context, (TChar)']')) return j; j++;
-    }
-    else if (platform == Error::PlatformKind::Uefi)
-    {
-        if (!writer(context, (TChar)'[')) return j; j++;
-        if (!writer(context, (TChar)'U')) return j; j++;
+        if (!writer(context, tag))        return j; j++;
         if (!writer(context, (TChar)']')) return j; j++;
     }
 
@@ -810,7 +704,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                     continue;
                 UINT32 num = args[currentArg++].u32;
                 // Format the number as uppercase hexadecimal.
-                j += StringFormatter::FormatUInt32AsHex(writer, context, num, fieldWidth, 1, zeroPad, addPrefix);
+                j += StringFormatter::FormatUInt64AsHex(writer, context, (UINT64)num, fieldWidth, 1, zeroPad, addPrefix);
 
                 // If a '-' follows, add it (for MAC address separators)
                 if (format[i] == (TChar)'-')
@@ -867,7 +761,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
                     continue;
                 }
                 UINT32 num = args[currentArg++].u32;
-                j += StringFormatter::FormatUInt32AsHex(writer, context, num, fieldWidth, 0, zeroPad, addPrefix);
+                j += StringFormatter::FormatUInt64AsHex(writer, context, (UINT64)num, fieldWidth, 0, zeroPad, addPrefix);
                 i++; // Skip 'x'
                 continue;
             }

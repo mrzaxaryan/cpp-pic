@@ -616,9 +616,9 @@ INT32 ChaChaPoly1305::Poly1305Aead(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad
         poly.Update(zeropad, 16 - rem);
     UCHAR trail[16];
     Poly1305::U32TO8(trail, aad_len);
-    *(INT32 *)(trail + 4) = 0;
+    Memory::Zero(trail + 4, 4);
     Poly1305::U32TO8(trail + 8, len);
-    *(INT32 *)(trail + 12) = 0;
+    Memory::Zero(trail + 12, 4);
 
     poly.Update(trail, 16);
     poly.Finish(out + len);
@@ -628,9 +628,12 @@ INT32 ChaChaPoly1305::Poly1305Aead(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad
 
 INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad_len, PUCHAR poly_key, PUCHAR out)
 {
+    if (len < POLY1305_TAGLEN)
+        return -1;
+
     len -= POLY1305_TAGLEN;
 
-    this->EncryptBytes(pt, out, len);
+    // Authenticate BEFORE decrypting (AEAD requirement)
     this->Poly1305Key(poly_key);
     Poly1305 poly(poly_key);
     poly.Update(aad, aad_len);
@@ -644,20 +647,28 @@ INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 a
     if (rem)
         poly.Update(zeropad, 16 - rem);
     UCHAR trail[16];
-    Poly1305::U32TO8(&trail[0], aad_len == 5 ? 5 : 13);
-    *(INT32 *)&trail[4] = 0;
+    Poly1305::U32TO8(&trail[0], aad_len);
+    Memory::Zero(trail + 4, 4);
     Poly1305::U32TO8(&trail[8], len);
-    *(INT32 *)&trail[12] = 0;
+    Memory::Zero(trail + 12, 4);
 
     UCHAR mac_tag[POLY1305_TAGLEN];
     poly.Update(trail, 16);
     poly.Finish(mac_tag);
 
-    if (Memory::Compare(mac_tag, pt + len, POLY1305_TAGLEN) != 0)
+    // Constant-time comparison to prevent timing oracle
+    UINT8 diff = 0;
+    for (UINT32 i = 0; i < POLY1305_TAGLEN; i++)
+        diff |= mac_tag[i] ^ pt[len + i];
+
+    if (diff != 0)
     {
         LOG_ERROR("ChaChaPoly1305::Poly1305Decode: Authentication tag mismatch");
         return -1;
     }
+
+    // Only decrypt after authentication succeeds
+    this->EncryptBytes(pt, out, len);
 
     return len;
 }

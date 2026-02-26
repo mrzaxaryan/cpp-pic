@@ -421,7 +421,7 @@ Result<IPAddress, Error> DNS::CloudflareResolve(PCCHAR host, RequestType dnstype
 Result<IPAddress, Error> DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
 {
     auto serverName = "dns.google"_embed;
-    IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x04040808)};
+    IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x08080404)};
     return ResolveWithFallback(host, ips, (PCCHAR)serverName, dnstype);
 }
 

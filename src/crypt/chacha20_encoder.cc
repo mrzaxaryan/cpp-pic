@@ -16,7 +16,7 @@ ChaCha20Encoder::~ChaCha20Encoder()
 ChaCha20Encoder::ChaCha20Encoder()
 {
     this->ivLength = TLS_CHACHA20_IV_LENGTH;
-    this->initialized = true;
+    this->initialized = false;
     Memory::Zero(this->localNonce, TLS_CHACHA20_IV_LENGTH);
     Memory::Zero(this->remoteNonce, TLS_CHACHA20_IV_LENGTH);
 }
@@ -35,6 +35,7 @@ Result<void, Error> ChaCha20Encoder::Initialize(PUCHAR localKey, PUCHAR remoteKe
     this->remoteCipher.IVSetup96BitNonce(remoteIv, (PUCHAR)&counter);
     Memory::Copy(this->remoteNonce, remoteIv, sizeof(remoteIv));
 
+    this->initialized = true;
     return Result<void, Error>::Ok();
 }
 

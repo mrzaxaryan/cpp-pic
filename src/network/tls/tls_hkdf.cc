@@ -45,7 +45,7 @@ INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR
 /// @param ikmLen The length of the input keying material
 /// @return void
 
-VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 saltLen, const UCHAR *ikm, UCHAR ikmLen)
+VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 saltLen, const UCHAR *ikm, UINT32 ikmLen)
 {
     HMAC_SHA256 hmac;
     hmac.Init(salt, saltLen);
@@ -65,7 +65,7 @@ VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 sa
 /// @param infoLen The length of the info
 /// @return void
 
-VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const UCHAR *info, UCHAR infoLen)
+VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const UCHAR *info, UINT32 infoLen)
 {
     UCHAR digestOut[SHA256_DIGEST_SIZE];
     UINT32 idx = 0;

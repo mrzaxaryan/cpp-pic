@@ -17,19 +17,21 @@ USIZE String::IntToStr(INT64 value, CHAR *buffer, USIZE bufSize) noexcept
 	if (value < 0)
 	{
 		negative = true;
-		value = -value;
 	}
 
-	if (value == 0)
+	// Use unsigned to handle INT64_MIN correctly (negating INT64_MIN is UB)
+	UINT64 uval = negative ? (UINT64)0 - (UINT64)value : (UINT64)value;
+
+	if (uval == 0)
 	{
 		temp[pos++] = '0';
 	}
 	else
 	{
-		while (value > 0 && pos < 22)
+		while (uval > 0 && pos < 22)
 		{
-			temp[pos++] = '0' + (CHAR)(value % 10);
-			value = value / 10;
+			temp[pos++] = '0' + (CHAR)(uval % 10);
+			uval = uval / 10;
 		}
 	}
 
@@ -168,11 +170,18 @@ Result<INT64, Error> String::ParseInt64(const CHAR *str, USIZE len) noexcept
 		i++;
 	}
 
-	INT64 value = 0;
+	UINT64 value = 0;
 	BOOL hasDigits = false;
+	constexpr UINT64 maxPositive = 0x7FFFFFFFFFFFFFFFULL;
+	constexpr UINT64 maxNegative = 0x8000000000000000ULL;
+	UINT64 limit = negative ? maxNegative : maxPositive;
+
 	while (i < len && str[i] >= '0' && str[i] <= '9')
 	{
-		value = value * 10 + (str[i] - '0');
+		UINT64 digit = (UINT64)(str[i] - '0');
+		if (value > (limit - digit) / 10)
+			return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
+		value = value * 10 + digit;
 		hasDigits = true;
 		i++;
 	}
@@ -182,7 +191,7 @@ Result<INT64, Error> String::ParseInt64(const CHAR *str, USIZE len) noexcept
 		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
 	}
 
-	INT64 result = negative ? -value : value;
+	INT64 result = negative ? -(INT64)value : (INT64)value;
 	return Result<INT64, Error>::Ok(result);
 }
 
@@ -287,12 +296,16 @@ PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) noexcept
 // Returns the number of wide characters written (excluding null terminator)
 USIZE String::Utf8ToWide(PCCHAR utf8, PWCHAR wide, USIZE wideBufferSize)
 {
-	if (!utf8 || !wide || wideBufferSize == 0)
+	if (!utf8 || !wide || wideBufferSize < 3)
+	{
+		if (wide && wideBufferSize > 0)
+			wide[0] = L'\0';
 		return 0;
+	}
 
 	USIZE wideLen = 0;
 
-	while (*utf8 && wideLen < wideBufferSize - 2)
+	while (*utf8 && wideLen + 2 < wideBufferSize)
 	{
 		UINT32 ch;
 		UINT8 byte = (UINT8)*utf8++;

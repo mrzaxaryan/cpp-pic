@@ -1,6 +1,6 @@
-#if defined(PLATFORM_WINDOWS)
-
 #pragma once
+
+#if defined(PLATFORM_WINDOWS)
 
 #include "windows_types.h"
 

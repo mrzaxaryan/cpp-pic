@@ -322,6 +322,12 @@ Result<void, Error> TLSClient::OnServerHello(TlsBuffer &reader)
             }
             LOG_DEBUG("EXT_KEY_SHARE processed, ECC group: %d, public key size: %d bytes", eccgroup, pubkey.GetSize());
         }
+        else
+        {
+            // Skip unknown extensions
+            INT32 extLen = UINT16SwapByteOrder(reader.Read<INT16>());
+            reader.AppendReaded(extLen);
+        }
     }
     if (tls_ver != 0)
     {

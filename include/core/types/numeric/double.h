@@ -126,9 +126,8 @@ private:
             return a > b;
         case CMP_GE:
             return a >= b;
-        default:
-            return false;
         }
+        return false;
     }
 
     // Arithmetic operation enum for shared helper
@@ -162,9 +161,6 @@ private:
         case OP_DIV:
             result = a / b;
             break;
-        default:
-            result = 0.0;
-            break;
         }
         UINT64 result_ull = __builtin_bit_cast(UINT64, result);
         return DOUBLE(result_ull);
@@ -178,6 +174,9 @@ public:
      */
     static DOUBLE Parse(PCCHAR s) noexcept
     {
+        if (!s)
+            return DOUBLE(INT32(0));
+
         // Initialize result variables (use INT32 constructor to avoid .rdata)
         DOUBLE sign = DOUBLE(INT32(1));
         DOUBLE result = DOUBLE(INT32(0));
@@ -227,7 +226,7 @@ public:
         }
 
         BOOL negative = val < 0;
-        UINT32 absVal = negative ? (UINT32)(-val) : (UINT32)val;
+        UINT32 absVal = negative ? (UINT32)0 - (UINT32)val : (UINT32)val;
 
         INT32 msb = 31;
         while (msb >= 0 && !((absVal >> msb) & 1))
@@ -402,25 +401,25 @@ public:
         return DOUBLE(newBits);
     }
 
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE &operator+=(const DOUBLE &other) noexcept
+    FORCE_INLINE DOUBLE &operator+=(const DOUBLE &other) noexcept
     {
         *this = *this + other;
         return *this;
     }
 
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE &operator-=(const DOUBLE &other) noexcept
+    FORCE_INLINE DOUBLE &operator-=(const DOUBLE &other) noexcept
     {
         *this = *this - other;
         return *this;
     }
 
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE &operator*=(const DOUBLE &other) noexcept
+    FORCE_INLINE DOUBLE &operator*=(const DOUBLE &other) noexcept
     {
         *this = *this * other;
         return *this;
     }
 
-    NOINLINE DISABLE_OPTIMIZATION DOUBLE &operator/=(const DOUBLE &other) noexcept
+    FORCE_INLINE DOUBLE &operator/=(const DOUBLE &other) noexcept
     {
         *this = *this / other;
         return *this;
@@ -433,13 +432,13 @@ public:
 
     NOINLINE DISABLE_OPTIMIZATION DOUBLE operator-(UINT64 val) const noexcept
     {
-        DOUBLE d_val = DOUBLE((INT32)val);
+        DOUBLE d_val = DOUBLE((INT64)val);
         return *this - d_val;
     }
 
     NOINLINE DISABLE_OPTIMIZATION DOUBLE operator-(UINT32 val) const noexcept
     {
-        DOUBLE d_val = DOUBLE((INT32)val);
+        DOUBLE d_val = DOUBLE((INT64)val);
         return *this - d_val;
     }
 };

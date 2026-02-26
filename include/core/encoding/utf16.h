@@ -154,15 +154,10 @@ public:
         USIZE inputIndex = 0;
         USIZE outputIndex = 0;
 
-        while (inputIndex < inputLength && outputIndex < outputSize - 4)
+        while (inputIndex < inputLength && outputIndex + 4 <= outputSize)
         {
-            CHAR utf8Bytes[4];
-            USIZE bytesWritten = CodepointToUTF8(input, inputLength, inputIndex, utf8Bytes);
-
-            for (USIZE i = 0; i < bytesWritten && outputIndex < outputSize; i++)
-            {
-                output[outputIndex++] = utf8Bytes[i];
-            }
+            USIZE bytesWritten = CodepointToUTF8(input, inputLength, inputIndex, output + outputIndex);
+            outputIndex += bytesWritten;
         }
 
         return outputIndex;

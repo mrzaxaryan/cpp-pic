@@ -94,22 +94,25 @@ if(_content MATCHES "__DATA[ \t]+__la_symbol_ptr")
     list(APPEND _found "__DATA,__la_symbol_ptr")
 endif()
 
-# macOS: Check for __TEXT segment constant sections that are NOT __text.
-# At -O1+ the compiler may emit __TEXT,__const (constant pools),
-# __TEXT,__literal* (float/double constants), or __TEXT,__cstring.
-# These are not extracted into output.bin and break PIC loading.
-# The -rename_section linker flags in macOS.cmake merge these into __text,
-# so this check should never fire. It serves as a safety net in case the
-# rename flags are accidentally removed or a new section type appears.
-if(_content MATCHES "__TEXT[ \t]+__const")
-    list(APPEND _found "__TEXT,__const")
-endif()
-if(_content MATCHES "__TEXT[ \t]+__literal")
-    list(APPEND _found "__TEXT,__literal*")
-endif()
-if(_content MATCHES "__TEXT[ \t]+__cstring")
-    list(APPEND _found "__TEXT,__cstring")
-endif()
+# macOS: Catch ANY __TEXT subsection that is NOT __text.
+# Only __TEXT,__text is extracted into output.bin by the PIC loader. Any other
+# __TEXT subsection (constant pools, literal pools, string constants, stubs,
+# unwind info, etc.) would be missing from the PIC binary, causing a crash on
+# any PC-relative reference from code to data in that section.
+# The -rename_section linker flags in macOS.cmake merge known constant sections
+# into __text. This check is a comprehensive safety net that catches:
+#   - Known sections where the rename flag was accidentally removed
+#   - New/unexpected sections the compiler or LTO optimizer may create
+# The regex matches any line with "__TEXT" followed by a section name that is
+# NOT "__text" (the only allowed __TEXT subsection).
+string(REGEX MATCHALL "__TEXT[ \t]+__[a-z0-9_]+" _text_sections "${_content}")
+foreach(_entry ${_text_sections})
+    if(NOT _entry MATCHES "__TEXT[ \t]+__text$")
+        # Extract the section name for the error message
+        string(REGEX MATCH "__TEXT[ \t]+(__[a-z0-9_]+)" _match "${_entry}")
+        list(APPEND _found "__TEXT,${CMAKE_MATCH_1}")
+    endif()
+endforeach()
 
 if(_found)
     list(JOIN _found ", " _list)

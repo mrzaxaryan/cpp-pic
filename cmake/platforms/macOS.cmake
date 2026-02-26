@@ -50,6 +50,21 @@ if(PIR_ARCH STREQUAL "x86_64")
     # (where interrupts clobber the red zone) and is standard practice for
     # freestanding / position-independent code that makes direct syscalls.
     list(APPEND PIR_BASE_FLAGS -mno-red-zone)
+
+    # Disable the LLVM machine outliner for x86_64. At -Os/-Oz the machine
+    # outliner extracts common instruction sequences into shared functions called
+    # via CALL rel32. While these calls are RIP-relative, the outliner runs during
+    # LTO code generation and can interact with constant pool placement in ways
+    # that break position-independence: outlined sequences containing RIP-relative
+    # loads from constant pools get relocated, changing the offset to the pool
+    # entry that was resolved for the original call site. On aarch64 this is not
+    # an issue because literal pools are placed inline within __TEXT,__text.
+    # The flag must be on both the compile and link command lines so that it
+    # reaches the LTO backend (clang forwards -mllvm to the LTO code generator).
+    if(PIR_BUILD_TYPE STREQUAL "release")
+        list(APPEND PIR_BASE_FLAGS "SHELL:-mllvm -enable-machine-outliner=never")
+        list(APPEND PIR_BASE_LINK_FLAGS "SHELL:-mllvm -enable-machine-outliner=never")
+    endif()
 elseif(PIR_ARCH STREQUAL "aarch64")
     list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 endif()
@@ -77,6 +92,7 @@ pir_add_link_flags(
     -rename_section,__TEXT,__literal4,__TEXT,__text
     -rename_section,__TEXT,__literal8,__TEXT,__text
     -rename_section,__TEXT,__literal16,__TEXT,__text
+    -rename_section,__TEXT,__literal32,__TEXT,__text
     -rename_section,__TEXT,__cstring,__TEXT,__text
 )
 

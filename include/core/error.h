@@ -31,6 +31,7 @@ struct Error
 		Socket_WriteFailed_EventCreate = 13,   // ZwCreateEvent failed (Windows only)
 		Socket_WriteFailed_Timeout = 14,	   // send timed out
 		Socket_WriteFailed_Send = 15,		   // AFD_SEND / send() syscall failed
+		Socket_WaitFailed = 39,				   // ZwWaitForSingleObject failed (Windows only)
 
 		// -------------------------
 		// TLS errors (16–22)

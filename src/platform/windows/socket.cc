@@ -84,20 +84,19 @@ typedef struct AfdSocketParams
 // Returns STATUS_TIMEOUT if timed out (Status is NOT updated in that case).
 // Returns the wait status on success; if ZwWaitForSingleObject itself fails,
 // propagates its failure NTSTATUS so callers see a non-timeout, non-success result.
-static NTSTATUS AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, NTSTATUS &Status, LARGE_INTEGER *Timeout)
+static Result<NTSTATUS, Error> AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, NTSTATUS &Status, LARGE_INTEGER *Timeout)
 {
 	auto waitResult = NTDLL::ZwWaitForSingleObject(SockEvent, 0, Timeout);
 	if (!waitResult)
 	{
 		// ZwWaitForSingleObject failed — propagate its NTSTATUS so the
 		// subsequent !NT_SUCCESS(Status) check in the caller catches it.
-		Status = (NTSTATUS)waitResult.Bottom().Code;
-		return Status;
+		return Result<NTSTATUS, Error>::Err(waitResult, Error::Socket_WaitFailed);
 	}
 	NTSTATUS waitStatus = waitResult.Value();
 	if (waitStatus != (NTSTATUS)STATUS_TIMEOUT)
 		Status = IOSB.Status;
-	return waitStatus;
+	return Result<NTSTATUS, Error>::Ok(waitStatus);
 }
 
 Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
@@ -311,7 +310,13 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 		LARGE_INTEGER Timeout;
 		Timeout.QuadPart = 5 * 60 * 1000 * -10000LL;
 
-		if (AfdWait(SockEvent, IOSB, Status, &Timeout) == (NTSTATUS)STATUS_TIMEOUT)
+		auto waitResult = AfdWait(SockEvent, IOSB, Status, &Timeout);
+		if (!waitResult)
+		{
+			(void)NTDLL::ZwClose(SockEvent);
+			return Result<SSIZE, Error>::Err(waitResult, Error::Socket_ReadFailed_Recv);
+		}
+		if (waitResult.Value() == (NTSTATUS)STATUS_TIMEOUT)
 		{
 			(void)NTDLL::ZwClose(SockEvent);
 			return Result<SSIZE, Error>::Err(
@@ -376,7 +381,13 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 			LARGE_INTEGER Timeout;
 			Timeout.QuadPart = 1 * 60 * 1000 * -10000LL;
 
-			if (AfdWait(SockEvent, IOSB, Status, &Timeout) == (NTSTATUS)STATUS_TIMEOUT)
+			auto waitResult = AfdWait(SockEvent, IOSB, Status, &Timeout);
+			if (!waitResult)
+			{
+				(void)NTDLL::ZwClose(SockEvent);
+				return Result<UINT32, Error>::Err(waitResult, Error::Socket_WriteFailed_Send);
+			}
+			if (waitResult.Value() == (NTSTATUS)STATUS_TIMEOUT)
 			{
 				(void)NTDLL::ZwClose(SockEvent);
 				return Result<UINT32, Error>::Err(

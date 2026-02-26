@@ -1,0 +1,17 @@
+{
+  "date": "2026-02-26",
+  "commit": "ec5844a",
+  "sizes": {
+    "linux_armv7a_bin": 97296,
+    "windows_aarch64_bin": 84088,
+    "linux_i386_bin": 93335,
+    "uefi_x86_64_bin": 85331,
+    "windows_x86_64_bin": 86632,
+    "macos_x86_64_bin": 87704,
+    "uefi_aarch64_bin": 83260,
+    "linux_x86_64_bin": 87090,
+    "macos_aarch64_bin": 71648,
+    "linux_aarch64_bin": 71876,
+    "windows_i386_bin": 90212
+  }
+}

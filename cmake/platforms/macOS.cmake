@@ -82,24 +82,6 @@ pir_add_link_flags(
     -map,${PIR_MAP_FILE}
 )
 
-# Merge constant pool sections into __TEXT,__text.
-# At -Os/-Oz the compiler may place constants (float literals, merged constants,
-# SIMD shuffle masks) into __TEXT,__const or __TEXT,__literal* sections. These
-# are NOT extracted into output.bin (only __TEXT,__text is), so any PC-relative
-# reference from code to these sections crashes the PIC loader. Renaming them
-# into __TEXT,__text ensures they are included in the flat binary.
-# Note: The register barriers in embedded_array.h prevent SOME constant pool
-# emissions, but cannot cover every path the optimiser may take at -Os/-Oz
-# with LTO. These linker flags are the robust, final safety net.
-pir_add_link_flags(
-    -rename_section,__TEXT,__const,__TEXT,__text
-    -rename_section,__TEXT,__literal4,__TEXT,__text
-    -rename_section,__TEXT,__literal8,__TEXT,__text
-    -rename_section,__TEXT,__literal16,__TEXT,__text
-    -rename_section,__TEXT,__literal32,__TEXT,__text
-    -rename_section,__TEXT,__cstring,__TEXT,__text
-)
-
 if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(-dead_strip)
 endif()

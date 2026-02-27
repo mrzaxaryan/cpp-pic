@@ -111,7 +111,13 @@ private:
 
 public:
     // Constructor and destructor
-    DirectoryIterator() : handle((PVOID)-1), first(true), isBitMaskMode(false) {}
+    DirectoryIterator()
+        : handle((PVOID)-1), first(true)
+#ifdef PLATFORM_WINDOWS
+        , isBitMaskMode(false)
+#endif
+
+    {}
     static Result<void, Error> Initialization(DirectoryIterator *iter, PCWCHAR path);
     ~DirectoryIterator();
 

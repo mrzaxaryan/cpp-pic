@@ -32,4 +32,13 @@ public:
         offset += size;
         return size;
     }
+    PVOID GetBinaryReaderAddress() {
+        return address;
+    }
+    USIZE GetBinaryReaderOffset() {
+        return offset;
+    }
+    USIZE GetBinaryReaderMaxSize() {
+        return maxSize;
+    }
 };

@@ -410,8 +410,12 @@ static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &da
     entry.type = 3; // Default to Fixed
 }
 
+DirectoryIterator::DirectoryIterator([[maybe_unused]] PCWCHAR path)
+        : handle((PVOID)-1), first(true)
+        {}
+
 // DirectoryIterator Constructor
-Result<void, Error> DirectoryIterator::Initialization(DirectoryIterator *iter, PCWCHAR path) 
+Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path) 
 {
     NTSTATUS status;
     // CASE: List Drives (Path is empty or nullptr)
@@ -432,9 +436,9 @@ Result<void, Error> DirectoryIterator::Initialization(DirectoryIterator *iter, P
         if (ProcessDeviceMapInfo.Query.DriveMap != 0)
         {
             // Store the mask in the pointer itself
-            iter->handle = (PVOID)(USIZE)ProcessDeviceMapInfo.Query.DriveMap;
-            iter->first = true; // Flag to indicate we are in "Drive Mode"
-            iter->isBitMaskMode = true;
+            handle = (PVOID)(USIZE)ProcessDeviceMapInfo.Query.DriveMap;
+            first = true; // Flag to indicate we are in "Drive Mode"
+            isBitMaskMode = true;
         }
         return Result<void, Error>::Ok();
     }
@@ -450,7 +454,7 @@ Result<void, Error> DirectoryIterator::Initialization(DirectoryIterator *iter, P
 
     IO_STATUS_BLOCK ioStatusBlock;
     status = NTDLL::ZwOpenFile(
-        &iter->handle,
+        &handle,
         FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objAttr,
         &ioStatusBlock,
@@ -461,7 +465,7 @@ Result<void, Error> DirectoryIterator::Initialization(DirectoryIterator *iter, P
 
     if (!NT_SUCCESS(status))
     {
-        iter->handle = (PVOID)-1;
+        handle = (PVOID)-1;
         return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_OpenFailed);
     }
 
@@ -470,7 +474,7 @@ Result<void, Error> DirectoryIterator::Initialization(DirectoryIterator *iter, P
     Memory::Zero(buffer, sizeof(buffer));
 
     status = NTDLL::ZwQueryDirectoryFile(
-        iter->handle,
+        handle,
         nullptr,
         nullptr,
         nullptr,
@@ -485,12 +489,12 @@ Result<void, Error> DirectoryIterator::Initialization(DirectoryIterator *iter, P
     if (NT_SUCCESS(status))
     {
         const FILE_BOTH_DIR_INFORMATION &info = *(const FILE_BOTH_DIR_INFORMATION *)buffer;
-        FillEntry(iter->currentEntry, info);
+        FillEntry(currentEntry, info);
     }
     else
     {
-        (void)NTDLL::ZwClose(iter->handle);
-        iter->handle = (PVOID)-1;
+        (void)NTDLL::ZwClose(handle);
+        handle = (PVOID)-1;
     }
     return Result<void, Error>::Ok();
 }

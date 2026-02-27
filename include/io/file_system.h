@@ -99,7 +99,7 @@ private:
     DirectoryEntry currentEntry; // Current directory entry
     BOOL first;                  // Flag for first call to Next()
 #ifdef PLATFORM_WINDOWS
-    BOOL isBitMaskMode; // Flag for bitmask mode on Windows
+    BOOL isBitMaskMode = false; // Flag for bitmask mode on Windows
 #endif
 
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS)
@@ -111,14 +111,10 @@ private:
 
 public:
     // Constructor and destructor
-    DirectoryIterator()
-        : handle((PVOID)-1), first(true)
-#ifdef PLATFORM_WINDOWS
-        , isBitMaskMode(false)
-#endif
+    
+    DirectoryIterator(PCWCHAR path);
 
-    {}
-    static Result<void, Error> Initialization(DirectoryIterator *iter, PCWCHAR path);
+    Result<void, Error> Initialization(PCWCHAR path);
     ~DirectoryIterator();
 
     // Move to next entry. Returns false when no more files.

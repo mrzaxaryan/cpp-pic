@@ -447,7 +447,7 @@ private:
 	static BOOL TestDirectoryIteration()
 	{
 		DirectoryIterator rootIter;
-		Result<void, Error> result = DirectoryIterator::Initialization(&rootIter, Path::NormalizePath(L""_embed));
+		auto result = rootIter.Initialization(Path::NormalizePath(L""_embed));
 		if (!result.IsOk())
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for root");
@@ -455,7 +455,7 @@ private:
 		}
 		// Test iterating through a directory with multiple files
 		DirectoryIterator iter;
-		result = DirectoryIterator::Initialization(&iter, Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
+		result = iter.Initialization(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
 		if (!result.IsOk())
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for level1_dir1");

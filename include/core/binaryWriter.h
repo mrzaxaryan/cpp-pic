@@ -28,4 +28,14 @@ class BinaryWriter{
             offset += size;
             return address;
         }
+
+        PVOID GetAddress() {
+            return address;
+        }
+        USIZE GetOffset() {
+            return offset;
+        }
+        USIZE GetMaxSize() {
+            return maxSize;
+        }
 };

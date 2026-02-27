@@ -32,4 +32,13 @@ public:
         offset += size;
         return size;
     }
+    PVOID GetAddress() {
+        return address;
+    }
+    USIZE GetOffset() {
+        return offset;
+    }
+    USIZE GetMaxSize() {
+        return maxSize;
+    }
 };

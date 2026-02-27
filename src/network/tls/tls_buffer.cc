@@ -19,25 +19,6 @@ INT32 TlsBuffer::Append(PCVOID data, INT32 size)
 /// @param data Character to append
 /// @return The offset at which the character was appended
 
-INT32 TlsBuffer::Append(CHAR data)
-{
-    CheckSize(1);
-    buffer[this->size] = data;
-    this->size++;
-    return this->size - 1;
-}
-
-/// @brief Append a 16-bit integer to the TLS buffer
-/// @param data The 16-bit integer to append
-/// @return The offset at which the 16-bit integer was appended
-
-INT32 TlsBuffer::Append(INT16 data)
-{
-    CheckSize(2);
-    *(INT16 *)(buffer + this->size) = data;
-    this->size += 2;
-    return this->size - 2;
-}
 
 /// @brief Append a 32-bit integer to the TLS buffer
 /// @param size The 32-bit integer to append

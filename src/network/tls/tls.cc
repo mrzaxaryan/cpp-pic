@@ -53,7 +53,7 @@ typedef enum
 
 static FORCE_INLINE VOID AppendU16BE(TlsBuffer &buf, UINT16 val)
 {
-    buf.Append((INT16)UINT16SwapByteOrder(val));
+    buf.Append<INT16>(UINT16SwapByteOrder(val));
 }
 
 /// @brief Send packet data over TLS connection
@@ -72,15 +72,15 @@ Result<void, Error> TLSClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer
     LOG_DEBUG("Sending packet with type: %d, version: %d, size: %d bytes", packetType, ver, buf.GetSize());
 
     TlsBuffer tempBuffer;
-    tempBuffer.Append((CHAR)packetType);
-    tempBuffer.Append((INT16)ver);
+    tempBuffer.Append<CHAR>(packetType);
+    tempBuffer.Append<INT16>(ver);
     INT32 bodySizeIndex = tempBuffer.AppendSize(2); // tls body size
 
     BOOL keep_original = packetType == CONTENT_CHANGECIPHERSPEC || packetType == CONTENT_ALERT;
     if (!keep_original && crypto.GetEncoding())
     {
         LOG_DEBUG("Encoding packet with type: %d, size: %d bytes", packetType, buf.GetSize());
-        buf.Append((CHAR)packetType);
+        buf.Append<CHAR>(packetType);
         (tempBuffer.GetBuffer())[0] = CONTENT_APPLICATION_DATA;
     }
     LOG_DEBUG("Encoding buffer with size: %d bytes, keep_original: %d", buf.GetSize(), keep_original);
@@ -110,15 +110,15 @@ Result<void, Error> TLSClient::SendClientHello(const CHAR *host)
 
     BOOL hastls13 = false;
 
-    sendBuffer.Append((CHAR)MSG_CLIENT_HELLO);
+    sendBuffer.Append<CHAR>(MSG_CLIENT_HELLO);
     INT32 handshakeSizeIndex = sendBuffer.AppendSize(3); // tls handshake body size
     LOG_DEBUG("Appending ClientHello with handshake size index: %d", handshakeSizeIndex);
 
-    sendBuffer.Append((INT16)0x0303);
+    sendBuffer.Append<INT16>(0x0303);
     LOG_DEBUG("Appending ClientHello with version: 0x0303");
     sendBuffer.Append(crypto.CreateClientRand(), RAND_SIZE);
     LOG_DEBUG("Appending ClientHello with client random data");
-    sendBuffer.Append((CHAR)0);
+    sendBuffer.Append<CHAR>(0);
     LOG_DEBUG("Client has %d ciphers to append", crypto.GetCipherCount());
     INT32 cipherCountIndex = sendBuffer.AppendSize(2);
     LOG_DEBUG("Appending ClientHello with cipher count index: %d", cipherCountIndex);
@@ -129,8 +129,8 @@ Result<void, Error> TLSClient::SendClientHello(const CHAR *host)
     }
     LOG_DEBUG("Appending ClientHello with %d ciphers", crypto.GetCipherCount());
     *(PUINT16)(sendBuffer.GetBuffer() + cipherCountIndex) = UINT16SwapByteOrder(sendBuffer.GetSize() - cipherCountIndex - 2);
-    sendBuffer.Append((CHAR)1);
-    sendBuffer.Append((CHAR)0);
+    sendBuffer.Append<CHAR>(1);
+    sendBuffer.Append<CHAR>(0);
 
     INT32 extSizeIndex = sendBuffer.AppendSize(2);
     LOG_DEBUG("Appending ClientHello with extension size index: %d", extSizeIndex);
@@ -139,7 +139,7 @@ Result<void, Error> TLSClient::SendClientHello(const CHAR *host)
     LOG_DEBUG("Appending ClientHello with host: %s, length: %d", host, hostLen);
     AppendU16BE(sendBuffer, hostLen + 5);
     AppendU16BE(sendBuffer, hostLen + 3);
-    sendBuffer.Append((CHAR)0);
+    sendBuffer.Append<CHAR>(0);
     AppendU16BE(sendBuffer, hostLen);
     sendBuffer.Append(host, hostLen);
 
@@ -155,7 +155,7 @@ Result<void, Error> TLSClient::SendClientHello(const CHAR *host)
         LOG_DEBUG("Appending ClientHello with TLS 1.3 specific extensions");
         AppendU16BE(sendBuffer, EXT_SUPPORTED_VERSION);
         AppendU16BE(sendBuffer, 3);
-        sendBuffer.Append((CHAR)2);
+        sendBuffer.Append<CHAR>(2);
         // tls 1.3 version
         AppendU16BE(sendBuffer, 0x0304);
 
@@ -220,9 +220,9 @@ Result<void, Error> TLSClient::SendClientFinished()
     LOG_DEBUG("Sending Client Finished for client: %p", this);
     crypto.ComputeVerify(verify, CIPHER_HASH_SIZE, 0);
     LOG_DEBUG("Computed verify data for Client Finished, size: %d bytes", verify.GetSize());
-    sendBuffer.Append((CHAR)MSG_FINISHED);
-    sendBuffer.Append((CHAR)0);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(verify.GetSize()));
+    sendBuffer.Append<CHAR>(MSG_FINISHED);
+    sendBuffer.Append<CHAR>(0);
+    sendBuffer.Append<INT16>(UINT16SwapByteOrder(verify.GetSize()));
     sendBuffer.Append(verify.GetBuffer(), verify.GetSize());
 
     auto r = SendPacket(CONTENT_HANDSHAKE, 0x303, sendBuffer);
@@ -239,13 +239,13 @@ Result<void, Error> TLSClient::SendClientExchange()
     sendBuffer.Clear();
     TlsBuffer &pubkey = crypto.GetPubKey();
     LOG_DEBUG("Sending Client Key Exchange for client: %p, public key size: %d bytes", this, pubkey.GetSize());
-    sendBuffer.Append((CHAR)MSG_CLIENT_KEY_EXCHANGE);
-    sendBuffer.Append((CHAR)0);
-    sendBuffer.Append((INT16)UINT16SwapByteOrder(pubkey.GetSize() + 1));
-    sendBuffer.Append(((CHAR)(pubkey.GetSize()))); // tls body size
+    sendBuffer.Append<CHAR>(MSG_CLIENT_KEY_EXCHANGE);
+    sendBuffer.Append<CHAR>(0);
+    sendBuffer.Append<INT16>(UINT16SwapByteOrder(pubkey.GetSize() + 1));
+    sendBuffer.Append<CHAR>((pubkey.GetSize())); // tls body size
     sendBuffer.Append(pubkey.GetBuffer(), pubkey.GetSize());
     auto r = SendPacket(CONTENT_HANDSHAKE, 0x303, sendBuffer);
-    if (!r)
+    if (!r) 
         return Result<void, Error>::Err(r, Error::Tls_ClientExchangeFailed);
     return Result<void, Error>::Ok();
 }
@@ -256,7 +256,7 @@ Result<void, Error> TLSClient::SendClientExchange()
 Result<void, Error> TLSClient::SendChangeCipherSpec()
 {
     sendBuffer.Clear();
-    sendBuffer.Append((CHAR)1);
+    sendBuffer.Append<CHAR>(1);
     auto r = SendPacket(CONTENT_CHANGECIPHERSPEC, 0x303, sendBuffer);
     if (!r)
         return Result<void, Error>::Err(r, Error::Tls_ChangeCipherSpecFailed);

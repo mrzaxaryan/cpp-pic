@@ -54,8 +54,16 @@ public:
 
     // Write operations
     INT32 Append(PCVOID data, INT32 size);
-    INT32 Append(CHAR data);
-    INT32 Append(INT16 data);
+
+    template <typename T>
+    INT32 Append(T data){
+        CheckSize(sizeof(T));
+        *(T *)(buffer + this->size) = data;
+        this->size += sizeof(T);
+        return this->size - sizeof(T);
+    }
+    
+    
     INT32 AppendSize(INT32 size);
     // Setting operation
     VOID SetSize(INT32 size);

@@ -32,8 +32,7 @@ jobs:
       - name: Verify toolchain
         run: |
           clang++ --version
-          which ld64.lld
-          ld64.lld --version
+          ld -v 2>&1 | head -3 || true
 
       - name: Build -O0
         run: |

@@ -29,6 +29,12 @@ jobs:
           done
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
+      - name: Verify toolchain
+        run: |
+          clang++ --version
+          which ld64.lld
+          ld64.lld --version
+
       - name: Build -O0
         run: |
           rm -rf build

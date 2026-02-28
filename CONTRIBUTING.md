@@ -391,21 +391,6 @@ TlsBuffer(PCHAR buf, INT32 size) : buffer(buf), ownsMemory(false) {}
 
 ## Patterns
 
-### Static Class as Module
-
-Prefer classes with only `static` methods as modules. Namespaces are allowed for platform-specific factory functions (e.g. `result::FromNTSTATUS` in `platform_result.h`):
-
-```cpp
-class Memory
-{
-public:
-    FORCE_INLINE static PVOID Copy(PVOID dest, PCVOID src, USIZE count);
-    FORCE_INLINE static PVOID Zero(PVOID dest, USIZE count);
-};
-```
-
-Examples: `Memory`, `String`, `Console`, `Djb2`, `Logger`, `Math`, `Base64`
-
 ### Compile-Time Embedding
 
 The `_embed` ecosystem converts literals into immediate values, eliminating `.rdata`:

@@ -112,10 +112,12 @@ endif()
 
 # On ARM64, the linker adds dyld_stub_binder to the initial undefined symbols
 # list for dynamic executables. Normally libSystem provides it, but -nostdlib
-# prevents linking libSystem. A no-op stub with visibility("default") is
-# provided in src/platform/macos/platform.cc to satisfy the linker. The
-# explicit visibility override is required because -fvisibility=hidden (set
-# globally) would otherwise make the symbol hidden, preventing the linker from
-# matching it against the default-visibility initial-undefine reference. The
-# stub is never called because -fvisibility=hidden eliminates all lazy-binding
-# stubs for every other symbol.
+# prevents linking libSystem. Apple's system linker treats initial-undefines
+# as a special category that cannot be satisfied by input objects (even with
+# visibility("default")) or suppressed with -U. Use -undefined dynamic_lookup
+# to tell the linker to allow all undefined symbols — they'll be dynamically
+# resolved by dyld at runtime. The dyld_stub_binder symbol is never actually
+# called because -fvisibility=hidden eliminates all lazy-binding stubs.
+if(PIR_ARCH STREQUAL "aarch64")
+    pir_add_link_flags(-undefined,dynamic_lookup)
+endif()

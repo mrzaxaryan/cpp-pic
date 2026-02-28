@@ -24,15 +24,16 @@
 #include "compiler.h"
 
 /**
- * @namespace BitOps
- * @brief Namespace containing bit manipulation operations
+ * @class BitOps
+ * @brief Static class containing bit manipulation operations
  *
  * @details Provides templated bit rotation functions that work with any
  * unsigned integer type. The template implementations compile to optimal
  * machine instructions for the target architecture.
  */
-namespace BitOps
+class BitOps
 {
+public:
     /**
      * @brief Rotate right (circular shift right)
      * @tparam T Unsigned integer type (UINT32, UINT64, etc.)
@@ -112,6 +113,6 @@ namespace BitOps
      * @return Value rotated left by n bits
      */
     static FORCE_INLINE UINT64 ROTL64(UINT64 x, UINT32 n) { return ROTL(x, n); }
-}
+};
 
 /** @} */ // end of bitops group

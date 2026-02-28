@@ -130,60 +130,78 @@ public:
     [[nodiscard]] static Result<NTSTATUS, Error> ZwCreateFile(PPVOID FileHandle, UINT32 DesiredAccess, PVOID ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, UINT32 FileAttributes, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, PVOID EaBuffer, UINT32 EaLength);
     // This function allocates virtual memory in the address space of a process.
     // Minimum supported client	Windows XP.
-    [[nodiscard]] static NTSTATUS ZwAllocateVirtualMemory(PVOID ProcessHandle, PPVOID BaseAddress, USIZE ZeroBits, PUSIZE RegionSize, UINT32 AllocationType, UINT32 Protect);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwAllocateVirtualMemory(PVOID ProcessHandle, PPVOID BaseAddress, USIZE ZeroBits, PUSIZE RegionSize, UINT32 AllocationType, UINT32 Protect);
     // This function releases virtual memory in the address space of a process.
     // Minimum supported client	Windows XP.
-    [[nodiscard]] static NTSTATUS ZwFreeVirtualMemory(PVOID ProcessHandle, PPVOID BaseAddress, PUSIZE RegionSize, UINT32 FreeType);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwFreeVirtualMemory(PVOID ProcessHandle, PPVOID BaseAddress, PUSIZE RegionSize, UINT32 FreeType);
     // This function terminates the specified process and all of its threads.
     // Target platform is universal.
-    [[nodiscard]] static NTSTATUS ZwTerminateProcess(PVOID ProcessHandle, NTSTATUS ExitStatus);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwTerminateProcess(PVOID ProcessHandle, NTSTATUS ExitStatus);
     // This function retrieves file information for the specified file.
     // Minimum supported client	Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwQueryInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwQueryInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass);
     // This function reads data from an open file.
     // Minimum supported client	Windows 2000 Professional [desktop apps | UWP apps].
-    [[nodiscard]] static NTSTATUS ZwReadFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwReadFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key);
     // This function writes data to an open file.
     // Minimum supported client	Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwWriteFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwWriteFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, UINT32 Length, PLARGE_INTEGER ByteOffset, PUINT32 Key);
     // This function sets various types of information for a file object.
     // Minimum supported client	Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwSetInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwSetInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass);
     // This function deletes a file.
     // Minimum supported client	Windows XP.
-    [[nodiscard]] static NTSTATUS ZwDeleteFile(POBJECT_ATTRIBUTES FileName);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwDeleteFile(POBJECT_ATTRIBUTES FileName);
     // This function retrieves basic information about a file.
     // Minimum supported client Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwQueryAttributesFile(POBJECT_ATTRIBUTES ObjectAttributes, PFILE_BASIC_INFORMATION FileInformation);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwQueryAttributesFile(POBJECT_ATTRIBUTES ObjectAttributes, PFILE_BASIC_INFORMATION FileInformation);
     // This function opens an existing file, device, directory, or volume, and returns a handle for the file object.
     // Target Platform	Windows.
-    [[nodiscard]] static NTSTATUS ZwOpenFile(PPVOID FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, UINT32 ShareAccess, UINT32 OpenOptions);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwOpenFile(PPVOID FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, UINT32 ShareAccess, UINT32 OpenOptions);
     // This function retrieves volume information for the specified file system.
     // Minimum supported client	Windows XP.
-    [[nodiscard]] static NTSTATUS ZwQueryVolumeInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FsInformation, UINT32 Length, UINT32 FsInformationClass);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwQueryVolumeInformationFile(PVOID FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FsInformation, UINT32 Length, UINT32 FsInformationClass);
     // This function retrieves information about a process.
     // Target Platform	Windows
-    [[nodiscard]] static NTSTATUS ZwQueryInformationProcess(PVOID ProcessHandle, UINT32 ProcessInformationClass, PVOID ProcessInformation, UINT32 ProcessInformationLength, PUINT32 ReturnLength);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwQueryInformationProcess(PVOID ProcessHandle, UINT32 ProcessInformationClass, PVOID ProcessInformation, UINT32 ProcessInformationLength, PUINT32 ReturnLength);
     // This function returns a handle to the current process.
     // All target platforms.
     static inline PVOID NtCurrentProcess() { return (PVOID)(USIZE)-1L; }
     static inline PVOID NtCurrentThread() { return (PVOID)(USIZE)-2L; }
     // This function creates a named pipe.
     // Minimum supported client Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwCreateNamedPipeFile(PPVOID FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, UINT32 NamedPipeType, UINT32 ReadMode, UINT32 CompletionMode, UINT32 MaximumInstances, UINT32 InboundQuota, UINT32 OutboundQuota, PLARGE_INTEGER DefaultTimeout);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwCreateNamedPipeFile(PPVOID FileHandle, UINT32 DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, UINT32 ShareAccess, UINT32 CreateDisposition, UINT32 CreateOptions, UINT32 NamedPipeType, UINT32 ReadMode, UINT32 CompletionMode, UINT32 MaximumInstances, UINT32 InboundQuota, UINT32 OutboundQuota, PLARGE_INTEGER DefaultTimeout);
     // This function sets information for an object.
     // Minimum supported client Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwSetInformationObject(PVOID Handle, UINT32 ObjectInformationClass, PVOID ObjectInformation, UINT32 ObjectInformationLength);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwSetInformationObject(PVOID Handle, UINT32 ObjectInformationClass, PVOID ObjectInformation, UINT32 ObjectInformationLength);
     // This function creates a user process.
     // Minimum supported client Windows Vista.
-    [[nodiscard]] static NTSTATUS ZwCreateUserProcess(PPVOID ProcessHandle, PPVOID ThreadHandle, UINT32 ProcessDesiredAccess, UINT32 ThreadDesiredAccess, POBJECT_ATTRIBUTES ProcessObjectAttributes, POBJECT_ATTRIBUTES ThreadObjectAttributes, UINT32 ProcessFlags, UINT32 ThreadFlags, PVOID ProcessParameters, PVOID CreateInfo, PVOID AttributeList);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwCreateUserProcess(PPVOID ProcessHandle, PPVOID ThreadHandle, UINT32 ProcessDesiredAccess, UINT32 ThreadDesiredAccess, POBJECT_ATTRIBUTES ProcessObjectAttributes, POBJECT_ATTRIBUTES ThreadObjectAttributes, UINT32 ProcessFlags, UINT32 ThreadFlags, PVOID ProcessParameters, PVOID CreateInfo, PVOID AttributeList);
     // This function creates process parameters.
     // Minimum supported client Windows 2000.
-    [[nodiscard]] static NTSTATUS RtlCreateProcessParametersEx(PVOID *ProcessParameters, PUNICODE_STRING ImagePathName, PUNICODE_STRING DllPath, PUNICODE_STRING CurrentDirectory, PUNICODE_STRING CommandLine, PVOID Environment, PUNICODE_STRING WindowTitle, PUNICODE_STRING DesktopInfo, PUNICODE_STRING ShellInfo, PUNICODE_STRING RuntimeData, UINT32 Flags);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> RtlCreateProcessParametersEx(PVOID *ProcessParameters, PUNICODE_STRING ImagePathName, PUNICODE_STRING DllPath, PUNICODE_STRING CurrentDirectory, PUNICODE_STRING CommandLine, PVOID Environment, PUNICODE_STRING WindowTitle, PUNICODE_STRING DesktopInfo, PUNICODE_STRING ShellInfo, PUNICODE_STRING RuntimeData, UINT32 Flags);
     // This function destroys process parameters.
     // Minimum supported client Windows 2000.
-    [[nodiscard]] static NTSTATUS RtlDestroyProcessParameters(PVOID ProcessParameters);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> RtlDestroyProcessParameters(PVOID ProcessParameters);
     // This function queries directory information for a file.
     // Minimum supported client Windows 2000.
-    [[nodiscard]] static NTSTATUS ZwQueryDirectoryFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass, BOOL ReturnSingleEntry, PUNICODE_STRING FileName, BOOL RestartScan);
+    // Returns Ok(status) on NT_SUCCESS, Err(Error{platformCode}) on failure.
+    [[nodiscard]] static Result<NTSTATUS, Error> ZwQueryDirectoryFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass, BOOL ReturnSingleEntry, PUNICODE_STRING FileName, BOOL RestartScan);
 };

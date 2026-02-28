@@ -16,9 +16,9 @@ File::File(PVOID handle) : fileHandle(handle), fileSize(0)
         Memory::Zero(&fileStandardInfo, sizeof(FILE_STANDARD_INFORMATION));
         Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
-        NTSTATUS status = NTDLL::ZwQueryInformationFile(fileHandle, &ioStatusBlock, &fileStandardInfo, sizeof(fileStandardInfo), FileStandardInformation);
+        auto queryResult = NTDLL::ZwQueryInformationFile(fileHandle, &ioStatusBlock, &fileStandardInfo, sizeof(fileStandardInfo), FileStandardInformation);
 
-        if (NT_SUCCESS(status))
+        if (queryResult)
         {
             fileSize = fileStandardInfo.EndOfFile.QuadPart;
         }
@@ -76,13 +76,13 @@ Result<UINT32, Error> File::Read(PVOID buffer, UINT32 size)
     IO_STATUS_BLOCK ioStatusBlock;
     Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
-    NTSTATUS status = NTDLL::ZwReadFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, buffer, (UINT32)size, nullptr, nullptr);
+    auto readResult = NTDLL::ZwReadFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, buffer, (UINT32)size, nullptr, nullptr);
 
-    if (NT_SUCCESS(status))
+    if (readResult)
     {
         return Result<UINT32, Error>::Ok((UINT32)ioStatusBlock.Information);
     }
-    return Result<UINT32, Error>::Err(Error::Windows((UINT32)status), Error::Fs_ReadFailed);
+    return Result<UINT32, Error>::Err(readResult, Error::Fs_ReadFailed);
 }
 
 // Write data from the buffer to the file
@@ -94,13 +94,13 @@ Result<UINT32, Error> File::Write(PCVOID buffer, USIZE size)
     IO_STATUS_BLOCK ioStatusBlock;
     Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 
-    NTSTATUS status = NTDLL::ZwWriteFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, (PVOID)buffer, (UINT32)size, nullptr, nullptr);
+    auto writeResult = NTDLL::ZwWriteFile((PVOID)fileHandle, nullptr, nullptr, nullptr, &ioStatusBlock, (PVOID)buffer, (UINT32)size, nullptr, nullptr);
 
-    if (NT_SUCCESS(status))
+    if (writeResult)
     {
         return Result<UINT32, Error>::Ok((UINT32)ioStatusBlock.Information);
     }
-    return Result<UINT32, Error>::Err(Error::Windows((UINT32)status), Error::Fs_WriteFailed);
+    return Result<UINT32, Error>::Err(writeResult, Error::Fs_WriteFailed);
 }
 
 // Get the current file offset
@@ -114,9 +114,9 @@ USIZE File::GetOffset() const
     Memory::Zero(&posFile, sizeof(posFile));
     Memory::Zero(&ioStatusBlock, sizeof(ioStatusBlock));
 
-    NTSTATUS status = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFile, sizeof(posFile), FilePositionInformation);
+    auto queryResult = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFile, sizeof(posFile), FilePositionInformation);
 
-    if (NT_SUCCESS(status))
+    if (queryResult)
     {
         return (USIZE)posFile.CurrentByteOffset.QuadPart;
     }
@@ -152,8 +152,8 @@ void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
     Memory::Zero(&fileStandardInfo, sizeof(FILE_STANDARD_INFORMATION));
     INT64 distance = 0;
 
-    NTSTATUS status = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
-    if (!NT_SUCCESS(status))
+    auto queryResult = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+    if (!queryResult)
         return;
 
     switch (origin)
@@ -165,8 +165,8 @@ void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
         distance = posInfo.CurrentByteOffset.QuadPart + relativeAmount;
         break;
     case OffsetOrigin::End:
-        status = NTDLL::ZwQueryInformationFile(fileHandle, &ioStatusBlock, &fileStandardInfo, sizeof(fileStandardInfo), FileStandardInformation);
-        if (!NT_SUCCESS(status))
+        queryResult = NTDLL::ZwQueryInformationFile(fileHandle, &ioStatusBlock, &fileStandardInfo, sizeof(fileStandardInfo), FileStandardInformation);
+        if (!queryResult)
             return;
         distance = fileStandardInfo.EndOfFile.QuadPart + relativeAmount;
         break;
@@ -285,12 +285,12 @@ Result<void, Error> FileSystem::Exists(PCWCHAR path)
         return Result<void, Error>::Err(Error::Fs_PathResolveFailed);
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
-    NTSTATUS status = NTDLL::ZwQueryAttributesFile(&objAttr, &fileBasicInfo);
+    auto queryResult = NTDLL::ZwQueryAttributesFile(&objAttr, &fileBasicInfo);
 
     NTDLL::RtlFreeUnicodeString(&uniName);
 
-    if (!NT_SUCCESS(status))
-        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_OpenFailed);
+    if (!queryResult)
+        return Result<void, Error>::Err(queryResult, Error::Fs_OpenFailed);
 
     if (fileBasicInfo.FileAttributes == 0xFFFFFFFF)
         return Result<void, Error>::Err(Error::Fs_OpenFailed);
@@ -352,14 +352,14 @@ Result<void, Error> FileSystem::DeleteDirectory(PCWCHAR path)
 
     InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
-    NTSTATUS status = NTDLL::ZwOpenFile(&hDir, DELETE | SYNCHRONIZE, &objAttr, &ioStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
-    if (!NT_SUCCESS(status))
+    auto openResult = NTDLL::ZwOpenFile(&hDir, DELETE | SYNCHRONIZE, &objAttr, &ioStatusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
+    if (!openResult)
     {
         NTDLL::RtlFreeUnicodeString(&uniName);
-        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_DeleteDirFailed);
+        return Result<void, Error>::Err(openResult, Error::Fs_DeleteDirFailed);
     }
 
-    status = NTDLL::ZwSetInformationFile(
+    auto setResult = NTDLL::ZwSetInformationFile(
         hDir,
         &ioStatusBlock,
         &disp,
@@ -369,8 +369,8 @@ Result<void, Error> FileSystem::DeleteDirectory(PCWCHAR path)
     (void)NTDLL::ZwClose(hDir);
     NTDLL::RtlFreeUnicodeString(&uniName);
 
-    if (!NT_SUCCESS(status))
-        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_DeleteDirFailed);
+    if (!setResult)
+        return Result<void, Error>::Err(setResult, Error::Fs_DeleteDirFailed);
 
     return Result<void, Error>::Ok();
 }
@@ -420,21 +420,20 @@ DirectoryIterator::DirectoryIterator()
 // DirectoryIterator Constructor
 Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path) 
 {
-    NTSTATUS status;
     // CASE: List Drives (Path is empty or nullptr)
     if (!path || path[0] == L'\0')
     {
         PROCESS_DEVICEMAP_INFORMATION ProcessDeviceMapInfo;
-        status = NTDLL::ZwQueryInformationProcess(
+        auto queryResult = NTDLL::ZwQueryInformationProcess(
             NTDLL::NtCurrentProcess(),
             ProcessDeviceMap,
             &ProcessDeviceMapInfo.Query,
             sizeof(ProcessDeviceMapInfo.Query),
             nullptr);
 
-        if (!NT_SUCCESS(status))
+        if (!queryResult)
         {
-            return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_OpenFailed);
+            return Result<void, Error>::Err(queryResult, Error::Fs_OpenFailed);
         }
         if (ProcessDeviceMapInfo.Query.DriveMap != 0)
         {
@@ -448,15 +447,15 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
 
     // Convert path to NT path and open directory handle
     UNICODE_STRING uniPath;
-    status = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniPath, nullptr, nullptr);
-    if (!NT_SUCCESS(status))
-        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_PathResolveFailed);
+    auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniPath, nullptr, nullptr);
+    if (!pathResult)
+        return Result<void, Error>::Err(pathResult, Error::Fs_PathResolveFailed);
 
     OBJECT_ATTRIBUTES objAttr;
     InitializeObjectAttributes(&objAttr, &uniPath, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
     IO_STATUS_BLOCK ioStatusBlock;
-    status = NTDLL::ZwOpenFile(
+    auto openResult = NTDLL::ZwOpenFile(
         &handle,
         FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objAttr,
@@ -466,17 +465,17 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
 
     NTDLL::RtlFreeUnicodeString(&uniPath);
 
-    if (!NT_SUCCESS(status))
+    if (!openResult)
     {
         handle = (PVOID)-1;
-        return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_OpenFailed);
+        return Result<void, Error>::Err(openResult, Error::Fs_OpenFailed);
     }
 
     // Query the first entry
     alignas(alignof(FILE_BOTH_DIR_INFORMATION)) UINT8 buffer[sizeof(FILE_BOTH_DIR_INFORMATION) + 260 * sizeof(WCHAR)];
     Memory::Zero(buffer, sizeof(buffer));
 
-    status = NTDLL::ZwQueryDirectoryFile(
+    auto dirResult = NTDLL::ZwQueryDirectoryFile(
         handle,
         nullptr,
         nullptr,
@@ -489,7 +488,7 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
         nullptr,
         true);
 
-    if (NT_SUCCESS(status))
+    if (dirResult)
     {
         const FILE_BOTH_DIR_INFORMATION &info = *(const FILE_BOTH_DIR_INFORMATION *)buffer;
         FillEntry(currentEntry, info);
@@ -522,7 +521,7 @@ Result<void, Error> DirectoryIterator::Next()
         // Query the process device map to get drive types
         PROCESS_DEVICEMAP_INFORMATION devMapInfo;
         Memory::Zero(&devMapInfo, sizeof(devMapInfo));
-        NTSTATUS devMapStatus = NTDLL::ZwQueryInformationProcess(
+        auto devMapResult = NTDLL::ZwQueryInformationProcess(
             NTDLL::NtCurrentProcess(),
             ProcessDeviceMap,
             &devMapInfo.Query,
@@ -544,7 +543,7 @@ Result<void, Error> DirectoryIterator::Next()
                 currentEntry.isDrive = true;
 
                 // DriveType[] uses Win32 drive type constants directly
-                if (NT_SUCCESS(devMapStatus))
+                if (devMapResult)
                     currentEntry.type = (UINT32)devMapInfo.Query.DriveType[i];
                 else
                     currentEntry.type = DRIVE_UNKNOWN;
@@ -571,7 +570,7 @@ Result<void, Error> DirectoryIterator::Next()
     alignas(alignof(FILE_BOTH_DIR_INFORMATION)) UINT8 buffer[sizeof(FILE_BOTH_DIR_INFORMATION) + 260 * sizeof(WCHAR)];
     Memory::Zero(buffer, sizeof(buffer));
 
-    NTSTATUS status = NTDLL::ZwQueryDirectoryFile(
+    auto dirResult = NTDLL::ZwQueryDirectoryFile(
         handle,
         nullptr,
         nullptr,
@@ -584,14 +583,14 @@ Result<void, Error> DirectoryIterator::Next()
         nullptr,
         false);
 
-    if (NT_SUCCESS(status))
+    if (dirResult)
     {
         const FILE_BOTH_DIR_INFORMATION &dirInfo = *(const FILE_BOTH_DIR_INFORMATION *)buffer;
         FillEntry(currentEntry, dirInfo);
         return Result<void, Error>::Ok();
     }
 
-    return Result<void, Error>::Err(Error::Windows((UINT32)status), Error::Fs_ReadFailed);
+    return Result<void, Error>::Err(dirResult, Error::Fs_ReadFailed);
 }
 
 // Move constructor

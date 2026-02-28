@@ -6,8 +6,8 @@ PVOID Allocator::AllocateMemory(USIZE len)
 {
     PVOID base = nullptr;
     USIZE size = len;
-    NTSTATUS status = NTDLL::ZwAllocateVirtualMemory(NTDLL::NtCurrentProcess(), &base, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    return NT_SUCCESS(status) ? base : nullptr;
+    auto result = NTDLL::ZwAllocateVirtualMemory(NTDLL::NtCurrentProcess(), &base, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    return result ? base : nullptr;
 }
 
 VOID Allocator::ReleaseMemory(PVOID ptr, USIZE)

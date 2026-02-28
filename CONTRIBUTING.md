@@ -291,6 +291,39 @@ private:
 - Watch aggregate sizes -- large fixed-size members consume stack when instantiated as locals
 - Test under `-Oz` (release builds) to catch stack issues early
 
+**Constructor rules** -- Constructors must be trivial and must never fail:
+
+Constructors cannot return error codes, and PIR has no exceptions. A constructor that performs fallible work (DNS resolution, syscalls, URL parsing) creates a silent-failure path that violates the `[[nodiscard]]` principle. Instead, use a **static factory method** returning `Result<T, Error>`:
+
+```cpp
+class MyClient
+{
+private:
+	MyClient() : port(0), isConnected(false) {}  // trivial, cannot fail
+
+public:
+	// Factory -- caller MUST check the result (enforced by [[nodiscard]])
+	[[nodiscard]] static Result<MyClient, Error> Create(PCCHAR url);
+
+	// Separate open/close for connection lifecycle
+	[[nodiscard]] Result<void, Error> Open();
+	[[nodiscard]] Result<void, Error> Close();
+};
+
+// Usage
+auto createResult = MyClient::Create((PCCHAR)url);
+if (!createResult)
+    return false;  // error is preserved and propagated
+MyClient &client = createResult.Value();
+```
+
+Rules:
+1. Constructors only initialize members to safe defaults (zero, nullptr, false)
+2. All fallible work goes into a `[[nodiscard]]` factory or `Open()` method
+3. Factory methods return `Result<T, Error>` so errors propagate cleanly
+4. The type must support move semantics for the factory to return it via `Result`
+5. Never do network I/O, syscalls, or complex parsing in a constructor
+
 **RAII pattern** -- Acquire resources in constructors, release in destructors:
 
 ```cpp

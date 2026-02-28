@@ -50,6 +50,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare LLVM directory
+        run: sudo mkdir -p /opt/llvm && sudo chown -R $(whoami) /opt/llvm
+
       - name: Restore LLVM cache
         uses: actions/cache/restore@v4
         with:

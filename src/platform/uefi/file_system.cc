@@ -73,14 +73,12 @@ static EFI_FILE_PROTOCOL *OpenFileFromRoot(EFI_FILE_PROTOCOL *Root, PCWCHAR path
 		return nullptr;
 
 	// Normalize path separators (convert '/' to '\' for UEFI)
-	PWCHAR normalizedPath = Path::NormalizePath(path);
-	if (normalizedPath == nullptr)
+	WCHAR normalizedBuf[512];
+	if (!Path::NormalizePath(path, Span<WCHAR>(normalizedBuf)))
 		return nullptr;
 
 	EFI_FILE_PROTOCOL *FileHandle = nullptr;
-	EFI_STATUS Status = Root->Open(Root, &FileHandle, (CHAR16 *)normalizedPath, mode, attributes);
-
-	delete[] normalizedPath;
+	EFI_STATUS Status = Root->Open(Root, &FileHandle, (CHAR16 *)normalizedBuf, mode, attributes);
 
 	if (EFI_ERROR_CHECK(Status))
 		return nullptr;
@@ -208,19 +206,17 @@ Result<void, Error> FileSystem::CreateDirectory(PCWCHAR path)
 		return Result<void, Error>::Err(Error::Fs_CreateDirFailed);
 
 	// Normalize path separators (convert '/' to '\' for UEFI)
-	PWCHAR normalizedPath = Path::NormalizePath(path);
-	if (normalizedPath == nullptr)
+	WCHAR normalizedBuf[512];
+	if (!Path::NormalizePath(path, Span<WCHAR>(normalizedBuf)))
 	{
 		Root->Close(Root);
 		return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_CreateDirFailed);
 	}
 
 	EFI_FILE_PROTOCOL *DirHandle = nullptr;
-	EFI_STATUS Status = Root->Open(Root, &DirHandle, (CHAR16 *)normalizedPath,
+	EFI_STATUS Status = Root->Open(Root, &DirHandle, (CHAR16 *)normalizedBuf,
 								   EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
 								   EFI_FILE_DIRECTORY);
-
-	delete[] normalizedPath;
 	Root->Close(Root);
 
 	if (EFI_ERROR_CHECK(Status) || DirHandle == nullptr)

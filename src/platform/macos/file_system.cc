@@ -4,6 +4,7 @@
 #include "system.h"
 #include "string.h"
 #include "utf16.h"
+#include "path.h"
 
 // --- File Implementation ---
 
@@ -106,8 +107,9 @@ VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 Result<File, Error> FileSystem::Open(PCWCHAR path, INT32 flags)
 {
 	CHAR utf8Path[1024];
-	USIZE pathLen = String::Length(path);
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(path, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
+	WCHAR normalizedPath[1024];
+	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
+	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
 	utf8Path[utf8Len] = '\0';
 
 	INT32 openFlags = 0;
@@ -140,8 +142,9 @@ Result<File, Error> FileSystem::Open(PCWCHAR path, INT32 flags)
 Result<void, Error> FileSystem::Delete(PCWCHAR path)
 {
 	CHAR utf8Path[1024];
-	USIZE pathLen = String::Length(path);
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(path, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
+	WCHAR normalizedPath[1024];
+	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
+	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
 	utf8Path[utf8Len] = '\0';
 
 	SSIZE result = System::Call(SYS_UNLINK, (USIZE)utf8Path);
@@ -153,8 +156,9 @@ Result<void, Error> FileSystem::Delete(PCWCHAR path)
 Result<void, Error> FileSystem::Exists(PCWCHAR path)
 {
 	CHAR utf8Path[1024];
-	USIZE pathLen = String::Length(path);
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(path, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
+	WCHAR normalizedPath[1024];
+	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
+	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
 	utf8Path[utf8Len] = '\0';
 
 	UINT8 statbuf[144];
@@ -167,8 +171,9 @@ Result<void, Error> FileSystem::Exists(PCWCHAR path)
 Result<void, Error> FileSystem::CreateDirectory(PCWCHAR path)
 {
 	CHAR utf8Path[1024];
-	USIZE pathLen = String::Length(path);
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(path, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
+	WCHAR normalizedPath[1024];
+	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
+	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
 	utf8Path[utf8Len] = '\0';
 
 	// Mode 0755 (rwxr-xr-x)
@@ -182,8 +187,9 @@ Result<void, Error> FileSystem::CreateDirectory(PCWCHAR path)
 Result<void, Error> FileSystem::DeleteDirectory(PCWCHAR path)
 {
 	CHAR utf8Path[1024];
-	USIZE pathLen = String::Length(path);
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(path, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
+	WCHAR normalizedPath[1024];
+	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
+	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
 	utf8Path[utf8Len] = '\0';
 
 	SSIZE result = System::Call(SYS_RMDIR, (USIZE)utf8Path);
@@ -205,8 +211,9 @@ Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 
 	if (path && path[0] != L'\0')
 	{
-		USIZE pathLen = String::Length(path);
-		USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(path, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
+		WCHAR normalizedPath[1024];
+		USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
+		USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen), Span<CHAR>(utf8Path, sizeof(utf8Path) - 1));
 		utf8Path[utf8Len] = '\0';
 	}
 	else

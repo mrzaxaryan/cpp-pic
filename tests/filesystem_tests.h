@@ -31,7 +31,7 @@ private:
 	static BOOL TestCreateNestedDirectories()
 	{
 		// Create root directory
-		auto r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root"_embed));
+		auto r = FileSystem::CreateDirectory(L"test_io_root"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create test_io_root");
@@ -39,19 +39,19 @@ private:
 		}
 
 		// Create first level directories
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir1"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level1_dir1");
 			return false;
 		}
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir2"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir2"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level1_dir2");
 			return false;
 		}
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir3"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir3"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level1_dir3");
@@ -59,31 +59,31 @@ private:
 		}
 
 		// Create second level directories
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir1\\level2_dir1"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level2_dir1");
 			return false;
 		}
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir1\\level2_dir2"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level2_dir2");
 			return false;
 		}
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir2\\level2_dir3"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level2_dir3");
 			return false;
 		}
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir2\\level2_dir4"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level2_dir4");
 			return false;
 		}
-		r = FileSystem::CreateDirectory(Path::NormalizePath(L"test_io_root\\level1_dir3\\level2_dir5"_embed));
+		r = FileSystem::CreateDirectory(L"test_io_root\\level1_dir3\\level2_dir5"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to create level2_dir5");
@@ -91,55 +91,55 @@ private:
 		}
 
 		// Verify all directories exist
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root"_embed));
+		r = FileSystem::Exists(L"test_io_root"_embed);
 		if (!r)
 		{
 			LOG_ERROR("test_io_root does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir1"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level1_dir1 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir2"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir2"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level1_dir2 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir3"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir3"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level1_dir3 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir1\\level2_dir1"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level2_dir1 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir1\\level2_dir2"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level2_dir2 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir2\\level2_dir3"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level2_dir3 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir2\\level2_dir4"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level2_dir4 does not exist after creation");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir3\\level2_dir5"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir3\\level2_dir5"_embed);
 		if (!r)
 		{
 			LOG_ERROR("level2_dir5 does not exist after creation");
@@ -151,7 +151,7 @@ private:
 
 	static BOOL TestCreateFilesInDirectories()
 	{
-		auto r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\root_file.txt"_embed),
+		auto r = FileSystem::Open(L"test_io_root\\root_file.txt"_embed,
 								  FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -160,7 +160,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\file1.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir1\\file1.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -169,7 +169,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\file2.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir2\\file2.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -178,7 +178,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir3\\file3.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir3\\file3.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -187,7 +187,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -196,7 +196,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2\\deep_file2.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir1\\level2_dir2\\deep_file2.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -205,7 +205,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3\\deep_file3.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir2\\level2_dir3\\deep_file3.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -214,7 +214,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4\\deep_file4.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir2\\level2_dir4\\deep_file4.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -223,7 +223,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir3\\level2_dir5\\deep_file5.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir3\\level2_dir5\\deep_file5.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -232,7 +232,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\extra1.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir1\\extra1.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -241,7 +241,7 @@ private:
 		}
 		r.Value().Close();
 
-		r = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\extra2.txt"_embed),
+		r = FileSystem::Open(L"test_io_root\\level1_dir1\\extra2.txt"_embed,
 							 FileSystem::FS_CREATE | FileSystem::FS_WRITE);
 		if (!r)
 		{
@@ -257,7 +257,7 @@ private:
 	{
 		// Test 1: Simple text
 		{
-			auto openResult = FileSystem::Open(Path::NormalizePath(L"test_io_root\\test_write_read.txt"_embed),
+			auto openResult = FileSystem::Open(L"test_io_root\\test_write_read.txt"_embed,
 											   FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
 			if (!openResult)
 			{
@@ -282,7 +282,7 @@ private:
 			file.Close();
 
 			// Read it back
-			auto readOpenResult = FileSystem::Open(Path::NormalizePath(L"test_io_root\\test_write_read.txt"_embed), FileSystem::FS_READ);
+			auto readOpenResult = FileSystem::Open(L"test_io_root\\test_write_read.txt"_embed, FileSystem::FS_READ);
 			if (!readOpenResult)
 			{
 				LOG_ERROR("Failed to open test_write_read.txt for reading");
@@ -319,7 +319,7 @@ private:
 
 		// Test 2: Binary data
 		{
-			auto openResult = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\binary_test.dat"_embed),
+			auto openResult = FileSystem::Open(L"test_io_root\\level1_dir1\\binary_test.dat"_embed,
 											   FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
 			if (!openResult)
 			{
@@ -349,7 +349,7 @@ private:
 			file.Close();
 
 			// Read it back
-			auto readOpenResult = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir1\\binary_test.dat"_embed), FileSystem::FS_READ);
+			auto readOpenResult = FileSystem::Open(L"test_io_root\\level1_dir1\\binary_test.dat"_embed, FileSystem::FS_READ);
 			if (!readOpenResult)
 			{
 				LOG_ERROR("Failed to open binary_test.dat for reading");
@@ -386,7 +386,7 @@ private:
 
 		// Test 3: File offset operations
 		{
-			auto openResult = FileSystem::Open(Path::NormalizePath(L"test_io_root\\level1_dir2\\offset_test.dat"_embed),
+			auto openResult = FileSystem::Open(L"test_io_root\\level1_dir2\\offset_test.dat"_embed,
 											   FileSystem::FS_CREATE | FileSystem::FS_WRITE | FileSystem::FS_TRUNCATE);
 			if (!openResult)
 			{
@@ -436,19 +436,19 @@ private:
 	static BOOL TestFileExistence()
 	{
 		// Test existing files
-		auto r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\root_file.txt"_embed));
+		auto r = FileSystem::Exists(L"test_io_root\\root_file.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("root_file.txt should exist");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1\\file1.txt"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir1\\file1.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("file1.txt should exist");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("deep_file1.txt should exist");
@@ -456,13 +456,13 @@ private:
 		}
 
 		// Test non-existing files
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\nonexistent.txt"_embed));
+		r = FileSystem::Exists(L"test_io_root\\nonexistent.txt"_embed);
 		if (r)
 		{
 			LOG_ERROR("nonexistent.txt should not exist");
 			return false;
 		}
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root\\level1_dir1\\missing.txt"_embed));
+		r = FileSystem::Exists(L"test_io_root\\level1_dir1\\missing.txt"_embed);
 		if (r)
 		{
 			LOG_ERROR("missing.txt should not exist");
@@ -474,14 +474,14 @@ private:
 
 	static BOOL TestDirectoryIteration()
 	{
-		auto rootResult = DirectoryIterator::Create(Path::NormalizePath(L""_embed));
+		auto rootResult = DirectoryIterator::Create(L""_embed);
 		if (!rootResult)
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for root");
 			return false;
 		}
 		// Test iterating through a directory with multiple files
-		auto iterResult = DirectoryIterator::Create(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
+		auto iterResult = DirectoryIterator::Create(L"test_io_root\\level1_dir1"_embed);
 		if (!iterResult)
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for level1_dir1");
@@ -536,31 +536,31 @@ private:
 		// Delete files first (from deepest to shallowest)
 
 		// Second level files
-		auto r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed));
+		auto r = FileSystem::Delete(L"test_io_root\\level1_dir1\\level2_dir1\\deep_file1.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete deep_file1.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2\\deep_file2.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir1\\level2_dir2\\deep_file2.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete deep_file2.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3\\deep_file3.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir2\\level2_dir3\\deep_file3.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete deep_file3.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4\\deep_file4.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir2\\level2_dir4\\deep_file4.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete deep_file4.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir3\\level2_dir5\\deep_file5.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir3\\level2_dir5\\deep_file5.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete deep_file5.txt");
@@ -568,43 +568,43 @@ private:
 		}
 
 		// First level files
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir1\\file1.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir1\\file1.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete file1.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir1\\extra1.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir1\\extra1.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete extra1.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir1\\extra2.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir1\\extra2.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete extra2.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir1\\binary_test.dat"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir1\\binary_test.dat"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete binary_test.dat");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir2\\file2.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir2\\file2.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete file2.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir2\\offset_test.dat"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir2\\offset_test.dat"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete offset_test.dat");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\level1_dir3\\file3.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\level1_dir3\\file3.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete file3.txt");
@@ -612,13 +612,13 @@ private:
 		}
 
 		// Root level files
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\root_file.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\root_file.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete root_file.txt");
 			return false;
 		}
-		r = FileSystem::Delete(Path::NormalizePath(L"test_io_root\\test_write_read.txt"_embed));
+		r = FileSystem::Delete(L"test_io_root\\test_write_read.txt"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete test_write_read.txt");
@@ -628,31 +628,31 @@ private:
 		// Delete directories (from deepest to shallowest)
 
 		// Second level directories
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir1"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir1\\level2_dir1"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level2_dir1");
 			return false;
 		}
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir1\\level2_dir2"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir1\\level2_dir2"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level2_dir2");
 			return false;
 		}
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir3"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir2\\level2_dir3"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level2_dir3");
 			return false;
 		}
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir2\\level2_dir4"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir2\\level2_dir4"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level2_dir4");
 			return false;
 		}
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir3\\level2_dir5"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir3\\level2_dir5"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level2_dir5");
@@ -660,19 +660,19 @@ private:
 		}
 
 		// First level directories
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir1"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level1_dir1");
 			return false;
 		}
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir2"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir2"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level1_dir2");
 			return false;
 		}
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root\\level1_dir3"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root\\level1_dir3"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete level1_dir3");
@@ -680,7 +680,7 @@ private:
 		}
 
 		// Root directory
-		r = FileSystem::DeleteDirectory(Path::NormalizePath(L"test_io_root"_embed));
+		r = FileSystem::DeleteDirectory(L"test_io_root"_embed);
 		if (!r)
 		{
 			LOG_ERROR("Failed to delete test_io_root");
@@ -688,7 +688,7 @@ private:
 		}
 
 		// Verify cleanup was successful
-		r = FileSystem::Exists(Path::NormalizePath(L"test_io_root"_embed));
+		r = FileSystem::Exists(L"test_io_root"_embed);
 		if (r)
 		{
 			LOG_ERROR("test_io_root still exists after cleanup");

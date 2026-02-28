@@ -135,8 +135,8 @@ private:
 		Random rng;
 		CHAR buffer[32];
 
-		// Generate string of length 10
-		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 10));
+		// Generate string of 10 random chars (span size = 11 to include null terminator)
+		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 11));
 
 		// Verify length
 		if (len != 10)
@@ -170,8 +170,8 @@ private:
 		Random rng;
 		WCHAR buffer[32];
 
-		// Generate string of length 15
-		UINT32 len = rng.GetString<WCHAR>(Span<WCHAR>(buffer, 15));
+		// Generate string of 15 random chars (span size = 16 to include null terminator)
+		UINT32 len = rng.GetString<WCHAR>(Span<WCHAR>(buffer, 16));
 
 		// Verify length
 		if (len != 15)
@@ -242,8 +242,8 @@ private:
 		Random rng;
 		CHAR buffer[16];
 
-		// Generate string of length 0
-		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 0));
+		// Generate empty string (span size = 1 for null terminator only)
+		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 1));
 
 		// Verify length is 0
 		if (len != 0)

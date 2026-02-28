@@ -18,7 +18,8 @@ public:
     // Constructor — trivial; Get() auto-seeds on first call
     Random() : seed(0) {}
 
-    // Generate a random string of specified length
+    // Generate a random string: fills str.Size()-1 positions with random chars,
+    // writes null terminator at str.Size()-1, returns str.Size()-1 (number of random chars).
     template <typename TChar>
     UINT32 GetString(Span<TChar> str);
     // Generate a random character
@@ -50,11 +51,13 @@ TChar Random::GetChar()
 template <typename TChar>
 UINT32 Random::GetString(Span<TChar> str)
 {
-    UINT32 length = (UINT32)str.Size();
+    if (str.Size() == 0)
+        return 0;
+    UINT32 length = (UINT32)str.Size() - 1;
     for (UINT32 i = 0; i < length; i++)
     {
-        str[i] = Random::GetChar<TChar>(); // Get a random character
+        str[i] = Random::GetChar<TChar>();
     }
-    str.Data()[length] = (TChar)'\0'; // Null-terminate (caller must allocate length+1)
+    str[length] = (TChar)'\0';
     return length;
 }

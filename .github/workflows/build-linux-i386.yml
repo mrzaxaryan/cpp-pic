@@ -15,9 +15,12 @@ env:
   LLVM_VERSION: "21.1.0"
 
 jobs:
-  setup:
+  build-and-test:
     runs-on: ubuntu-22.04
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Cache LLVM
         id: cache-llvm
         uses: actions/cache@v4
@@ -36,53 +39,55 @@ jobs:
           sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
           rm "$TARBALL"
 
-  build-and-test:
-    needs: setup
-    name: -${{ matrix.opt }}
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        opt: [O0, O1, O2, O3, Os, Oz, Og]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Restore LLVM cache
-        uses: actions/cache/restore@v4
-        with:
-          path: /opt/llvm
-          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
-
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake qemu-user-static
+          sudo apt-get install -y ninja-build cmake
 
       - name: Add LLVM to PATH
         run: echo "/opt/llvm/bin" >> $GITHUB_PATH
 
-      - name: Build -${{ matrix.opt }}
+      - name: Install QEMU
         run: |
-          cmake --preset linux-i386-release -DOPTIMIZATION_LEVEL=${{ matrix.opt }}
-          cmake --build --preset linux-i386-release
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
 
-      - name: Test ELF -${{ matrix.opt }}
+      - name: Build, Upload, and Test all optimization levels
         run: |
-          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
-          chmod +x "$TEST_ELF"
-          qemu-i386-static "$TEST_ELF"
+          set -e
+          OPTS="O0 O1 O2 O3 Os Oz Og"
+          FAILED=""
+          for opt in $OPTS; do
+            echo "========== Building -$opt =========="
+            rm -rf build
+            cmake --preset linux-i386-release -DOPTIMIZATION_LEVEL=$opt
+            if ! cmake --build --preset linux-i386-release; then FAILED="$FAILED $opt-build"; continue; fi
 
-      - name: Test PIC -${{ matrix.opt }}
-        run: |
-          python3 scripts/loader.py --arch i386 $(find build -type f -name "output.bin" | head -n 1)
+            echo "========== Saving -$opt =========="
+            mkdir -p "artifacts/$opt"
+            cp -r build/* "artifacts/$opt/"
+
+            echo "========== Testing ELF -$opt =========="
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            if ! qemu-i386-static "$TEST_ELF"; then FAILED="$FAILED $opt-elf"; continue; fi
+
+            echo "========== Testing PIC -$opt =========="
+            if ! python3 scripts/loader.py --arch i386 $(find build -type f -name "output.bin" | head -n 1); then FAILED="$FAILED $opt-pic"; continue; fi
+
+            echo "========== $opt passed =========="
+          done
+          if [ -n "$FAILED" ]; then
+            echo "Failed:$FAILED"
+            exit 1
+          fi
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-linux-i386-${{ matrix.opt }}
+          name: build-linux-i386
           retention-days: 1
           path: |
-            build/
-            !build/**/cmake/
+            artifacts/
+            !artifacts/**/cmake/

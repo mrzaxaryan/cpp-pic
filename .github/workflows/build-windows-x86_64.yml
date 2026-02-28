@@ -15,15 +15,24 @@ env:
   LLVM_VERSION: "21.1.0"
 
 jobs:
-  setup:
+  build-and-test:
     runs-on: windows-2022
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Cache LLVM
         id: cache-llvm
         uses: actions/cache@v4
         with:
           path: C:\Program Files\LLVM
           key: llvm-${{ env.LLVM_VERSION }}-windows-2022
+
+      - name: Install Ninja
+        shell: pwsh
+        run: |
+          choco install ninja -y
+          ninja --version
 
       - name: Install LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -38,57 +47,49 @@ jobs:
           Invoke-WebRequest -Uri $url -OutFile $exe
           Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
 
-  build-and-test:
-    needs: setup
-    name: -${{ matrix.opt }}
-    runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        opt: [O0, O1, O2, O3, Os, Oz, Og]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Restore LLVM cache
-        uses: actions/cache/restore@v4
-        with:
-          path: C:\Program Files\LLVM
-          key: llvm-${{ env.LLVM_VERSION }}-windows-2022
-
-      - name: Install Ninja
-        shell: pwsh
-        run: |
-          choco install ninja -y
-          ninja --version
-
       - name: Add LLVM to PATH
         shell: pwsh
         run: |
           "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      - name: Build -${{ matrix.opt }}
+      - name: Build, Upload, and Test all optimization levels
         shell: pwsh
         run: |
-          cmake --preset windows-x86_64-release "-DOPTIMIZATION_LEVEL=${{ matrix.opt }}"
-          cmake --build --preset windows-x86_64-release
+          $opts = @("O0", "O1", "O2", "O3", "Os", "Oz", "Og")
+          $failed = @()
+          foreach ($opt in $opts) {
+            Write-Host "========== Building -$opt ==========" -ForegroundColor Cyan
+            Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+            cmake --preset windows-x86_64-release "-DOPTIMIZATION_LEVEL=$opt"
+            cmake --build --preset windows-x86_64-release
+            if ($LASTEXITCODE -ne 0) { $failed += "$opt-build"; continue }
 
-      - name: Test EXE -${{ matrix.opt }}
-        shell: pwsh
-        run: |
-          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+            Write-Host "========== Uploading -$opt ==========" -ForegroundColor Cyan
+            $artifactDir = "artifacts/$opt"
+            New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
+            Copy-Item -Path "build/*" -Destination $artifactDir -Recurse
 
-      - name: Test PIC -${{ matrix.opt }}
-        shell: pwsh
-        run: |
-          python scripts/loader.py --arch x86_64 (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
+            Write-Host "========== Testing EXE -$opt ==========" -ForegroundColor Cyan
+            & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
+            if ($LASTEXITCODE -ne 0) { $failed += "$opt-exe"; continue }
+
+            Write-Host "========== Testing PIC -$opt ==========" -ForegroundColor Cyan
+            python scripts/loader.py --arch x86_64 (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
+            if ($LASTEXITCODE -ne 0) { $failed += "$opt-pic"; continue }
+
+            Write-Host "========== $opt passed ==========" -ForegroundColor Green
+          }
+          if ($failed.Count -gt 0) {
+            Write-Host "Failed: $($failed -join ', ')" -ForegroundColor Red
+            exit 1
+          }
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-windows-x86_64-${{ matrix.opt }}
+          name: build-windows-x86_64
           retention-days: 1
           path: |
-            build/
-            !build/**/cmake/
+            artifacts/
+            !artifacts/**/cmake/

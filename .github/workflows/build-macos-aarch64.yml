@@ -12,95 +12,75 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
-    runs-on: macos-14
-    steps:
-      - name: Cache LLVM
-        id: cache-llvm
-        uses: actions/cache@v4
-        with:
-          path: /opt/llvm
-          key: llvm-macos-aarch64-v1
-
-      - name: Install and cache LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-        run: |
-          for i in 1 2 3; do
-            brew install llvm && break
-            echo "Attempt $i failed, retrying in 10s..."
-            sleep 10
-          done
-          sudo mkdir -p /opt/llvm
-          sudo cp -RL "$(brew --prefix llvm)/" /opt/llvm/
-
   build-and-test:
-    needs: setup
-    name: -${{ matrix.opt }}
     runs-on: macos-14
-    env:
-      CC: /opt/llvm/bin/clang
-      CXX: /opt/llvm/bin/clang++
-    strategy:
-      fail-fast: false
-      matrix:
-        opt: [O0, O1, O2, O3, Os, Oz, Og]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare LLVM directory
-        run: sudo mkdir -p /opt/llvm && sudo chown -R $(whoami) /opt/llvm
-
-      - name: Restore LLVM cache
-        uses: actions/cache/restore@v4
-        with:
-          path: /opt/llvm
-          key: llvm-macos-aarch64-v1
-          fail-on-cache-miss: true
-
-      - name: Install build tools
+      - name: Install LLVM and build tools
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
-        run: brew install ninja cmake
-
-      - name: Add LLVM to PATH
-        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
-
-      - name: Build -${{ matrix.opt }}
         run: |
-          cmake --preset macos-aarch64-release -DOPTIMIZATION_LEVEL=${{ matrix.opt }}
-          cmake --build --preset macos-aarch64-release
+          for i in 1 2 3; do
+            brew install llvm ninja cmake && break
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
-      - name: Sections -${{ matrix.opt }}
+      - name: Build, Upload, and Test all optimization levels
         run: |
-          TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
-          PIC_BIN=$(find build -type f -name "output.bin" | head -n 1)
-          echo "Mach-O: $TEST_BIN ($(wc -c < "$TEST_BIN") bytes)"
-          echo "PIC:    $PIC_BIN ($(wc -c < "$PIC_BIN") bytes)"
-          file "$TEST_BIN"
-          llvm-objdump -h "$TEST_BIN" 2>/dev/null || true
+          set -e
+          OPTS="O0 O1 O2 O3 Os Oz Og"
+          FAILED=""
+          for opt in $OPTS; do
+            echo "========== Building -$opt =========="
+            rm -rf build
+            cmake --preset macos-aarch64-release -DOPTIMIZATION_LEVEL=$opt
+            cmake --build --preset macos-aarch64-release
+            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-build"; continue; fi
 
-      - name: Test Mach-O -${{ matrix.opt }}
-        run: |
-          TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
-          chmod +x "$TEST_BIN"
-          codesign --sign - --force "$TEST_BIN"
-          codesign --verify --verbose "$TEST_BIN" || echo "WARNING: codesign verification failed"
-          "$TEST_BIN"
+            echo "========== Saving -$opt =========="
+            mkdir -p "artifacts/$opt"
+            cp -r build/* "artifacts/$opt/"
 
-      - name: Test PIC -${{ matrix.opt }}
-        run: |
-          PIC_BIN=$(find build -type f -name "output.bin" | head -n 1)
-          python3 scripts/loader.py --arch aarch64 "$PIC_BIN"
+            echo "========== Sections -$opt =========="
+            TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
+            PIC_BIN=$(find build -type f -name "output.bin" | head -n 1)
+            echo "Mach-O: $TEST_BIN ($(wc -c < "$TEST_BIN") bytes)"
+            echo "PIC:    $PIC_BIN ($(wc -c < "$PIC_BIN") bytes)"
+            file "$TEST_BIN"
+            llvm-objdump -h "$TEST_BIN" 2>/dev/null || true
+
+            echo "========== Testing Mach-O -$opt =========="
+            chmod +x "$TEST_BIN"
+            codesign --sign - --force "$TEST_BIN"
+            codesign --verify --verbose "$TEST_BIN" || echo "WARNING: codesign verification failed"
+            if ! "$TEST_BIN"; then
+              echo "Mach-O test failed for -$opt (exit=$?)"
+              FAILED="$FAILED $opt-macho"; continue
+            fi
+
+            echo "========== Testing PIC -$opt =========="
+            if ! python3 scripts/loader.py --arch aarch64 "$PIC_BIN"; then
+              echo "PIC test failed for -$opt"
+              FAILED="$FAILED $opt-pic"; continue
+            fi
+
+            echo "========== $opt passed =========="
+          done
+          if [ -n "$FAILED" ]; then
+            echo "Failed:$FAILED"
+            exit 1
+          fi
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-macos-aarch64-${{ matrix.opt }}
+          name: build-macos-aarch64
           retention-days: 1
           path: |
-            build/
-            !build/**/cmake/
+            artifacts/
+            !artifacts/**/cmake/

@@ -211,8 +211,6 @@ Write(writable.Subspan(4, 16));   // slicing
 
 Use `Span<T>` for writable buffers and `Span<const T>` for read-only views. `Span<T>` implicitly converts to `Span<const T>`.
 
-**`[[nodiscard]]`** — Apply to every fallible function and factory. PIR has no exceptions — a missed return check is a silent bug.
-
 **`Result<T, Error>`** — **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. This ensures a uniform error-handling interface across the codebase:
 
 ```cpp

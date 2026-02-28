@@ -20,30 +20,29 @@ VOID TlsHash::Append(Span<const CHAR> buffer)
     this->cache.Append(buffer);
 }
 
-/// @brief Get the hash value from the cache by computing the appropriate hash (SHA-256 or SHA-384) based on the specified hash size
-/// @param out The buffer to store the computed hash
-/// @param hashSize The size of the hash to compute
+/// @brief Get the hash value from the cache by computing SHA-256 (out.Size()==32) or SHA-384 (out.Size()==48)
+/// @param out Output span; size determines which hash algorithm is used
 /// @return void
 
-VOID TlsHash::GetHash(PCHAR out, INT32 hashSize)
+VOID TlsHash::GetHash(Span<CHAR> out)
 {
-    if (hashSize == 32)
+    if (out.Size() == SHA256_DIGEST_SIZE)
     {
-        LOG_DEBUG("Computing SHA256 hash with size: %d bytes", hashSize);
+        LOG_DEBUG("Computing SHA256 hash with size: %d bytes", (INT32)out.Size());
         SHA256 ctx;
         if (this->cache.GetSize() > 0)
         {
             LOG_DEBUG("SHA256 hash cache size: %d bytes", this->cache.GetSize());
             ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
         }
-        ctx.Final((UINT8 *)out);
+        ctx.Final(Span<UINT8>((UINT8 *)out.Data(), out.Size()));
     }
     else
     {
-        LOG_DEBUG("Computing SHA384 hash with size: %d bytes", hashSize);
+        LOG_DEBUG("Computing SHA384 hash with size: %d bytes", (INT32)out.Size());
         SHA384 ctx;
         if (this->cache.GetSize() > 0)
             ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
-        ctx.Final((UINT8 *)out);
+        ctx.Final(Span<UINT8>((UINT8 *)out.Data(), out.Size()));
     }
 }

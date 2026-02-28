@@ -417,9 +417,11 @@ DirectoryIterator::DirectoryIterator()
 
         }
 
-// DirectoryIterator Constructor
-Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path) 
+// DirectoryIterator factory
+Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 {
+    DirectoryIterator iter;
+
     // CASE: List Drives (Path is empty or nullptr)
     if (!path || path[0] == L'\0')
     {
@@ -433,30 +435,30 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
 
         if (!queryResult)
         {
-            return Result<void, Error>::Err(queryResult, Error::Fs_OpenFailed);
+            return Result<DirectoryIterator, Error>::Err(queryResult, Error::Fs_OpenFailed);
         }
         if (ProcessDeviceMapInfo.Query.DriveMap != 0)
         {
             // Store the mask in the pointer itself
-            handle = (PVOID)(USIZE)ProcessDeviceMapInfo.Query.DriveMap;
-            first = true; // Flag to indicate we are in "Drive Mode"
-            isBitMaskMode = true;
+            iter.handle = (PVOID)(USIZE)ProcessDeviceMapInfo.Query.DriveMap;
+            iter.first = true; // Flag to indicate we are in "Drive Mode"
+            iter.isBitMaskMode = true;
         }
-        return Result<void, Error>::Ok();
+        return Result<DirectoryIterator, Error>::Ok(static_cast<DirectoryIterator &&>(iter));
     }
 
     // Convert path to NT path and open directory handle
     UNICODE_STRING uniPath;
     auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniPath, nullptr, nullptr);
     if (!pathResult)
-        return Result<void, Error>::Err(pathResult, Error::Fs_PathResolveFailed);
+        return Result<DirectoryIterator, Error>::Err(pathResult, Error::Fs_PathResolveFailed);
 
     OBJECT_ATTRIBUTES objAttr;
     InitializeObjectAttributes(&objAttr, &uniPath, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
     IO_STATUS_BLOCK ioStatusBlock;
     auto openResult = NTDLL::ZwOpenFile(
-        &handle,
+        &iter.handle,
         FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &objAttr,
         &ioStatusBlock,
@@ -467,8 +469,8 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
 
     if (!openResult)
     {
-        handle = (PVOID)-1;
-        return Result<void, Error>::Err(openResult, Error::Fs_OpenFailed);
+        iter.handle = (PVOID)-1;
+        return Result<DirectoryIterator, Error>::Err(openResult, Error::Fs_OpenFailed);
     }
 
     // Query the first entry
@@ -476,7 +478,7 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
     Memory::Zero(buffer, sizeof(buffer));
 
     auto dirResult = NTDLL::ZwQueryDirectoryFile(
-        handle,
+        iter.handle,
         nullptr,
         nullptr,
         nullptr,
@@ -491,14 +493,14 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
     if (dirResult)
     {
         const FILE_BOTH_DIR_INFORMATION &info = *(const FILE_BOTH_DIR_INFORMATION *)buffer;
-        FillEntry(currentEntry, info);
+        FillEntry(iter.currentEntry, info);
     }
     else
     {
-        (void)NTDLL::ZwClose(handle);
-        handle = (PVOID)-1;
+        (void)NTDLL::ZwClose(iter.handle);
+        iter.handle = (PVOID)-1;
     }
-    return Result<void, Error>::Ok();
+    return Result<DirectoryIterator, Error>::Ok(static_cast<DirectoryIterator &&>(iter));
 }
 
 // Move to next entry. Ok = has entry, Err = done or syscall failed.

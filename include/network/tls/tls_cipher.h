@@ -126,12 +126,12 @@ public:
     // Function to update server information
     [[nodiscard]] Result<void, Error> UpdateServerInfo();
     // Function to get and update the current handshake hash
-    VOID GetHash(CHAR *out);
+    VOID GetHash(Span<CHAR> out);
     VOID UpdateHash(Span<const CHAR> in);
     // Key computation functions
     [[nodiscard]] Result<void, Error> ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
-    [[nodiscard]] Result<void, Error> ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer &premasterKey);
-    [[nodiscard]] Result<void, Error> ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash);
+    [[nodiscard]] Result<void, Error> ComputePreKey(ECC_GROUP ecc, Span<const CHAR> serverKey, TlsBuffer &premasterKey);
+    [[nodiscard]] Result<void, Error> ComputeKey(ECC_GROUP ecc, Span<const CHAR> serverKey, Span<CHAR> finishedHash);
     VOID ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
     // Functions for encoding and decoding TLS records
     VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);

@@ -176,14 +176,14 @@ private:
 		UINT8 aliceSecret[32];
 		UINT8 bobSecret[32];
 
-		auto aliceResult = alice.ComputeSharedSecret(Span<const UINT8>(bobPublicKey), aliceSecret);
+		auto aliceResult = alice.ComputeSharedSecret(Span<const UINT8>(bobPublicKey), Span<UINT8>(aliceSecret));
 		if (!aliceResult)
 		{
 			LOG_ERROR("Alice ECDH shared secret computation failed (error: %e)", aliceResult.Error());
 			return false;
 		}
 
-		auto bobResult = bob.ComputeSharedSecret(Span<const UINT8>(alicePublicKey), bobSecret);
+		auto bobResult = bob.ComputeSharedSecret(Span<const UINT8>(alicePublicKey), Span<UINT8>(bobSecret));
 		if (!bobResult)
 		{
 			LOG_ERROR("Bob ECDH shared secret computation failed (error: %e)", bobResult.Error());
@@ -246,7 +246,7 @@ private:
 		invalidPublicKey[0] = 0x03; // Invalid format (should be 0x04)
 
 		UINT8 secret[32];
-		auto result = ecc.ComputeSharedSecret(Span<const UINT8>(invalidPublicKey), secret);
+		auto result = ecc.ComputeSharedSecret(Span<const UINT8>(invalidPublicKey), Span<UINT8>(secret));
 
 		// Should fail
 		if (!result.IsErr())

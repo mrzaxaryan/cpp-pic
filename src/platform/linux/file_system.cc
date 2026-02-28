@@ -221,8 +221,9 @@ DirectoryIterator::DirectoryIterator()
     : handle((PVOID)INVALID_FD), first(false), nread(0), bpos(0)
 {}
 
-Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
+Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 {
+    DirectoryIterator iter;
     CHAR utf8Path[1024];
 
     if (path && path[0] != L'\0')
@@ -246,10 +247,10 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
 
     if (fd >= 0)
     {
-        handle = (PVOID)fd;
-        first = true;
+        iter.handle = (PVOID)fd;
+        iter.first = true;
     }
-    return Result<void, Error>::Ok();
+    return Result<DirectoryIterator, Error>::Ok(static_cast<DirectoryIterator &&>(iter));
 }
 
 DirectoryIterator::DirectoryIterator(DirectoryIterator &&other) noexcept

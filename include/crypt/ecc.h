@@ -285,7 +285,7 @@ public:
      *
      * @warning The raw shared secret should be passed through a KDF before use.
      */
-    [[nodiscard]] Result<UINT32, Error> ComputeSharedSecret(Span<const UINT8> publicKey, UINT8 *secret);
+    [[nodiscard]] Result<UINT32, Error> ComputeSharedSecret(Span<const UINT8> publicKey, Span<UINT8> secret);
 };
 
 /** @} */ // end of ecc group

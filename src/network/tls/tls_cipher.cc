@@ -69,13 +69,13 @@ Result<void, Error> TlsCipher::UpdateServerInfo()
     return Result<void, Error>::Ok();
 }
 
-/// @brief Get the current handshake hash and store it in the provided output buffer
-/// @param out Pointer to the buffer where the handshake hash will be stored
+/// @brief Get the current handshake hash and store it in the provided output span
+/// @param out Output span; size determines which hash algorithm is used
 /// @return void
 
-VOID TlsCipher::GetHash(CHAR *out)
+VOID TlsCipher::GetHash(Span<CHAR> out)
 {
-    this->handshakeHash.GetHash(out, CIPHER_HASH_SIZE);
+    this->handshakeHash.GetHash(out);
 }
 
 /// @brief Update the handshake hash with new input data
@@ -128,7 +128,7 @@ Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 /// @param premasterKey Pointer to the buffer where the computed pre-master key will be stored
 /// @return Result<void, Error>::Ok() if the pre-master key was successfully computed
 
-Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer &premasterKey)
+Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, Span<const CHAR> serverKey, TlsBuffer &premasterKey)
 {
     INT32 eccIndex;
     INT32 eccSize;
@@ -157,7 +157,7 @@ Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKe
 
     premasterKey.SetSize(eccSize);
 
-    auto secretResult = this->privateEccKeys[eccIndex]->ComputeSharedSecret(Span<const UINT8>((UINT8 *)serverKey, serverKeyLen), (UINT8 *)premasterKey.GetBuffer());
+    auto secretResult = this->privateEccKeys[eccIndex]->ComputeSharedSecret(Span<const UINT8>((UINT8 *)serverKey.Data(), serverKey.Size()), Span<UINT8>((UINT8 *)premasterKey.GetBuffer(), eccSize));
     if (!secretResult)
     {
         LOG_DEBUG("Failed to compute shared secret for ECC group %d", ecc);
@@ -174,7 +174,7 @@ Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKe
 /// @param finishedHash Pointer to the buffer where the computed finished hash will be stored
 /// @return Result<void, Error>::Ok() if the TLS key was successfully computed
 
-Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash)
+Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, Span<const CHAR> serverKey, Span<CHAR> finishedHash)
 {
 
     if (this->cipherIndex == -1)
@@ -199,7 +199,7 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, 
     const CHAR *server_key = ecc == ECC_NONE ? (const CHAR *)server_key_app : (const CHAR *)server_key_hs;
     const CHAR *client_key = ecc == ECC_NONE ? (const CHAR *)client_key_app : (const CHAR *)client_key_hs;
     TlsHash hash2;
-    hash2.GetHash((PCHAR)hash, hashLen);
+    hash2.GetHash(Span<CHAR>((CHAR *)hash, hashLen));
     Memory::Zero(earlysecret, sizeof(earlysecret));
 
     if (ecc == ECC_NONE)
@@ -209,16 +209,16 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, 
         TlsHKDF::ExpandLabel(Span<UCHAR>(salt, hashLen), Span<const UCHAR>((UINT8 *)this->data13.pseudoRandomKey, hashLen), Span<const CHAR>("derived"_embed, 7), Span<const UCHAR>(hash, hashLen));
         TlsHKDF::Extract(Span<UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const UCHAR>(salt, hashLen), Span<const UCHAR>(earlysecret, hashLen));
 
-        if (finishedHash)
+        if (finishedHash.Data())
         {
-            LOG_DEBUG("Using finished hash for TLS key computation with size: %d bytes", String::Length(finishedHash));
-            Memory::Copy(hash, (VOID *)finishedHash, hashLen);
+            LOG_DEBUG("Using finished hash for TLS key computation with size: %d bytes", (INT32)finishedHash.Size());
+            Memory::Copy(hash, (VOID *)finishedHash.Data(), hashLen);
         }
     }
     else
     {
         TlsBuffer premaster_key;
-        auto preKeyResult = this->ComputePreKey(ecc, serverKey, serverKeyLen, premaster_key);
+        auto preKeyResult = this->ComputePreKey(ecc, serverKey, premaster_key);
         if (!preKeyResult)
         {
             LOG_DEBUG("Failed to compute pre-master key for ECC group %d", ecc);
@@ -234,7 +234,7 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, 
         TlsHKDF::ExpandLabel(Span<UCHAR>(salt, hashLen), Span<const UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const CHAR>("derived"_embed, 7), Span<const UCHAR>(hash, hashLen));
         TlsHKDF::Extract(Span<UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const UCHAR>(salt, hashLen), Span<const UCHAR>((UINT8 *)premaster_key.GetBuffer(), premaster_key.GetSize()));
 
-        this->GetHash((PCHAR)hash);
+        this->GetHash(Span<CHAR>((CHAR *)hash, CIPHER_HASH_SIZE));
     }
 
     TlsHKDF::ExpandLabel(Span<UCHAR>(this->data13.handshakeSecret, hashLen), Span<const UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const CHAR>(client_key, 12), Span<const UCHAR>(hash, hashLen));
@@ -274,7 +274,7 @@ VOID TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRem
     CHAR hash[MAX_HASH_LEN];
     INT32 hashLen = CIPHER_HASH_SIZE;
     LOG_DEBUG("tls_cipher_compute_verify: Getting handshake hash, hash_len=%d", hashLen);
-    this->GetHash(hash);
+    this->GetHash(Span<CHAR>(hash, hashLen));
 
     UINT8 finished_key[MAX_HASH_LEN];
     auto finishedLabel = "finished"_embed;

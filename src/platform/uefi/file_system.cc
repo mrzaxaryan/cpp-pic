@@ -430,20 +430,21 @@ DirectoryIterator::DirectoryIterator()
 	: handle(nullptr), currentEntry{}, first(true)
 {}
 
-Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
+Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 {
-	(VOID) first; // Suppress unused warning - UEFI uses Read to iterate
+	DirectoryIterator iter;
+	(VOID) iter.first; // Suppress unused warning - UEFI uses Read to iterate
 
 	EFI_FILE_PROTOCOL *Root = GetRootDirectory();
 	if (Root == nullptr)
-		return Result<void, Error>::Err(Error::Fs_OpenFailed);
+		return Result<DirectoryIterator, Error>::Err(Error::Fs_OpenFailed);
 
 	// Empty path means root directory - use the volume root handle directly
 	// rather than calling Open() with L"" which some firmware doesn't support
 	if (path == nullptr || path[0] == 0)
 	{
-		handle = (PVOID)Root;
-		return Result<void, Error>::Ok();
+		iter.handle = (PVOID)Root;
+		return Result<DirectoryIterator, Error>::Ok(static_cast<DirectoryIterator &&>(iter));
 	}
 
 	EFI_FILE_PROTOCOL *DirHandle = OpenFileFromRoot(Root, path, EFI_FILE_MODE_READ, 0);
@@ -451,10 +452,10 @@ Result<void, Error> DirectoryIterator::Initialization(PCWCHAR path)
 
 	if (DirHandle != nullptr)
 	{
-		handle = (PVOID)DirHandle;
-		return Result<void, Error>::Ok();
+		iter.handle = (PVOID)DirHandle;
+		return Result<DirectoryIterator, Error>::Ok(static_cast<DirectoryIterator &&>(iter));
 	}
-	return Result<void, Error>::Err(Error::Fs_OpenFailed);
+	return Result<DirectoryIterator, Error>::Err(Error::Fs_OpenFailed);
 }
 
 DirectoryIterator::DirectoryIterator(DirectoryIterator &&other) noexcept

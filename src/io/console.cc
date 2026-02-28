@@ -16,7 +16,7 @@ UINT32 Console::Write(Span<const WCHAR> text)
 	while (inputIndex < text.Size())
 	{
 		CHAR bytes[4];
-		USIZE n = UTF16::CodepointToUTF8(text, inputIndex, bytes);
+		USIZE n = UTF16::CodepointToUTF8(text, inputIndex, Span<CHAR>(bytes, sizeof(bytes)));
 		if (n == 0)
 		{
 			inputIndex++;

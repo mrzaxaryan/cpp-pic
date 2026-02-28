@@ -341,7 +341,7 @@ Result<void, Error> TLSClient::OnServerHello(TlsBuffer &reader)
 
         LOG_DEBUG("Valid TLS version and public key size, tls_ver: %d, pubkey.size: %d, eccgroup: %d", tls_ver, pubkey.GetSize(), eccgroup);
 
-        auto r = crypto.ComputeKey(eccgroup, pubkey.GetBuffer(), pubkey.GetSize(), nullptr);
+        auto r = crypto.ComputeKey(eccgroup, Span<const CHAR>(pubkey.GetBuffer(), pubkey.GetSize()), Span<CHAR>());
         if (!r)
         {
             LOG_DEBUG("Failed to compute TLS 1.3 key for client: %p, ECC group: %d, public key size: %d", this, eccgroup, pubkey.GetSize());
@@ -415,7 +415,7 @@ Result<void, Error> TLSClient::OnServerFinished()
 {
     LOG_DEBUG("Processing Server Finished for client: %p", this);
     CHAR finished_hash[MAX_HASH_LEN] = {0};
-    crypto.GetHash(finished_hash);
+    crypto.GetHash(Span<CHAR>(finished_hash, CIPHER_HASH_SIZE));
     auto ret = SendChangeCipherSpec();
 
     if (!ret)
@@ -432,7 +432,7 @@ Result<void, Error> TLSClient::OnServerFinished()
     }
     LOG_DEBUG("Client Finished sent successfully for client: %p", this);
     crypto.ResetSequenceNumber();
-    auto r2 = crypto.ComputeKey(ECC_NONE, nullptr, 0, finished_hash);
+    auto r2 = crypto.ComputeKey(ECC_NONE, Span<const CHAR>(), Span<CHAR>(finished_hash, CIPHER_HASH_SIZE));
     if (!r2)
     {
         LOG_DEBUG("Failed to compute TLS 1.3 key for client: %p", this);

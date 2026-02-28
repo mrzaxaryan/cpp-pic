@@ -789,7 +789,7 @@ Ecc::~Ecc()
     Memory::Zero(this, sizeof(Ecc));
 }
 
-Result<UINT32, Error> Ecc::ComputeSharedSecret(Span<const UINT8> publicKey, UINT8 *secret)
+Result<UINT32, Error> Ecc::ComputeSharedSecret(Span<const UINT8> publicKey, Span<UINT8> secret)
 {
     if (publicKey.Size() != this->eccBytes * 2 + 1 || publicKey[0] != 0x04)
         return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
@@ -806,7 +806,7 @@ Result<UINT32, Error> Ecc::ComputeSharedSecret(Span<const UINT8> publicKey, UINT
 
     EccPoint l_product;
     this->Mult(l_product, l_public, this->privateKey, l_random);
-    this->Native2Bytes(secret, l_product.x);
+    this->Native2Bytes(secret.Data(), l_product.x);
 
     if (this->IsZero(l_product))
         return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);

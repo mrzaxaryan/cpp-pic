@@ -63,7 +63,7 @@ public:
      *
      * @note The inputIndex parameter is advanced past the consumed code unit(s).
      */
-    static USIZE CodepointToUTF8(Span<const WCHAR> input, USIZE& inputIndex, CHAR* output)
+    static USIZE CodepointToUTF8(Span<const WCHAR> input, USIZE& inputIndex, Span<CHAR> output)
     {
         if (inputIndex >= input.Size())
             return 0;
@@ -96,7 +96,7 @@ public:
      * - U+0800 to U+FFFF: 3 bytes (1110xxxx 10xxxxxx 10xxxxxx)
      * - U+10000 to U+10FFFF: 4 bytes (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
      */
-    static USIZE CodepointToUTF8Bytes(UINT32 codepoint, CHAR* output)
+    static USIZE CodepointToUTF8Bytes(UINT32 codepoint, Span<CHAR> output)
     {
         if (codepoint < 0x80)
         {
@@ -157,7 +157,7 @@ public:
 
         while (inputIndex < input.Size() && outputIndex + 4 <= output.Size())
         {
-            USIZE bytesWritten = CodepointToUTF8(input, inputIndex, output.Data() + outputIndex);
+            USIZE bytesWritten = CodepointToUTF8(input, inputIndex, output.Subspan(outputIndex));
             outputIndex += bytesWritten;
         }
 

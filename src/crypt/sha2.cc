@@ -259,7 +259,7 @@ VOID SHABase<Traits>::Update(Span<const UINT8> message)
 }
 
 template<typename Traits>
-VOID SHABase<Traits>::Final(UINT8 *digest)
+VOID SHABase<Traits>::Final(Span<UINT8> digest)
 {
     UINT64 block_nb;
     UINT64 pm_len;
@@ -294,12 +294,12 @@ VOID SHABase<Traits>::Final(UINT8 *digest)
 
     for (i = 0; i < (INT32)Traits::OUTPUT_WORDS; i++)
     {
-        Traits::Unpack(this->h[i], &digest[i << Traits::WORD_SHIFT]);
+        Traits::Unpack(this->h[i], digest.Data() + (i << Traits::WORD_SHIFT));
     }
 }
 
 template<typename Traits>
-VOID SHABase<Traits>::Hash(Span<const UINT8> message, UINT8 *digest)
+VOID SHABase<Traits>::Hash(Span<const UINT8> message, Span<UINT8> digest)
 {
     SHABase<Traits> ctx;
     ctx.Update(message);
@@ -330,7 +330,7 @@ VOID HMACBase<SHAType, Traits>::Init(Span<const UCHAR> key)
         if (key_size > Traits::BLOCK_SIZE)
         {
             num = Traits::DIGEST_SIZE;
-            SHAType::Hash(Span<const UINT8>(key.Data(), key.Size()), key_temp);
+            SHAType::Hash(Span<const UINT8>(key.Data(), key.Size()), Span<UINT8>(key_temp));
             key_used = key_temp;
         }
         else
@@ -376,9 +376,9 @@ VOID HMACBase<SHAType, Traits>::Final(Span<UCHAR> mac)
     UCHAR digest_inside[Traits::DIGEST_SIZE];
     UCHAR mac_temp[Traits::DIGEST_SIZE];
 
-    this->ctx_inside.Final(digest_inside);
+    this->ctx_inside.Final(Span<UINT8>(digest_inside));
     this->ctx_outside.Update(Span<const UINT8>(digest_inside, Traits::DIGEST_SIZE));
-    this->ctx_outside.Final(mac_temp);
+    this->ctx_outside.Final(Span<UINT8>(mac_temp));
     Memory::Copy(mac.Data(), mac_temp, mac.Size());
     Memory::Zero(digest_inside, sizeof(digest_inside));
     Memory::Zero(mac_temp, sizeof(mac_temp));

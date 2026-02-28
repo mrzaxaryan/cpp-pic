@@ -28,6 +28,6 @@ public:
     VOID Reset();
     // Append data to the hash cache
     VOID Append(Span<const CHAR> buffer);
-    // Get the hash value from the cache
-    VOID GetHash(PCHAR out, INT32 hashSize);
+    // Get the hash value from the cache; dispatch on out.Size() (32 = SHA-256, 48 = SHA-384)
+    VOID GetHash(Span<CHAR> out);
 };

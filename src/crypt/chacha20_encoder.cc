@@ -27,8 +27,8 @@ Result<void, Error> ChaCha20Encoder::Initialize(PUCHAR localKey, PUCHAR remoteKe
     UINT32 counter = 1;
     this->ivLength = TLS_CHACHA20_IV_LENGTH;
     LOG_DEBUG("Initializing Chacha20 encoder with key length: %d bits", keyLength * 8);
-    this->localCipher.KeySetup(localKey, keyLength * 8);
-    this->remoteCipher.KeySetup(remoteKey, keyLength * 8);
+    this->localCipher.KeySetup(Span<const UINT8>(localKey, keyLength));
+    this->remoteCipher.KeySetup(Span<const UINT8>(remoteKey, keyLength));
     LOG_DEBUG("Chacha20 encoder initialized with local key: %p, remote key: %p", localKey, remoteKey);
     this->localCipher.IVSetup96BitNonce(localIv, (PUCHAR)&counter);
     Memory::Copy(this->localNonce, localIv, sizeof(localIv));
@@ -52,9 +52,13 @@ VOID ChaCha20Encoder::Encode(TlsBuffer &out, Span<const CHAR> packet, Span<const
     UCHAR poly1305_key[POLY1305_KEYLEN];
     this->localCipher.IvUpdate(this->localNonce, sequence, (UINT8 *)&counter);
     LOG_DEBUG("Chacha20 encoder updated IV with sequence: %p, counter: %d", sequence, counter);
-    this->localCipher.Poly1305Key(poly1305_key);
+    this->localCipher.Poly1305Key(Span<UCHAR>(poly1305_key));
     LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
-    this->localCipher.Poly1305Aead((UINT8 *)packet.Data(), packetSize, (UINT8 *)aad.Data(), aadSize, poly1305_key, (UINT8 *)out.GetBuffer() + out.GetSize() - POLY1305_TAGLEN - packetSize);
+    this->localCipher.Poly1305Aead(
+        Span<UCHAR>((UINT8 *)packet.Data(), packetSize),
+        Span<const UCHAR>((UINT8 *)aad.Data(), aadSize),
+        poly1305_key,
+        Span<UCHAR>((UINT8 *)out.GetBuffer() + out.GetSize() - POLY1305_TAGLEN - packetSize, packetSize + POLY1305_TAGLEN));
 }
 
 // Decode data using ChaCha20 and Poly1305
@@ -74,17 +78,22 @@ Result<void, Error> ChaCha20Encoder::Decode(TlsBuffer &in, TlsBuffer &out, Span<
 
     // Generate Poly1305 key from current cipher state
     UCHAR poly1305_key[POLY1305_KEYLEN];
-    this->remoteCipher.Poly1305Key(poly1305_key);
+    this->remoteCipher.Poly1305Key(Span<UCHAR>(poly1305_key));
     LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
 
     // Decode and verify (poly_key is already computed, don't regenerate inside Poly1305Decode)
-    INT32 size = this->remoteCipher.Poly1305Decode((UINT8 *)in.GetBuffer(), in.GetSize(), (UINT8 *)aad.Data(), aadSize, poly1305_key, (UINT8 *)out.GetBuffer());
-    LOG_DEBUG("Chacha20 decode returned size: %d", size);
-    if (size <= 0)
+    auto decodeResult = this->remoteCipher.Poly1305Decode(
+        Span<UCHAR>((UINT8 *)in.GetBuffer(), in.GetSize()),
+        Span<const UCHAR>((UINT8 *)aad.Data(), aadSize),
+        poly1305_key,
+        Span<UCHAR>((UINT8 *)out.GetBuffer(), in.GetSize()));
+    LOG_DEBUG("Chacha20 decode returned");
+    if (!decodeResult)
     {
-        LOG_ERROR("Chacha20 Decode failed, size: %d", size);
+        LOG_ERROR("Chacha20 Decode failed");
         return Result<void, Error>::Err(Error::ChaCha20_DecodeFailed);
     }
+    INT32 size = decodeResult.Value();
     LOG_DEBUG("Chacha20 Decode succeeded, output size: %d bytes", size);
     out.SetSize(size);
     return Result<void, Error>::Ok();

@@ -169,11 +169,11 @@ VOID Poly1305::ProcessBlocks(Span<const UCHAR> data)
     m_h[4] = h4;
 }
 
-INT32 Poly1305::GenerateKey(PUCHAR key256, Span<const UCHAR> nonce, PUCHAR poly_key, UINT32 counter)
+INT32 Poly1305::GenerateKey(Span<const UCHAR> key256, Span<const UCHAR> nonce, Span<UCHAR> poly_key, UINT32 counter)
 {
     ChaChaPoly1305 ctx;
     UINT64 ctr;
-    ctx.KeySetup(key256, 256);
+    ctx.KeySetup(key256);
 
     if (nonce.Size() == 8)
     {
@@ -189,7 +189,7 @@ INT32 Poly1305::GenerateKey(PUCHAR key256, Span<const UCHAR> nonce, PUCHAR poly_
         return -1;
     }
 
-    ctx.Block(poly_key, POLY1305_KEYLEN);
+    ctx.Block(poly_key.Data(), POLY1305_KEYLEN);
     return 0;
 }
 
@@ -233,7 +233,7 @@ VOID Poly1305::Update(Span<const UCHAR> data)
     }
 }
 
-VOID Poly1305::Finish(UCHAR mac[16])
+VOID Poly1305::Finish(Span<UCHAR> mac)
 {
     UINT32 h0, h1, h2, h3, h4, c;
     UINT32 g0, g1, g2, g3, g4;
@@ -318,10 +318,10 @@ VOID Poly1305::Finish(UCHAR mac[16])
     f = (UINT64)h3 + m_pad[3] + (f >> 32);
     h3 = (UINT32)f;
 
-    U32TO8(mac + 0, h0);
-    U32TO8(mac + 4, h1);
-    U32TO8(mac + 8, h2);
-    U32TO8(mac + 12, h3);
+    U32TO8(mac.Data() + 0, h0);
+    U32TO8(mac.Data() + 4, h1);
+    U32TO8(mac.Data() + 8, h2);
+    U32TO8(mac.Data() + 12, h3);
 
     /* zero out the state */
     Memory::Zero(m_h, sizeof(m_h));
@@ -332,8 +332,10 @@ VOID Poly1305::Finish(UCHAR mac[16])
 //========== ChaCha20 from D. J. Bernstein ========= //
 // Source available at https://cr.yp.to/chacha.html  //
 
-VOID ChaChaPoly1305::KeySetup(const UINT8 *k, UINT32 kbits)
+VOID ChaChaPoly1305::KeySetup(Span<const UINT8> key)
 {
+    const UINT8 *k = key.Data();
+    UINT32 kbits = (UINT32)key.Size() * 8;
 
     this->input[4] = _private_tls_U8TO32_LITTLE(k + 0);
     this->input[5] = _private_tls_U8TO32_LITTLE(k + 4);
@@ -404,8 +406,12 @@ VOID ChaChaPoly1305::IvUpdate(const UINT8 *iv, const UINT8 *aad, const UINT8 *co
     this->input[15] = _private_tls_U8TO32_LITTLE(iv + 8) ^ _private_tls_U8TO32_LITTLE(aad + 4);
 }
 
-VOID ChaChaPoly1305::EncryptBytes(const UINT8 *m, UINT8 *c, UINT32 bytes)
+VOID ChaChaPoly1305::EncryptBytes(Span<const UINT8> m_span, Span<UINT8> c_span)
 {
+    const UINT8 *m = m_span.Data();
+    UINT8 *c = c_span.Data();
+    UINT32 bytes = (UINT32)m_span.Size();
+
     UINT32 x0, x1, x2, x3, x4, x5, x6, x7;
     UINT32 x8, x9, x10, x11, x12, x13, x14, x15;
     UINT32 j0, j1, j2, j3, j4, j5, j6, j7;
@@ -599,65 +605,66 @@ VOID ChaChaPoly1305::Block(PUCHAR c, UINT32 len)
     this->input[12] = PLUSONE(this->input[12]);
 }
 
-INT32 ChaChaPoly1305::Poly1305Aead(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad_len, const UCHAR (&poly_key)[POLY1305_KEYLEN], PUCHAR out)
+INT32 ChaChaPoly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
 {
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
 
+    UINT32 len = (UINT32)pt.Size();
     UINT32 counter = 1;
     this->IVSetup96BitNonce(nullptr, (PUCHAR)&counter);
-    this->EncryptBytes(pt, out, len);
+    this->EncryptBytes(Span<const UINT8>(pt.Data(), len), Span<UINT8>(out.Data(), len));
 
     Poly1305 poly(poly_key);
-    poly.Update(Span<const UCHAR>(aad, aad_len));
-    INT32 rem = aad_len % 16;
+    poly.Update(aad);
+    INT32 rem = (INT32)aad.Size() % 16;
     if (rem)
         poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
-    poly.Update(Span<const UCHAR>(out, len));
-    rem = len % 16;
+    poly.Update(Span<const UCHAR>(out.Data(), len));
+    rem = (INT32)len % 16;
     if (rem)
         poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
     UCHAR trail[16];
-    Poly1305::U32TO8(trail, aad_len);
+    Poly1305::U32TO8(trail, (UINT32)aad.Size());
     Memory::Zero(trail + 4, 4);
     Poly1305::U32TO8(trail + 8, len);
     Memory::Zero(trail + 12, 4);
 
     poly.Update(Span<const UCHAR>(trail));
-    poly.Finish(out + len);
+    poly.Finish(out.Subspan(len));
 
-    return len + POLY1305_TAGLEN;
+    return (INT32)len + POLY1305_TAGLEN;
 }
 
-INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad_len, const UCHAR (&poly_key)[POLY1305_KEYLEN], PUCHAR out)
+Result<INT32, Error> ChaChaPoly1305::Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
 {
-    if (len < POLY1305_TAGLEN)
-        return -1;
+    if (pt.Size() < POLY1305_TAGLEN)
+        return Result<INT32, Error>::Err(Error::ChaCha20_DecodeFailed);
 
-    len -= POLY1305_TAGLEN;
+    UINT32 len = (UINT32)pt.Size() - POLY1305_TAGLEN;
 
     // Authenticate BEFORE decrypting (AEAD requirement)
     // poly_key is already computed by the caller; use it directly
     Poly1305 poly(poly_key);
-    poly.Update(Span<const UCHAR>(aad, aad_len));
+    poly.Update(aad);
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
-    INT32 rem = aad_len % 16;
+    INT32 rem = (INT32)aad.Size() % 16;
     if (rem)
         poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
-    poly.Update(Span<const UCHAR>(pt, len));
-    rem = len % 16;
+    poly.Update(Span<const UCHAR>(pt.Data(), len));
+    rem = (INT32)len % 16;
     if (rem)
         poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
     UCHAR trail[16];
-    Poly1305::U32TO8(&trail[0], aad_len);
+    Poly1305::U32TO8(&trail[0], (UINT32)aad.Size());
     Memory::Zero(trail + 4, 4);
     Poly1305::U32TO8(&trail[8], len);
     Memory::Zero(trail + 12, 4);
 
     UCHAR mac_tag[POLY1305_TAGLEN];
     poly.Update(Span<const UCHAR>(trail));
-    poly.Finish(mac_tag);
+    poly.Finish(Span<UCHAR>(mac_tag));
 
     // Constant-time comparison to prevent timing oracle
     UINT8 diff = 0;
@@ -667,22 +674,22 @@ INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 a
     if (diff != 0)
     {
         LOG_ERROR("ChaChaPoly1305::Poly1305Decode: Authentication tag mismatch");
-        return -1;
+        return Result<INT32, Error>::Err(Error::ChaCha20_DecodeFailed);
     }
 
     // Only decrypt after authentication succeeds
-    this->EncryptBytes(pt, out, len);
+    this->EncryptBytes(Span<const UINT8>(pt.Data(), len), Span<UINT8>(out.Data(), len));
 
-    return len;
+    return Result<INT32, Error>::Ok((INT32)len);
 }
 
-VOID ChaChaPoly1305::Poly1305Key(PUCHAR poly1305_key)
+VOID ChaChaPoly1305::Poly1305Key(Span<UCHAR> poly1305_key)
 {
     UCHAR key[32];
     UCHAR nonce[12];
     this->Key(key);
     this->Nonce(nonce);
-    Poly1305::GenerateKey(key, Span<const UCHAR>(nonce), poly1305_key, 0);
+    Poly1305::GenerateKey(Span<const UCHAR>(key), Span<const UCHAR>(nonce), poly1305_key, 0);
 }
 
 ChaChaPoly1305::ChaChaPoly1305()

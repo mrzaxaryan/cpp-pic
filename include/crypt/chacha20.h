@@ -113,7 +113,7 @@ public:
      * @brief Finalizes MAC computation and outputs tag
      * @param mac Output buffer for 16-byte authentication tag
      */
-    VOID Finish(UCHAR mac[16]);
+    VOID Finish(Span<UCHAR> mac);
 
     /**
      * @brief Converts 4 bytes to 32-bit word (little-endian)
@@ -140,7 +140,7 @@ public:
      * @details Derives the Poly1305 key by encrypting zeros with ChaCha20
      * using block counter 0, as specified in RFC 7539.
      */
-    static INT32 GenerateKey(PUCHAR key256, Span<const UCHAR> nonce, PUCHAR poly_key, UINT32 counter);
+    static INT32 GenerateKey(Span<const UCHAR> key256, Span<const UCHAR> nonce, Span<UCHAR> poly_key, UINT32 counter);
 };
 
 /**
@@ -205,7 +205,7 @@ public:
      * @details Initializes the ChaCha20 state with the provided key.
      * For 128-bit keys, the key is duplicated to fill 256 bits.
      */
-    VOID KeySetup(const UINT8 *k, UINT32 kbits);
+    VOID KeySetup(Span<const UINT8> key);
 
     /**
      * @brief Extracts current key from state
@@ -255,7 +255,7 @@ public:
      *
      * @details XORs input with keystream. Same function for encryption and decryption.
      */
-    VOID EncryptBytes(const UINT8 *m, UINT8 *c, UINT32 bytes);
+    VOID EncryptBytes(Span<const UINT8> m_span, Span<UINT8> c_span);
 
     /**
      * @brief Generates raw keystream block
@@ -271,7 +271,7 @@ public:
      * @details Per RFC 7539, the Poly1305 key is derived by encrypting
      * a zero block with ChaCha20 using counter = 0.
      */
-    VOID Poly1305Key(PUCHAR poly1305_key);
+    VOID Poly1305Key(Span<UCHAR> poly1305_key);
 
     /**
      * @brief Performs AEAD encryption with Poly1305 authentication
@@ -285,7 +285,7 @@ public:
      *
      * @details Encrypts plaintext and computes authentication tag over AAD and ciphertext.
      */
-    INT32 Poly1305Aead(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad_len, const UCHAR (&poly_key)[POLY1305_KEYLEN], PUCHAR out);
+    INT32 Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out);
 
     /**
      * @brief Performs AEAD decryption with Poly1305 verification
@@ -300,7 +300,7 @@ public:
      * @details Verifies authentication tag and decrypts if valid.
      * @warning Returns error if tag verification fails - do not use output in this case.
      */
-    INT32 Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad_len, const UCHAR (&poly_key)[POLY1305_KEYLEN], PUCHAR out);
+    [[nodiscard]] Result<INT32, Error> Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out);
 };
 
 /** @} */ // end of chacha20 group

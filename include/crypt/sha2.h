@@ -230,21 +230,21 @@ public:
 
     /**
      * @brief Finalizes hash computation and outputs digest
-     * @param digest Output buffer for hash digest (must be Traits::DIGEST_SIZE bytes)
+     * @param digest Output span for hash digest (must be Traits::DIGEST_SIZE bytes)
      *
      * @details Applies padding, processes final block, and outputs the digest.
      * @note After calling Final(), the context should not be reused without re-initialization.
      */
-    VOID Final(UINT8 *digest);
+    VOID Final(Span<UINT8> digest);
 
     /**
      * @brief Computes hash of a complete message in one call
      * @param message Span of message data bytes
-     * @param digest Output buffer for hash digest (must be Traits::DIGEST_SIZE bytes)
+     * @param digest Output span for hash digest (must be Traits::DIGEST_SIZE bytes)
      *
      * @details Convenience method for hashing complete messages.
      */
-    static VOID Hash(Span<const UINT8> message, UINT8 *digest);
+    static VOID Hash(Span<const UINT8> message, Span<UINT8> digest);
 
     /**
      * @brief Processes message blocks through the compression function

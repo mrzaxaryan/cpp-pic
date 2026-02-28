@@ -474,21 +474,20 @@ private:
 
 	static BOOL TestDirectoryIteration()
 	{
-		DirectoryIterator rootIter;
-		auto r = rootIter.Initialization(Path::NormalizePath(L""_embed));
-		if (!r)
+		auto rootResult = DirectoryIterator::Create(Path::NormalizePath(L""_embed));
+		if (!rootResult)
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for root");
 			return false;
 		}
 		// Test iterating through a directory with multiple files
-		DirectoryIterator iter;
-		r = iter.Initialization(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
-		if (!r)
+		auto iterResult = DirectoryIterator::Create(Path::NormalizePath(L"test_io_root\\level1_dir1"_embed));
+		if (!iterResult)
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for level1_dir1");
 			return false;
 		}
+		DirectoryIterator &iter = iterResult.Value();
 
 		INT32 fileCount = 0;
 		INT32 dirCount = 0;

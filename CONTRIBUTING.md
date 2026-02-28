@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-**Requirements:** Clang/LLVM 21+, CMake 3.20+, Ninja 1.10+, C++23. See [TOOLCHAIN.md](TOOLCHAIN.md) for installation.
+**Requirements:** Clang/LLVM 21+, CMake 3.20+, Ninja 1.10+, C++23. See [Toolchain Installation](#toolchain-installation) below.
 
 ```bash
 # Build
@@ -14,6 +14,95 @@ cmake --build --preset {platform}-{arch}-{build_type}
 ```
 
 Presets: `windows|linux|macos|uefi` x `i386|x86_64|armv7a|aarch64` x `debug|release`
+
+## Toolchain Installation
+
+### Windows
+
+**Prerequisites:** [winget](https://github.com/microsoft/winget-cli) (pre-installed on Windows 11 and recent Windows 10).
+
+```powershell
+# Install all dependencies
+winget install --id Kitware.CMake && winget install --id Ninja-build.Ninja && winget install --id LLVM.LLVM
+
+# Optional: Install Doxygen for documentation generation
+winget install -e --id DimitriVanHeesch.Doxygen
+```
+
+**Important:** After installation, restart your terminal or log out and log back in for the PATH changes to take effect.
+
+Verify:
+
+```powershell
+clang --version && clang++ --version && lld-link --version && cmake --version && ninja --version
+```
+
+### Linux (Ubuntu/Debian)
+
+```bash
+# Install all dependencies (LLVM 21)
+LLVM_VER=21 && sudo apt-get update && sudo apt-get install -y wget lsb-release ca-certificates gnupg cmake ninja-build && sudo mkdir -p /etc/apt/keyrings && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null && echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list && sudo apt-get update && sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER} lldb-${LLVM_VER} && sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lldb-dap lldb-dap /usr/bin/lldb-dap-${LLVM_VER} 100 && sudo update-alternatives --set clang "/usr/bin/clang-${LLVM_VER}" && sudo update-alternatives --set clang++ "/usr/bin/clang++-${LLVM_VER}" && sudo update-alternatives --set lld "/usr/bin/lld-${LLVM_VER}" && sudo update-alternatives --set llvm-objdump "/usr/bin/llvm-objdump-${LLVM_VER}" && sudo update-alternatives --set llvm-objcopy "/usr/bin/llvm-objcopy-${LLVM_VER}" && sudo update-alternatives --set llvm-strings "/usr/bin/llvm-strings-${LLVM_VER}" && sudo update-alternatives --set lldb-dap "/usr/bin/lldb-dap-${LLVM_VER}"
+```
+
+**Note:** To install a different LLVM version, change `LLVM_VER=21` to your desired version (e.g., `LLVM_VER=22`).
+
+Verify:
+
+```bash
+clang --version && clang++ --version && lld --version && cmake --version && ninja --version
+```
+
+### macOS
+
+**Prerequisites:** [Homebrew](https://brew.sh/).
+
+```bash
+# Install all dependencies
+brew install llvm cmake ninja
+```
+
+Add LLVM to your PATH:
+
+```bash
+# For Apple Silicon (M1/M2/M3/M4)
+echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+# For Intel Macs
+echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Verify:
+
+```bash
+clang --version && clang++ --version && ld64.lld --version && cmake --version && ninja --version
+```
+
+### IDE Configuration
+
+#### Visual Studio Code
+
+This project is designed and optimized for [Visual Studio Code](https://code.visualstudio.com/). When you open this project in VSCode, you will be automatically prompted to install the recommended extensions.
+
+#### WSL Integration
+
+If you're developing on Windows with WSL, you can open this project in WSL using VSCode's remote development features.
+
+**From within WSL**, navigate to the project directory and run:
+
+```bash
+code .
+```
+
+**Prerequisites:**
+- Ensure WSL is properly configured on your Windows system
+- Install QEMU, UEFI firmware, and disk image tools:
+  ```bash
+  sudo apt-get update && sudo apt-get install -y qemu-user-static qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64 dosfstools mtools
+  ```
+
+For more information, see the [VSCode WSL documentation](https://code.visualstudio.com/docs/remote/wsl) and [.vscode/README.md](.vscode/README.md).
 
 ## Project Structure
 

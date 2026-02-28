@@ -304,15 +304,15 @@ Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 		{
 			if (i > 0)
 			{
-				buffer.Data()[offset++] = '.';
+				buffer[offset++] = '.';
 			}
 			CHAR temp[4];
 			String::WriteDecimal(temp, octets[i]);
 			UINT32 len = String::Length(temp);
-			Memory::Copy(buffer.Data() + offset, temp, len);
+			Memory::Copy(&buffer[offset], temp, len);
 			offset += len;
 		}
-		buffer.Data()[offset] = '\0';
+		buffer[offset] = '\0';
 		return Result<void, Error>::Ok();
 	}
 	else if (version == IPVersion::IPv6)
@@ -328,7 +328,7 @@ Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 		{
 			if (i > 0)
 			{
-				buffer.Data()[offset++] = ':';
+				buffer[offset++] = ':';
 			}
 			UINT16 group = ((UINT16)address.ipv6[i * 2] << 8) | address.ipv6[i * 2 + 1];
 
@@ -336,10 +336,10 @@ Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 			CHAR hexStr[5];
 			String::WriteHex(hexStr, group);
 			UINT32 hexLen = String::Length(hexStr);
-			Memory::Copy(buffer.Data() + offset, hexStr, hexLen);
+			Memory::Copy(&buffer[offset], hexStr, hexLen);
 			offset += hexLen;
 		}
-		buffer.Data()[offset] = '\0';
+		buffer[offset] = '\0';
 		return Result<void, Error>::Ok();
 	}
 

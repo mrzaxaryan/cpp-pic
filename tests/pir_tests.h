@@ -57,6 +57,7 @@
 #include "filesystem_tests.h"
 #include "result_tests.h"
 #include "binary_io_tests.h"
+#include "span_tests.h"
 
 static BOOL RunPIRTests()
 {
@@ -66,6 +67,7 @@ static BOOL RunPIRTests()
 	LOG_INFO("");
 
 	// CORE - Result Type and Embedded Types
+	RunTestSuite<SpanTests>(allPassed);
 	RunTestSuite<ResultTests>(allPassed);
 	RunTestSuite<DoubleTests>(allPassed);
 	RunTestSuite<StringTests>(allPassed);

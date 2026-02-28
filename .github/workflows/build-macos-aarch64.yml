@@ -13,7 +13,12 @@ concurrency:
 
 jobs:
   build-and-test:
+    name: -${{ matrix.opt }}
     runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: [O0, O1, O2, O3, Os, Oz, Og]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,58 +34,39 @@ jobs:
           done
           echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
-      - name: Build, Upload, and Test all optimization levels
+      - name: Build -${{ matrix.opt }}
         run: |
-          set -e
-          OPTS="O0 O1 O2 O3 Os Oz Og"
-          FAILED=""
-          for opt in $OPTS; do
-            echo "========== Building -$opt =========="
-            rm -rf build
-            cmake --preset macos-aarch64-release -DOPTIMIZATION_LEVEL=$opt
-            cmake --build --preset macos-aarch64-release
-            if [ $? -ne 0 ]; then FAILED="$FAILED $opt-build"; continue; fi
+          cmake --preset macos-aarch64-release -DOPTIMIZATION_LEVEL=${{ matrix.opt }}
+          cmake --build --preset macos-aarch64-release
 
-            echo "========== Saving -$opt =========="
-            mkdir -p "artifacts/$opt"
-            cp -r build/* "artifacts/$opt/"
+      - name: Sections -${{ matrix.opt }}
+        run: |
+          TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
+          PIC_BIN=$(find build -type f -name "output.bin" | head -n 1)
+          echo "Mach-O: $TEST_BIN ($(wc -c < "$TEST_BIN") bytes)"
+          echo "PIC:    $PIC_BIN ($(wc -c < "$PIC_BIN") bytes)"
+          file "$TEST_BIN"
+          llvm-objdump -h "$TEST_BIN" 2>/dev/null || true
 
-            echo "========== Sections -$opt =========="
-            TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
-            PIC_BIN=$(find build -type f -name "output.bin" | head -n 1)
-            echo "Mach-O: $TEST_BIN ($(wc -c < "$TEST_BIN") bytes)"
-            echo "PIC:    $PIC_BIN ($(wc -c < "$PIC_BIN") bytes)"
-            file "$TEST_BIN"
-            llvm-objdump -h "$TEST_BIN" 2>/dev/null || true
+      - name: Test Mach-O -${{ matrix.opt }}
+        run: |
+          TEST_BIN=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
+          chmod +x "$TEST_BIN"
+          codesign --sign - --force "$TEST_BIN"
+          codesign --verify --verbose "$TEST_BIN" || echo "WARNING: codesign verification failed"
+          "$TEST_BIN"
 
-            echo "========== Testing Mach-O -$opt =========="
-            chmod +x "$TEST_BIN"
-            codesign --sign - --force "$TEST_BIN"
-            codesign --verify --verbose "$TEST_BIN" || echo "WARNING: codesign verification failed"
-            if ! "$TEST_BIN"; then
-              echo "Mach-O test failed for -$opt (exit=$?)"
-              FAILED="$FAILED $opt-macho"; continue
-            fi
-
-            echo "========== Testing PIC -$opt =========="
-            if ! python3 scripts/loader.py --arch aarch64 "$PIC_BIN"; then
-              echo "PIC test failed for -$opt"
-              FAILED="$FAILED $opt-pic"; continue
-            fi
-
-            echo "========== $opt passed =========="
-          done
-          if [ -n "$FAILED" ]; then
-            echo "Failed:$FAILED"
-            exit 1
-          fi
+      - name: Test PIC -${{ matrix.opt }}
+        run: |
+          PIC_BIN=$(find build -type f -name "output.bin" | head -n 1)
+          python3 scripts/loader.py --arch aarch64 "$PIC_BIN"
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-macos-aarch64
+          name: build-macos-aarch64-${{ matrix.opt }}
           retention-days: 1
           path: |
-            artifacts/
-            !artifacts/**/cmake/
+            build/
+            !build/**/cmake/

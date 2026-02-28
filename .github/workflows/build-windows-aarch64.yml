@@ -16,7 +16,12 @@ env:
 
 jobs:
   build-and-test:
+    name: -${{ matrix.opt }}
     runs-on: windows-11-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: [O0, O1, O2, O3, Os, Oz, Og]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,44 +57,28 @@ jobs:
         run: |
           "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      - name: Build, Upload, and Test all optimization levels
+      - name: Build -${{ matrix.opt }}
         shell: pwsh
         run: |
-          $opts = @("O0", "O1", "O2", "O3", "Os", "Oz", "Og")
-          $failed = @()
-          foreach ($opt in $opts) {
-            Write-Host "========== Building -$opt ==========" -ForegroundColor Cyan
-            Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
-            cmake --preset windows-aarch64-release "-DOPTIMIZATION_LEVEL=$opt"
-            cmake --build --preset windows-aarch64-release
-            if ($LASTEXITCODE -ne 0) { $failed += "$opt-build"; continue }
+          cmake --preset windows-aarch64-release "-DOPTIMIZATION_LEVEL=${{ matrix.opt }}"
+          cmake --build --preset windows-aarch64-release
 
-            Write-Host "========== Uploading -$opt ==========" -ForegroundColor Cyan
-            $artifactDir = "artifacts/$opt"
-            New-Item -ItemType Directory -Force -Path $artifactDir | Out-Null
-            Copy-Item -Path "build/*" -Destination $artifactDir -Recurse
+      - name: Test EXE -${{ matrix.opt }}
+        shell: pwsh
+        run: |
+          & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
 
-            Write-Host "========== Testing EXE -$opt ==========" -ForegroundColor Cyan
-            & (Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1).FullName
-            if ($LASTEXITCODE -ne 0) { $failed += "$opt-exe"; continue }
-
-            Write-Host "========== Testing PIC -$opt ==========" -ForegroundColor Cyan
-            python scripts/loader.py --arch aarch64 (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
-            if ($LASTEXITCODE -ne 0) { $failed += "$opt-pic"; continue }
-
-            Write-Host "========== $opt passed ==========" -ForegroundColor Green
-          }
-          if ($failed.Count -gt 0) {
-            Write-Host "Failed: $($failed -join ', ')" -ForegroundColor Red
-            exit 1
-          }
+      - name: Test PIC -${{ matrix.opt }}
+        shell: pwsh
+        run: |
+          python scripts/loader.py --arch aarch64 (Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1).FullName
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-windows-aarch64
+          name: build-windows-aarch64-${{ matrix.opt }}
           retention-days: 1
           path: |
-            artifacts/
-            !artifacts/**/cmake/
+            build/
+            !build/**/cmake/

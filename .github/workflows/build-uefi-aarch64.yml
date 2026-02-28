@@ -16,8 +16,13 @@ env:
 
 jobs:
   build-and-test:
+    name: -${{ matrix.opt }}
     runs-on: ubuntu-22.04
-    timeout-minutes: 35
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: [O0, O1, O2, O3, Os, Oz, Og]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,61 +58,41 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-system-x86 qemu-system-arm qemu-efi-aarch64 libslirp0 qemu-system-common dosfstools mtools
 
-      - name: Build, Upload, and Test all optimization levels
+      - name: Build -${{ matrix.opt }}
+        run: |
+          cmake --preset uefi-aarch64-release -DOPTIMIZATION_LEVEL=${{ matrix.opt }}
+          cmake --build --preset uefi-aarch64-release
+
+      - name: Test UEFI -${{ matrix.opt }}
         run: |
           set -o pipefail
-          OPTS="O0 O1 O2 O3 Os Oz Og"
-          FAILED=""
-          for opt in $OPTS; do
-            echo "========== Building -$opt =========="
-            rm -rf build
-            cmake --preset uefi-aarch64-release -DOPTIMIZATION_LEVEL=$opt
-            if ! cmake --build --preset uefi-aarch64-release; then FAILED="$FAILED $opt-build"; continue; fi
+          DISK_IMG="uefi-disk.img"
+          dd if=/dev/zero of="$DISK_IMG" bs=1M count=64 2>/dev/null
+          mkfs.fat -F 32 -n UEFI "$DISK_IMG" >/dev/null
+          mmd -i "$DISK_IMG" ::/EFI
+          mmd -i "$DISK_IMG" ::/EFI/BOOT
+          mcopy -i "$DISK_IMG" build/release/uefi/aarch64/output.efi "::EFI/BOOT/BOOTAA64.EFI"
 
-            echo "========== Saving -$opt =========="
-            mkdir -p "artifacts/$opt"
-            cp -r build/* "artifacts/$opt/"
-
-            echo "========== Testing UEFI -$opt =========="
-            DISK_IMG="uefi-disk-${opt}.img"
-            dd if=/dev/zero of="$DISK_IMG" bs=1M count=64 2>/dev/null
-            mkfs.fat -F 32 -n UEFI "$DISK_IMG" >/dev/null
-            mmd -i "$DISK_IMG" ::/EFI
-            mmd -i "$DISK_IMG" ::/EFI/BOOT
-            mcopy -i "$DISK_IMG" build/release/uefi/aarch64/output.efi "::EFI/BOOT/BOOTAA64.EFI"
-
-            set +e
-            timeout 180s qemu-system-aarch64 -M virt -cpu cortex-a72 \
-              -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
-              -drive file="$DISK_IMG",format=raw,if=virtio \
-              -m 512 \
-              -nographic \
-              -serial mon:stdio \
-              -nic user,model=virtio \
-              -semihosting \
-              -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
-            ret=${PIPESTATUS[0]}
-            set -e
-            rm -f "$DISK_IMG"
-            echo "QEMU exit code: $ret (expected 0 for success)"
-            if [ "$ret" -ne "0" ]; then
-              FAILED="$FAILED $opt-uefi"
-              continue
-            fi
-
-            echo "========== $opt passed =========="
-          done
-          if [ -n "$FAILED" ]; then
-            echo "Failed:$FAILED"
-            exit 1
-          fi
+          timeout 180s qemu-system-aarch64 -M virt -cpu cortex-a72 \
+            -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
+            -drive file="$DISK_IMG",format=raw,if=virtio \
+            -m 512 \
+            -nographic \
+            -serial mon:stdio \
+            -nic user,model=virtio \
+            -semihosting \
+            -no-reboot 2>&1 | sed -u 's/?\[[0-9;]*m//g'
+          ret=${PIPESTATUS[0]}
+          rm -f "$DISK_IMG"
+          echo "QEMU exit code: $ret (expected 0 for success)"
+          [ "$ret" -eq "0" ]
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-uefi-aarch64
+          name: build-uefi-aarch64-${{ matrix.opt }}
           retention-days: 1
           path: |
-            artifacts/
-            !artifacts/**/cmake/
+            build/
+            !build/**/cmake/

@@ -16,7 +16,12 @@ env:
 
 jobs:
   build-and-test:
+    name: -${{ matrix.opt }}
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: [O0, O1, O2, O3, Os, Oz, Og]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,42 +52,27 @@ jobs:
       - name: Add LLVM to PATH
         run: echo "/opt/llvm/bin" >> $GITHUB_PATH
 
-      - name: Build, Upload, and Test all optimization levels
+      - name: Build -${{ matrix.opt }}
         run: |
-          set -e
-          OPTS="O0 O1 O2 O3 Os Oz Og"
-          FAILED=""
-          for opt in $OPTS; do
-            echo "========== Building -$opt =========="
-            rm -rf build
-            cmake --preset linux-x86_64-release -DOPTIMIZATION_LEVEL=$opt
-            if ! cmake --build --preset linux-x86_64-release; then FAILED="$FAILED $opt-build"; continue; fi
+          cmake --preset linux-x86_64-release -DOPTIMIZATION_LEVEL=${{ matrix.opt }}
+          cmake --build --preset linux-x86_64-release
 
-            echo "========== Saving -$opt =========="
-            mkdir -p "artifacts/$opt"
-            cp -r build/* "artifacts/$opt/"
+      - name: Test ELF -${{ matrix.opt }}
+        run: |
+          TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+          chmod +x "$TEST_ELF"
+          "$TEST_ELF"
 
-            echo "========== Testing ELF -$opt =========="
-            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
-            chmod +x "$TEST_ELF"
-            if ! "$TEST_ELF"; then FAILED="$FAILED $opt-elf"; continue; fi
-
-            echo "========== Testing PIC -$opt =========="
-            if ! python3 scripts/loader.py --arch x86_64 $(find build -type f -name "output.bin" | head -n 1); then FAILED="$FAILED $opt-pic"; continue; fi
-
-            echo "========== $opt passed =========="
-          done
-          if [ -n "$FAILED" ]; then
-            echo "Failed:$FAILED"
-            exit 1
-          fi
+      - name: Test PIC -${{ matrix.opt }}
+        run: |
+          python3 scripts/loader.py --arch x86_64 $(find build -type f -name "output.bin" | head -n 1)
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-linux-x86_64
+          name: build-linux-x86_64-${{ matrix.opt }}
           retention-days: 1
           path: |
-            artifacts/
-            !artifacts/**/cmake/
+            build/
+            !build/**/cmake/

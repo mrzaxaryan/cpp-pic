@@ -32,7 +32,7 @@ jobs:
       - name: Verify toolchain
         run: |
           clang++ --version
-          ld -v 2>&1 | head -3 || true
+          ls "$(brew --prefix llvm)/bin"/ld* "$(brew --prefix llvm)/bin"/lld* 2>/dev/null || true
 
       - name: Build -O0
         run: |

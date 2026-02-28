@@ -59,7 +59,7 @@ private:
 					   "Host: one.one.one.one\r\n"_embed
 					   "Connection: close\r\n"_embed
 					   "\r\n"_embed;
-		auto writeResult = tlsClient.Write((PCVOID)(PCCHAR)message, message.Length());
+		auto writeResult = tlsClient.Write(Span<const CHAR>((PCCHAR)message, message.Length()));
 
 		if (!writeResult)
 		{
@@ -77,7 +77,7 @@ private:
 		// Receive echo response
 		CHAR buffer[128];
 		Memory::Zero(buffer, sizeof(buffer));
-		auto readResult = tlsClient.Read(buffer, sizeof(buffer) - 1);
+		auto readResult = tlsClient.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
 
 		if (!readResult)
 		{
@@ -130,7 +130,7 @@ private:
 					"\r\n"_embed;
 
 		// Send and receive message 1
-		auto send1 = tlsClient.Write((PCVOID)(PCCHAR)msg1, msg1.Length());
+		auto send1 = tlsClient.Write(Span<const CHAR>((PCCHAR)msg1, msg1.Length()));
 		if (!send1)
 		{
 			LOG_ERROR("Failed to send message 1 (error: %e)", send1.Error());
@@ -146,7 +146,7 @@ private:
 
 		CHAR buffer1[128];
 		Memory::Zero(buffer1, sizeof(buffer1));
-		auto recv1 = tlsClient.Read(buffer1, sizeof(buffer1) - 1);
+		auto recv1 = tlsClient.Read(Span<CHAR>(buffer1, sizeof(buffer1) - 1));
 		if (!recv1)
 		{
 			LOG_ERROR("Failed to receive echo response for message 1 (error: %e)", recv1.Error());
@@ -161,7 +161,7 @@ private:
 		}
 
 		// Send and receive message 2
-		auto send2 = tlsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length());
+		auto send2 = tlsClient.Write(Span<const CHAR>((PCCHAR)msg2, msg2.Length()));
 		if (!send2)
 		{
 			LOG_ERROR("Failed to send message 2 (error: %e)", send2.Error());
@@ -177,7 +177,7 @@ private:
 
 		CHAR buffer2[128];
 		Memory::Zero(buffer2, sizeof(buffer2));
-		auto recv2 = tlsClient.Read(buffer2, sizeof(buffer2) - 1);
+		auto recv2 = tlsClient.Read(Span<CHAR>(buffer2, sizeof(buffer2) - 1));
 		if (!recv2)
 		{
 			LOG_ERROR("Failed to receive echo response for message 2 (error: %e)", recv2.Error());
@@ -192,7 +192,7 @@ private:
 		}
 
 		// Send and receive message 3
-		auto send3 = tlsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length());
+		auto send3 = tlsClient.Write(Span<const CHAR>((PCCHAR)msg3, msg3.Length()));
 		if (!send3)
 		{
 			LOG_ERROR("Failed to send message 3 (error: %e)", send3.Error());
@@ -208,7 +208,7 @@ private:
 
 		CHAR buffer3[128];
 		Memory::Zero(buffer3, sizeof(buffer3));
-		auto recv3 = tlsClient.Read(buffer3, sizeof(buffer3) - 1);
+		auto recv3 = tlsClient.Read(Span<CHAR>(buffer3, sizeof(buffer3) - 1));
 		if (!recv3)
 		{
 			LOG_ERROR("Failed to receive echo response for message 3 (error: %e)", recv3.Error());

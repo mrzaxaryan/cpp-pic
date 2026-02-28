@@ -56,7 +56,7 @@ Result<void, Error> WebSocketClient::Open()
 	auto writeStr = [&](PCCHAR s) -> BOOL
 	{
 		UINT32 len = String::Length(s);
-		auto r = tlsContext.Write(s, len);
+		auto r = tlsContext.Write(Span<const CHAR>(s, len));
 		return r && r.Value() == len;
 	};
 
@@ -92,7 +92,7 @@ Result<void, Error> WebSocketClient::Close()
 	{
 		// Send a WebSocket CLOSE frame (status code 1000 = normal closure, big-endian)
 		UINT16 statusCode = UINT16SwapByteOrder(1000);
-		(void)Write(&statusCode, sizeof(statusCode), OPCODE_CLOSE);
+		(void)Write(Span<const CHAR>((const CHAR *)&statusCode, sizeof(statusCode)), OPCODE_CLOSE);
 	}
 
 	isConnected = false;
@@ -101,8 +101,9 @@ Result<void, Error> WebSocketClient::Close()
 	return Result<void, Error>::Ok();
 }
 
-Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode)
+Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketOpcode opcode)
 {
+	UINT32 bufferLength = (UINT32)buffer.Size();
 	if (!isConnected && opcode != OPCODE_CLOSE)
 	{
 		return Result<UINT32, Error>::Err(Error::Ws_NotConnected);
@@ -152,12 +153,12 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 	{
 		Memory::Copy(chunk, header, headerLength);
 		PUINT8 dst = chunk + headerLength;
-		PUINT8 src = (PUINT8)buffer;
+		PUINT8 src = (PUINT8)buffer.Data();
 		for (UINT32 i = 0; i < bufferLength; i++)
 			dst[i] = src[i] ^ maskKey[i & 3];
 
 		UINT32 frameLength = headerLength + bufferLength;
-		auto smallWrite = tlsContext.Write(chunk, frameLength);
+		auto smallWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, frameLength));
 		if (!smallWrite || smallWrite.Value() != frameLength)
 		{
 			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
@@ -167,13 +168,13 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 	}
 
 	// Large frames: write header, then mask and write payload in chunks
-	auto headerWrite = tlsContext.Write(header, headerLength);
+	auto headerWrite = tlsContext.Write(Span<const CHAR>((PCHAR)header, headerLength));
 	if (!headerWrite || headerWrite.Value() != headerLength)
 	{
 		return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 	}
 
-	PUINT8 src = (PUINT8)buffer;
+	PUINT8 src = (PUINT8)buffer.Data();
 	UINT32 offset = 0;
 	UINT32 remaining = bufferLength;
 
@@ -183,7 +184,7 @@ Result<UINT32, Error> WebSocketClient::Write(PCVOID buffer, UINT32 bufferLength,
 		for (UINT32 i = 0; i < chunkSize; i++)
 			chunk[i] = src[offset + i] ^ maskKey[(offset + i) & 3];
 
-		auto chunkWrite = tlsContext.Write(chunk, chunkSize);
+		auto chunkWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, chunkSize));
 		if (!chunkWrite || chunkWrite.Value() != chunkSize)
 		{
 			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
@@ -202,7 +203,7 @@ Result<void, Error> WebSocketClient::ReceiveRestrict(PVOID buffer, UINT32 size)
 	UINT32 totalBytesRead = 0;
 	while (totalBytesRead < size)
 	{
-		auto readResult = tlsContext.Read((PCHAR)buffer + totalBytesRead, size - totalBytesRead);
+		auto readResult = tlsContext.Read(Span<CHAR>((PCHAR)buffer + totalBytesRead, size - totalBytesRead));
 		if (!readResult || readResult.Value() <= 0)
 			return Result<void, Error>::Err(readResult, Error::Ws_ReceiveFailed);
 		totalBytesRead += (UINT32)readResult.Value();
@@ -382,14 +383,14 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 		else if (frame.opcode == OPCODE_CLOSE)
 		{
 			// Send close response per RFC 6455 Section 5.5.1
-			(void)Write(frame.data, (frame.length >= 2) ? 2 : 0, OPCODE_CLOSE);
+			(void)Write(Span<const CHAR>(frame.data, (frame.length >= 2) ? 2 : 0), OPCODE_CLOSE);
 			delete[] frame.data;
 			isConnected = false;
 			return Result<WebSocketMessage, Error>::Err(Error::Ws_ConnectionClosed);
 		}
 		else if (frame.opcode == OPCODE_PING)
 		{
-			(void)Write(frame.data, (UINT32)frame.length, OPCODE_PONG);
+			(void)Write(Span<const CHAR>(frame.data, (UINT32)frame.length), OPCODE_PONG);
 			delete[] frame.data;
 		}
 		else if (frame.opcode == OPCODE_PONG)

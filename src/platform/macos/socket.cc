@@ -109,10 +109,13 @@ Result<void, Error> Socket::Close()
 	return Result<void, Error>::Ok();
 }
 
-Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 {
+	PVOID bufferPtr = (PVOID)buffer.Data();
+	UINT32 bufferLength = (UINT32)buffer.Size();
+
 	SSIZE sockfd = (SSIZE)m_socket;
-	SSIZE result = System::Call(SYS_RECVFROM, sockfd, (USIZE)buffer, bufferLength, 0, 0, 0);
+	SSIZE result = System::Call(SYS_RECVFROM, sockfd, (USIZE)bufferPtr, bufferLength, 0, 0, 0);
 	if (result < 0)
 	{
 		return Result<SSIZE, Error>::Err(
@@ -123,15 +126,18 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 	return Result<SSIZE, Error>::Ok(result);
 }
 
-Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 {
+	PCVOID bufferPtr = (PCVOID)buffer.Data();
+	UINT32 bufferLength = (UINT32)buffer.Size();
+
 	SSIZE  sockfd    = (SSIZE)m_socket;
 	UINT32 totalSent = 0;
 
 	while (totalSent < bufferLength)
 	{
 		SSIZE sent = System::Call(SYS_SENDTO, sockfd,
-		                          (USIZE)((const CHAR *)buffer + totalSent),
+		                          (USIZE)((const CHAR *)bufferPtr + totalSent),
 		                          bufferLength - totalSent, 0, 0, 0);
 		if (sent <= 0)
 		{

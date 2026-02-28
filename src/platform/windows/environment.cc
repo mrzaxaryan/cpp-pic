@@ -56,9 +56,10 @@ static BOOL CompareEnvName(const WCHAR *wide, const CHAR *narrow) noexcept
     return *wide == L'=';
 }
 
-USIZE Environment::GetVariable(const CHAR *name, CHAR *buffer, USIZE bufferSize) noexcept
+USIZE Environment::GetVariable(const CHAR *name, Span<CHAR> buffer) noexcept
 {
-    if (name == nullptr || buffer == nullptr || bufferSize == 0)
+    USIZE bufferSize = buffer.Size();
+    if (name == nullptr || bufferSize == 0)
     {
         return 0;
     }
@@ -103,7 +104,7 @@ USIZE Environment::GetVariable(const CHAR *name, CHAR *buffer, USIZE bufferSize)
                     // Simple wide to narrow conversion (ASCII only)
                     buffer[len++] = (CHAR)*value++;
                 }
-                buffer[len] = '\0';
+                buffer.Data()[len] = '\0';
                 return len;
             }
         }
@@ -117,6 +118,6 @@ USIZE Environment::GetVariable(const CHAR *name, CHAR *buffer, USIZE bufferSize)
     }
 
     // Variable not found
-    buffer[0] = '\0';
+    buffer.Data()[0] = '\0';
     return 0;
 }

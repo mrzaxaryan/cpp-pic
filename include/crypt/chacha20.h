@@ -80,10 +80,9 @@ private:
 
     /**
      * @brief Processes complete 16-byte blocks
-     * @param data Pointer to block data
-     * @param bytes Number of bytes (must be multiple of 16)
+     * @param data Block data (size must be multiple of 16)
      */
-    VOID ProcessBlocks(const UCHAR *data, USIZE bytes);
+    VOID ProcessBlocks(Span<const UCHAR> data);
 
 public:
     /**
@@ -106,10 +105,9 @@ public:
 
     /**
      * @brief Updates MAC computation with additional data
-     * @param data Pointer to input data
-     * @param bytes Number of bytes to process
+     * @param data Span of input data bytes
      */
-    VOID Update(const UCHAR *data, USIZE bytes);
+    VOID Update(Span<const UCHAR> data);
 
     /**
      * @brief Finalizes MAC computation and outputs tag
@@ -134,8 +132,7 @@ public:
     /**
      * @brief Generates Poly1305 key from ChaCha20 keystream
      * @param key256 256-bit ChaCha20 key
-     * @param nonce Nonce for ChaCha20
-     * @param noncelen Length of nonce in bytes
+     * @param nonce Span of nonce bytes (8 or 12 bytes)
      * @param poly_key Output buffer for 32-byte Poly1305 key
      * @param counter ChaCha20 block counter (usually 0)
      * @return 0 on success
@@ -143,7 +140,7 @@ public:
      * @details Derives the Poly1305 key by encrypting zeros with ChaCha20
      * using block counter 0, as specified in RFC 7539.
      */
-    static INT32 GenerateKey(PUCHAR key256, PUCHAR nonce, UINT32 noncelen, PUCHAR poly_key, UINT32 counter);
+    static INT32 GenerateKey(PUCHAR key256, Span<const UCHAR> nonce, PUCHAR poly_key, UINT32 counter);
 };
 
 /**

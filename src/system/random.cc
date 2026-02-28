@@ -41,8 +41,9 @@ INT32 Random::Get()
 }
 
 // Function to fill a buffer with random bytes
-INT32 Random::GetArray(USIZE size, PUINT8 buffer)
+INT32 Random::GetArray(Span<UINT8> buffer)
 {
+    USIZE size = buffer.Size();
     // Fill the buffer with random bytes
     for (USIZE i = 0; i < size; ++i)
         buffer[i] = (UINT8)(Random::Get() & 0xFF); // Get random byte

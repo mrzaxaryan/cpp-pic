@@ -290,8 +290,11 @@ Result<void, Error> Socket::Close()
 	return Result<void, Error>::Ok();
 }
 
-Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
+Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 {
+	PVOID bufferPtr = (PVOID)buffer.Data();
+	UINT32 bufferSize = (UINT32)buffer.Size();
+
 	LOG_DEBUG("Read(handle: 0x%p, bufferSize: %d)\n", this, bufferSize);
 
 	PVOID SockEvent = nullptr;
@@ -301,7 +304,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 
 	AfdWsaBuf RecvBuffer;
 	RecvBuffer.Length = bufferSize;
-	RecvBuffer.Buffer = buffer;
+	RecvBuffer.Buffer = bufferPtr;
 
 	AfdSendRecvInfo RecvInfo;
 	Memory::Zero(&RecvInfo, sizeof(RecvInfo));
@@ -356,8 +359,11 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferSize)
 	return Result<SSIZE, Error>::Ok((SSIZE)IOSB.Information);
 }
 
-Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 {
+	PCVOID bufferPtr = (PCVOID)buffer.Data();
+	UINT32 bufferLength = (UINT32)buffer.Size();
+
 	LOG_DEBUG("Write(handle: 0x%p, length: %d)\n", this, bufferLength);
 
 	PVOID SockEvent = nullptr;
@@ -376,7 +382,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 	do
 	{
 		Memory::Zero(&IOSB, sizeof(IOSB));
-		SendBuffer.Buffer    = (PVOID)((PCHAR)buffer + totalSent);
+		SendBuffer.Buffer    = (PVOID)((PCHAR)bufferPtr + totalSent);
 		SendBuffer.Length    = bufferLength - totalSent;
 		SendInfo.BufferArray = &SendBuffer;
 

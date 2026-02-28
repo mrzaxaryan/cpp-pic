@@ -27,7 +27,7 @@ public:
     // Reset the hash cache
     VOID Reset();
     // Append data to the hash cache
-    VOID Append(const CHAR *buffer, INT32 size);
+    VOID Append(Span<const CHAR> buffer);
     // Get the hash value from the cache
     VOID GetHash(PCHAR out, INT32 hashSize);
 };

@@ -136,7 +136,7 @@ private:
 		CHAR buffer[32];
 
 		// Generate string of length 10
-		UINT32 len = rng.GetString<CHAR>(buffer, 10);
+		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 10));
 
 		// Verify length
 		if (len != 10)
@@ -171,7 +171,7 @@ private:
 		WCHAR buffer[32];
 
 		// Generate string of length 15
-		UINT32 len = rng.GetString<WCHAR>(buffer, 15);
+		UINT32 len = rng.GetString<WCHAR>(Span<WCHAR>(buffer, 15));
 
 		// Verify length
 		if (len != 15)
@@ -209,7 +209,7 @@ private:
 		Memory::Zero(buffer, sizeof(buffer));
 
 		// Fill buffer with random bytes
-		INT32 result = rng.GetArray(64, buffer);
+		INT32 result = rng.GetArray(Span<UINT8>(buffer, 64));
 
 		// Verify success
 		if (result != 1)
@@ -243,7 +243,7 @@ private:
 		CHAR buffer[16];
 
 		// Generate string of length 0
-		UINT32 len = rng.GetString<CHAR>(buffer, 0);
+		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 0));
 
 		// Verify length is 0
 		if (len != 0)

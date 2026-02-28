@@ -27,7 +27,7 @@ public:
      *
      * NOTE: On UEFI, this always returns 0 (no environment variables).
      */
-    static USIZE GetVariable(const CHAR* name, CHAR* buffer, USIZE bufferSize) noexcept;
+    static USIZE GetVariable(const CHAR* name, Span<CHAR> buffer) noexcept;
 
     // Prevent instantiation
     VOID* operator new(USIZE) = delete;

@@ -83,7 +83,7 @@ private:
 
 		// Send text message
 		auto testMessage = "Hello, WebSocket!"_embed;
-		auto writeResult = wsClient.Write((PCVOID)(PCCHAR)testMessage, testMessage.Length(), OPCODE_TEXT);
+		auto writeResult = wsClient.Write(Span<const CHAR>((PCCHAR)testMessage, testMessage.Length()), OPCODE_TEXT);
 
 		if (!writeResult)
 		{
@@ -163,7 +163,7 @@ private:
 		}
 		UINT32 dataLength = sizeof(binaryData);
 
-		auto writeResult = wsClient.Write((PCVOID)binaryData, dataLength, OPCODE_BINARY);
+		auto writeResult = wsClient.Write(Span<const CHAR>((PCHAR)binaryData, dataLength), OPCODE_BINARY);
 
 		if (!writeResult)
 		{
@@ -241,7 +241,7 @@ private:
 		auto msg3 = "Third message"_embed;
 
 		// Send and receive message 1
-		auto write1 = wsClient.Write((PCVOID)(PCCHAR)msg1, msg1.Length(), OPCODE_TEXT);
+		auto write1 = wsClient.Write(Span<const CHAR>((PCCHAR)msg1, msg1.Length()), OPCODE_TEXT);
 		if (!write1)
 		{
 			LOG_ERROR("Failed to send message 1 (error: %e)", write1.Error());
@@ -264,7 +264,7 @@ private:
 		}
 
 		// Send and receive message 2
-		auto write2 = wsClient.Write((PCVOID)(PCCHAR)msg2, msg2.Length(), OPCODE_TEXT);
+		auto write2 = wsClient.Write(Span<const CHAR>((PCCHAR)msg2, msg2.Length()), OPCODE_TEXT);
 		if (!write2)
 		{
 			LOG_ERROR("Failed to send message 2 (error: %e)", write2.Error());
@@ -287,7 +287,7 @@ private:
 		}
 
 		// Send and receive message 3
-		auto write3 = wsClient.Write((PCVOID)(PCCHAR)msg3, msg3.Length(), OPCODE_TEXT);
+		auto write3 = wsClient.Write(Span<const CHAR>((PCCHAR)msg3, msg3.Length()), OPCODE_TEXT);
 		if (!write3)
 		{
 			LOG_ERROR("Failed to send message 3 (error: %e)", write3.Error());
@@ -356,7 +356,7 @@ private:
 		largeMessage[largeMessageSize] = '\0';
 
 		// Send large message
-		auto writeResult = wsClient.Write((PCVOID)largeMessage, largeMessageSize, OPCODE_TEXT);
+		auto writeResult = wsClient.Write(Span<const CHAR>(largeMessage, largeMessageSize), OPCODE_TEXT);
 
 		if (!writeResult)
 		{

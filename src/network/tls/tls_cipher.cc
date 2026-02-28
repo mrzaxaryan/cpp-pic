@@ -83,9 +83,9 @@ VOID TlsCipher::GetHash(CHAR *out)
 /// @param len Length of the input data
 /// @return void
 
-VOID TlsCipher::UpdateHash(const CHAR *in, UINT32 len)
+VOID TlsCipher::UpdateHash(Span<const CHAR> in)
 {
-    this->handshakeHash.Append(in, len);
+    this->handshakeHash.Append(in);
 }
 
 /// @brief Compute the public key for the specified ECC index and store it in the provided output buffer
@@ -113,7 +113,7 @@ Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 
     out.CheckSize(MAX_PUBKEY_SIZE);
 
-    auto exportResult = this->privateEccKeys[eccIndex]->ExportPublicKey((UINT8 *)out.GetBuffer() + out.GetSize(), MAX_PUBKEY_SIZE);
+    auto exportResult = this->privateEccKeys[eccIndex]->ExportPublicKey(Span<UINT8>((UINT8 *)out.GetBuffer() + out.GetSize(), MAX_PUBKEY_SIZE));
     if (!exportResult)
         return Result<void, Error>::Err(exportResult, Error::TlsCipher_ComputePublicKeyFailed);
     out.SetSize(out.GetSize() + exportResult.Value());
@@ -157,7 +157,7 @@ Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, const CHAR *serverKe
 
     premasterKey.SetSize(eccSize);
 
-    auto secretResult = this->privateEccKeys[eccIndex]->ComputeSharedSecret((UINT8 *)serverKey, serverKeyLen, (UINT8 *)premasterKey.GetBuffer());
+    auto secretResult = this->privateEccKeys[eccIndex]->ComputeSharedSecret(Span<const UINT8>((UINT8 *)serverKey, serverKeyLen), (UINT8 *)premasterKey.GetBuffer());
     if (!secretResult)
     {
         LOG_DEBUG("Failed to compute shared secret for ECC group %d", ecc);
@@ -206,8 +206,8 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, 
     {
         LOG_DEBUG("Using ECC_NONE for TLS key computation");
 
-        TlsHKDF::ExpandLabel(salt, hashLen, (UINT8 *)this->data13.pseudoRandomKey, hashLen, "derived"_embed, 7, hash, hashLen);
-        TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, salt, hashLen, earlysecret, hashLen);
+        TlsHKDF::ExpandLabel(Span<UCHAR>(salt, hashLen), Span<const UCHAR>((UINT8 *)this->data13.pseudoRandomKey, hashLen), Span<const CHAR>("derived"_embed, 7), Span<const UCHAR>(hash, hashLen));
+        TlsHKDF::Extract(Span<UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const UCHAR>(salt, hashLen), Span<const UCHAR>(earlysecret, hashLen));
 
         if (finishedHash)
         {
@@ -230,22 +230,22 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, 
         UCHAR zeroSalt[MAX_HASH_LEN];
         Memory::Zero(zeroSalt, hashLen);
 
-        TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, zeroSalt, hashLen, earlysecret, hashLen);
-        TlsHKDF::ExpandLabel(salt, hashLen, this->data13.pseudoRandomKey, hashLen, "derived"_embed, 7, hash, hashLen);
-        TlsHKDF::Extract(this->data13.pseudoRandomKey, hashLen, salt, hashLen, (UINT8 *)premaster_key.GetBuffer(), premaster_key.GetSize());
+        TlsHKDF::Extract(Span<UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const UCHAR>(zeroSalt, hashLen), Span<const UCHAR>(earlysecret, hashLen));
+        TlsHKDF::ExpandLabel(Span<UCHAR>(salt, hashLen), Span<const UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const CHAR>("derived"_embed, 7), Span<const UCHAR>(hash, hashLen));
+        TlsHKDF::Extract(Span<UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const UCHAR>(salt, hashLen), Span<const UCHAR>((UINT8 *)premaster_key.GetBuffer(), premaster_key.GetSize()));
 
         this->GetHash((PCHAR)hash);
     }
 
-    TlsHKDF::ExpandLabel(this->data13.handshakeSecret, hashLen, this->data13.pseudoRandomKey, hashLen, client_key, 12, hash, hashLen);
+    TlsHKDF::ExpandLabel(Span<UCHAR>(this->data13.handshakeSecret, hashLen), Span<const UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const CHAR>(client_key, 12), Span<const UCHAR>(hash, hashLen));
 
-    TlsHKDF::ExpandLabel(localKeyBuffer, keyLen, this->data13.handshakeSecret, hashLen, "key"_embed, 3, nullptr, 0);
-    TlsHKDF::ExpandLabel(localIvBuffer, this->chacha20Context.GetIvLength(), this->data13.handshakeSecret, hashLen, "iv"_embed, 2, nullptr, 0);
+    TlsHKDF::ExpandLabel(Span<UCHAR>(localKeyBuffer, keyLen), Span<const UCHAR>(this->data13.handshakeSecret, hashLen), Span<const CHAR>("key"_embed, 3), Span<const UCHAR>());
+    TlsHKDF::ExpandLabel(Span<UCHAR>(localIvBuffer, this->chacha20Context.GetIvLength()), Span<const UCHAR>(this->data13.handshakeSecret, hashLen), Span<const CHAR>("iv"_embed, 2), Span<const UCHAR>());
 
-    TlsHKDF::ExpandLabel(this->data13.mainSecret, hashLen, this->data13.pseudoRandomKey, hashLen, server_key, 12, hash, hashLen);
+    TlsHKDF::ExpandLabel(Span<UCHAR>(this->data13.mainSecret, hashLen), Span<const UCHAR>(this->data13.pseudoRandomKey, hashLen), Span<const CHAR>(server_key, 12), Span<const UCHAR>(hash, hashLen));
 
-    TlsHKDF::ExpandLabel(remoteKeyBuffer, keyLen, this->data13.mainSecret, hashLen, "key"_embed, 3, nullptr, 0);
-    TlsHKDF::ExpandLabel(remoteIvBuffer, this->chacha20Context.GetIvLength(), this->data13.mainSecret, hashLen, "iv"_embed, 2, nullptr, 0);
+    TlsHKDF::ExpandLabel(Span<UCHAR>(remoteKeyBuffer, keyLen), Span<const UCHAR>(this->data13.mainSecret, hashLen), Span<const CHAR>("key"_embed, 3), Span<const UCHAR>());
+    TlsHKDF::ExpandLabel(Span<UCHAR>(remoteIvBuffer, this->chacha20Context.GetIvLength()), Span<const UCHAR>(this->data13.mainSecret, hashLen), Span<const CHAR>("iv"_embed, 2), Span<const UCHAR>());
 
     auto initResult = this->chacha20Context.Initialize(localKeyBuffer, remoteKeyBuffer, localIvBuffer, remoteIvBuffer, keyLen);
     if (!initResult)
@@ -281,20 +281,20 @@ VOID TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRem
     if (localOrRemote)
     {
         LOG_DEBUG("tls_cipher_compute_verify: Using server finished key");
-        TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.mainSecret, hashLen, finishedLabel, 8, nullptr, 0);
+        TlsHKDF::ExpandLabel(Span<UCHAR>(finished_key, hashLen), Span<const UCHAR>(this->data13.mainSecret, hashLen), Span<const CHAR>(finishedLabel, 8), Span<const UCHAR>());
     }
     else
     {
         LOG_DEBUG("tls_cipher_compute_verify: Using client finished key");
-        TlsHKDF::ExpandLabel(finished_key, hashLen, this->data13.handshakeSecret, hashLen, finishedLabel, 8, nullptr, 0);
+        TlsHKDF::ExpandLabel(Span<UCHAR>(finished_key, hashLen), Span<const UCHAR>(this->data13.handshakeSecret, hashLen), Span<const CHAR>(finishedLabel, 8), Span<const UCHAR>());
     }
     out.SetSize(verifySize);
     LOG_DEBUG("tls_cipher_compute_verify: Calculating HMAC for verify, verify_size=%d", verifySize);
     HMAC_SHA256 hmac;
-    hmac.Init(finished_key, hashLen);
-    hmac.Update((UINT8 *)hash, hashLen);
+    hmac.Init(Span<const UCHAR>(finished_key, hashLen));
+    hmac.Update(Span<const UCHAR>((UINT8 *)hash, hashLen));
 
-    hmac.Final((UINT8 *)out.GetBuffer(), out.GetSize());
+    hmac.Final(Span<UCHAR>((UINT8 *)out.GetBuffer(), out.GetSize()));
     LOG_DEBUG("tls_cipher_compute_verify: Finished verify computation");
 }
 
@@ -305,14 +305,15 @@ VOID TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRem
 /// @param keepOriginal Indicates whether to keep the original TLS record without encoding
 /// @return void
 
-VOID TlsCipher::Encode(TlsBuffer &sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal)
+VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal)
 {
     if (!this->isEncoding || !this->chacha20Context.IsValid() || keepOriginal)
     {
         LOG_DEBUG("Encoding not enabled or encoder is nullptr, appending packet directly to sendbuf");
-        sendbuf.Append(packet, packetSize);
+        sendbuf.Append(packet);
         return;
     }
+    INT32 packetSize = (INT32)packet.Size();
     LOG_DEBUG("Encoding packet with size: %d bytes", packetSize);
 
     UCHAR aad[13];
@@ -324,7 +325,7 @@ VOID TlsCipher::Encode(TlsBuffer &sendbuf, const CHAR *packet, INT32 packetSize,
     UINT64 clientSeq = UINT64SwapByteOrder(this->clientSeqNum++);
     Memory::Copy(aad + 5, &clientSeq, sizeof(UINT64));
 
-    this->chacha20Context.Encode(sendbuf, packet, packetSize, aad, sizeof(aad));
+    this->chacha20Context.Encode(sendbuf, packet, Span<const UCHAR>(aad));
 }
 
 /// @brief Decode a TLS record using the ChaCha20 encoder and store the result in the provided buffer
@@ -348,7 +349,7 @@ Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
     UINT64 serverSeq = UINT64SwapByteOrder(this->serverSeqNum++);
     Memory::Copy(aad + 5, &serverSeq, sizeof(UINT64));
 
-    auto decodeResult = this->chacha20Context.Decode(inout, this->decodeBuffer, aad, sizeof(aad));
+    auto decodeResult = this->chacha20Context.Decode(inout, this->decodeBuffer, Span<const UCHAR>(aad));
     if (!decodeResult)
     {
         LOG_ERROR("Decoding failed, returning error");

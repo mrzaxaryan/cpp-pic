@@ -59,7 +59,7 @@ private:
 
 		// Verify we can export a public key
 		UINT8 publicKey[32 * 2 + 1];
-		auto result = ecc.ExportPublicKey(publicKey, sizeof(publicKey));
+		auto result = ecc.ExportPublicKey(Span<UINT8>(publicKey));
 		if (!result)
 		{
 			LOG_ERROR("secp256r1 ExportPublicKey failed (error: %e)", result.Error());
@@ -87,7 +87,7 @@ private:
 
 		// Verify we can export a public key
 		UINT8 publicKey[48 * 2 + 1];
-		auto result = ecc.ExportPublicKey(publicKey, sizeof(publicKey));
+		auto result = ecc.ExportPublicKey(Span<UINT8>(publicKey));
 		if (!result)
 		{
 			LOG_ERROR("secp384r1 ExportPublicKey failed (error: %e)", result.Error());
@@ -109,7 +109,7 @@ private:
 		(void)ecc.Initialize(32); // secp256r1
 
 		UINT8 publicKey[32 * 2 + 1];
-		auto result = ecc.ExportPublicKey(publicKey, sizeof(publicKey));
+		auto result = ecc.ExportPublicKey(Span<UINT8>(publicKey));
 
 		// Export should succeed
 		if (!result)
@@ -135,7 +135,7 @@ private:
 		(void)ecc.Initialize(32); // secp256r1
 
 		UINT8 publicKey[32 * 2 + 1];
-		(void)ecc.ExportPublicKey(publicKey, sizeof(publicKey));
+		(void)ecc.ExportPublicKey(Span<UINT8>(publicKey));
 
 		// First byte should be 0x04 (uncompressed point format)
 		if (publicKey[0] != 0x04)
@@ -169,21 +169,21 @@ private:
 		UINT8 alicePublicKey[32 * 2 + 1];
 		UINT8 bobPublicKey[32 * 2 + 1];
 
-		(void)alice.ExportPublicKey(alicePublicKey, sizeof(alicePublicKey));
-		(void)bob.ExportPublicKey(bobPublicKey, sizeof(bobPublicKey));
+		(void)alice.ExportPublicKey(Span<UINT8>(alicePublicKey));
+		(void)bob.ExportPublicKey(Span<UINT8>(bobPublicKey));
 
 		// Compute shared secrets
 		UINT8 aliceSecret[32];
 		UINT8 bobSecret[32];
 
-		auto aliceResult = alice.ComputeSharedSecret(bobPublicKey, sizeof(bobPublicKey), aliceSecret);
+		auto aliceResult = alice.ComputeSharedSecret(Span<const UINT8>(bobPublicKey), aliceSecret);
 		if (!aliceResult)
 		{
 			LOG_ERROR("Alice ECDH shared secret computation failed (error: %e)", aliceResult.Error());
 			return false;
 		}
 
-		auto bobResult = bob.ComputeSharedSecret(alicePublicKey, sizeof(alicePublicKey), bobSecret);
+		auto bobResult = bob.ComputeSharedSecret(Span<const UINT8>(alicePublicKey), bobSecret);
 		if (!bobResult)
 		{
 			LOG_ERROR("Bob ECDH shared secret computation failed (error: %e)", bobResult.Error());
@@ -223,7 +223,7 @@ private:
 		(void)ecc.Initialize(32);
 
 		UINT8 tooSmallBuffer[32]; // Too small for secp256r1 (needs 65 bytes)
-		auto result = ecc.ExportPublicKey(tooSmallBuffer, sizeof(tooSmallBuffer));
+		auto result = ecc.ExportPublicKey(Span<UINT8>(tooSmallBuffer));
 
 		// Should fail due to insufficient buffer size
 		if (!result.IsErr())
@@ -246,7 +246,7 @@ private:
 		invalidPublicKey[0] = 0x03; // Invalid format (should be 0x04)
 
 		UINT8 secret[32];
-		auto result = ecc.ComputeSharedSecret(invalidPublicKey, sizeof(invalidPublicKey), secret);
+		auto result = ecc.ComputeSharedSecret(Span<const UINT8>(invalidPublicKey), secret);
 
 		// Should fail
 		if (!result.IsErr())
@@ -264,7 +264,7 @@ private:
 		(void)ecc1.Initialize(32);
 
 		UINT8 pubKey1[32 * 2 + 1];
-		(void)ecc1.ExportPublicKey(pubKey1, sizeof(pubKey1));
+		(void)ecc1.ExportPublicKey(Span<UINT8>(pubKey1));
 
 		// Generate second key - should be different because Initialize()
 		// uses random bytes which advances the RNG state
@@ -272,7 +272,7 @@ private:
 		(void)ecc2.Initialize(32);
 
 		UINT8 pubKey2[32 * 2 + 1];
-		(void)ecc2.ExportPublicKey(pubKey2, sizeof(pubKey2));
+		(void)ecc2.ExportPublicKey(Span<UINT8>(pubKey2));
 
 		// Keys should be different (each Initialize() call uses RNG)
 		BOOL key1DiffersFrom2 = !CompareBytes(pubKey1, pubKey2, sizeof(pubKey1));

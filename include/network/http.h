@@ -70,11 +70,11 @@ public:
     // Operations with HttpClient
     [[nodiscard]] Result<void, Error> Open();
     [[nodiscard]] Result<void, Error> Close();
-    [[nodiscard]] Result<SSIZE, Error> Read(PVOID buffer, UINT32 bufferLength);
-    [[nodiscard]] Result<UINT32, Error> Write(PCVOID buffer, UINT32 bufferLength);
+    [[nodiscard]] Result<SSIZE, Error> Read(Span<CHAR> buffer);
+    [[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer);
 
     [[nodiscard]] Result<void, Error> SendGetRequest();
-    [[nodiscard]] Result<void, Error> SendPostRequest(PCVOID data, UINT32 dataLength);
+    [[nodiscard]] Result<void, Error> SendPostRequest(Span<const CHAR> data);
     // Static method to parse a URL into its components (host, path, port, secure) and validate the format
     [[nodiscard]] static Result<void, Error> ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
     // Read HTTP response headers using a rolling window (no buffer needed).

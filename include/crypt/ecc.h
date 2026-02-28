@@ -264,20 +264,18 @@ public:
 
     /**
      * @brief Exports public key in uncompressed format
-     * @param publicKey Output buffer for public key
-     * @param publicKeySize Size of output buffer (must be >= 2*eccBytes + 1)
+     * @param publicKey Output span for public key (must be >= 2*eccBytes + 1)
      * @return Ok(bytesWritten) on success, Err(Ecc_ExportKeyFailed) on error
      *
      * @details Exports public key as: 0x04 || x || y (uncompressed point format)
      * For P-256: 65 bytes (1 + 32 + 32)
      * For P-384: 97 bytes (1 + 48 + 48)
      */
-    [[nodiscard]] Result<UINT32, Error> ExportPublicKey(UINT8 *publicKey, UINT32 publicKeySize);
+    [[nodiscard]] Result<UINT32, Error> ExportPublicKey(Span<UINT8> publicKey);
 
     /**
      * @brief Computes ECDH shared secret
-     * @param publicKey Peer's public key (uncompressed or compressed)
-     * @param publicKeySize Size of peer's public key
+     * @param publicKey Span of peer's public key (uncompressed or compressed)
      * @param secret Output buffer for shared secret (x-coordinate)
      * @return Ok(bytesWritten) on success, Err(Ecc_SharedSecretFailed) on error
      *
@@ -287,7 +285,7 @@ public:
      *
      * @warning The raw shared secret should be passed through a KDF before use.
      */
-    [[nodiscard]] Result<UINT32, Error> ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UINT8 *secret);
+    [[nodiscard]] Result<UINT32, Error> ComputeSharedSecret(Span<const UINT8> publicKey, UINT8 *secret);
 };
 
 /** @} */ // end of ecc group

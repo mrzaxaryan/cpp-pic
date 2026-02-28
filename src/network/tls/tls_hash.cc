@@ -15,9 +15,9 @@ VOID TlsHash::Reset()
 /// @param size The size of the data to append
 /// @return void
 
-VOID TlsHash::Append(const CHAR *buffer, INT32 size)
+VOID TlsHash::Append(Span<const CHAR> buffer)
 {
-    this->cache.Append(buffer, size);
+    this->cache.Append(buffer);
 }
 
 /// @brief Get the hash value from the cache by computing the appropriate hash (SHA-256 or SHA-384) based on the specified hash size
@@ -34,7 +34,7 @@ VOID TlsHash::GetHash(PCHAR out, INT32 hashSize)
         if (this->cache.GetSize() > 0)
         {
             LOG_DEBUG("SHA256 hash cache size: %d bytes", this->cache.GetSize());
-            ctx.Update((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize());
+            ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
         }
         ctx.Final((UINT8 *)out);
     }
@@ -43,7 +43,7 @@ VOID TlsHash::GetHash(PCHAR out, INT32 hashSize)
         LOG_DEBUG("Computing SHA384 hash with size: %d bytes", hashSize);
         SHA384 ctx;
         if (this->cache.GetSize() > 0)
-            ctx.Update((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize());
+            ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
         ctx.Final((UINT8 *)out);
     }
 }

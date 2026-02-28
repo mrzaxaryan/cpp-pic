@@ -13,23 +13,25 @@
 /// @param length Length of the output keying material (OKM) that will be derived using this label
 /// @return The total length of the created HKDF label
 
-INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR dataLen, PUCHAR hkdflabel, UINT16 length)
+INT32 TlsHKDF::Label(Span<const CHAR> label, Span<const UCHAR> data, PUCHAR hkdflabel, UINT16 length)
 {
     auto prefix = "tls13 "_embed;
+    UCHAR labelLen = (UCHAR)label.Size();
+    UCHAR dataLen = (UCHAR)data.Size();
 
-    LOG_DEBUG("Creating HKDF label with label: %s, label_len: %d, data_len: %d, length: %d", label, labelLen, dataLen, length);
+    LOG_DEBUG("Creating HKDF label with label_len: %d, data_len: %d, length: %d", labelLen, dataLen, length);
     *(PUINT16)hkdflabel = UINT16SwapByteOrder(length);
     INT32 prefix_len = prefix.Length();
     LOG_DEBUG("HKDF label prefix length: %d", prefix_len);
     Memory::Copy(&hkdflabel[3], (PCCHAR)prefix, prefix_len);
 
     hkdflabel[2] = (UCHAR)prefix_len + labelLen;
-    Memory::Copy(&hkdflabel[3 + prefix_len], (PVOID)label, labelLen);
-    hkdflabel[3 + prefix_len + labelLen] = (UCHAR)dataLen;
+    Memory::Copy(&hkdflabel[3 + prefix_len], (PVOID)label.Data(), labelLen);
+    hkdflabel[3 + prefix_len + labelLen] = dataLen;
     if (dataLen)
     {
         LOG_DEBUG("Copying data to HKDF label, data_len: %d", dataLen);
-        Memory::Copy(&hkdflabel[4 + prefix_len + labelLen], (PVOID)data, dataLen);
+        Memory::Copy(&hkdflabel[4 + prefix_len + labelLen], (PVOID)data.Data(), dataLen);
     }
 
     LOG_DEBUG("HKDF label created with total length: %d bytes", 4 + prefix_len + labelLen + dataLen);
@@ -45,15 +47,14 @@ INT32 TlsHKDF::Label(const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR
 /// @param ikmLen The length of the input keying material
 /// @return void
 
-VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 saltLen, const UCHAR *ikm, UINT32 ikmLen)
+VOID TlsHKDF::Extract(Span<UCHAR> output, Span<const UCHAR> salt, Span<const UCHAR> ikm)
 {
     HMAC_SHA256 hmac;
-    hmac.Init(salt, saltLen);
+    hmac.Init(salt);
 
-    LOG_DEBUG("Extracting HKDF with output length: %d, salt length: %d, ikm length: %d", outlen, saltLen, ikmLen);
-    LOG_DEBUG("Salt: %p, IKM: %p", salt, ikm);
-    hmac.Update(ikm, ikmLen);
-    hmac.Final(output, outlen);
+    LOG_DEBUG("Extracting HKDF with output length: %d, salt length: %d, ikm length: %d", (UINT32)output.Size(), (UINT32)salt.Size(), (UINT32)ikm.Size());
+    hmac.Update(ikm);
+    hmac.Final(output);
 }
 
 /// @brief Expand the HKDF keying material using the given secret, info, and output length
@@ -65,32 +66,33 @@ VOID TlsHKDF::Extract(PUCHAR output, UINT32 outlen, const UCHAR *salt, UINT32 sa
 /// @param infoLen The length of the info
 /// @return void
 
-VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const UCHAR *info, UINT32 infoLen)
+VOID TlsHKDF::Expand(Span<UCHAR> output, Span<const UCHAR> secret, Span<const UCHAR> info)
 {
     UCHAR digestOut[SHA256_DIGEST_SIZE];
     UINT32 idx = 0;
     UCHAR i2 = 0;
+    UINT32 outlen = (UINT32)output.Size();
 
-    LOG_DEBUG("Expanding HKDF with output length: %d, secret length: %d, info length: %d", outlen, secretLen, infoLen);
+    LOG_DEBUG("Expanding HKDF with output length: %d, secret length: %d, info length: %d", outlen, (UINT32)secret.Size(), (UINT32)info.Size());
     constexpr UINT32 hashLen = SHA256_DIGEST_SIZE;
     while (outlen)
     {
         HMAC_SHA256 hmac;
-        hmac.Init(secret, secretLen);
+        hmac.Init(secret);
         if (i2)
         {
             LOG_DEBUG("Using previous digest for HKDF expansion, i2: %d", i2);
-            hmac.Update(digestOut, hashLen);
+            hmac.Update(Span<const UCHAR>(digestOut, hashLen));
         }
 
-        if ((info) && (infoLen))
+        if (info.Data() && info.Size())
         {
-            LOG_DEBUG("Updating HMAC with info, info length: %d", infoLen);
-            hmac.Update(info, infoLen);
+            LOG_DEBUG("Updating HMAC with info, info length: %d", (UINT32)info.Size());
+            hmac.Update(info);
         }
         i2++;
-        hmac.Update(&i2, 1);
-        hmac.Final(digestOut, hashLen);
+        hmac.Update(Span<const UCHAR>(&i2, 1));
+        hmac.Final(Span<UCHAR>(digestOut, hashLen));
 
         UINT32 copylen = outlen;
         if (copylen > hashLen)
@@ -124,10 +126,11 @@ VOID TlsHKDF::Expand(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 s
 /// @param dataLen The length of the data
 /// @return void 
 
-VOID TlsHKDF::ExpandLabel(PUCHAR output, UINT32 outlen, const UCHAR *secret, UINT32 secretLen, const CHAR *label, UCHAR labelLen, const UCHAR *data, UCHAR dataLen)
+VOID TlsHKDF::ExpandLabel(Span<UCHAR> output, Span<const UCHAR> secret, Span<const CHAR> label, Span<const UCHAR> data)
 {
     UCHAR hkdf_label[512];
-    INT32 len = TlsHKDF::Label(label, labelLen, data, dataLen, hkdf_label, outlen);
-    LOG_DEBUG("Expanding HKDF label with output length: %d, secret length: %d, label length: %d, data length: %d", outlen, secretLen, labelLen, dataLen);
-    TlsHKDF::Expand(output, outlen, secret, secretLen, hkdf_label, len);
+    UINT32 outlen = (UINT32)output.Size();
+    INT32 len = TlsHKDF::Label(label, data, hkdf_label, outlen);
+    LOG_DEBUG("Expanding HKDF label with output length: %d, secret length: %d, label length: %d, data length: %d", outlen, (UINT32)secret.Size(), (UINT32)label.Size(), (UINT32)data.Size());
+    TlsHKDF::Expand(output, secret, Span<const UCHAR>(hkdf_label, len));
 }

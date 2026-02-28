@@ -7,12 +7,13 @@
 /// @param size Size of the data to append
 /// @return The offset at which the data was appended
 
-INT32 TlsBuffer::Append(PCVOID data, INT32 size)
+INT32 TlsBuffer::Append(Span<const CHAR> data)
 {
-    CheckSize(size);
-    Memory::Copy(buffer + this->size, (PVOID)data, size);
-    this->size += size;
-    return this->size - size;
+    INT32 dataSize = (INT32)data.Size();
+    CheckSize(dataSize);
+    Memory::Copy(buffer + this->size, (PVOID)data.Data(), dataSize);
+    this->size += dataSize;
+    return this->size - dataSize;
 }
 
 /// @brief Append a single character to the TLS buffer
@@ -144,10 +145,10 @@ INT8 TlsBuffer::Read<INT8>()
 /// @param size The number of bytes to read
 /// @return void
 
-VOID TlsBuffer::Read(PCHAR buf, INT32 size)
+VOID TlsBuffer::Read(Span<CHAR> buf)
 {
-    Memory::Copy(buf, this->buffer + this->readPos, size);
-    this->readPos += size;
+    Memory::Copy(buf.Data(), this->buffer + this->readPos, buf.Size());
+    this->readPos += (INT32)buf.Size();
 }
 
 /// @brief Read a 24-bit big-endian unsigned integer from the TLS buffer

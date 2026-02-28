@@ -789,20 +789,20 @@ Ecc::~Ecc()
     Memory::Zero(this, sizeof(Ecc));
 }
 
-Result<UINT32, Error> Ecc::ComputeSharedSecret(const UINT8 *publicKey, UINT32 publicKeySize, UINT8 *secret)
+Result<UINT32, Error> Ecc::ComputeSharedSecret(Span<const UINT8> publicKey, UINT8 *secret)
 {
-    if (publicKeySize != this->eccBytes * 2 + 1 || publicKey[0] != 0x04)
+    if (publicKey.Size() != this->eccBytes * 2 + 1 || publicKey[0] != 0x04)
         return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
 
     Random random;
     EccPoint l_public;
     UINT64 l_random[MAX_NUM_ECC_DIGITS];
 
-    if (!random.GetArray((USIZE)(this->numEccDigits * sizeof(UINT64)), (UINT8 *)l_random))
+    if (!random.GetArray(Span<UINT8>((UINT8 *)l_random, (USIZE)(this->numEccDigits * sizeof(UINT64)))))
         return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
 
-    this->Bytes2Native(l_public.x, publicKey + 1);
-    this->Bytes2Native(l_public.y, publicKey + 1 + this->eccBytes);
+    this->Bytes2Native(l_public.x, publicKey.Data() + 1);
+    this->Bytes2Native(l_public.y, publicKey.Data() + 1 + this->eccBytes);
 
     EccPoint l_product;
     this->Mult(l_product, l_public, this->privateKey, l_random);
@@ -841,7 +841,7 @@ Result<void, Error> Ecc::Initialize(INT32 curve)
     do
     {
         Random random;
-        if (!random.GetArray((USIZE)(this->numEccDigits * sizeof(UINT64)), (UINT8 *)this->privateKey) || (l_tries++ >= MAX_TRIES))
+        if (!random.GetArray(Span<UINT8>((UINT8 *)this->privateKey, (USIZE)(this->numEccDigits * sizeof(UINT64)))) || (l_tries++ >= MAX_TRIES))
             return Result<void, Error>::Err(Error::Ecc_InitFailed);
         if (this->VliIsZero(this->privateKey))
             continue;
@@ -856,12 +856,12 @@ Result<void, Error> Ecc::Initialize(INT32 curve)
     return Result<void, Error>::Ok();
 }
 
-Result<UINT32, Error> Ecc::ExportPublicKey(UINT8 *publicKey, UINT32 publicKeySize)
+Result<UINT32, Error> Ecc::ExportPublicKey(Span<UINT8> publicKey)
 {
-    if (publicKey == 0 || publicKeySize < this->eccBytes * 2 + 1)
+    if (publicKey.Data() == 0 || publicKey.Size() < this->eccBytes * 2 + 1)
         return Result<UINT32, Error>::Err(Error::Ecc_ExportKeyFailed);
     publicKey[0] = 0x04;
-    this->Native2Bytes(publicKey + 1, this->publicKey.x);
-    this->Native2Bytes(publicKey + 1 + this->eccBytes, this->publicKey.y);
+    this->Native2Bytes(publicKey.Data() + 1, this->publicKey.x);
+    this->Native2Bytes(publicKey.Data() + 1 + this->eccBytes, this->publicKey.y);
     return Result<UINT32, Error>::Ok(this->eccBytes * 2 + 1);
 }

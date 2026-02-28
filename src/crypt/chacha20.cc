@@ -93,7 +93,7 @@ VOID Poly1305::U32TO8(PUCHAR p, UINT32 v)
     p[3] = (v >> 24) & 0xff;
 }
 
-VOID Poly1305::ProcessBlocks(const UCHAR *data, USIZE bytes)
+VOID Poly1305::ProcessBlocks(Span<const UCHAR> data)
 {
     const UINT32 hibit = (m_final) ? 0 : (1UL << 24); /* 1 << 128 */
     UINT32 r0, r1, r2, r3, r4;
@@ -101,6 +101,9 @@ VOID Poly1305::ProcessBlocks(const UCHAR *data, USIZE bytes)
     UINT32 h0, h1, h2, h3, h4;
     UINT64 d0, d1, d2, d3, d4;
     UINT32 c;
+
+    const UCHAR *p = data.Data();
+    USIZE bytes = data.Size();
 
     r0 = m_r[0];
     r1 = m_r[1];
@@ -122,11 +125,11 @@ VOID Poly1305::ProcessBlocks(const UCHAR *data, USIZE bytes)
     while (bytes >= POLY1305_BLOCK_SIZE)
     {
         /* h += m[i] */
-        h0 += (U8TO32(data + 0)) & 0x3ffffff;
-        h1 += (U8TO32(data + 3) >> 2) & 0x3ffffff;
-        h2 += (U8TO32(data + 6) >> 4) & 0x3ffffff;
-        h3 += (U8TO32(data + 9) >> 6) & 0x3ffffff;
-        h4 += (U8TO32(data + 12) >> 8) | hibit;
+        h0 += (U8TO32(p + 0)) & 0x3ffffff;
+        h1 += (U8TO32(p + 3) >> 2) & 0x3ffffff;
+        h2 += (U8TO32(p + 6) >> 4) & 0x3ffffff;
+        h3 += (U8TO32(p + 9) >> 6) & 0x3ffffff;
+        h4 += (U8TO32(p + 12) >> 8) | hibit;
 
         /* h *= r */
         d0 = ((UINT64)h0 * r0) + ((UINT64)h1 * s4) + ((UINT64)h2 * s3) + ((UINT64)h3 * s2) + ((UINT64)h4 * s1);
@@ -155,7 +158,7 @@ VOID Poly1305::ProcessBlocks(const UCHAR *data, USIZE bytes)
         h0 = h0 & 0x3ffffff;
         h1 += c;
 
-        data += POLY1305_BLOCK_SIZE;
+        p += POLY1305_BLOCK_SIZE;
         bytes -= POLY1305_BLOCK_SIZE;
     }
 
@@ -166,20 +169,20 @@ VOID Poly1305::ProcessBlocks(const UCHAR *data, USIZE bytes)
     m_h[4] = h4;
 }
 
-INT32 Poly1305::GenerateKey(PUCHAR key256, PUCHAR nonce, UINT32 noncelen, PUCHAR poly_key, UINT32 counter)
+INT32 Poly1305::GenerateKey(PUCHAR key256, Span<const UCHAR> nonce, PUCHAR poly_key, UINT32 counter)
 {
     ChaChaPoly1305 ctx;
     UINT64 ctr;
     ctx.KeySetup(key256, 256);
 
-    if (noncelen == 8)
+    if (nonce.Size() == 8)
     {
         ctr = counter;
-        ctx.IvSetup(nonce, (PUCHAR)&ctr);
+        ctx.IvSetup(nonce.Data(), (PUCHAR)&ctr);
     }
-    else if (noncelen == 12)
+    else if (nonce.Size() == 12)
     {
-        ctx.IVSetup96BitNonce(nonce, (PUCHAR)&counter);
+        ctx.IVSetup96BitNonce(nonce.Data(), (PUCHAR)&counter);
     }
     else
     {
@@ -190,8 +193,10 @@ INT32 Poly1305::GenerateKey(PUCHAR key256, PUCHAR nonce, UINT32 noncelen, PUCHAR
     return 0;
 }
 
-VOID Poly1305::Update(const UCHAR *data, USIZE bytes)
+VOID Poly1305::Update(Span<const UCHAR> data)
 {
+    const UCHAR *p = data.Data();
+    USIZE bytes = data.Size();
     USIZE i;
     /* handle leftover */
     if (m_leftover)
@@ -200,13 +205,13 @@ VOID Poly1305::Update(const UCHAR *data, USIZE bytes)
         if (want > bytes)
             want = bytes;
         for (i = 0; i < want; i++)
-            m_buffer[m_leftover + i] = data[i];
+            m_buffer[m_leftover + i] = p[i];
         bytes -= want;
-        data += want;
+        p += want;
         m_leftover += want;
         if (m_leftover < POLY1305_BLOCK_SIZE)
             return;
-        ProcessBlocks(m_buffer, POLY1305_BLOCK_SIZE);
+        ProcessBlocks(Span<const UCHAR>(m_buffer, POLY1305_BLOCK_SIZE));
         m_leftover = 0;
     }
 
@@ -214,8 +219,8 @@ VOID Poly1305::Update(const UCHAR *data, USIZE bytes)
     if (bytes >= POLY1305_BLOCK_SIZE)
     {
         USIZE want = (bytes & ~(POLY1305_BLOCK_SIZE - 1));
-        ProcessBlocks(data, want);
-        data += want;
+        ProcessBlocks(Span<const UCHAR>(p, want));
+        p += want;
         bytes -= want;
     }
 
@@ -223,7 +228,7 @@ VOID Poly1305::Update(const UCHAR *data, USIZE bytes)
     if (bytes)
     {
         for (i = 0; i < bytes; i++)
-            m_buffer[m_leftover + i] = data[i];
+            m_buffer[m_leftover + i] = p[i];
         m_leftover += bytes;
     }
 }
@@ -242,7 +247,7 @@ VOID Poly1305::Finish(UCHAR mac[16])
         m_buffer[i++] = 1;
         Memory::Zero(&m_buffer[i], POLY1305_BLOCK_SIZE - i);
         m_final = 1;
-        ProcessBlocks(m_buffer, POLY1305_BLOCK_SIZE);
+        ProcessBlocks(Span<const UCHAR>(m_buffer, POLY1305_BLOCK_SIZE));
     }
 
     /* fully carry h */
@@ -604,21 +609,21 @@ INT32 ChaChaPoly1305::Poly1305Aead(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 aad
     this->EncryptBytes(pt, out, len);
 
     Poly1305 poly(poly_key);
-    poly.Update(aad, aad_len);
+    poly.Update(Span<const UCHAR>(aad, aad_len));
     INT32 rem = aad_len % 16;
     if (rem)
-        poly.Update(zeropad, 16 - rem);
-    poly.Update(out, len);
+        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
+    poly.Update(Span<const UCHAR>(out, len));
     rem = len % 16;
     if (rem)
-        poly.Update(zeropad, 16 - rem);
+        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
     UCHAR trail[16];
     Poly1305::U32TO8(trail, aad_len);
     Memory::Zero(trail + 4, 4);
     Poly1305::U32TO8(trail + 8, len);
     Memory::Zero(trail + 12, 4);
 
-    poly.Update(trail, 16);
+    poly.Update(Span<const UCHAR>(trail));
     poly.Finish(out + len);
 
     return len + POLY1305_TAGLEN;
@@ -634,16 +639,16 @@ INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 a
     // Authenticate BEFORE decrypting (AEAD requirement)
     // poly_key is already computed by the caller; use it directly
     Poly1305 poly(poly_key);
-    poly.Update(aad, aad_len);
+    poly.Update(Span<const UCHAR>(aad, aad_len));
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
     INT32 rem = aad_len % 16;
     if (rem)
-        poly.Update(zeropad, 16 - rem);
-    poly.Update(pt, len);
+        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
+    poly.Update(Span<const UCHAR>(pt, len));
     rem = len % 16;
     if (rem)
-        poly.Update(zeropad, 16 - rem);
+        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
     UCHAR trail[16];
     Poly1305::U32TO8(&trail[0], aad_len);
     Memory::Zero(trail + 4, 4);
@@ -651,7 +656,7 @@ INT32 ChaChaPoly1305::Poly1305Decode(PUCHAR pt, UINT32 len, PUCHAR aad, UINT32 a
     Memory::Zero(trail + 12, 4);
 
     UCHAR mac_tag[POLY1305_TAGLEN];
-    poly.Update(trail, 16);
+    poly.Update(Span<const UCHAR>(trail));
     poly.Finish(mac_tag);
 
     // Constant-time comparison to prevent timing oracle
@@ -677,7 +682,7 @@ VOID ChaChaPoly1305::Poly1305Key(PUCHAR poly1305_key)
     UCHAR nonce[12];
     this->Key(key);
     this->Nonce(nonce);
-    Poly1305::GenerateKey(key, nonce, sizeof(nonce), poly1305_key, 0);
+    Poly1305::GenerateKey(key, Span<const UCHAR>(nonce), poly1305_key, 0);
 }
 
 ChaChaPoly1305::ChaChaPoly1305()

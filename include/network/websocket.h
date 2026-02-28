@@ -138,5 +138,5 @@ public:
 	[[nodiscard]] Result<void, Error> Open();
 	[[nodiscard]] Result<void, Error> Close();
 	[[nodiscard]] Result<WebSocketMessage, Error> Read();
-	[[nodiscard]] Result<UINT32, Error> Write(PCVOID buffer, UINT32 bufferLength, WebSocketOpcode opcode = OPCODE_BINARY);
+	[[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer, WebSocketOpcode opcode = OPCODE_BINARY);
 };

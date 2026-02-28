@@ -127,14 +127,14 @@ public:
     [[nodiscard]] Result<void, Error> UpdateServerInfo();
     // Function to get and update the current handshake hash
     VOID GetHash(CHAR *out);
-    VOID UpdateHash(const CHAR *in, UINT32 len);
+    VOID UpdateHash(Span<const CHAR> in);
     // Key computation functions
     [[nodiscard]] Result<void, Error> ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
     [[nodiscard]] Result<void, Error> ComputePreKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, TlsBuffer &premasterKey);
     [[nodiscard]] Result<void, Error> ComputeKey(ECC_GROUP ecc, const CHAR *serverKey, INT32 serverKeyLen, PCHAR finishedHash);
     VOID ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
     // Functions for encoding and decoding TLS records
-    VOID Encode(TlsBuffer &sendbuf, const CHAR *packet, INT32 packetSize, BOOL keepOriginal);
+    VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);
     [[nodiscard]] Result<void, Error> Decode(TlsBuffer &inout, INT32 version);
     VOID SetEncoding(BOOL encoding);
     // Function to reset sequence numbers

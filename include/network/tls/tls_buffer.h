@@ -53,7 +53,7 @@ public:
     }
 
     // Write operations
-    INT32 Append(PCVOID data, INT32 size);
+    INT32 Append(Span<const CHAR> data);
 
     template <typename T>
     INT32 Append(T data){
@@ -75,7 +75,7 @@ public:
     // Read operations
     template <typename T>
     T Read();
-    VOID Read(PCHAR buf, INT32 size);
+    VOID Read(Span<CHAR> buf);
     UINT32 ReadU24BE();
 
     // Accessors

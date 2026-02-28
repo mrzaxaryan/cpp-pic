@@ -169,6 +169,6 @@ public:
 	SSIZE GetFd() const { return (SSIZE)m_socket; }
 	[[nodiscard]] Result<void, Error> Open();
 	[[nodiscard]] Result<void, Error> Close();
-	[[nodiscard]] Result<SSIZE, Error> Read(PVOID buffer, UINT32 bufferLength);
-	[[nodiscard]] Result<UINT32, Error> Write(PCVOID buffer, UINT32 bufferLength);
+	[[nodiscard]] Result<SSIZE, Error> Read(Span<CHAR> buffer);
+	[[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer);
 };

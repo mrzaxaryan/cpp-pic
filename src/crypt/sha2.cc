@@ -224,8 +224,9 @@ VOID SHABase<Traits>::Transform(SHABase &ctx, const UINT8 *message, UINT64 block
 }
 
 template<typename Traits>
-VOID SHABase<Traits>::Update(const UINT8 *message, UINT64 len)
+VOID SHABase<Traits>::Update(Span<const UINT8> message)
 {
+    UINT64 len = (UINT64)message.Size();
     UINT64 block_nb;
     UINT64 new_len, rem_len, tmp_len;
     const UINT8 *shifted_message;
@@ -233,7 +234,7 @@ VOID SHABase<Traits>::Update(const UINT8 *message, UINT64 len)
     tmp_len = Traits::BLOCK_SIZE - this->len;
     rem_len = len < tmp_len ? len : tmp_len;
 
-    Memory::Copy(&(this->block[this->len]), message, (USIZE)rem_len);
+    Memory::Copy(&(this->block[this->len]), message.Data(), (USIZE)rem_len);
 
     if (this->len + len < Traits::BLOCK_SIZE)
     {
@@ -244,7 +245,7 @@ VOID SHABase<Traits>::Update(const UINT8 *message, UINT64 len)
     new_len = len - rem_len;
     block_nb = new_len / Traits::BLOCK_SIZE;
 
-    shifted_message = message + rem_len;
+    shifted_message = message.Data() + rem_len;
 
     SHABase<Traits>::Transform(*this, this->block, 1);
     SHABase<Traits>::Transform(*this, shifted_message, block_nb);
@@ -298,10 +299,10 @@ VOID SHABase<Traits>::Final(UINT8 *digest)
 }
 
 template<typename Traits>
-VOID SHABase<Traits>::Hash(const UINT8 *message, UINT64 len, UINT8 *digest)
+VOID SHABase<Traits>::Hash(Span<const UINT8> message, UINT8 *digest)
 {
     SHABase<Traits> ctx;
-    ctx.Update(message, len);
+    ctx.Update(message);
     ctx.Final(digest);
 }
 
@@ -309,8 +310,9 @@ template class SHABase<SHA256Traits>;
 template class SHABase<SHA384Traits>;
 
 template<typename SHAType, typename Traits>
-VOID HMACBase<SHAType, Traits>::Init(const UCHAR *key, UINT32 key_size)
+VOID HMACBase<SHAType, Traits>::Init(Span<const UCHAR> key)
 {
+    UINT32 key_size = (UINT32)key.Size();
     UINT32 fill;
     UINT32 num;
 
@@ -320,7 +322,7 @@ VOID HMACBase<SHAType, Traits>::Init(const UCHAR *key, UINT32 key_size)
 
     if (key_size == Traits::BLOCK_SIZE)
     {
-        key_used = key;
+        key_used = key.Data();
         num = Traits::BLOCK_SIZE;
     }
     else
@@ -328,12 +330,12 @@ VOID HMACBase<SHAType, Traits>::Init(const UCHAR *key, UINT32 key_size)
         if (key_size > Traits::BLOCK_SIZE)
         {
             num = Traits::DIGEST_SIZE;
-            SHAType::Hash(key, key_size, key_temp);
+            SHAType::Hash(Span<const UINT8>(key.Data(), key.Size()), key_temp);
             key_used = key_temp;
         }
         else
         {
-            key_used = key;
+            key_used = key.Data();
             num = key_size;
         }
         fill = Traits::BLOCK_SIZE - num;
@@ -348,8 +350,8 @@ VOID HMACBase<SHAType, Traits>::Init(const UCHAR *key, UINT32 key_size)
         this->block_opad[i] = key_used[i] ^ 0x5c;
     }
 
-    this->ctx_inside.Update(this->block_ipad, Traits::BLOCK_SIZE);
-    this->ctx_outside.Update(this->block_opad, Traits::BLOCK_SIZE);
+    this->ctx_inside.Update(Span<const UINT8>(this->block_ipad, Traits::BLOCK_SIZE));
+    this->ctx_outside.Update(Span<const UINT8>(this->block_opad, Traits::BLOCK_SIZE));
 
     Memory::Copy(&this->ctx_inside_reinit, &this->ctx_inside, sizeof(SHAType));
     Memory::Copy(&this->ctx_outside_reinit, &this->ctx_outside, sizeof(SHAType));
@@ -363,34 +365,32 @@ VOID HMACBase<SHAType, Traits>::Reinit()
 }
 
 template<typename SHAType, typename Traits>
-VOID HMACBase<SHAType, Traits>::Update(const UCHAR *message, UINT32 message_len)
+VOID HMACBase<SHAType, Traits>::Update(Span<const UCHAR> message)
 {
-    this->ctx_inside.Update(message, message_len);
+    this->ctx_inside.Update(Span<const UINT8>(message.Data(), message.Size()));
 }
 
 template<typename SHAType, typename Traits>
-VOID HMACBase<SHAType, Traits>::Final(PUCHAR mac, UINT32 mac_size)
+VOID HMACBase<SHAType, Traits>::Final(Span<UCHAR> mac)
 {
     UCHAR digest_inside[Traits::DIGEST_SIZE];
     UCHAR mac_temp[Traits::DIGEST_SIZE];
 
     this->ctx_inside.Final(digest_inside);
-    this->ctx_outside.Update(digest_inside, Traits::DIGEST_SIZE);
+    this->ctx_outside.Update(Span<const UINT8>(digest_inside, Traits::DIGEST_SIZE));
     this->ctx_outside.Final(mac_temp);
-    Memory::Copy(mac, mac_temp, mac_size);
+    Memory::Copy(mac.Data(), mac_temp, mac.Size());
     Memory::Zero(digest_inside, sizeof(digest_inside));
     Memory::Zero(mac_temp, sizeof(mac_temp));
 }
 
 template<typename SHAType, typename Traits>
-VOID HMACBase<SHAType, Traits>::Compute(const UCHAR *key, UINT32 key_size,
-                                         const UCHAR *message, UINT32 message_len,
-                                         PUCHAR mac, UINT32 mac_size)
+VOID HMACBase<SHAType, Traits>::Compute(Span<const UCHAR> key, Span<const UCHAR> message, Span<UCHAR> mac)
 {
     HMACBase<SHAType, Traits> ctx;
-    ctx.Init(key, key_size);
-    ctx.Update(message, message_len);
-    ctx.Final(mac, mac_size);
+    ctx.Init(key);
+    ctx.Update(message);
+    ctx.Final(mac);
 }
 
 template class HMACBase<SHA256, SHA256Traits>;

@@ -106,9 +106,9 @@ Result<void, Error> HttpClient::Close()
 /// @param bufferLength The maximum number of bytes to read into the buffer
 /// @return Ok(bytesRead) on success, or Err with Http_ReadFailed on failure
 
-Result<SSIZE, Error> HttpClient::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, Error> HttpClient::Read(Span<CHAR> buffer)
 {
-    auto r = tlsContext.Read(buffer, bufferLength);
+    auto r = tlsContext.Read(buffer);
     if (!r)
         return Result<SSIZE, Error>::Err(r, Error::Http_ReadFailed);
     return Result<SSIZE, Error>::Ok(r.Value());
@@ -119,9 +119,9 @@ Result<SSIZE, Error> HttpClient::Read(PVOID buffer, UINT32 bufferLength)
 /// @param bufferLength The length of the data to be sent in bytes
 /// @return Ok(bytesWritten) on success, or Err with Http_WriteFailed on failure
 
-Result<UINT32, Error> HttpClient::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, Error> HttpClient::Write(Span<const CHAR> buffer)
 {
-    auto r = tlsContext.Write(buffer, bufferLength);
+    auto r = tlsContext.Write(buffer);
     if (!r)
         return Result<UINT32, Error>::Err(r, Error::Http_WriteFailed);
     return Result<UINT32, Error>::Ok(r.Value());
@@ -144,7 +144,7 @@ Result<void, Error> HttpClient::SendGetRequest()
 
     request[pos] = '\0';
 
-    auto r = Write(request, (UINT32)pos);
+    auto r = Write(Span<const CHAR>(request, (UINT32)pos));
     if (!r || r.Value() != pos)
         return Result<void, Error>::Err(r, Error::Http_SendGetFailed);
     return Result<void, Error>::Ok();
@@ -155,8 +155,9 @@ Result<void, Error> HttpClient::SendGetRequest()
 /// @param dataLength Length of the data to be sent in bytes
 /// @return Ok on success, or Err with Http_SendPostFailed on failure
 
-Result<void, Error> HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
+Result<void, Error> HttpClient::SendPostRequest(Span<const CHAR> data)
 {
+    UINT32 dataLength = (UINT32)data.Size();
     // Build POST request with Content-Length
     CHAR request[2048];
     USIZE pos = 0;
@@ -198,7 +199,7 @@ Result<void, Error> HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
     request[pos] = '\0';
 
     // Send headers
-    auto r = Write(request, (UINT32)pos);
+    auto r = Write(Span<const CHAR>(request, (UINT32)pos));
     if (!r || r.Value() != pos)
     {
         return Result<void, Error>::Err(r, Error::Http_SendPostFailed);
@@ -207,7 +208,7 @@ Result<void, Error> HttpClient::SendPostRequest(PCVOID data, UINT32 dataLength)
     // Send body
     if (dataLength > 0)
     {
-        auto bodyResult = Write(data, dataLength);
+        auto bodyResult = Write(data);
         if (!bodyResult || bodyResult.Value() != dataLength)
             return Result<void, Error>::Err(bodyResult, Error::Http_SendPostFailed);
     }
@@ -346,7 +347,7 @@ Result<INT64, Error> HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 e
     for (;;)
     {
         CHAR c;
-        auto readResult = client.Read(&c, 1);
+        auto readResult = client.Read(Span<CHAR>(&c, 1));
         if (!readResult || readResult.Value() <= 0)
             return Result<INT64, Error>::Err(readResult, Error::Http_ReadHeadersFailed_Read);
 

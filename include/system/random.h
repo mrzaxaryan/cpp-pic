@@ -20,7 +20,7 @@ public:
 
     // Generate a random string of specified length
     template <typename TChar>
-    UINT32 GetString(TChar *pString, UINT32 length);
+    UINT32 GetString(Span<TChar> str);
     // Generate a random character
     template <typename TChar>
     TChar GetChar();
@@ -28,7 +28,7 @@ public:
     // Core random function
     INT32 Get();
     // Random byte array
-    INT32 GetArray(USIZE size, PUINT8 buffer);
+    INT32 GetArray(Span<UINT8> buffer);
 };
 
 template <typename TChar>
@@ -48,13 +48,13 @@ TChar Random::GetChar()
 }
 
 template <typename TChar>
-UINT32 Random::GetString(TChar *pString, UINT32 length)
+UINT32 Random::GetString(Span<TChar> str)
 {
-    UINT32 i = 0; // Loop counter for the string length
-    for (i = 0; i < length; i++)
+    UINT32 length = (UINT32)str.Size();
+    for (UINT32 i = 0; i < length; i++)
     {
-        pString[i] = Random::GetChar<TChar>(); // Get a random wide character
+        str[i] = Random::GetChar<TChar>(); // Get a random character
     }
-    pString[length] = (TChar)'\0'; // Null-terminate the wide string
-    return length;                 // Return the length of the wide string
+    str.Data()[length] = (TChar)'\0'; // Null-terminate (caller must allocate length+1)
+    return length;
 }

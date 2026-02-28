@@ -222,12 +222,11 @@ public:
 
     /**
      * @brief Updates hash with additional message data
-     * @param message Pointer to message data
-     * @param len Length of message data in bytes
+     * @param message Span of message data bytes
      *
      * @details Can be called multiple times to hash large messages incrementally.
      */
-    VOID Update(const UINT8 *message, UINT64 len);
+    VOID Update(Span<const UINT8> message);
 
     /**
      * @brief Finalizes hash computation and outputs digest
@@ -240,13 +239,12 @@ public:
 
     /**
      * @brief Computes hash of a complete message in one call
-     * @param message Pointer to message data
-     * @param len Length of message data in bytes
+     * @param message Span of message data bytes
      * @param digest Output buffer for hash digest (must be Traits::DIGEST_SIZE bytes)
      *
      * @details Convenience method for hashing complete messages.
      */
-    static VOID Hash(const UINT8 *message, UINT64 len, UINT8 *digest);
+    static VOID Hash(Span<const UINT8> message, UINT8 *digest);
 
     /**
      * @brief Processes message blocks through the compression function
@@ -310,13 +308,12 @@ private:
 public:
     /**
      * @brief Initializes HMAC with a secret key
-     * @param key Pointer to secret key
-     * @param key_size Length of key in bytes
+     * @param key Span of secret key bytes
      *
      * @details If key is longer than block size, it is hashed first.
      * Key is padded with zeros to block size, then XORed with ipad/opad.
      */
-    VOID Init(const UCHAR *key, UINT32 key_size);
+    VOID Init(Span<const UCHAR> key);
 
     /**
      * @brief Reinitializes HMAC for computing another MAC with same key
@@ -328,30 +325,25 @@ public:
 
     /**
      * @brief Updates HMAC with additional message data
-     * @param message Pointer to message data
-     * @param messageLen Length of message data in bytes
+     * @param message Span of message data bytes
      */
-    VOID Update(const UCHAR *message, UINT32 messageLen);
+    VOID Update(Span<const UCHAR> message);
 
     /**
      * @brief Finalizes HMAC computation and outputs MAC
-     * @param mac Output buffer for MAC
-     * @param macSize Size of output buffer (can be less than digest size for truncation)
+     * @param mac Output span for MAC (can be less than digest size for truncation)
      */
-    VOID Final(PUCHAR mac, UINT32 macSize);
+    VOID Final(Span<UCHAR> mac);
 
     /**
      * @brief Computes HMAC of a complete message in one call
-     * @param key Pointer to secret key
-     * @param keySize Length of key in bytes
-     * @param message Pointer to message data
-     * @param messageLen Length of message in bytes
-     * @param mac Output buffer for MAC
-     * @param macSize Size of output buffer
+     * @param key Span of secret key bytes
+     * @param message Span of message data bytes
+     * @param mac Output span for MAC
      *
      * @details Convenience method for computing HMAC of complete messages.
      */
-    static VOID Compute(const UCHAR *key, UINT32 keySize, const UCHAR *message, UINT32 messageLen, PUCHAR mac, UINT32 macSize);
+    static VOID Compute(Span<const UCHAR> key, Span<const UCHAR> message, Span<UCHAR> mac);
 };
 
 /** @brief HMAC-SHA256 message authentication code */

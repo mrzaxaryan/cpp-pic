@@ -8,9 +8,9 @@
 
 #include "environment.h"
 
-USIZE Environment::GetVariable(const CHAR* name, CHAR* buffer, USIZE bufferSize) noexcept
+USIZE Environment::GetVariable(const CHAR* name, Span<CHAR> buffer) noexcept
 {
-	if (name == nullptr || buffer == nullptr || bufferSize == 0)
+	if (name == nullptr || buffer.Size() == 0)
 	{
 		return 0;
 	}

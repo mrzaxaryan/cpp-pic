@@ -694,8 +694,11 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 // Read
 // =============================================================================
 
-Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
+Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 {
+	PVOID bufferPtr = (PVOID)buffer.Data();
+	UINT32 bufferLength = (UINT32)buffer.Size();
+
 	LOG_DEBUG("Socket: Read(%u bytes) starting...", bufferLength);
 
 	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
@@ -725,7 +728,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 		RxData.DataLength = bufferLength;
 		RxData.FragmentCount = 1;
 		RxData.FragmentTable[0].FragmentLength = bufferLength;
-		RxData.FragmentTable[0].FragmentBuffer = buffer;
+		RxData.FragmentTable[0].FragmentBuffer = bufferPtr;
 
 		EFI_TCP6_IO_TOKEN RxToken;
 		Memory::Zero(&RxToken, sizeof(RxToken));
@@ -752,7 +755,7 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 		RxData.DataLength = bufferLength;
 		RxData.FragmentCount = 1;
 		RxData.FragmentTable[0].FragmentLength = bufferLength;
-		RxData.FragmentTable[0].FragmentBuffer = buffer;
+		RxData.FragmentTable[0].FragmentBuffer = bufferPtr;
 
 		EFI_TCP4_IO_TOKEN RxToken;
 		Memory::Zero(&RxToken, sizeof(RxToken));
@@ -789,8 +792,11 @@ Result<SSIZE, Error> Socket::Read(PVOID buffer, UINT32 bufferLength)
 // Write
 // =============================================================================
 
-Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
+Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 {
+	PCVOID bufferPtr = (PCVOID)buffer.Data();
+	UINT32 bufferLength = (UINT32)buffer.Size();
+
 	LOG_DEBUG("Socket: Write(%u bytes) starting...", bufferLength);
 
 	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
@@ -823,7 +829,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		TxData.DataLength = bufferLength;
 		TxData.FragmentCount = 1;
 		TxData.FragmentTable[0].FragmentLength = bufferLength;
-		TxData.FragmentTable[0].FragmentBuffer = (PVOID)buffer;
+		TxData.FragmentTable[0].FragmentBuffer = (PVOID)bufferPtr;
 
 		EFI_TCP6_IO_TOKEN TxToken;
 		Memory::Zero(&TxToken, sizeof(TxToken));
@@ -850,7 +856,7 @@ Result<UINT32, Error> Socket::Write(PCVOID buffer, UINT32 bufferLength)
 		TxData.DataLength = bufferLength;
 		TxData.FragmentCount = 1;
 		TxData.FragmentTable[0].FragmentLength = bufferLength;
-		TxData.FragmentTable[0].FragmentBuffer = (PVOID)buffer;
+		TxData.FragmentTable[0].FragmentBuffer = (PVOID)bufferPtr;
 
 		EFI_TCP4_IO_TOKEN TxToken;
 		Memory::Zero(&TxToken, sizeof(TxToken));

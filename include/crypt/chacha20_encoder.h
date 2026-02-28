@@ -133,23 +133,20 @@ public:
     /**
      * @brief Encrypts and authenticates a TLS record
      * @param out Output buffer for encrypted record (ciphertext + tag)
-     * @param packet Plaintext data to encrypt
-     * @param packetSize Length of plaintext in bytes
-     * @param aad Additional authenticated data (TLS record header)
-     * @param aadSize Length of AAD in bytes
+     * @param packet Span of plaintext data to encrypt
+     * @param aad Span of additional authenticated data (TLS record header)
      *
      * @details Encrypts packet with ChaCha20, computes Poly1305 tag over AAD
      * and ciphertext, and appends the 16-byte tag to output.
      * Automatically increments the local sequence number.
      */
-    VOID Encode(TlsBuffer &out, const CHAR *packet, INT32 packetSize, const UCHAR *aad, INT32 aadSize);
+    VOID Encode(TlsBuffer &out, Span<const CHAR> packet, Span<const UCHAR> aad);
 
     /**
      * @brief Decrypts and verifies a TLS record
      * @param in Input buffer containing ciphertext + tag
      * @param out Output buffer for decrypted plaintext
-     * @param aad Additional authenticated data (TLS record header)
-     * @param aadSize Length of AAD in bytes
+     * @param aad Span of additional authenticated data (TLS record header)
      * @return Result<void, Error>::Ok() if decryption and authentication succeed, Error::ChaCha20_DecodeFailed otherwise
      *
      * @details Verifies Poly1305 tag over AAD and ciphertext, then decrypts
@@ -158,7 +155,7 @@ public:
      * @warning Returns Err if authentication fails - output buffer contents
      * are undefined and MUST NOT be used.
      */
-    [[nodiscard]] Result<void, Error> Decode(TlsBuffer &in, TlsBuffer &out, const UCHAR *aad, INT32 aadSize);
+    [[nodiscard]] Result<void, Error> Decode(TlsBuffer &in, TlsBuffer &out, Span<const UCHAR> aad);
 
     /**
      * @brief Computes output size for encoding or decoding

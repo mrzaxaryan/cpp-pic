@@ -79,7 +79,7 @@ private:
 		}
 
 		auto request = "GET / HTTP/1.1\r\nHost: one.one.one.one\r\nConnection: close\r\n\r\n"_embed;
-		auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		auto writeResult = sock.Write(Span<const CHAR>((PCCHAR)request, request.Length()));
 
 		if (!writeResult)
 		{
@@ -96,7 +96,7 @@ private:
 
 		CHAR buffer[512];
 		Memory::Zero(buffer, sizeof(buffer));
-		auto readResult = sock.Read(buffer, sizeof(buffer) - 1);
+		auto readResult = sock.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
 
 		if (!readResult || readResult.Value() <= 0)
 		{
@@ -135,7 +135,7 @@ private:
 			}
 
 			auto request = "GET / HTTP/1.0\r\n\r\n"_embed;
-			auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+			auto writeResult = sock.Write(Span<const CHAR>((PCCHAR)request, request.Length()));
 
 			if (!writeResult)
 			{
@@ -152,7 +152,7 @@ private:
 
 			CHAR buffer[128];
 			Memory::Zero(buffer, sizeof(buffer));
-			auto readResult = sock.Read(buffer, sizeof(buffer) - 1);
+			auto readResult = sock.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
 
 			if (!readResult)
 			{
@@ -273,7 +273,7 @@ private:
 		LOG_INFO("IPv6 socket connected successfully to %s:80", (PCCHAR)ipv6Str);
 
 		auto request = "GET / HTTP/1.1\r\nHost: one.one.one.one\r\nConnection: close\r\n\r\n"_embed;
-		auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		auto writeResult = sock.Write(Span<const CHAR>((PCCHAR)request, request.Length()));
 
 		if (!writeResult)
 		{
@@ -290,7 +290,7 @@ private:
 
 		CHAR buffer[512];
 		Memory::Zero(buffer, sizeof(buffer));
-		auto readResult = sock.Read(buffer, sizeof(buffer) - 1);
+		auto readResult = sock.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
 
 		if (!readResult)
 		{
@@ -334,7 +334,7 @@ private:
 		}
 
 		auto request = "GET /get HTTP/1.1\r\nHost: httpbin.org\r\nConnection: close\r\n\r\n"_embed;
-		auto writeResult = sock.Write((PCVOID)(PCCHAR)request, request.Length());
+		auto writeResult = sock.Write(Span<const CHAR>((PCCHAR)request, request.Length()));
 		if (!writeResult)
 		{
 			LOG_ERROR("Failed to send HTTP request to httpbin.org (error: %e)", writeResult.Error());
@@ -350,7 +350,7 @@ private:
 
 		CHAR buffer[1024];
 		Memory::Zero(buffer, sizeof(buffer));
-		auto readResult = sock.Read(buffer, sizeof(buffer) - 1);
+		auto readResult = sock.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
 		if (!readResult)
 		{
 			LOG_ERROR("Failed to receive HTTP response from httpbin.org (error: %e)", readResult.Error());

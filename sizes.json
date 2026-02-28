@@ -1,6 +1,8 @@
 {
   "linux_armv7a_exe": "99.0 KB",
   "linux_armv7a_bin": "97.9 KB",
+  "windows_aarch64_exe": "84.0 KB",
+  "windows_aarch64_bin": "83.4 KB",
   "linux_i386_exe": "93.5 KB",
   "linux_i386_bin": "92.5 KB",
   "uefi_x86_64_exe": "87.0 KB",

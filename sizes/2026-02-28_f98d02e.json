@@ -1,0 +1,17 @@
+{
+  "date": "2026-02-28",
+  "commit": "f98d02e",
+  "sizes": {
+    "linux_armv7a_bin": 103672,
+    "windows_aarch64_bin": 89280,
+    "linux_i386_bin": 98951,
+    "uefi_x86_64_bin": 90659,
+    "windows_x86_64_bin": 92424,
+    "macos_x86_64_bin": 92408,
+    "uefi_aarch64_bin": 88300,
+    "linux_x86_64_bin": 91698,
+    "macos_aarch64_bin": 75088,
+    "linux_aarch64_bin": 75948,
+    "windows_i386_bin": 96176
+  }
+}

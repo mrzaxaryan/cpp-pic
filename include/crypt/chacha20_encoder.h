@@ -121,14 +121,13 @@ public:
      * @param remoteKey Key for decrypting incoming data (server_write_key)
      * @param localIv IV for outgoing data (client_write_iv)
      * @param remoteIv IV for incoming data (server_write_iv)
-     * @param keyLength Key length in bytes (must be 32 for ChaCha20)
      * @return Result<void, Error>::Ok() on success, Result<void, Error>::Err() on failure
      *
      * @details Keys and IVs are derived from the TLS 1.3 key schedule.
      * For client: local = client_write, remote = server_write
      * For server: local = server_write, remote = client_write
      */
-    [[nodiscard]] Result<void, Error> Initialize(PUCHAR localKey, PUCHAR remoteKey, const UCHAR (&localIv)[TLS_CHACHA20_IV_LENGTH], const UCHAR (&remoteIv)[TLS_CHACHA20_IV_LENGTH], INT32 keyLength);
+    [[nodiscard]] Result<void, Error> Initialize(Span<const UINT8> localKey, Span<const UINT8> remoteKey, const UCHAR (&localIv)[TLS_CHACHA20_IV_LENGTH], const UCHAR (&remoteIv)[TLS_CHACHA20_IV_LENGTH]);
 
     /**
      * @brief Encrypts and authenticates a TLS record

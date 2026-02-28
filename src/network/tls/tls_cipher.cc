@@ -247,7 +247,7 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, Span<const CHAR> server
     TlsHKDF::ExpandLabel(Span<UCHAR>(remoteKeyBuffer, keyLen), Span<const UCHAR>(this->data13.mainSecret, hashLen), Span<const CHAR>("key"_embed, 3), Span<const UCHAR>());
     TlsHKDF::ExpandLabel(Span<UCHAR>(remoteIvBuffer, this->chacha20Context.GetIvLength()), Span<const UCHAR>(this->data13.mainSecret, hashLen), Span<const CHAR>("iv"_embed, 2), Span<const UCHAR>());
 
-    auto initResult = this->chacha20Context.Initialize(localKeyBuffer, remoteKeyBuffer, localIvBuffer, remoteIvBuffer, keyLen);
+    auto initResult = this->chacha20Context.Initialize(Span<const UINT8>(localKeyBuffer, keyLen), Span<const UINT8>(remoteKeyBuffer, keyLen), localIvBuffer, remoteIvBuffer);
     if (!initResult)
     {
         LOG_DEBUG("Failed to initialize encoder with local key: %p, remote key: %p", localKeyBuffer, remoteKeyBuffer);

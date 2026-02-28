@@ -19,7 +19,11 @@ public:
     // Constructor for wrapping existing data - read mode (does not own memory)
     TlsBuffer(PCHAR buffer, INT32 size) : buffer(buffer), capacity(size), size(size), readPos(0), ownsMemory(false) {}
 
-    ~TlsBuffer() { if (ownsMemory) Clear(); }
+    ~TlsBuffer()
+    {
+        if (ownsMemory)
+            Clear();
+    }
 
     TlsBuffer(const TlsBuffer &) = delete;
     TlsBuffer &operator=(const TlsBuffer &) = delete;
@@ -37,7 +41,8 @@ public:
     {
         if (this != &other)
         {
-            if (ownsMemory) Clear();
+            if (ownsMemory)
+                Clear();
             buffer = other.buffer;
             capacity = other.capacity;
             size = other.size;
@@ -56,14 +61,14 @@ public:
     INT32 Append(Span<const CHAR> data);
 
     template <typename T>
-    INT32 Append(T data){
+    INT32 Append(T data)
+    {
         CheckSize(sizeof(T));
         *(T *)(buffer + this->size) = data;
         this->size += sizeof(T);
         return this->size - sizeof(T);
     }
-    
-    
+
     INT32 AppendSize(INT32 size);
     // Setting operation
     VOID SetSize(INT32 size);
@@ -81,7 +86,12 @@ public:
     // Accessors
     INT32 GetSize() const { return size; }
     PCHAR GetBuffer() const { return buffer; }
-    VOID SetBuffer(PCHAR buf) { buffer = buf; if (!ownsMemory) size = 0; }
+    VOID SetBuffer(PCHAR buf)
+    {
+        buffer = buf;
+        if (!ownsMemory)
+            size = 0;
+    }
     INT32 GetReaded() const { return readPos; }
     VOID AppendReaded(INT32 sz) { readPos += sz; }
     VOID ResetReadPos() { readPos = 0; }

@@ -38,6 +38,18 @@ public:
 		// Size optimization
 		RunTest(allPassed, EMBED_FUNC(TestSizeOptimization), L"Static extent eliminates size member"_embed);
 
+		// Compile-time slicing — static extent
+		RunTest(allPassed, EMBED_FUNC(TestStaticPtrConstruction), L"Static explicit pointer construction"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStaticCompileTimeFirst), L"Static First<N>() returns Span<T,N>"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStaticCompileTimeLast), L"Static Last<N>() returns Span<T,N>"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStaticCompileTimeSubspanOffsetCount), L"Static Subspan<O,N>() returns Span<T,N>"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestStaticCompileTimeSubspanOffset), L"Static Subspan<O>() deduces count from type"_embed);
+
+		// Compile-time slicing — dynamic extent
+		RunTest(allPassed, EMBED_FUNC(TestDynamicCompileTimeFirst), L"Dynamic First<N>() returns Span<T,N>"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestDynamicCompileTimeLast), L"Dynamic Last<N>() returns Span<T,N>"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestDynamicCompileTimeSubspan), L"Dynamic Subspan<O,N>() returns Span<T,N>"_embed);
+
 		// Edge cases
 		RunTest(allPassed, EMBED_FUNC(TestEmptyDynamic), L"Empty dynamic span"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestSingleElement), L"Single element static span"_embed);
@@ -390,6 +402,149 @@ private:
 		if (s.Size() != 1 || s[0] != 42 || s.IsEmpty())
 		{
 			LOG_ERROR("Single element static span check failed");
+			return false;
+		}
+		return true;
+	}
+
+	// =====================================================================
+	// Compile-time slicing — static extent
+	// =====================================================================
+
+	static BOOL TestStaticPtrConstruction()
+	{
+		UINT8 buf[4];
+		buf[0] = 7; buf[1] = 8; buf[2] = 9; buf[3] = 10;
+		UINT8 *ptr = buf;
+		Span<UINT8, 4> s(ptr);  // explicit pointer constructor
+		if (s.Data() != buf || s.Size() != 4 || s[0] != 7)
+		{
+			LOG_ERROR("Static explicit pointer construction failed");
+			return false;
+		}
+		static_assert(sizeof(s) == sizeof(UINT8 *), "Static span from pointer must store only pointer");
+		return true;
+	}
+
+	static BOOL TestStaticCompileTimeFirst()
+	{
+		UINT8 buf[8];
+		buf[0] = 1; buf[1] = 2; buf[2] = 3; buf[3] = 4;
+		buf[4] = 5; buf[5] = 6; buf[6] = 7; buf[7] = 8;
+		Span<UINT8, 8> s(buf);
+
+		Span<UINT8, 3> first = s.First<3>();
+		static_assert(sizeof(first) == sizeof(UINT8 *), "First<N>() must return pointer-only span");
+		if (first.Size() != 3 || first[0] != 1 || first[2] != 3)
+		{
+			LOG_ERROR("Static First<3>() failed");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestStaticCompileTimeLast()
+	{
+		UINT8 buf[8];
+		buf[0] = 1; buf[1] = 2; buf[2] = 3; buf[3] = 4;
+		buf[4] = 5; buf[5] = 6; buf[6] = 7; buf[7] = 8;
+		Span<UINT8, 8> s(buf);
+
+		Span<UINT8, 3> last = s.Last<3>();
+		static_assert(sizeof(last) == sizeof(UINT8 *), "Last<N>() must return pointer-only span");
+		if (last.Size() != 3 || last[0] != 6 || last[2] != 8)
+		{
+			LOG_ERROR("Static Last<3>() failed");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestStaticCompileTimeSubspanOffsetCount()
+	{
+		UINT8 buf[8];
+		buf[0] = 1; buf[1] = 2; buf[2] = 3; buf[3] = 4;
+		buf[4] = 5; buf[5] = 6; buf[6] = 7; buf[7] = 8;
+		Span<UINT8, 8> s(buf);
+
+		Span<UINT8, 4> mid = s.Subspan<2, 4>();
+		static_assert(sizeof(mid) == sizeof(UINT8 *), "Subspan<O,N>() must return pointer-only span");
+		if (mid.Size() != 4 || mid[0] != 3 || mid[3] != 6)
+		{
+			LOG_ERROR("Static Subspan<2,4>() failed");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestStaticCompileTimeSubspanOffset()
+	{
+		UINT8 buf[8];
+		buf[0] = 1; buf[1] = 2; buf[2] = 3; buf[3] = 4;
+		buf[4] = 5; buf[5] = 6; buf[6] = 7; buf[7] = 8;
+		Span<UINT8, 8> s(buf);
+
+		auto tail = s.Subspan<3>();  // Span<UINT8, 8-3> = Span<UINT8, 5>
+		static_assert(__is_same_as(decltype(tail), Span<UINT8, 5>), "Subspan<O>() must deduce count from extent");
+		static_assert(sizeof(tail) == sizeof(UINT8 *), "Subspan<O>() must return pointer-only span");
+		if (tail.Size() != 5 || tail[0] != 4 || tail[4] != 8)
+		{
+			LOG_ERROR("Static Subspan<3>() failed");
+			return false;
+		}
+		return true;
+	}
+
+	// =====================================================================
+	// Compile-time slicing — dynamic extent
+	// =====================================================================
+
+	static BOOL TestDynamicCompileTimeFirst()
+	{
+		UINT8 buf[8];
+		buf[0] = 10; buf[1] = 20; buf[2] = 30; buf[3] = 40;
+		buf[4] = 50; buf[5] = 60; buf[6] = 70; buf[7] = 80;
+		Span<UINT8> s(buf, 8);
+
+		Span<UINT8, 4> first = s.First<4>();
+		static_assert(sizeof(first) == sizeof(UINT8 *), "Dynamic First<N>() must return pointer-only span");
+		if (first.Size() != 4 || first[0] != 10 || first[3] != 40)
+		{
+			LOG_ERROR("Dynamic First<4>() failed");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestDynamicCompileTimeLast()
+	{
+		UINT8 buf[8];
+		buf[0] = 10; buf[1] = 20; buf[2] = 30; buf[3] = 40;
+		buf[4] = 50; buf[5] = 60; buf[6] = 70; buf[7] = 80;
+		Span<UINT8> s(buf, 8);
+
+		Span<UINT8, 4> last = s.Last<4>();
+		static_assert(sizeof(last) == sizeof(UINT8 *), "Dynamic Last<N>() must return pointer-only span");
+		if (last.Size() != 4 || last[0] != 50 || last[3] != 80)
+		{
+			LOG_ERROR("Dynamic Last<4>() failed");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestDynamicCompileTimeSubspan()
+	{
+		UINT8 buf[8];
+		buf[0] = 10; buf[1] = 20; buf[2] = 30; buf[3] = 40;
+		buf[4] = 50; buf[5] = 60; buf[6] = 70; buf[7] = 80;
+		Span<UINT8> s(buf, 8);
+
+		Span<UINT8, 3> mid = s.Subspan<2, 3>();
+		static_assert(sizeof(mid) == sizeof(UINT8 *), "Dynamic Subspan<O,N>() must return pointer-only span");
+		if (mid.Size() != 3 || mid[0] != 30 || mid[2] != 50)
+		{
+			LOG_ERROR("Dynamic Subspan<2,3>() failed");
 			return false;
 		}
 		return true;

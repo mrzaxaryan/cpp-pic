@@ -113,7 +113,7 @@ public:
      * @brief Finalizes MAC computation and outputs tag
      * @param mac Output buffer for 16-byte authentication tag
      */
-    VOID Finish(Span<UCHAR> mac);
+    VOID Finish(Span<UCHAR, POLY1305_TAGLEN> mac);
 
     /**
      * @brief Converts 4 bytes to 32-bit word (little-endian)
@@ -140,7 +140,7 @@ public:
      * @details Derives the Poly1305 key by encrypting zeros with ChaCha20
      * using block counter 0, as specified in RFC 7539.
      */
-    static INT32 GenerateKey(Span<const UCHAR> key256, Span<const UCHAR> nonce, Span<UCHAR> poly_key, UINT32 counter);
+    static INT32 GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter);
 };
 
 /**
@@ -271,7 +271,7 @@ public:
      * @details Per RFC 7539, the Poly1305 key is derived by encrypting
      * a zero block with ChaCha20 using counter = 0.
      */
-    VOID Poly1305Key(Span<UCHAR> poly1305_key);
+    VOID Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> poly1305_key);
 
     /**
      * @brief Performs AEAD encryption with Poly1305 authentication

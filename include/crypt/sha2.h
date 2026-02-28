@@ -235,7 +235,7 @@ public:
      * @details Applies padding, processes final block, and outputs the digest.
      * @note After calling Final(), the context should not be reused without re-initialization.
      */
-    VOID Final(Span<UINT8> digest);
+    VOID Final(Span<UINT8, Traits::DIGEST_SIZE> digest);
 
     /**
      * @brief Computes hash of a complete message in one call
@@ -244,7 +244,7 @@ public:
      *
      * @details Convenience method for hashing complete messages.
      */
-    static VOID Hash(Span<const UINT8> message, Span<UINT8> digest);
+    static VOID Hash(Span<const UINT8> message, Span<UINT8, Traits::DIGEST_SIZE> digest);
 
     /**
      * @brief Processes message blocks through the compression function

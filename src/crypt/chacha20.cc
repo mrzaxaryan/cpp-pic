@@ -169,7 +169,7 @@ VOID Poly1305::ProcessBlocks(Span<const UCHAR> data)
     m_h[4] = h4;
 }
 
-INT32 Poly1305::GenerateKey(Span<const UCHAR> key256, Span<const UCHAR> nonce, Span<UCHAR> poly_key, UINT32 counter)
+INT32 Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter)
 {
     ChaChaPoly1305 ctx;
     UINT64 ctr;
@@ -233,7 +233,7 @@ VOID Poly1305::Update(Span<const UCHAR> data)
     }
 }
 
-VOID Poly1305::Finish(Span<UCHAR> mac)
+VOID Poly1305::Finish(Span<UCHAR, POLY1305_TAGLEN> mac)
 {
     UINT32 h0, h1, h2, h3, h4, c;
     UINT32 g0, g1, g2, g3, g4;
@@ -634,7 +634,7 @@ INT32 ChaChaPoly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const 
     Memory::Zero(trail + 12, 4);
 
     poly.Update(Span<const UCHAR>(trail));
-    poly.Finish(out.Subspan(len));
+    poly.Finish(out.Last<POLY1305_TAGLEN>());
 
     return (INT32)len + POLY1305_TAGLEN;
 }
@@ -667,7 +667,7 @@ Result<INT32, Error> ChaChaPoly1305::Poly1305Decode(Span<UCHAR> pt, Span<const U
 
     UCHAR mac_tag[POLY1305_TAGLEN];
     poly.Update(Span<const UCHAR>(trail));
-    poly.Finish(Span<UCHAR>(mac_tag));
+    poly.Finish(mac_tag);
 
     // Constant-time comparison to prevent timing oracle
     UINT8 diff = 0;
@@ -686,13 +686,13 @@ Result<INT32, Error> ChaChaPoly1305::Poly1305Decode(Span<UCHAR> pt, Span<const U
     return Result<INT32, Error>::Ok((INT32)len);
 }
 
-VOID ChaChaPoly1305::Poly1305Key(Span<UCHAR> poly1305_key)
+VOID ChaChaPoly1305::Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> poly1305_key)
 {
     UCHAR key[32];
     UCHAR nonce[12];
     this->Key(key);
     this->Nonce(nonce);
-    Poly1305::GenerateKey(Span<const UCHAR>(key), Span<const UCHAR>(nonce), poly1305_key, 0);
+    Poly1305::GenerateKey(key, nonce, poly1305_key, 0);
 }
 
 ChaChaPoly1305::ChaChaPoly1305()

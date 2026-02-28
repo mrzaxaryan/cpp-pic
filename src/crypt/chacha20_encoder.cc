@@ -52,7 +52,7 @@ VOID ChaCha20Encoder::Encode(TlsBuffer &out, Span<const CHAR> packet, Span<const
     UCHAR poly1305_key[POLY1305_KEYLEN];
     this->localCipher.IvUpdate(this->localNonce, sequence, (UINT8 *)&counter);
     LOG_DEBUG("Chacha20 encoder updated IV with sequence: %p, counter: %d", sequence, counter);
-    this->localCipher.Poly1305Key(Span<UCHAR>(poly1305_key));
+    this->localCipher.Poly1305Key(poly1305_key);
     LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
     this->localCipher.Poly1305Aead(
         Span<UCHAR>((UINT8 *)packet.Data(), packetSize),
@@ -78,7 +78,7 @@ Result<void, Error> ChaCha20Encoder::Decode(TlsBuffer &in, TlsBuffer &out, Span<
 
     // Generate Poly1305 key from current cipher state
     UCHAR poly1305_key[POLY1305_KEYLEN];
-    this->remoteCipher.Poly1305Key(Span<UCHAR>(poly1305_key));
+    this->remoteCipher.Poly1305Key(poly1305_key);
     LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
 
     // Decode and verify (poly_key is already computed, don't regenerate inside Poly1305Decode)

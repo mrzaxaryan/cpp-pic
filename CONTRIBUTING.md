@@ -188,7 +188,7 @@ UINT32 val = embedded[0];                        // Unpacked at runtime
 | Style | When | Example |
 |-------|------|---------|
 | By value | Small register-sized types | `UINT32 ComputeHash(UINT32 input)` |
-| By pointer | Output params, nullable, Windows API compat | `NTSTATUS ZwCreateFile(PPVOID FileHandle, ...)` |
+| By pointer | Output params, nullable, Windows API compat | `Result<NTSTATUS, Error> ZwCreateFile(PPVOID FileHandle, ...)` |
 | By reference | Non-null params (compile-time guarantee) | `Socket(const IPAddress &ipAddress, UINT16 port)` |
 | `Span<T>` | Contiguous buffer params (replaces `T*, USIZE` pairs) | `void Process(Span<const UINT8> data)` |
 
@@ -258,17 +258,24 @@ PIR has no exceptions. **Every fallible function must return `Result<T, Error>`*
 
 ### Construction Patterns
 
+`Error` stores a single `(Code, Platform)` slot — there is no call-chain. Each layer picks the most useful code to surface.
+
 ```cpp
-// Single error (most common):
+// Single runtime error:
 return Result<UINT32, Error>::Err(Error::Socket_WriteFailed_Send);
 
-// OS error + runtime context:
-return Result<UINT32, Error>::Err(Error::Posix((UINT32)(-sent)), Error::Socket_WriteFailed_Send);
+// Single OS error (low-level wrappers — OS code is the most useful context):
+return Result<UINT32, Error>::Err(Error::Posix((UINT32)(-sent)));
 
-// Propagation from a failed Result:
+// Propagate lower-level error unchanged:
 auto r = context.Write(buffer, size);
 if (!r)
-    return Result<UINT32, Error>::Err(r, Error::Tls_WriteFailed_Send);
+    return Result<UINT32, Error>::Err(r.Error());
+
+// Replace with own layer's error code (when the caller's context is more useful):
+auto r = context.Write(buffer, size);
+if (!r)
+    return Result<UINT32, Error>::Err(Error::Tls_WriteFailed_Send);
 ```
 
 ### Platform Conversion Factories
@@ -339,7 +346,7 @@ public:
 
 auto createResult = MyClient::Create((PCCHAR)url);
 if (!createResult)
-    return false;
+    return Result<void, Error>::Err(createResult.Error());
 MyClient &client = createResult.Value();
 ```
 
@@ -371,7 +378,7 @@ public:
 
     VOID Close()
     {
-        if (handle != nullptr) { NTDLL::ZwClose(handle); handle = nullptr; }
+        if (handle != nullptr) { (void)NTDLL::ZwClose(handle); handle = nullptr; }
     }
 };
 ```

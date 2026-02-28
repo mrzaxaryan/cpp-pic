@@ -35,7 +35,7 @@ VOID TlsHash::GetHash(Span<CHAR> out)
             LOG_DEBUG("SHA256 hash cache size: %d bytes", this->cache.GetSize());
             ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
         }
-        ctx.Final(Span<UINT8>((UINT8 *)out.Data(), out.Size()));
+        ctx.Final(Span<UINT8, SHA256_DIGEST_SIZE>((UINT8 *)out.Data()));
     }
     else
     {
@@ -43,6 +43,6 @@ VOID TlsHash::GetHash(Span<CHAR> out)
         SHA384 ctx;
         if (this->cache.GetSize() > 0)
             ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
-        ctx.Final(Span<UINT8>((UINT8 *)out.Data(), out.Size()));
+        ctx.Final(Span<UINT8, SHA384_DIGEST_SIZE>((UINT8 *)out.Data()));
     }
 }

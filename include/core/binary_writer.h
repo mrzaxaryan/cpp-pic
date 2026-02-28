@@ -12,7 +12,7 @@ private:
 	USIZE maxSize;
 
 public:
-	BinaryWriter(PVOID address, USIZE offset, USIZE maxSize)
+	constexpr BinaryWriter(PVOID address, USIZE offset, USIZE maxSize)
 		: address(address), offset(offset), maxSize(maxSize)
 	{
 	}
@@ -38,7 +38,7 @@ public:
 		return address;
 	}
 
-	PVOID GetAddress() const { return address; }
-	USIZE GetOffset() const { return offset; }
-	USIZE GetMaxSize() const { return maxSize; }
+	constexpr PVOID GetAddress() const { return address; }
+	constexpr USIZE GetOffset() const { return offset; }
+	constexpr USIZE GetMaxSize() const { return maxSize; }
 };

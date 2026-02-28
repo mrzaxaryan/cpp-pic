@@ -102,15 +102,3 @@ Result<void, Error> Base64::Decode(PCCHAR input, UINT32 inputSize, PCHAR output)
 
     return Result<void, Error>::Ok();
 }
-
-// Calculate the output size needed for Base64 encoding
-UINT32 Base64::GetEncodeOutSize(UINT32 inputSize)
-{
-    return BASE64_ENCODE_OUT_SIZE(inputSize);
-}
-
-// Calculate the output size needed for Base64 decoding
-UINT32 Base64::GetDecodeOutSize(UINT32 inputSize)
-{
-    return BASE64_DECODE_OUT_SIZE(inputSize);
-}

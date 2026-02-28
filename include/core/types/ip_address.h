@@ -143,25 +143,25 @@ public:
      * @brief Check if address is valid
      * @return true if IPv4 or IPv6, false if Invalid
      */
-    BOOL IsValid() const;
+    constexpr BOOL IsValid() const { return version != IPVersion::Invalid; }
 
     /**
      * @brief Check if address is IPv4
      * @return true if IPv4 address
      */
-    BOOL IsIPv4() const;
+    constexpr BOOL IsIPv4() const { return version == IPVersion::IPv4; }
 
     /**
      * @brief Check if address is IPv6
      * @return true if IPv6 address
      */
-    BOOL IsIPv6() const;
+    constexpr BOOL IsIPv6() const { return version == IPVersion::IPv6; }
 
     /**
      * @brief Get address version
      * @return IPVersion enumeration value
      */
-    IPVersion GetVersion() const;
+    constexpr IPVersion GetVersion() const { return version; }
 
     /// @}
     /// @name Conversion Methods
@@ -169,15 +169,15 @@ public:
 
     /**
      * @brief Get IPv4 address value
-     * @return IPv4 address in network byte order (undefined if not IPv4)
+     * @return IPv4 address in network byte order (0xFFFFFFFF if not IPv4)
      */
-    UINT32 ToIPv4() const;
+    constexpr UINT32 ToIPv4() const { return version == IPVersion::IPv4 ? address.ipv4 : 0xFFFFFFFF; }
 
     /**
      * @brief Get IPv6 address array
-     * @return Pointer to 16-byte IPv6 address (undefined if not IPv6)
+     * @return Pointer to 16-byte IPv6 address (nullptr if not IPv6)
      */
-    const UINT8 *ToIPv6() const;
+    constexpr const UINT8 *ToIPv6() const { return version == IPVersion::IPv6 ? address.ipv6 : nullptr; }
 
     /**
      * @brief Convert to string representation

@@ -85,7 +85,7 @@ public:
      * hash = ((hash << 5) + hash) + c, which is equivalent to hash * 33 + c.
      */
     template <typename TChar>
-    static UINT64 Hash(const TChar *value)
+    static constexpr UINT64 Hash(const TChar *value)
     {
         UINT64 h = Seed;
         for (UINT64 i = 0; value[i] != (TChar)0; ++i)

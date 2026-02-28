@@ -47,7 +47,7 @@ public:
      * @return The larger of the two values
      */
     template <typename T, typename U>
-    static FORCE_INLINE auto Max(const T& a, const U& b) noexcept
+    static constexpr FORCE_INLINE auto Max(const T& a, const U& b) noexcept
     {
         using CommonType = decltype(true ? a : b);
         const CommonType ca = static_cast<CommonType>(a);
@@ -62,7 +62,7 @@ public:
      * @return The smaller of the two values
      */
     template <typename T, typename U>
-    static FORCE_INLINE auto Min(const T& a, const U& b) noexcept
+    static constexpr FORCE_INLINE auto Min(const T& a, const U& b) noexcept
     {
         using CommonType = decltype(true ? a : b);
         const CommonType ca = static_cast<CommonType>(a);
@@ -76,7 +76,7 @@ public:
      * @return The absolute value of x
      */
     template <typename T>
-    static FORCE_INLINE T Abs(T x) noexcept
+    static constexpr FORCE_INLINE T Abs(T x) noexcept
     {
         return (x < 0) ? -x : x;
     }
@@ -89,7 +89,7 @@ public:
      * @return x clamped to [minVal, maxVal]
      */
     template <typename T>
-    static FORCE_INLINE T Clamp(T x, T minVal, T maxVal) noexcept
+    static constexpr FORCE_INLINE T Clamp(T x, T minVal, T maxVal) noexcept
     {
         return Min(Max(x, minVal), maxVal);
     }

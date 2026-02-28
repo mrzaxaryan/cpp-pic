@@ -280,50 +280,6 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
     }
 }
 
-// Check if IP address is valid
-BOOL IPAddress::IsValid() const
-{
-    return version != IPVersion::Invalid;
-}
-
-// Check if IP address is IPv4
-BOOL IPAddress::IsIPv4() const
-{
-    return version == IPVersion::IPv4;
-}
-
-// Check if IP address is IPv6
-BOOL IPAddress::IsIPv6() const
-{
-    return version == IPVersion::IPv6;
-}
-
-// Get IP version
-IPVersion IPAddress::GetVersion() const
-{
-    return version;
-}
-
-// Convert to IPv4 (returns 0xFFFFFFFF if not IPv4)
-UINT32 IPAddress::ToIPv4() const
-{
-    if (version == IPVersion::IPv4)
-    {
-        return address.ipv4;
-    }
-    return 0xFFFFFFFF; // INVALID_IPV4
-}
-
-// Get IPv6 address (returns nullptr if not IPv6)
-const UINT8 *IPAddress::ToIPv6() const
-{
-    if (version == IPVersion::IPv6)
-    {
-        return address.ipv6;
-    }
-    return nullptr;
-}
-
 // Convert IP address to string
 Result<void, Error> IPAddress::ToString(PCHAR buffer, UINT32 bufferSize) const
 {

@@ -52,7 +52,7 @@ public:
      * @endcode
      */
     template<typename T>
-    static FORCE_INLINE T ROTR(T x, UINT32 n)
+    static constexpr FORCE_INLINE T ROTR(T x, UINT32 n)
     {
         constexpr UINT32 bits = sizeof(T) * 8;
         return (x >> n) | (x << (bits - n));
@@ -76,7 +76,7 @@ public:
      * @endcode
      */
     template<typename T>
-    static FORCE_INLINE T ROTL(T x, UINT32 n)
+    static constexpr FORCE_INLINE T ROTL(T x, UINT32 n)
     {
         constexpr UINT32 bits = sizeof(T) * 8;
         return (x << n) | (x >> (bits - n));
@@ -88,7 +88,7 @@ public:
      * @param n Number of bits to rotate by
      * @return Value rotated right by n bits
      */
-    static FORCE_INLINE UINT32 ROTR32(UINT32 x, UINT32 n) { return ROTR(x, n); }
+    static constexpr FORCE_INLINE UINT32 ROTR32(UINT32 x, UINT32 n) { return ROTR(x, n); }
 
     /**
      * @brief Rotate 32-bit value left
@@ -96,7 +96,7 @@ public:
      * @param n Number of bits to rotate by
      * @return Value rotated left by n bits
      */
-    static FORCE_INLINE UINT32 ROTL32(UINT32 x, UINT32 n) { return ROTL(x, n); }
+    static constexpr FORCE_INLINE UINT32 ROTL32(UINT32 x, UINT32 n) { return ROTL(x, n); }
 
     /**
      * @brief Rotate 64-bit value right
@@ -104,7 +104,7 @@ public:
      * @param n Number of bits to rotate by
      * @return Value rotated right by n bits
      */
-    static FORCE_INLINE UINT64 ROTR64(UINT64 x, UINT32 n) { return ROTR(x, n); }
+    static constexpr FORCE_INLINE UINT64 ROTR64(UINT64 x, UINT32 n) { return ROTR(x, n); }
 
     /**
      * @brief Rotate 64-bit value left
@@ -112,7 +112,7 @@ public:
      * @param n Number of bits to rotate by
      * @return Value rotated left by n bits
      */
-    static FORCE_INLINE UINT64 ROTL64(UINT64 x, UINT32 n) { return ROTL(x, n); }
+    static constexpr FORCE_INLINE UINT64 ROTL64(UINT64 x, UINT32 n) { return ROTL(x, n); }
 };
 
 /** @} */ // end of bitops group

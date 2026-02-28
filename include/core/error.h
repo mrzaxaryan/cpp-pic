@@ -162,13 +162,13 @@ struct Error
 	ErrorCodes   Code;
 	PlatformKind Platform;
 
-	Error(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
+	constexpr Error(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
 		: Code((ErrorCodes)code), Platform(platform)
 	{
 	}
 
 	// Platform-specific factory methods — concise alternative to the constructor.
-	[[nodiscard]] static Error Windows(UINT32 ntstatus) { return Error(ntstatus, PlatformKind::Windows); }
-	[[nodiscard]] static Error Posix(UINT32 errnoVal)   { return Error(errnoVal, PlatformKind::Posix); }
-	[[nodiscard]] static Error Uefi(UINT32 efiStatus)   { return Error(efiStatus, PlatformKind::Uefi); }
+	[[nodiscard]] static constexpr Error Windows(UINT32 ntstatus) { return Error(ntstatus, PlatformKind::Windows); }
+	[[nodiscard]] static constexpr Error Posix(UINT32 errnoVal)   { return Error(errnoVal, PlatformKind::Posix); }
+	[[nodiscard]] static constexpr Error Uefi(UINT32 efiStatus)   { return Error(efiStatus, PlatformKind::Uefi); }
 };

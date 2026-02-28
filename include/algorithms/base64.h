@@ -81,7 +81,10 @@ public:
      * @details Base64 encoding expands data by 4/3 ratio, rounded up to
      * the nearest multiple of 4 for padding.
      */
-    static UINT32 GetEncodeOutSize(UINT32 inputSize);
+    static constexpr UINT32 GetEncodeOutSize(UINT32 inputSize)
+    {
+        return (UINT32)((((inputSize) + 2) / 3) * 4 + 1);
+    }
 
     /**
      * @brief Calculates required output buffer size for decoding
@@ -90,7 +93,10 @@ public:
      *
      * @details Base64 decoding contracts data by 3/4 ratio.
      */
-    static UINT32 GetDecodeOutSize(UINT32 inputSize);
+    static constexpr UINT32 GetDecodeOutSize(UINT32 inputSize)
+    {
+        return (UINT32)(((inputSize) >> 2) * 3);
+    }
 };
 
 /** @} */ // end of base64 group

@@ -157,7 +157,6 @@ UINT32 val = embedded[0];                        // Unpacked at runtime
 - **Indentation:** Tabs (not spaces)
 - **Braces:** Allman style — opening brace on its own line
 - **Include guard:** `#pragma once` in every header
-- **No namespaces** — use `static` class methods instead
 - **No STL, no exceptions, no RTTI**
 - **`FORCE_INLINE`** for force-inlined functions, **`NOINLINE`** when inlining must be prevented
 - **`constexpr`** for compile-time-evaluable values; **`consteval`** when evaluation *must* happen at compile time
@@ -253,17 +252,22 @@ if (!r)
 
 ### Platform Conversion Factories
 
-`Result` provides `From*` factories that convert a raw OS status into `Ok`/`Err` in one call. Use these in low-level wrappers that only need the OS error code:
+Each platform provides `result::From*` template functions in `include/platform/<platform>/platform_result.h`. These convert a raw OS status into `Ok`/`Err` in one call. Use them in low-level wrappers that only need the OS error code:
 
 ```cpp
-// Windows — success when status >= 0 (NT_SUCCESS semantics):
-return Result<NTSTATUS, Error>::FromNTSTATUS(status);
+// Windows (include "platform_result.h"):
+return result::FromNTSTATUS<NTSTATUS>(status);    // Ok when status >= 0
+return result::FromNTSTATUS<void>(status);         // void: discards value on success
 
-// POSIX — success when result >= 0, failure stores -result as errno:
-return Result<void, Error>::FromPosix(result);
+// Linux (include "platform_result.h"):
+return result::FromLinux<UINT32>(result);           // Ok when result >= 0
+return result::FromLinux<void>(result);             // void: discards value on success
 
-// UEFI — success when (SSIZE)status >= 0:
-return Result<void, Error>::FromEfiStatus(status);
+// macOS (include "platform_result.h"):
+return result::FromMacOS<UINT32>(result);           // Ok when result >= 0
+
+// UEFI (include "platform_result.h"):
+return result::FromEfiStatus<void>(status);         // Ok when (SSIZE)status >= 0
 ```
 
 For void Results, the raw value is discarded on success. For non-void Results, the raw value is stored as the Ok value.
@@ -389,7 +393,7 @@ TlsBuffer(PCHAR buf, INT32 size) : buffer(buf), ownsMemory(false) {}
 
 ### Static Class as Module
 
-No namespaces. Classes with only `static` methods serve as modules:
+Prefer classes with only `static` methods as modules. Namespaces are allowed for platform-specific factory functions (e.g. `result::FromNTSTATUS` in `platform_result.h`):
 
 ```cpp
 class Memory
@@ -486,16 +490,18 @@ Result<void, Error> Kernel32::MyFunction(UINT32 param1, PVOID param2)
 
 ### NTDLL / Zw* Syscalls
 
-Indirect syscalls on x86_64/i386, direct ntdll calls on ARM64. Use `FromNTSTATUS` to convert the raw status:
+Indirect syscalls on x86_64/i386, direct ntdll calls on ARM64. Use `result::FromNTSTATUS` to convert the raw status:
 
 ```cpp
+#include "platform_result.h"
+
 [[nodiscard]] Result<NTSTATUS, Error> NTDLL::ZwMyFunction(PVOID Param1, UINT32 Param2)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwMyFunction");
     NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
         ? System::Call(entry, (USIZE)Param1, (USIZE)Param2)
         : CALL_FUNCTION("ZwMyFunction", PVOID Param1, UINT32 Param2);
-    return Result<NTSTATUS, Error>::FromNTSTATUS(status);
+    return result::FromNTSTATUS<NTSTATUS>(status);
 }
 ```
 

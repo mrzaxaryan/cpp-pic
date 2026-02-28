@@ -132,51 +132,6 @@ public:
 	}
 
 	// =====================================================================
-	// Platform conversion factories
-	// =====================================================================
-	// These call E::Windows/Posix/Uefi which are resolved at instantiation
-	// time, so no platform headers are pulled into core.
-
-	/// Windows NTSTATUS: success when status >= 0 (NT_SUCCESS semantics).
-	[[nodiscard]] static FORCE_INLINE Result FromNTSTATUS(INT32 status) noexcept
-	{
-		if (status >= 0)
-		{
-			if constexpr (IS_VOID)
-				return Ok();
-			else
-				return Ok((STORED_TYPE)status);
-		}
-		return Err(E::Windows((UINT32)status));
-	}
-
-	/// POSIX syscall: success when result >= 0, failure stores -result as errno.
-	[[nodiscard]] static FORCE_INLINE Result FromPosix(SSIZE result) noexcept
-	{
-		if (result >= 0)
-		{
-			if constexpr (IS_VOID)
-				return Ok();
-			else
-				return Ok((STORED_TYPE)result);
-		}
-		return Err(E::Posix((UINT32)(-result)));
-	}
-
-	/// UEFI EFI_STATUS: success when (SSIZE)status >= 0.
-	[[nodiscard]] static FORCE_INLINE Result FromEfiStatus(USIZE status) noexcept
-	{
-		if ((SSIZE)status >= 0)
-		{
-			if constexpr (IS_VOID)
-				return Ok();
-			else
-				return Ok((STORED_TYPE)status);
-		}
-		return Err(E::Uefi((UINT32)status));
-	}
-
-	// =====================================================================
 	// Destructor + move semantics
 	// =====================================================================
 

@@ -46,7 +46,8 @@ The binary must contain **only** a `.text` section. No `.rdata`, `.rodata`, `.da
 | Global/static variables | Stack-local variables |
 | `const` arrays at file scope | `MakeEmbedArray(...)` |
 | STL containers/algorithms | Custom PIR implementations |
-| Exceptions (`throw`/`try`/`catch`) | Return error codes or `Result<T, E>` |
+| Exceptions (`throw`/`try`/`catch`) | `Result<T, Error>` |
+| Raw `BOOL`/`NTSTATUS`/`SSIZE` for fallible returns | `Result<T, Error>` or `Result<void, Error>` |
 | RTTI (`dynamic_cast`, `typeid`) | Static dispatch |
 
 **Embedded types quick reference:**
@@ -100,21 +101,23 @@ UINT32 val = embedded[0];                        // Unpacked at runtime
 | By pointer | Output params, nullable, Windows API compat | `NTSTATUS ZwCreateFile(PPVOID FileHandle, ...)` |
 | By reference | Non-null params (compile-time guarantee) | `Socket(const IPAddress &ipAddress, UINT16 port)` |
 
-**`[[nodiscard]]`** — Apply to every function returning `BOOL`, `NTSTATUS`, `SSIZE`, `Result<T, E>`, or factory objects. PIR has no exceptions — a missed return check is a silent bug.
+**`[[nodiscard]]`** — Apply to every fallible function and factory. PIR has no exceptions — a missed return check is a silent bug.
 
-**`Result<T, E>`** — Use for functions that can fail and need to return a value or error:
+**`Result<T, Error>`** — **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. This ensures a uniform error-handling interface across the codebase:
 
 ```cpp
-[[nodiscard]] Result<IPAddress, UINT32> Resolve(PCCHAR host);
+[[nodiscard]] Result<IPAddress, Error> Resolve(PCCHAR host);
 
 auto result = Resolve(hostName);
 if (result.IsErr())
     return;
 IPAddress &ip = result.Value();  // borrow; Result still owns it
 
-// Use Result<void, E> when there is no value to return
-[[nodiscard]] Result<void, UINT32> Open();
+// Use Result<void, Error> when there is no value to return
+[[nodiscard]] Result<void, Error> Open();
 ```
+
+Infallible functions (getters, pure computations, operators) return their value directly — they do not use `Result`.
 
 ### Platform-Specific Code
 
@@ -134,7 +137,7 @@ Use preprocessor guards:
 
 ## Error Handling
 
-PIR has no exceptions. Every fallible function returns `BOOL`, `NTSTATUS`, `SSIZE`, or `Result<T, Error>`.
+PIR has no exceptions. **Every fallible function must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value to return). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure.
 
 ### The Error Struct
 
@@ -169,7 +172,7 @@ LOG_ERROR("Operation failed (error: %e)", result.Error());
 
 ### Error Rules
 
-- Always `[[nodiscard]]` on functions returning `Result<T, Error>`, `BOOL`, `NTSTATUS`, or `SSIZE`
+- Always `[[nodiscard]]` on functions returning `Result<T, Error>`
 - OS errors: use factory methods — `Error::Windows()`, `Error::Posix()`, `Error::Uefi()`
 - Runtime errors: pass bare — `Result::Err(Error::Socket_WriteFailed_Send)`
 - Each layer adds only its own `ErrorCodes` values
@@ -360,13 +363,16 @@ Two strategies: **conditional compilation** (`#if defined(PLATFORM_*)`) for smal
 
 ```cpp
 // Header: include/platform/windows/kernel32.h
-class Kernel32 { public: static BOOL MyFunction(UINT32 param1, PVOID param2); };
+class Kernel32 { public: [[nodiscard]] static Result<void, Error> MyFunction(UINT32 param1, PVOID param2); };
 
 // Source: src/platform/windows/kernel32.cc
-BOOL Kernel32::MyFunction(UINT32 param1, PVOID param2)
+Result<void, Error> Kernel32::MyFunction(UINT32 param1, PVOID param2)
 {
-    return ((BOOL(STDCALL *)(UINT32, PVOID))
+    BOOL ok = ((BOOL(STDCALL *)(UINT32, PVOID))
         ResolveKernel32ExportAddress("MyFunction"))(param1, param2);
+    if (!ok)
+        return Result<void, Error>::Err(Error::Kernel32_MyFunctionFailed);
+    return Result<void, Error>::Ok();
 }
 ```
 
@@ -375,12 +381,15 @@ BOOL Kernel32::MyFunction(UINT32 param1, PVOID param2)
 Indirect syscalls on x86_64/i386, direct ntdll calls on ARM64:
 
 ```cpp
-NTSTATUS NTDLL::ZwMyFunction(PVOID Param1, UINT32 Param2)
+[[nodiscard]] Result<void, Error> NTDLL::ZwMyFunction(PVOID Param1, UINT32 Param2)
 {
     SYSCALL_ENTRY entry = ResolveSyscall("ZwMyFunction");
-    return entry.ssn != SYSCALL_SSN_INVALID
+    NTSTATUS status = entry.ssn != SYSCALL_SSN_INVALID
         ? System::Call(entry, (USIZE)Param1, (USIZE)Param2)
         : CALL_FUNCTION("ZwMyFunction", PVOID Param1, UINT32 Param2);
+    if (status != STATUS_SUCCESS)
+        return Result<void, Error>::Err(Error::Windows((UINT32)status));
+    return Result<void, Error>::Ok();
 }
 ```
 

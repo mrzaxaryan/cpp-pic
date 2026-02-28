@@ -287,7 +287,7 @@
     {
       "label": "Run UEFI x86_64 (QEMU)",
       "type": "shell",
-      "command": "qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -drive file=fat:rw:build/release/uefi/x86_64,format=raw,if=ide,index=0 -m 512 -nographic -nic user,model=e1000 -device isa-debug-exit,iobase=0xf4,iosize=0x04 -no-reboot; ret=$?; if [ $ret -eq 1 ]; then exit 0; else exit $ret; fi",
+      "command": "qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -drive file=fat:rw:build/release/uefi/x86_64,format=raw,if=ide,index=0 -m 512 -nographic -nic user,model=e1000 -no-reboot",
       "dependsOn": "uefi-x86_64-release",
       "problemMatcher": [],
       "group": "test"
@@ -295,7 +295,7 @@
     {
       "label": "Run UEFI aarch64 (QEMU)",
       "type": "shell",
-      "command": "qemu-system-aarch64 -M virt -cpu cortex-a72 -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -drive file=fat:rw:build/release/uefi/aarch64,format=raw,if=virtio -m 512 -nographic -nic user,model=virtio -semihosting -no-reboot; ret=$?; if [ $ret -eq 0 ]; then exit 0; else exit $ret; fi",
+      "command": "qemu-system-aarch64 -M virt -cpu cortex-a72 -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd -drive file=fat:rw:build/release/uefi/aarch64,format=raw,if=virtio -m 512 -nographic -nic user,model=virtio -no-reboot",
       "dependsOn": "uefi-aarch64-release",
       "problemMatcher": [],
       "group": "test"

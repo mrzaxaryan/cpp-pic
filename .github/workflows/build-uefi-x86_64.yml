@@ -88,13 +88,13 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi
 
@@ -134,13 +134,13 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi
 
@@ -180,13 +180,13 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi
 
@@ -226,13 +226,13 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi
 
@@ -272,13 +272,13 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi
 
@@ -318,13 +318,13 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi
 
@@ -364,12 +364,12 @@ jobs:
             -nographic \
             -serial mon:stdio \
             -nic user,model=e1000 \
-            -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g'
-          ret=${PIPESTATUS[0]}
+            -no-reboot 2>&1 | sed -u 's/?\\[[0-9;]*m//g' | tee /tmp/qemu-output.log
           set -e
           rm -f "$DISK_IMG"
-          echo "QEMU exit code: $ret (expected 1 for success)"
-          if [ "$ret" -ne "1" ]; then
+          if grep -q "ALL TESTS PASSED" /tmp/qemu-output.log; then
+            echo "Tests passed!"
+          else
+            echo "Tests failed or output not found!"
             exit 1
           fi

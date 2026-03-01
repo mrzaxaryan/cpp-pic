@@ -1,0 +1,17 @@
+{
+  "date": "2026-03-01",
+  "commit": "9933995",
+  "sizes": {
+    "linux_armv7a_bin": 106464,
+    "windows_aarch64_bin": 91200,
+    "linux_i386_bin": 101895,
+    "uefi_x86_64_bin": 92595,
+    "windows_x86_64_bin": 94152,
+    "macos_x86_64_bin": 93800,
+    "uefi_aarch64_bin": 90416,
+    "linux_x86_64_bin": 93154,
+    "macos_aarch64_bin": 76920,
+    "linux_aarch64_bin": 78196,
+    "windows_i386_bin": 100032
+  }
+}

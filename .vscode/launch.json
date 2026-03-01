@@ -230,6 +230,52 @@
             "cwd": "${workspaceFolder}",
             "internalConsoleOptions": "openOnSessionStart",
             "preLaunchTask": "solaris-x86_64-debug"
+        },
+        {
+            "name": "solaris-i386-release (PIC)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "i386",
+                "${workspaceFolder}/build/release/solaris/i386/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "solaris-i386-release"
+        },
+        {
+            "name": "solaris-i386-debug",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/solaris/i386/output.elf",
+            "cwd": "${workspaceFolder}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "preLaunchTask": "solaris-i386-debug"
+        },
+        {
+            "name": "solaris-aarch64-release (PIC)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "aarch64",
+                "${workspaceFolder}/build/release/solaris/aarch64/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "solaris-aarch64-release"
+        },
+        {
+            "name": "solaris-aarch64-debug",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/solaris/aarch64/output.elf",
+            "cwd": "${workspaceFolder}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "preLaunchTask": "solaris-aarch64-debug"
         }
     ]
 }

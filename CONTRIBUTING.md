@@ -283,10 +283,21 @@ Platform-specific OS API wrappers (NTDLL, Kernel32) **must** include Doxygen doc
 | Structs (Windows-style) | `_NAME` with typedef | `typedef struct _OBJECT_ATTRIBUTES { ... } OBJECT_ATTRIBUTES;` |
 | Template utility types | `UPPER_CASE` | `EMBEDDED_STRING<...>`, `VOID_TO_TAG<T>` |
 | Template classes | `PascalCase` | `Result<T, E>`, `Span<T>`, `SHABase<Traits>` |
-| Enums | `UPPER_CASE` | `EVENT_TYPE` |
-| Class methods (static) | `PascalCase` | `String::Length()`, `NTDLL::ZwCreateFile()` |
+| Enum names | `PascalCase` | `ErrorCodes`, `PlatformKind`, `IPVersion`, `CmpOp` |
+| Enum values (scoped `enum class`) | `PascalCase` | `PlatformKind::Runtime`, `IPVersion::IPv4` |
+| Enum values (unscoped) | `PascalCase_Underscore` | `Socket_CreateFailed_Open`, `Tls_OpenFailed_Socket` |
+| Class methods | `PascalCase` | `String::Length()`, `NTDLL::ZwCreateFile()` |
+| Member variables (private) | `camelCase` | `address`, `offset`, `maxSize`, `bits` |
+| Member variables (in `Result`/`Span`) | `m_` prefix + `camelCase` | `m_data`, `m_size`, `m_value`, `m_isOk` |
+| Struct fields (public) | `PascalCase` | `Error::Code`, `Error::Platform` |
 | Local variables | `camelCase` | `allPassed`, `fileHandle`, `bufferSize` |
-| Macros/constants | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `ENTRYPOINT` |
+| Function parameters | `camelCase` | `ipAddress`, `maxSize`, `errnoVal` |
+| `#define` macros | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `ENTRYPOINT`, `EMBED_FUNC` |
+| `constexpr` free constants | `UPPER_CASE` | `DYNAMIC_EXTENT` |
+| `static constexpr` class members | `PascalCase` | `Count`, `SizeBytes`, `WordCount`, `Seed` |
+| Concepts | `UPPER_CASE` | `TCHAR` |
+| Template type parameters | `T` or `T` prefix + `PascalCase` | `T`, `E`, `TChar`, `TValue` |
+| Template value parameters | `PascalCase` | `N`, `Extent`, `Bytes` |
 | Header files | `snake_case.h` | `embedded_string.h`, `windows_types.h` |
 | Source files | `snake_case.cc` | `kernel32.cc`, `entry_point.cc` |
 | Platform-specific | `name.platform.cc` | `allocator.windows.cc`, `syscall.linux.h` |

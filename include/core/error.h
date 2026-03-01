@@ -120,6 +120,7 @@ struct Error
 		Tls_ChangeCipherSpecFailed = 82, // ChangeCipherSpec send failed
 		Tls_ProcessReceiveFailed   = 83, // receive processing failed
 		Tls_OnPacketFailed         = 84, // packet handling failed
+		Tls_ReadFailed_Channel     = 85, // ReadChannel returned 0 bytes
 
 		// -------------------------
 		// Process errors (90–94)

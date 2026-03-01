@@ -487,7 +487,7 @@ Result<void, Error> TlsClient::OnPacket(INT32 packetType, INT32 version, TlsBuff
         {
             seg_size = TlsReader.GetSize();
         }
-        TlsBuffer reader_sig(TlsReader.GetBuffer() + TlsReader.GetReadPosition(), seg_size);
+        TlsBuffer reader_sig(Span<CHAR>(TlsReader.GetBuffer() + TlsReader.GetReadPosition(), (USIZE)seg_size));
 
         TlsState state_seq[6]{};
 
@@ -636,7 +636,7 @@ Result<void, Error> TlsClient::ProcessReceive()
 
         LOG_DEBUG("Processing packet for client: %p, current index: %d, packet size: %d", this, (INT32)headerStart, packetSize);
 
-        TlsBuffer unnamed((PCHAR)reader.Current(), packetSize);
+        TlsBuffer unnamed(Span<CHAR>((PCHAR)reader.Current(), (USIZE)packetSize));
 
         auto ret = OnPacket(contentType, version, unnamed);
         if (!ret)
@@ -657,16 +657,15 @@ Result<void, Error> TlsClient::ProcessReceive()
 }
 
 /// @brief Read data from channel buffer
-/// @param out Pointer to the output buffer where the read data will be stored
-/// @param size Size of the output buffer and the maximum number of bytes to read from the channel buffer
-/// @return The number of bytes read from the channel buffer
+/// @param output Span wrapping the output buffer
+/// @return Ok(bytes read) on success, or Err when channel is empty
 
-INT32 TlsClient::ReadChannel(PCHAR out, INT32 size)
+Result<INT32, Error> TlsClient::ReadChannel(Span<CHAR> output)
 {
-    INT32 movesize = Math::Min(size, channelBuffer.GetSize() - channelBytesRead);
+    INT32 movesize = Math::Min((INT32)output.Size(), channelBuffer.GetSize() - channelBytesRead);
     LOG_DEBUG("Reading from channel for client: %p, requested size: %d, available size: %d, readed size: %d",
-              this, size, channelBuffer.GetSize() - channelBytesRead, channelBytesRead);
-    Memory::Copy(out, channelBuffer.GetBuffer() + channelBytesRead, movesize);
+              this, (INT32)output.Size(), channelBuffer.GetSize() - channelBytesRead, channelBytesRead);
+    Memory::Copy(output.Data(), channelBuffer.GetBuffer() + channelBytesRead, movesize);
     channelBytesRead += movesize;
     if (((channelBytesRead > (channelBuffer.GetSize() >> 2) * 3) && (channelBuffer.GetSize() > 1024 * 1024)) || (channelBytesRead >= channelBuffer.GetSize()))
     {
@@ -681,9 +680,10 @@ INT32 TlsClient::ReadChannel(PCHAR out, INT32 size)
     if (movesize == 0)
     {
         LOG_ERROR("recv channel size is 0, maybe error");
+        return Result<INT32, Error>::Err(Error::Tls_ReadFailed_Channel);
     }
     LOG_DEBUG("Returning movesize: %d for client: %p", movesize, this);
-    return movesize;
+    return Result<INT32, Error>::Ok(movesize);
 }
 
 /// @brief Open a TLS connection to the server, perform the TLS handshake by sending the ClientHello message and processing the server's responses
@@ -808,7 +808,6 @@ Result<UINT32, Error> TlsClient::Write(Span<const CHAR> buffer)
 
 Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)
 {
-    UINT32 bufferLength = (UINT32)buffer.Size();
     if (!secure)
     {
         auto readResult = context.Read(buffer);
@@ -824,7 +823,7 @@ Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)
         LOG_DEBUG("recv error, state index is %d", stateIndex);
         return Result<SSIZE, Error>::Err(Error::Tls_ReadFailed_NotReady);
     }
-    LOG_DEBUG("Reading data for client: %p, requested size: %d", this, bufferLength);
+    LOG_DEBUG("Reading data for client: %p, requested size: %d", this, (INT32)buffer.Size());
     while (channelBuffer.GetSize() <= channelBytesRead)
     {
         auto recvResult = ProcessReceive();
@@ -835,7 +834,10 @@ Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)
         }
     }
 
-    return Result<SSIZE, Error>::Ok(ReadChannel(buffer.Data(), bufferLength));
+    auto channelResult = ReadChannel(buffer);
+    if (!channelResult)
+        return Result<SSIZE, Error>::Err(channelResult, Error::Tls_ReadFailed_Channel);
+    return Result<SSIZE, Error>::Ok((SSIZE)channelResult.Value());
 }
 
 /// @brief Factory method for TlsClient — creates and validates the underlying socket

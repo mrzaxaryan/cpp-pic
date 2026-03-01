@@ -50,57 +50,56 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
     return false;
 }
 
-// Skip over a DNS name in wire format. maxLen is bytes remaining from ptr.
-// Returns bytes consumed, or -1 on error.
-[[nodiscard]] static INT32 SkipName(const UINT8 *ptr, INT32 maxLen)
+// Skip over a DNS name in wire format.
+// Returns bytes consumed, or Err on malformed input.
+[[nodiscard]] static Result<INT32, Error> SkipName(Span<const UINT8> data)
 {
     INT32 offset = 0;
-    while (offset < maxLen)
+    while (offset < (INT32)data.Size())
     {
-        UINT8 label = ptr[offset];
+        UINT8 label = data[offset];
 
         if (label == 0)
-            return offset + 1;
+            return Result<INT32, Error>::Ok(offset + 1);
 
         if (label >= 0xC0)
         {
-            if (offset + 2 > maxLen)
-                return -1;
-            return offset + 2;
+            if (offset + 2 > (INT32)data.Size())
+                return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
+            return Result<INT32, Error>::Ok(offset + 2);
         }
 
         if (label > 63)
         {
             LOG_WARNING("SkipName: invalid label length: %d", label);
-            return -1;
+            return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
         }
 
         offset += label + 1;
     }
-    return -1;
+    return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
 }
 
 // Parse DNS answer section, extract A/AAAA address.
-// bufferLen is the total bytes available from ptr.
-[[nodiscard]] static Result<void, Error> ParseAnswer(const UINT8 *ptr, INT32 cnt, INT32 bufferLen, IPAddress &ipAddress)
+[[nodiscard]] static Result<void, Error> ParseAnswer(Span<const UINT8> data, INT32 cnt, IPAddress &ipAddress)
 {
     // type(2) + class(2) + ttl(4) + rdlength(2)
     constexpr INT32 FIXED_FIELDS_SIZE = 10;
 
-    BinaryReader reader((PVOID)ptr, (USIZE)bufferLen);
+    BinaryReader reader((PVOID)data.Data(), data.Size());
 
     while (cnt > 0)
     {
         if (reader.Remaining() == 0)
             break;
 
-        INT32 nameLen = SkipName((const UINT8 *)reader.Current(), (INT32)reader.Remaining());
-        if (nameLen <= 0)
+        auto skipResult = SkipName(Span<const UINT8>((const UINT8 *)reader.Current(), reader.Remaining()));
+        if (!skipResult)
         {
             LOG_WARNING("ParseAnswer: failed to skip answer name");
             break;
         }
-        reader.Skip((USIZE)nameLen);
+        reader.Skip((USIZE)skipResult.Value());
 
         if ((INT32)reader.Remaining() < FIXED_FIELDS_SIZE)
         {
@@ -141,47 +140,47 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
     return Result<void, Error>::Err(Error::Dns_ParseFailed);
 }
 
-[[nodiscard]] static INT32 ParseQuery(const UINT8 *ptr, INT32 cnt, INT32 bufferLen)
+[[nodiscard]] static Result<INT32, Error> ParseQuery(Span<const UINT8> data, INT32 cnt)
 {
-    BinaryReader reader((PVOID)ptr, (USIZE)bufferLen);
+    BinaryReader reader((PVOID)data.Data(), data.Size());
 
     while (cnt > 0)
     {
         if (reader.Remaining() == 0)
         {
             LOG_WARNING("ParseQuery: buffer exhausted");
-            return -1;
+            return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
         }
 
-        INT32 nameLen = SkipName((const UINT8 *)reader.Current(), (INT32)reader.Remaining());
-        if (nameLen <= 0)
+        auto skipResult = SkipName(Span<const UINT8>((const UINT8 *)reader.Current(), reader.Remaining()));
+        if (!skipResult)
         {
             LOG_WARNING("ParseQuery: invalid name length");
-            return -1;
+            return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
         }
 
-        INT32 entrySize = nameLen + (INT32)sizeof(DNS_REQUEST_QUESTION);
+        INT32 entrySize = skipResult.Value() + (INT32)sizeof(DNS_REQUEST_QUESTION);
         if ((INT32)reader.Remaining() < entrySize)
         {
             LOG_WARNING("ParseQuery: truncated question entry");
-            return -1;
+            return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
         }
 
         reader.Skip((USIZE)entrySize);
         cnt--;
     }
-    return (INT32)reader.GetOffset();
+    return Result<INT32, Error>::Ok((INT32)reader.GetOffset());
 }
 
-[[nodiscard]] static Result<void, Error> ParseDnsResponse(const UINT8 *buffer, INT32 len, IPAddress &ipAddress)
+[[nodiscard]] static Result<void, Error> ParseDnsResponse(Span<const UINT8> data, IPAddress &ipAddress)
 {
-    if (!buffer || len < (INT32)sizeof(DNS_REQUEST_HEADER))
+    if (data.Data() == nullptr || (INT32)data.Size() < (INT32)sizeof(DNS_REQUEST_HEADER))
     {
         LOG_WARNING("ParseDnsResponse: invalid parameters");
         return Result<void, Error>::Err(Error::Dns_ParseFailed);
     }
 
-    BinaryReader reader((PVOID)buffer, (USIZE)len);
+    BinaryReader reader((PVOID)data.Data(), data.Size());
 
     // Skip 2-byte ID
     reader.Skip(2);
@@ -220,13 +219,13 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 
     if (qCount > 0)
     {
-        INT32 size = ParseQuery((const UINT8 *)reader.Current(), qCount, (INT32)reader.Remaining());
-        if (size <= 0)
+        auto queryResult = ParseQuery(Span<const UINT8>((const UINT8 *)reader.Current(), reader.Remaining()), qCount);
+        if (!queryResult)
         {
-            LOG_WARNING("ParseDnsResponse: invalid query size: %d", size);
+            LOG_WARNING("ParseDnsResponse: invalid query section");
             return Result<void, Error>::Err(Error::Dns_ParseFailed);
         }
-        reader.Skip((USIZE)size);
+        reader.Skip((USIZE)queryResult.Value());
     }
 
     if (reader.Remaining() == 0)
@@ -235,20 +234,20 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
         return Result<void, Error>::Err(Error::Dns_ParseFailed);
     }
 
-    return ParseAnswer((const UINT8 *)reader.Current(), ansCount, (INT32)reader.Remaining(), ipAddress);
+    return ParseAnswer(Span<const UINT8>((const UINT8 *)reader.Current(), reader.Remaining()), ansCount, ipAddress);
 }
 
 // Convert hostname to DNS wire format (length-prefixed labels).
-// Returns bytes written (including null terminator), or -1 on overflow.
-[[nodiscard]] static INT32 FormatDnsName(UINT8 *dns, INT32 dnsSize, PCCHAR host)
+// Returns bytes written (including null terminator), or Err on overflow.
+[[nodiscard]] static Result<INT32, Error> FormatDnsName(Span<UINT8> output, PCCHAR host)
 {
-    if (!dns || !host || dnsSize <= 0)
-        return -1;
+    if (output.Data() == nullptr || !host || output.Size() == 0)
+        return Result<INT32, Error>::Err(Error::Dns_QueryFailed);
 
     UINT32 hostLen = (UINT32)String::Length(host);
     // Worst case: hostLen bytes + 1 extra label-length byte + null terminator
-    if ((INT32)(hostLen + 2) > dnsSize)
-        return -1;
+    if ((INT32)(hostLen + 2) > (INT32)output.Size())
+        return Result<INT32, Error>::Err(Error::Dns_QueryFailed);
 
     INT32 written = 0;
     UINT32 i, t = 0;
@@ -258,14 +257,14 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
         {
             UINT32 labelLen = i - t;
             if (labelLen == 0)
-                return -1; // empty label (leading dot or consecutive dots)
+                return Result<INT32, Error>::Err(Error::Dns_QueryFailed); // empty label (leading dot or consecutive dots)
             if (labelLen > 63)
-                return -1; // RFC 1035: label max 63 octets
-            if (written + 1 + (INT32)labelLen >= dnsSize)
-                return -1;
-            dns[written++] = (UINT8)labelLen;
+                return Result<INT32, Error>::Err(Error::Dns_QueryFailed); // RFC 1035: label max 63 octets
+            if (written + 1 + (INT32)labelLen >= (INT32)output.Size())
+                return Result<INT32, Error>::Err(Error::Dns_QueryFailed);
+            output[written++] = (UINT8)labelLen;
             for (; t < i; t++)
-                dns[written++] = host[t];
+                output[written++] = host[t];
             t++;
         }
     }
@@ -273,27 +272,27 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
     {
         UINT32 labelLen = i - t;
         if (labelLen == 0)
-            return -1; // trailing empty segment (shouldn't happen, but guard)
+            return Result<INT32, Error>::Err(Error::Dns_QueryFailed); // trailing empty segment (shouldn't happen, but guard)
         if (labelLen > 63)
-            return -1; // RFC 1035: label max 63 octets
-        if (written + 1 + (INT32)labelLen >= dnsSize)
-            return -1;
-        dns[written++] = (UINT8)labelLen;
+            return Result<INT32, Error>::Err(Error::Dns_QueryFailed); // RFC 1035: label max 63 octets
+        if (written + 1 + (INT32)labelLen >= (INT32)output.Size())
+            return Result<INT32, Error>::Err(Error::Dns_QueryFailed);
+        output[written++] = (UINT8)labelLen;
         for (; t < i; t++)
-            dns[written++] = host[t];
+            output[written++] = host[t];
     }
-    dns[written++] = '\0';
-    return written;
+    output[written++] = '\0';
+    return Result<INT32, Error>::Ok(written);
 }
 
 // Generate a DNS-over-HTTPS query packet (no TCP length prefix).
-// Returns query size in bytes, or 0 on error (buffer too small).
-[[nodiscard]] static UINT32 GenerateQuery(PCCHAR host, RequestType dnstype, PCHAR buffer, UINT32 bufferSize)
+// Returns query size in bytes, or Err on error (buffer too small).
+[[nodiscard]] static Result<UINT32, Error> GenerateQuery(PCCHAR host, RequestType dnstype, Span<CHAR> buffer)
 {
-    if (bufferSize < sizeof(DNS_REQUEST_HEADER) + sizeof(DNS_REQUEST_QUESTION) + 2)
-        return 0;
+    if (buffer.Size() < sizeof(DNS_REQUEST_HEADER) + sizeof(DNS_REQUEST_QUESTION) + 2)
+        return Result<UINT32, Error>::Err(Error::Dns_QueryFailed);
 
-    PDNS_REQUEST_HEADER pHeader = (PDNS_REQUEST_HEADER)buffer;
+    PDNS_REQUEST_HEADER pHeader = (PDNS_REQUEST_HEADER)buffer.Data();
 
     pHeader->id = (UINT16)0x24a1;
     pHeader->qr = 0;
@@ -311,20 +310,21 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
     pHeader->authCount = 0;
     pHeader->addCount = 0;
 
-    UINT8 *qname = (UINT8 *)buffer + sizeof(DNS_REQUEST_HEADER);
-    INT32 nameSpaceLeft = (INT32)(bufferSize - sizeof(DNS_REQUEST_HEADER) - sizeof(DNS_REQUEST_QUESTION));
-    INT32 nameLen = FormatDnsName(qname, nameSpaceLeft, host);
-    if (nameLen <= 0)
+    UINT8 *qname = (UINT8 *)buffer.Data() + sizeof(DNS_REQUEST_HEADER);
+    INT32 nameSpaceLeft = (INT32)(buffer.Size() - sizeof(DNS_REQUEST_HEADER) - sizeof(DNS_REQUEST_QUESTION));
+    auto nameResult = FormatDnsName(Span<UINT8>(qname, (USIZE)nameSpaceLeft), host);
+    if (!nameResult)
     {
         LOG_WARNING("GenerateQuery: hostname too long for buffer");
-        return 0;
+        return Result<UINT32, Error>::Err(nameResult, Error::Dns_QueryFailed);
     }
+    INT32 nameLen = nameResult.Value();
 
     PDNS_REQUEST_QUESTION pQuestion = (PDNS_REQUEST_QUESTION)(qname + nameLen);
     pQuestion->qclass = UINT16SwapByteOrder(1);
     pQuestion->qtype = UINT16SwapByteOrder(dnstype);
 
-    return (UINT32)(sizeof(DNS_REQUEST_HEADER) + nameLen + sizeof(DNS_REQUEST_QUESTION));
+    return Result<UINT32, Error>::Ok((UINT32)(sizeof(DNS_REQUEST_HEADER) + nameLen + sizeof(DNS_REQUEST_QUESTION)));
 }
 
 Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
@@ -348,12 +348,13 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSS
     }
 
     UINT8 queryBuffer[256];
-    UINT32 querySize = GenerateQuery(host, dnstype, (PCHAR)queryBuffer, sizeof(queryBuffer));
-    if (querySize == 0)
+    auto queryResult = GenerateQuery(host, dnstype, Span<CHAR>((PCHAR)queryBuffer, sizeof(queryBuffer)));
+    if (!queryResult)
     {
         LOG_WARNING("Failed to generate DNS query");
-        return Result<IPAddress, Error>::Err(Error::Dns_QueryFailed);
+        return Result<IPAddress, Error>::Err(queryResult, Error::Dns_QueryFailed);
     }
+    UINT32 querySize = queryResult.Value();
 
     auto writeStr = [&tlsClient](PCCHAR s) -> Result<void, Error>
     {
@@ -412,7 +413,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSS
     }
 
     IPAddress ipAddress;
-    if (!ParseDnsResponse((const UINT8 *)binaryResponse, (INT32)contentLength, ipAddress))
+    if (!ParseDnsResponse(Span<const UINT8>((const UINT8 *)binaryResponse, (USIZE)contentLength), ipAddress))
     {
         LOG_WARNING("Failed to parse DNS response");
         return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);

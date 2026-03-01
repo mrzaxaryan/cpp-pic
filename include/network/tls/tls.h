@@ -24,7 +24,7 @@ private:
     TlsBuffer recvBuffer;    // Receive buffer
     TlsBuffer channelBuffer; // Channel buffer for received data
     INT32 channelBytesRead;  // Number of bytes read from channel buffer
-    INT32 ReadChannel(PCHAR out, INT32 size);
+    [[nodiscard]] Result<INT32, Error> ReadChannel(Span<CHAR> output);
     [[nodiscard]] Result<void, Error> ProcessReceive();
     [[nodiscard]] Result<void, Error> OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader);
     [[nodiscard]] Result<void, Error> OnServerFinished();

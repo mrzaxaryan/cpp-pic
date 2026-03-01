@@ -17,7 +17,7 @@ public:
     TlsBuffer() : buffer(nullptr), capacity(0), size(0), readPos(0), ownsMemory(true) {}
 
     // Constructor for wrapping existing data - read mode (does not own memory)
-    TlsBuffer(PCHAR buffer, INT32 size) : buffer(buffer), capacity(size), size(size), readPos(0), ownsMemory(false) {}
+    TlsBuffer(Span<CHAR> data) : buffer(data.Data()), capacity((INT32)data.Size()), size((INT32)data.Size()), readPos(0), ownsMemory(false) {}
 
     ~TlsBuffer()
     {

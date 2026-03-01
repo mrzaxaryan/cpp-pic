@@ -172,7 +172,8 @@ UINT32 val = embedded[0];                        // Unpacked at runtime
 | Pointer typedefs | `P` prefix (`PP` double, `PC` const) | `PCHAR`, `PWCHAR`, `PPVOID`, `PCCHAR` |
 | Classes | `PascalCase`; all-caps for acronym names | `Socket`, `HttpClient`, `TlsBuffer`, `NTDLL` |
 | Structs (Windows-style) | `_NAME` with typedef | `typedef struct _OBJECT_ATTRIBUTES { ... } OBJECT_ATTRIBUTES;` |
-| Template types | `UPPER_CASE` | `EMBEDDED_STRING<...>` |
+| Template utility types | `UPPER_CASE` | `EMBEDDED_STRING<...>`, `VOID_TO_TAG<T>` |
+| Template classes | `PascalCase` | `Result<T, E>`, `Span<T>`, `SHABase<Traits>` |
 | Enums | `UPPER_CASE` | `EVENT_TYPE` |
 | Class methods (static) | `PascalCase` | `String::Length()`, `NTDLL::ZwCreateFile()` |
 | Local variables | `camelCase` | `allPassed`, `fileHandle`, `bufferSize` |
@@ -210,6 +211,17 @@ Write(writable.Subspan(4, 16));   // slicing
 ```
 
 Use `Span<T>` for writable buffers and `Span<const T>` for read-only views. `Span<T>` implicitly converts to `Span<const T>`.
+
+**Do not cache `Span::Size()` into a local variable** — `Size()` is `constexpr FORCE_INLINE` and compiles to a direct member access, so there is no cost to calling it repeatedly. Caching it into a local adds a redundant variable with no benefit:
+
+```cpp
+// Bad — unnecessary local variable:
+INT32 maxLen = (INT32)data.Size();
+while (offset < maxLen) { ... }
+
+// Good — call Size() directly:
+while (offset < (INT32)data.Size()) { ... }
+```
 
 **`[[nodiscard]] Result<T, Error>`** — **All fallible functions must return `Result<T, Error>` and also `[[nodiscard]]`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. This ensures a uniform error-handling interface across the codebase:
 
@@ -279,6 +291,11 @@ if (!r)
 auto r = context.Write(buffer, size);
 if (!r)
     return Result<UINT32, Error>::Err(Error::Tls_WriteFailed_Send);
+
+// Replace error via 2-arg shorthand (stores only the new code, discards the original):
+auto r = context.Write(buffer, size);
+if (!r)
+    return Result<UINT32, Error>::Err(r, Error::Tls_WriteFailed_Send);
 ```
 
 ### Platform Conversion Factories
@@ -314,7 +331,7 @@ LOG_ERROR("Operation failed (error: %e)", result.Error());
 
 ### Error Rules
 
-- `[[nodiscard]]` is required on all functions returning `Result<T, Error>` or `Result<void, Error>`. Use it only with fallible functions.
+- `[[nodiscard]]` is **required** on all Result-returning functions. It **may also** be used on factory methods and functions where discarding the return value is always a bug.
 - **Never use `Result<bool, Error>`** — use `Result<void, Error>` instead. `Result` itself is already bool-testable via `operator BOOL`, so wrapping a `bool` value creates confusing double-boolean checks (`!r || !r.Value()`). With `Result<void, Error>`, truthy means success and falsy means failure — clean and unambiguous.
 - OS errors: use factory methods — `Error::Windows()`, `Error::Posix()`, `Error::Uefi()`
 - Runtime errors: pass bare — `Result::Err(Error::Socket_WriteFailed_Send)`
@@ -415,7 +432,7 @@ Use a `BOOL ownsMemory` flag when a class may or may not own its buffer:
 
 ```cpp
 TlsBuffer() : buffer(nullptr), ownsMemory(true) {}
-TlsBuffer(PCHAR buf, INT32 size) : buffer(buf), ownsMemory(false) {}
+TlsBuffer(Span<CHAR> data) : buffer(data.Data()), ownsMemory(false) {}
 ~TlsBuffer() { if (ownsMemory) Clear(); }
 ```
 
@@ -435,6 +452,8 @@ The `_embed` ecosystem converts literals into immediate values, eliminating `.rd
 | `EMBEDDED_FUNCTION_POINTER` | `EMBED_FUNC(Fn)` | PC-relative offset, no relocation |
 
 A **register barrier** (`__asm__ volatile("" : "+r"(word))`) prevents the compiler from coalescing values back into `.rdata`.
+
+**LOG macros auto-embed** — `LOG_INFO`, `LOG_ERROR`, `LOG_WARNING`, and `LOG_DEBUG` automatically apply `_embed` to their format string. Write `LOG_INFO("msg")` not `LOG_INFO("msg"_embed)`.
 
 ### Traits-Based Dispatch
 

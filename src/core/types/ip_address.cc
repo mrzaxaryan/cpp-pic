@@ -46,8 +46,7 @@ Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 					// Flush accumulated hex digits before :: as a separate group
 					if (hexIndex > 0 && groupIndex < 8)
 					{
-						hexBuffer[hexIndex] = '\0';
-						UINT32 value = String::ParseHex(hexBuffer);
+						UINT32 value = String::ParseHex(Span<const CHAR>(hexBuffer, hexIndex));
 						ipv6[groupIndex * 2] = (UINT8)(value >> 8);
 						ipv6[groupIndex * 2 + 1] = (UINT8)(value & 0xFF);
 						groupIndex++;
@@ -64,8 +63,7 @@ Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 				else if (hexIndex > 0)
 				{
 					// Process accumulated hex digits
-					hexBuffer[hexIndex] = '\0';
-					UINT32 value = String::ParseHex(hexBuffer);
+					UINT32 value = String::ParseHex(Span<const CHAR>(hexBuffer, hexIndex));
 					ipv6[groupIndex * 2] = (UINT8)(value >> 8);
 					ipv6[groupIndex * 2 + 1] = (UINT8)(value & 0xFF);
 					groupIndex++;
@@ -97,8 +95,7 @@ Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 		// Process final group if any
 		if (hexIndex > 0 && groupIndex < 8)
 		{
-			hexBuffer[hexIndex] = '\0';
-			UINT32 value = String::ParseHex(hexBuffer);
+			UINT32 value = String::ParseHex(Span<const CHAR>(hexBuffer, hexIndex));
 			ipv6[groupIndex * 2] = (UINT8)(value >> 8);
 			ipv6[groupIndex * 2 + 1] = (UINT8)(value & 0xFF);
 			groupIndex++;

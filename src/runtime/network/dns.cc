@@ -94,7 +94,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 [[nodiscard]] FORCE_INLINE static BOOL IsLocalhost(PCCHAR host, IPAddress &result, RequestType type)
 {
 	auto localhost = "localhost"_embed;
-	if (String::Compare(host, (PCCHAR)localhost))
+	if (String::Compare(Span<const CHAR>(host, String::Length(host)), Span<const CHAR>((PCCHAR)localhost, localhost.Length())))
 	{
 		result = IPAddress::LocalHost(type == AAAA);
 		return true;

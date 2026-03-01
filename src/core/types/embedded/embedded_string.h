@@ -25,6 +25,7 @@
 #pragma once
 
 #include "core/types/primitives.h"
+#include "core/types/span.h"
 
 // =============================================================================
 // CHARACTER TYPE CONSTRAINT
@@ -166,6 +167,15 @@ public:
 	 * @return Pointer to the string data
 	 */
 	constexpr operator const TChar *() const noexcept { return data; }
+
+	/**
+	 * @brief Implicit conversion to a read-only Span over the string data
+	 * @return Span<const TChar> covering the string content (excluding null terminator)
+	 */
+	constexpr FORCE_INLINE operator Span<const TChar>() const noexcept
+	{
+		return Span<const TChar>(data, Length());
+	}
 
 	/**
 	 * @brief Array subscript operator

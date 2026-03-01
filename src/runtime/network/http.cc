@@ -235,23 +235,30 @@ Result<void, Error> HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&p
     port = 0;
     secure = false;
 
+    USIZE urlLen = String::Length(url);
+    Span<const CHAR> urlSpan(url, urlLen);
+
     UINT8 schemeLength = 0;
-    if (String::StartsWith<CHAR>(url, "ws://"_embed))
+    auto wsScheme = "ws://"_embed;
+    auto wssScheme = "wss://"_embed;
+    auto httpScheme = "http://"_embed;
+    auto httpsScheme = "https://"_embed;
+    if (String::StartsWith(urlSpan, Span<const CHAR>((PCCHAR)wsScheme, wsScheme.Length())))
     {
         secure = false;
         schemeLength = 5; // ws://
     }
-    else if (String::StartsWith<CHAR>(url, "wss://"_embed))
+    else if (String::StartsWith(urlSpan, Span<const CHAR>((PCCHAR)wssScheme, wssScheme.Length())))
     {
         secure = true;
         schemeLength = 6; // wss://
     }
-    else if (String::StartsWith<CHAR>(url, "http://"_embed))
+    else if (String::StartsWith(urlSpan, Span<const CHAR>((PCCHAR)httpScheme, httpScheme.Length())))
     {
         secure = false;
         schemeLength = 7; // http://
     }
-    else if (String::StartsWith<CHAR>(url, "https://"_embed))
+    else if (String::StartsWith(urlSpan, Span<const CHAR>((PCCHAR)httpsScheme, httpsScheme.Length())))
     {
         secure = true;
         schemeLength = 8; // https://
@@ -262,14 +269,13 @@ Result<void, Error> HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&p
     }
 
     PCCHAR pHostStart = url + schemeLength;
+    USIZE hostPartLen = urlLen - schemeLength;
 
-    PCCHAR pathStart = String::AddressOf('/', pHostStart);
-    if (pathStart == nullptr)
-        pathStart = pHostStart + String::Length(pHostStart);
+    SSIZE pathIdx = String::IndexOfChar(Span<const CHAR>(pHostStart, hostPartLen), '/');
+    PCCHAR pathStart = (pathIdx >= 0) ? pHostStart + pathIdx : pHostStart + hostPartLen;
 
-    PCCHAR portStart = String::AddressOf(':', pHostStart);
-    if (portStart != nullptr && portStart >= pathStart)
-        portStart = nullptr;
+    SSIZE portIdx = String::IndexOfChar(Span<const CHAR>(pHostStart, (USIZE)(pathStart - pHostStart)), ':');
+    PCCHAR portStart = (portIdx >= 0) ? pHostStart + portIdx : nullptr;
 
     if (portStart == nullptr)
     {

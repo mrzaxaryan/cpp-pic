@@ -221,12 +221,12 @@ Result<DOUBLE, Error> String::StrToFloat(Span<const CHAR> str) noexcept
 	return Result<DOUBLE, Error>::Ok(result);
 }
 
-UINT32 String::ParseHex(PCCHAR str) noexcept
+UINT32 String::ParseHex(Span<const CHAR> str) noexcept
 {
 	UINT32 result = 0;
-	while (*str != '\0')
+	for (USIZE i = 0; i < str.Size(); i++)
 	{
-		CHAR c = *str;
+		CHAR c = str[i];
 		UINT32 digit = 0;
 
 		if (c >= '0' && c <= '9')
@@ -247,7 +247,6 @@ UINT32 String::ParseHex(PCCHAR str) noexcept
 		}
 
 		result = (result << 4) | digit;
-		str++;
 	}
 	return result;
 }

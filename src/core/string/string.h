@@ -148,6 +148,17 @@ public:
 	/**
 	 * @brief Compare two strings with explicit lengths
 	 * @tparam TChar Character type (CHAR or WCHAR)
+	 * @param s1 First string span
+	 * @param s2 Second string span
+	 * @param ignoreCase If true, comparison is case-insensitive
+	 * @return true if strings are equal, false otherwise
+	 */
+	template <TCHAR TChar>
+	static constexpr BOOL Compare(Span<const TChar> s1, Span<const TChar> s2, BOOL ignoreCase = false) noexcept;
+
+	/**
+	 * @brief Compare two strings with explicit lengths
+	 * @tparam TChar Character type (CHAR or WCHAR)
 	 * @param a First string span
 	 * @param b Second string span
 	 * @return true if strings are equal, false otherwise
@@ -198,16 +209,6 @@ public:
 	/// @}
 	/// @name String Search
 	/// @{
-
-	/**
-	 * @brief Find address of character in string
-	 * @tparam TChar Character type (CHAR or WCHAR)
-	 * @param c Character to find
-	 * @param pChar String to search
-	 * @return Pointer to first occurrence, or nullptr if not found
-	 */
-	template <TCHAR TChar>
-	static constexpr const TChar *AddressOf(TChar c, const TChar *pChar) noexcept;
 
 	/**
 	 * @brief Find index of character in string
@@ -272,40 +273,38 @@ public:
 	/**
 	 * @brief Trim whitespace from end of string (in-place)
 	 * @tparam TChar Character type (CHAR or WCHAR)
-	 * @param str String to trim (modified in place)
-	 * @return New length including null terminator
+	 * @param str Mutable string span to trim (trailing whitespace replaced with null)
+	 * @return Subspan of str with trailing whitespace excluded
 	 */
 	template <TCHAR TChar>
-	static constexpr USIZE TrimEnd(TChar *str) noexcept;
+	static constexpr Span<TChar> TrimEnd(Span<TChar> str) noexcept;
 
 	/**
-	 * @brief Trim whitespace from end (with explicit length)
+	 * @brief Trim whitespace from end (read-only)
 	 * @tparam TChar Character type (CHAR or WCHAR)
-	 * @param str String to trim
-	 * @param len Length of string (updated on return)
+	 * @param str String span to trim
+	 * @return Subspan with trailing whitespace excluded
 	 */
 	template <TCHAR TChar>
-	static constexpr void TrimEnd(const TChar *str, USIZE &len) noexcept;
+	static constexpr Span<const TChar> TrimEnd(Span<const TChar> str) noexcept;
 
 	/**
 	 * @brief Trim whitespace from start
 	 * @tparam TChar Character type (CHAR or WCHAR)
-	 * @param str String to trim
-	 * @param len Length of string (updated on return)
-	 * @return Pointer to first non-whitespace character
+	 * @param str String span to trim
+	 * @return Subspan with leading whitespace excluded
 	 */
 	template <TCHAR TChar>
-	static constexpr const TChar *TrimStart(const TChar *str, USIZE &len) noexcept;
+	static constexpr Span<const TChar> TrimStart(Span<const TChar> str) noexcept;
 
 	/**
 	 * @brief Trim whitespace from both ends
 	 * @tparam TChar Character type (CHAR or WCHAR)
-	 * @param str String to trim
-	 * @param len Length of string (updated on return)
-	 * @return Pointer to first non-whitespace character
+	 * @param str String span to trim
+	 * @return Subspan with leading and trailing whitespace excluded
 	 */
 	template <TCHAR TChar>
-	static constexpr const TChar *Trim(const TChar *str, USIZE &len) noexcept;
+	static constexpr Span<const TChar> Trim(Span<const TChar> str) noexcept;
 
 	/**
 	 * @brief Concatenate two strings into a buffer
@@ -342,10 +341,10 @@ public:
 
 	/**
 	 * @brief Parse hexadecimal string to UINT32
-	 * @param str Hexadecimal string (without 0x prefix)
+	 * @param str Hexadecimal string span (without 0x prefix)
 	 * @return Parsed value (stops at first non-hex character)
 	 */
-	static UINT32 ParseHex(PCCHAR str) noexcept;
+	static UINT32 ParseHex(Span<const CHAR> str) noexcept;
 
 	/**
 	 * @brief Write decimal number to buffer
@@ -513,6 +512,21 @@ constexpr BOOL String::Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase
 }
 
 template <TCHAR TChar>
+constexpr BOOL String::Compare(Span<const TChar> s1, Span<const TChar> s2, BOOL ignoreCase) noexcept
+{
+	if (s1.Size() != s2.Size())
+		return false;
+	for (USIZE i = 0; i < s1.Size(); i++)
+	{
+		TChar c1 = ignoreCase ? ToLowerCase(s1[i]) : s1[i];
+		TChar c2 = ignoreCase ? ToLowerCase(s2[i]) : s2[i];
+		if (c1 != c2)
+			return false;
+	}
+	return true;
+}
+
+template <TCHAR TChar>
 constexpr BOOL String::Equals(Span<const TChar> a, Span<const TChar> b) noexcept
 {
 	if (a.Size() != b.Size())
@@ -589,21 +603,6 @@ constexpr BOOL String::EndsWith(Span<const TChar> str, Span<const TChar> suffix)
 // ============================================================================
 // STRING SEARCH IMPLEMENTATIONS
 // ============================================================================
-
-template <TCHAR TChar>
-constexpr const TChar *String::AddressOf(TChar c, const TChar *pChar) noexcept
-{
-	USIZE i = 0;
-	while (pChar[i] != '\0')
-	{
-		if (pChar[i] == c)
-		{
-			return &pChar[i];
-		}
-		i++;
-	}
-	return nullptr;
-}
 
 template <TCHAR TChar>
 constexpr SSIZE String::IndexOfChar(Span<const TChar> str, TChar ch) noexcept
@@ -691,56 +690,44 @@ constexpr USIZE String::CopyEmbed(const T &src, Span<CHAR> buffer) noexcept
 // ============================================================================
 
 template <TCHAR TChar>
-constexpr USIZE String::TrimEnd(TChar *str) noexcept
+constexpr Span<TChar> String::TrimEnd(Span<TChar> str) noexcept
 {
-	if (!str)
-		return 0;
-	INT32 len = (INT32)String::Length(str);
-	if (len == 0)
-		return 1;
-
-	USIZE lengthAfterTrim = len + 1;
-
-	TChar *p = str + len - 1;
-	while (p >= str && String::IsSpace((TChar)*p))
+	USIZE len = str.Size();
+	while (len > 0 && IsSpace(str[len - 1]))
 	{
-		*p = (TChar)'\0';
-		p--;
-		lengthAfterTrim--;
+		str[len - 1] = (TChar)'\0';
+		len--;
 	}
-	return lengthAfterTrim;
+	return Span<TChar>(str.Data(), len);
 }
 
 template <TCHAR TChar>
-constexpr void String::TrimEnd(const TChar *str, USIZE &len) noexcept
+constexpr Span<const TChar> String::TrimEnd(Span<const TChar> str) noexcept
 {
-	if (!str)
-		return;
+	USIZE len = str.Size();
 	while (len > 0 && IsSpace(str[len - 1]))
 	{
 		len--;
 	}
+	return Span<const TChar>(str.Data(), len);
 }
 
 template <TCHAR TChar>
-constexpr const TChar *String::TrimStart(const TChar *str, USIZE &len) noexcept
+constexpr Span<const TChar> String::TrimStart(Span<const TChar> str) noexcept
 {
-	if (!str)
-		return str;
-	while (len > 0 && IsSpace(*str))
+	USIZE offset = 0;
+	while (offset < str.Size() && IsSpace(str[offset]))
 	{
-		str++;
-		len--;
+		offset++;
 	}
-	return str;
+	return str.Subspan(offset);
 }
 
 template <TCHAR TChar>
-constexpr const TChar *String::Trim(const TChar *str, USIZE &len) noexcept
+constexpr Span<const TChar> String::Trim(Span<const TChar> str) noexcept
 {
-	str = TrimStart(str, len);
-	TrimEnd(str, len);
-	return str;
+	Span<const TChar> trimmed = TrimStart(str);
+	return TrimEnd(trimmed);
 }
 
 template <TCHAR TChar>

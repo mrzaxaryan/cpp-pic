@@ -3,13 +3,15 @@
 #include "core/types/primitives.h"
 
 // =============================================================================
-// Solaris/illumos Syscall Numbers (x86_64)
+// Solaris/illumos Syscall Numbers
 // =============================================================================
 // Source: illumos-gate usr/src/uts/common/sys/syscall.h
 // Solaris uses the carry flag to indicate errors (like BSD/macOS),
 // NOT negative return values (like Linux).
+// Syscall numbers are the same across all architectures on Solaris
+// (unlike Linux where i386 and x86_64 have completely different numbers).
 
-#if defined(ARCHITECTURE_X86_64)
+#if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_AARCH64)
 
 // File I/O
 constexpr USIZE SYS_READ       = 3;

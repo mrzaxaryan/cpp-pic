@@ -19,7 +19,9 @@ set(_triple_macos_x86_64    "x86_64-apple-macos11")
 set(_triple_macos_aarch64   "arm64-apple-macos11")
 set(_triple_uefi_x86_64     "x86_64-pc-windows-gnu")
 set(_triple_uefi_aarch64    "aarch64-pc-windows-gnu")
+set(_triple_solaris_i386    "i386-pc-solaris2.11")
 set(_triple_solaris_x86_64  "x86_64-pc-solaris2.11")
+set(_triple_solaris_aarch64 "aarch64-pc-solaris2.11")
 
 # Platform extensions
 set(_ext_windows ".exe")

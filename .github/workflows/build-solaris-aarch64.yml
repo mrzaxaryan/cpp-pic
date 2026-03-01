@@ -1,0 +1,230 @@
+name: Solaris AArch64
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - "**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LLVM_VERSION: "21.1.0"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-Linux-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build -O0
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=O0
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -O0
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-O0
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -O0 elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"
+
+      - name: Build -O1
+        if: always()
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=O1
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -O1
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-O1
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -O1 elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"
+
+      - name: Build -O2
+        if: always()
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=O2
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -O2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-O2
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -O2 elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"
+
+      - name: Build -O3
+        if: always()
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=O3
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -O3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-O3
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -O3 elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"
+
+      - name: Build -Os
+        if: always()
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=Os
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -Os
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-Os
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -Os elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"
+
+      - name: Build -Oz
+        if: always()
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=Oz
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -Oz
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-Oz
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -Oz elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"
+
+      - name: Build -Og
+        if: always()
+        run: |
+          rm -rf build
+          cmake --preset solaris-aarch64-release -DOPTIMIZATION_LEVEL=Og
+          cmake --build --preset solaris-aarch64-release
+
+      - name: Upload Artifacts -Og
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-solaris-aarch64-Og
+          retention-days: 1
+          path: |
+            build/
+            !build/**/cmake/
+
+      - name: Test -Og elf
+        if: always()
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: |
+            TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            chmod +x "$TEST_ELF"
+            "$TEST_ELF"

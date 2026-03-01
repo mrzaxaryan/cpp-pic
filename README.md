@@ -38,10 +38,10 @@
 </tr>
 <tr>
 <td>Solaris</td>
-<td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-i386.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-i386.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-x86_64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-x86_64.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center">-</td>
-<td align="center">-</td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-aarch64.yml"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-aarch64.yml?branch=main&label=&style=for-the-badge&logo=" alt="Build"></a></td>
 </tr>
 </table>
 
@@ -100,12 +100,13 @@
 </tr>
 <tr>
 <td>Solaris</td>
-<td align="center">-</td><td align="center">-</td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_i386_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center">-</td><td align="center">-</td>
-<td align="center">-</td>
-<td align="center">-</td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 </tr>
 </table>
 

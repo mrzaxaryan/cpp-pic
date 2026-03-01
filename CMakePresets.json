@@ -328,6 +328,58 @@
         "BUILD_TYPE": "release",
         "OPTIMIZATION_LEVEL": "Oz"
       }
+    },
+    {
+      "name": "solaris-i386-debug",
+      "displayName": "Solaris i386 (Debug)",
+      "description": "Solaris/illumos 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/solaris/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "solaris-i386-release",
+      "displayName": "Solaris i386 (Release)",
+      "description": "Solaris/illumos 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/solaris/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "solaris-aarch64-debug",
+      "displayName": "Solaris AArch64 (Debug)",
+      "description": "Solaris/illumos 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/solaris/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "solaris-aarch64-release",
+      "displayName": "Solaris AArch64 (Release)",
+      "description": "Solaris/illumos 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/solaris/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
     }
   ],
   "buildPresets": [
@@ -426,6 +478,22 @@
     {
       "name": "solaris-x86_64-release",
       "configurePreset": "solaris-x86_64-release"
+    },
+    {
+      "name": "solaris-i386-debug",
+      "configurePreset": "solaris-i386-debug"
+    },
+    {
+      "name": "solaris-i386-release",
+      "configurePreset": "solaris-i386-release"
+    },
+    {
+      "name": "solaris-aarch64-debug",
+      "configurePreset": "solaris-aarch64-debug"
+    },
+    {
+      "name": "solaris-aarch64-release",
+      "configurePreset": "solaris-aarch64-release"
     }
   ],
   "testPresets": [

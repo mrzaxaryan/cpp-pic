@@ -31,12 +31,11 @@ Result<HttpClient, Error> HttpClient::Create(PCCHAR url, PCCHAR ipAddress)
     auto ipResult = IPAddress::FromString(ipAddress);
     if (!ipResult)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
-    IPAddress ip = ipResult.Value();
-    auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
+    auto tlsResult = TlsClient::Create(host, ipResult.Value(), port, isSecure);
     if (!tlsResult)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
 
-    HttpClient client(host, parsedPath, ip, port, static_cast<TlsClient &&>(tlsResult.Value()));
+    HttpClient client(host, parsedPath, ipResult.Value(), port, static_cast<TlsClient &&>(tlsResult.Value()));
     return Result<HttpClient, Error>::Ok(static_cast<HttpClient &&>(client));
 }
 

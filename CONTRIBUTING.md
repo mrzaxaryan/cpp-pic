@@ -326,6 +326,24 @@ IPAddress &ip = result.Value();  // borrow; Result still owns it
 [[nodiscard]] Result<void, Error> Open();
 ```
 
+**Do not copy `Result::Value()`** into local variables — `Value()` is `FORCE_INLINE`, call it directly. When calling methods on the result value, use a local variable to avoid chaining:
+
+```cpp
+// Good — pass Value() directly to functions:
+auto createResult = Socket::Create(result.Value(), 443);
+
+// Good — local variable for method calls:
+auto x = result.Value();
+x.Method();
+
+// Bad — unnecessary copy just to pass as argument:
+IPAddress ip = result.Value();
+auto createResult = Socket::Create(ip, 443);
+
+// Bad — chaining Value() with method calls:
+result.Value().Method();
+```
+
 Infallible functions (getters, pure computations, operators) return their value directly — they do not use `Result`.
 
 ### Platform-Specific Code

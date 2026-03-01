@@ -113,37 +113,37 @@ private:
     // =========================================================================
 
     /** @brief Sets VLI to zero */
-    VOID VliClear(UINT64 *pVli);
+    VOID VliClear(Span<UINT64> pVli);
 
     /** @brief Tests if VLI is zero */
-    INT32 VliIsZero(const UINT64 *pVli);
+    INT32 VliIsZero(Span<const UINT64> pVli);
 
     /** @brief Tests specific bit of VLI */
-    UINT64 VliTestBit(const UINT64 *pVli, UINT32 p_bit);
+    UINT64 VliTestBit(Span<const UINT64> pVli, UINT32 p_bit);
 
     /** @brief Returns number of significant digits */
-    UINT32 VliNumDigits(const UINT64 *pVli);
+    UINT32 VliNumDigits(Span<const UINT64> pVli);
 
     /** @brief Returns number of significant bits */
-    UINT32 VliNumBits(const UINT64 *pVli);
+    UINT32 VliNumBits(Span<const UINT64> pVli);
 
     /** @brief Copies VLI: pDest = pSrc */
-    VOID VliSet(UINT64 *pDest, const UINT64 *pSrc);
+    VOID VliSet(Span<UINT64> pDest, Span<const UINT64> pSrc);
 
     /** @brief Compares two VLIs: returns -1, 0, or 1 */
-    INT32 VliCmp(const UINT64 *pLeft, const UINT64 *pRight);
+    INT32 VliCmp(Span<const UINT64> pLeft, Span<const UINT64> pRight);
 
     /** @brief Left shift: pResult = pIn << shift */
-    UINT64 VliLShift(UINT64 *pResult, const UINT64 *pIn, UINT32 shift);
+    UINT64 VliLShift(Span<UINT64> pResult, Span<const UINT64> pIn, UINT32 shift);
 
     /** @brief Right shift by 1: pVli >>= 1 */
-    VOID VliRShift1(UINT64 *pVli);
+    VOID VliRShift1(Span<UINT64> pVli);
 
     /** @brief Addition: pResult = pLeft + pRight, returns carry */
-    UINT64 VliAdd(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight);
+    UINT64 VliAdd(Span<UINT64> pResult, Span<const UINT64> pLeft, Span<const UINT64> pRight);
 
     /** @brief Subtraction: pResult = pLeft - pRight, returns borrow */
-    UINT64 VliSub(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight);
+    UINT64 VliSub(Span<UINT64> pResult, Span<const UINT64> pLeft, Span<const UINT64> pRight);
 
     /** @brief 64x64 -> 128 bit multiplication */
     UINT128_ Mul64_64(UINT64 left, UINT64 right);
@@ -171,7 +171,7 @@ private:
     VOID VliMmodFast256(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pProduct)[ECC_PRODUCT_DIGITS]);
 
     /** @brief Helper for P-384 reduction */
-    VOID OmegaMult384(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 *pRight);
+    VOID OmegaMult384(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], Span<const UINT64> pRight);
 
     /** @brief Fast reduction mod p for 384-bit curves (P-384) */
     VOID VliMmodFast384(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], UINT64 (&pProduct)[ECC_PRODUCT_DIGITS]);

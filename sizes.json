@@ -19,6 +19,8 @@
   "macos_aarch64_bin": "75.3 KB",
   "linux_aarch64_exe": "77.9 KB",
   "linux_aarch64_bin": "76.5 KB",
+  "solaris_x86_64_exe": "92.0 KB",
+  "solaris_x86_64_bin": "91.3 KB",
   "windows_i386_exe": "98.5 KB",
   "windows_i386_bin": "97.8 KB"
 }

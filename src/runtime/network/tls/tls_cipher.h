@@ -136,14 +136,14 @@ public:
     // Functions for encoding and decoding TLS records
     VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);
     [[nodiscard]] Result<void, Error> Decode(TlsBuffer &inout, INT32 version);
-    VOID SetEncoding(BOOL encoding);
+    constexpr VOID SetEncoding(BOOL encoding) { isEncoding = encoding; }
     // Function to reset sequence numbers
-    VOID ResetSequenceNumber();
+    constexpr VOID ResetSequenceNumber() { clientSeqNum = 0; serverSeqNum = 0; }
     // Check if the cipher is in a valid state
-    BOOL IsValid() const { return cipherCount > 0; }
+    constexpr BOOL IsValid() const { return cipherCount > 0; }
     // Accessor functions
-    BOOL GetEncoding() const { return isEncoding; }
-    INT32 GetCipherCount() const { return cipherCount; }
+    constexpr BOOL GetEncoding() const { return isEncoding; }
+    constexpr INT32 GetCipherCount() const { return cipherCount; }
     TlsBuffer &GetPubKey() { return publicKey; }
-    VOID SetCipherCount(INT32 count) { cipherCount = count; }
+    constexpr VOID SetCipherCount(INT32 count) { cipherCount = count; }
 };

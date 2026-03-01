@@ -360,21 +360,3 @@ Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 
     return Result<void, Error>::Ok();
 }
-
-/// @brief Set the encoding status for the TLS cipher
-/// @param encoding Indicates whether encoding should be enabled or disabled
-/// @return void
-
-VOID TlsCipher::SetEncoding(BOOL encoding)
-{
-    this->isEncoding = encoding;
-}
-
-/// @brief Request a reset of the sequence numbers for both client and server
-/// @return void
-
-VOID TlsCipher::ResetSequenceNumber()
-{
-    this->clientSeqNum = 0;
-    this->serverSeqNum = 0;
-}

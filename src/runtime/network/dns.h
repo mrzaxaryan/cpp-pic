@@ -42,7 +42,7 @@
  * @see RFC 3596 Section 2.1 — AAAA record type
  *      https://datatracker.ietf.org/doc/html/rfc3596#section-2.1
  */
-typedef enum
+enum class DnsRecordType
 {
 	A = 1,      ///< IPv4 host address — 4-byte address (RFC 1035 Section 3.4.1)
 	AAAA = 28,  ///< IPv6 host address — 16-byte address (RFC 3596 Section 2.1)
@@ -51,7 +51,7 @@ typedef enum
 	NS = 2,     ///< Authoritative name server (RFC 1035 Section 3.3.11)
 	PTR = 12,   ///< Domain name pointer — reverse DNS (RFC 1035 Section 3.3.12)
 	TXT = 16    ///< Text strings — arbitrary text data (RFC 1035 Section 3.3.14)
-} RequestType;
+};
 
 /**
  * @brief DNS-over-HTTPS stub resolver
@@ -74,8 +74,8 @@ private:
 	/**
 	 * @brief Resolves a hostname via DNS-over-HTTPS to a single DoH server
 	 * @param host Null-terminated hostname to resolve (e.g., "example.com")
-	 * @param DNSServerIp IP address of the DoH server to query
-	 * @param DNSServerName TLS SNI hostname for the DoH server (e.g., "one.one.one.one")
+	 * @param dnsServerIp IP address of the DoH server to query
+	 * @param dnsServerName TLS SNI hostname for the DoH server (e.g., "one.one.one.one")
 	 * @param dnstype Record type to query — A (IPv4) or AAAA (IPv6), defaults to AAAA
 	 * @return Ok(IPAddress) on successful resolution, or Err on connection/query/parse failure
 	 *
@@ -92,7 +92,7 @@ private:
 	 * @see RFC 1035 Section 4.1 — Message Format
 	 *      https://datatracker.ietf.org/doc/html/rfc1035#section-4.1
 	 */
-	[[nodiscard]] static Result<IPAddress, Error> ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype = AAAA);
+	[[nodiscard]] static Result<IPAddress, Error> ResolveOverHttp(PCCHAR host, const IPAddress &dnsServerIp, PCCHAR dnsServerName, DnsRecordType dnstype = DnsRecordType::AAAA);
 
 	/**
 	 * @brief Tries multiple IP addresses for a single DoH provider until one succeeds
@@ -107,7 +107,7 @@ private:
 	 * against individual server failures (e.g., Cloudflare 1.1.1.1 down, fallback to 1.0.0.1).
 	 */
 	template <UINT32 N>
-	[[nodiscard]] static Result<IPAddress, Error> ResolveWithFallback(PCCHAR host, const IPAddress (&ips)[N], PCCHAR serverName, RequestType dnstype)
+	[[nodiscard]] static Result<IPAddress, Error> ResolveWithFallback(PCCHAR host, const IPAddress (&ips)[N], PCCHAR serverName, DnsRecordType dnstype)
 	{
 		for (UINT32 i = 0; i < N; i++)
 		{
@@ -132,7 +132,7 @@ public:
 	 * If the requested type is AAAA and all attempts fail, automatically retries with A (IPv4)
 	 * through both providers. This handles environments without IPv6 connectivity.
 	 */
-	[[nodiscard]] static Result<IPAddress, Error> Resolve(PCCHAR host, RequestType dnstype = AAAA);
+	[[nodiscard]] static Result<IPAddress, Error> Resolve(PCCHAR host, DnsRecordType dnstype = DnsRecordType::AAAA);
 
 	/**
 	 * @brief Resolves a hostname via Cloudflare DNS-over-HTTPS (1.1.1.1 / 1.0.0.1)
@@ -145,7 +145,7 @@ public:
 	 *
 	 * @see https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/
 	 */
-	[[nodiscard]] static Result<IPAddress, Error> CloudflareResolve(PCCHAR host, RequestType dnstype = AAAA);
+	[[nodiscard]] static Result<IPAddress, Error> CloudflareResolve(PCCHAR host, DnsRecordType dnstype = DnsRecordType::AAAA);
 
 	/**
 	 * @brief Resolves a hostname via Google DNS-over-HTTPS (8.8.8.8 / 8.8.4.4)
@@ -158,5 +158,5 @@ public:
 	 *
 	 * @see https://developers.google.com/speed/public-dns/docs/doh
 	 */
-	[[nodiscard]] static Result<IPAddress, Error> GoogleResolve(PCCHAR host, RequestType dnstype = AAAA);
+	[[nodiscard]] static Result<IPAddress, Error> GoogleResolve(PCCHAR host, DnsRecordType dnstype = DnsRecordType::AAAA);
 };

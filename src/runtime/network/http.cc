@@ -66,7 +66,7 @@ Result<HttpClient, Error> HttpClient::Create(PCCHAR url)
     // IPv6 socket creation can fail on platforms without IPv6 support (e.g. UEFI)
     if (!tlsResult && ip.IsIPv6())
     {
-        auto dnsResultV4 = DNS::Resolve(host, A);
+        auto dnsResultV4 = DNS::Resolve(host, DnsRecordType::A);
         if (dnsResultV4)
         {
             ip = dnsResultV4.Value();

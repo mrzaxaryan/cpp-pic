@@ -12,13 +12,13 @@ private:
 	{
 		LOG_INFO("Test: Localhost Resolution");
 
-		auto result = DNS::CloudflareResolve("localhost"_embed, A);
+		auto result = DNS::CloudflareResolve("localhost"_embed, DnsRecordType::A);
 		if (!result)
 		{
 			LOG_ERROR("Localhost A resolution failed (error: %e)", result.Error());
 			return false;
 		}
-		IPAddress ip = result.Value();
+		auto& ip = result.Value();
 
 		// localhost should resolve to 127.0.0.1 = 0x7F000001 in network byte order = 0x0100007F
 		if (ip.ToIPv4() != 0x0100007F)
@@ -27,13 +27,13 @@ private:
 			return false;
 		}
 
-		auto result6 = DNS::CloudflareResolve("localhost"_embed, AAAA);
+		auto result6 = DNS::CloudflareResolve("localhost"_embed, DnsRecordType::AAAA);
 		if (!result6)
 		{
 			LOG_ERROR("Localhost AAAA resolution failed (error: %e)", result6.Error());
 			return false;
 		}
-		IPAddress ip6 = result6.Value();
+		auto& ip6 = result6.Value();
 
 		// localhost should resolve to ::1 for IPv6
 		UINT8 expectedIPv6[16]{};
@@ -53,13 +53,13 @@ private:
 	{
 		LOG_INFO("Test: Cloudflare DNS Resolution (dns.google)");
 
-		auto result = DNS::CloudflareResolve("dns.google"_embed, A);
+		auto result = DNS::CloudflareResolve("dns.google"_embed, DnsRecordType::A);
 		if (!result)
 		{
 			LOG_ERROR("Cloudflare DNS resolution failed (error: %e)", result.Error());
 			return false;
 		}
-		IPAddress ip = result.Value();
+		auto& ip = result.Value();
 
 		// dns.google should resolve to 8.8.8.8 or 8.8.4.4
 		// 8.8.8.8 in network byte order = 0x08080808
@@ -79,13 +79,13 @@ private:
 	{
 		LOG_INFO("Test: Google DNS Resolution (one.one.one.one)");
 
-		auto result = DNS::GoogleResolve("one.one.one.one"_embed, A);
+		auto result = DNS::GoogleResolve("one.one.one.one"_embed, DnsRecordType::A);
 		if (!result)
 		{
 			LOG_ERROR("Google DNS resolution failed (error: %e)", result.Error());
 			return false;
 		}
-		IPAddress ip = result.Value();
+		auto& ip = result.Value();
 
 		// one.one.one.one should resolve to 1.1.1.1 or 1.0.0.1
 		// 1.1.1.1 in network byte order = 0x01010101

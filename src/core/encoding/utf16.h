@@ -73,7 +73,7 @@ public:
 	 * @see RFC 2781 Section 2.1 — Encoding UTF-16 (surrogate pair algorithm)
 	 *      https://datatracker.ietf.org/doc/html/rfc2781#section-2.1
 	 */
-	static USIZE CodepointToUTF8(Span<const WCHAR> input, USIZE& inputIndex, Span<CHAR> output)
+	static constexpr USIZE CodepointToUTF8(Span<const WCHAR> input, USIZE& inputIndex, Span<CHAR> output)
 	{
 		if (inputIndex >= input.Size())
 			return 0;
@@ -109,7 +109,7 @@ public:
 	 * @see RFC 3629 Section 3 — UTF-8 definition
 	 *      https://datatracker.ietf.org/doc/html/rfc3629#section-3
 	 */
-	static USIZE CodepointToUTF8Bytes(UINT32 codepoint, Span<CHAR> output)
+	static constexpr USIZE CodepointToUTF8Bytes(UINT32 codepoint, Span<CHAR> output)
 	{
 		if (codepoint < 0x80)
 		{
@@ -168,7 +168,7 @@ public:
 	 * @see RFC 2781 — UTF-16, an encoding of ISO 10646
 	 *      https://datatracker.ietf.org/doc/html/rfc2781
 	 */
-	static USIZE ToUTF8(Span<const WCHAR> input, Span<CHAR> output)
+	static constexpr USIZE ToUTF8(Span<const WCHAR> input, Span<CHAR> output)
 	{
 		USIZE inputIndex = 0;
 		USIZE outputIndex = 0;

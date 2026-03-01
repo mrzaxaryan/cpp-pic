@@ -65,8 +65,8 @@ public:
     [[nodiscard]] static Result<HttpClient, Error> Create(PCCHAR url);
     [[nodiscard]] static Result<HttpClient, Error> Create(PCCHAR url, PCCHAR ipAddress);
 
-    BOOL IsValid() const { return tlsContext.IsValid(); }
-    BOOL IsSecure() const { return tlsContext.IsSecure(); }
+    constexpr BOOL IsValid() const { return tlsContext.IsValid(); }
+    constexpr BOOL IsSecure() const { return tlsContext.IsSecure(); }
     // Operations with HttpClient
     [[nodiscard]] Result<void, Error> Open();
     [[nodiscard]] Result<void, Error> Close();

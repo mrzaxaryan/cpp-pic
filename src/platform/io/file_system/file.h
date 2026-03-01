@@ -58,7 +58,7 @@ public:
 	[[nodiscard]] Result<UINT32, Error> Write(Span<const UINT8> buffer);
 
 	// Get the size of the file
-	USIZE GetSize() const { return fileSize; }
+	constexpr USIZE GetSize() const { return fileSize; }
 	// Get, set and move the file offset
 	USIZE GetOffset() const;
 	VOID SetOffset(USIZE absoluteOffset);

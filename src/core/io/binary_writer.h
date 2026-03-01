@@ -142,7 +142,7 @@ public:
 	 * @param value Byte value to write
 	 * @return Base address on success, nullptr if insufficient space remains
 	 */
-	FORCE_INLINE PVOID WriteU8(UINT8 value)
+	constexpr FORCE_INLINE PVOID WriteU8(UINT8 value)
 	{
 		if (offset + 1 > maxSize)
 			return nullptr;
@@ -163,7 +163,7 @@ public:
 	 * @see RFC 1700 — Assigned Numbers (network byte order)
 	 *      https://datatracker.ietf.org/doc/html/rfc1700
 	 */
-	FORCE_INLINE PVOID WriteU16BE(UINT16 value)
+	constexpr FORCE_INLINE PVOID WriteU16BE(UINT16 value)
 	{
 		if (offset + 2 > maxSize)
 			return nullptr;
@@ -186,7 +186,7 @@ public:
 	 * @see RFC 8446 Section 5.1 — Record Layer (TLS 1.3 record format uses 24-bit length)
 	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
 	 */
-	FORCE_INLINE PVOID WriteU24BE(UINT32 value)
+	constexpr FORCE_INLINE PVOID WriteU24BE(UINT32 value)
 	{
 		if (offset + 3 > maxSize)
 			return nullptr;
@@ -210,7 +210,7 @@ public:
 	 * @see RFC 1700 — Assigned Numbers (network byte order)
 	 *      https://datatracker.ietf.org/doc/html/rfc1700
 	 */
-	FORCE_INLINE PVOID WriteU32BE(UINT32 value)
+	constexpr FORCE_INLINE PVOID WriteU32BE(UINT32 value)
 	{
 		if (offset + 4 > maxSize)
 			return nullptr;
@@ -233,7 +233,7 @@ public:
 	 * @param count Number of bytes to skip
 	 * @return true if skip succeeded, false if it would exceed maxSize
 	 */
-	FORCE_INLINE BOOL Skip(USIZE count)
+	constexpr FORCE_INLINE BOOL Skip(USIZE count)
 	{
 		if (offset + count > maxSize)
 			return false;

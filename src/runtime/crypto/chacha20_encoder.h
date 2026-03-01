@@ -171,13 +171,13 @@ public:
      * @brief Returns the IV length
      * @return IV length in bytes (12 for TLS 1.3)
      */
-    INT32 GetIvLength() { return ivLength; }
+    constexpr INT32 GetIvLength() const { return ivLength; }
 
     /**
      * @brief Checks if encoder is initialized and valid
      * @return true if initialized, false otherwise
      */
-    BOOL IsValid() const { return initialized; }
+    constexpr BOOL IsValid() const { return initialized; }
 };
 
 /** @} */ // end of chacha20_encoder group

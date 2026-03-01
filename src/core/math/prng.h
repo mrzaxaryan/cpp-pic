@@ -53,25 +53,25 @@ public:
 	 * @brief Default constructor — unseeded state
 	 * @details State is zero (unseeded). Call Seed() before using Get().
 	 */
-	Prng() : state(0) {}
+	constexpr Prng() : state(0) {}
 
 	/**
 	 * @brief Construct with an explicit seed
 	 * @param seed Initial state (should be non-zero for meaningful output)
 	 */
-	explicit Prng(UINT64 seed) : state(seed) {}
+	constexpr explicit Prng(UINT64 seed) : state(seed) {}
 
 	/**
 	 * @brief Set or reset the generator state
 	 * @param seed New state value
 	 */
-	FORCE_INLINE void Seed(UINT64 seed) { state = seed; }
+	constexpr FORCE_INLINE void Seed(UINT64 seed) { state = seed; }
 
 	/**
 	 * @brief Check whether the generator has been seeded
 	 * @return true if state is non-zero
 	 */
-	FORCE_INLINE BOOL IsSeeded() const { return state != 0; }
+	constexpr FORCE_INLINE BOOL IsSeeded() const { return state != 0; }
 
 	/**
 	 * @brief Generate the next pseudorandom number
@@ -81,7 +81,7 @@ public:
 	 *
 	 * @return Pseudorandom INT32 in [0, 0x7FFFFFFF)
 	 */
-	FORCE_INLINE INT32 Get()
+	constexpr FORCE_INLINE INT32 Get()
 	{
 		state ^= state << 13;
 		state ^= state >> 7;
@@ -94,7 +94,7 @@ public:
 	 * @param buffer Output buffer to fill
 	 * @return 1 on success
 	 */
-	FORCE_INLINE INT32 GetArray(Span<UINT8> buffer)
+	constexpr FORCE_INLINE INT32 GetArray(Span<UINT8> buffer)
 	{
 		for (USIZE i = 0; i < buffer.Size(); ++i)
 			buffer[i] = (UINT8)(Get() & 0xFF);
@@ -107,7 +107,7 @@ public:
 	 * @return Random character in ['a', 'z']
 	 */
 	template <typename TChar>
-	FORCE_INLINE TChar GetChar()
+	constexpr FORCE_INLINE TChar GetChar()
 	{
 		INT32 val = Get();
 		// Map [0, 32767] to [0, 25] using: (val * 26) / 32768
@@ -128,7 +128,7 @@ public:
 	 * @return Number of random characters written (str.Size()-1), or 0 if empty
 	 */
 	template <typename TChar>
-	FORCE_INLINE UINT32 GetString(Span<TChar> str)
+	constexpr FORCE_INLINE UINT32 GetString(Span<TChar> str)
 	{
 		if (str.Size() == 0)
 			return 0;

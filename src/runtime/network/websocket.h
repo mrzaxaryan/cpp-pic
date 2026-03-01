@@ -223,11 +223,11 @@ public:
 	[[nodiscard]] static Result<WebSocketClient, Error> Create(PCCHAR url);
 
 	/** @brief Returns true if the underlying TLS transport is valid */
-	BOOL IsValid() const { return tlsContext.IsValid(); }
+	constexpr BOOL IsValid() const { return tlsContext.IsValid(); }
 	/** @brief Returns true if the connection uses TLS (wss://) */
-	BOOL IsSecure() const { return tlsContext.IsSecure(); }
+	constexpr BOOL IsSecure() const { return tlsContext.IsSecure(); }
 	/** @brief Returns true if the WebSocket connection is in the OPEN state */
-	BOOL IsConnected() const { return isConnected; }
+	constexpr BOOL IsConnected() const { return isConnected; }
 
 	/**
 	 * @brief Performs the WebSocket opening handshake

@@ -426,7 +426,7 @@ public:
 	 * @brief Checks whether the socket holds a valid OS handle
 	 * @return true if the socket has a non-null handle, false otherwise
 	 */
-	BOOL IsValid() const { return m_socket != nullptr; }
+	constexpr BOOL IsValid() const { return m_socket != nullptr; }
 
 	/**
 	 * @brief Returns the raw file descriptor / handle value

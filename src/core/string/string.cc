@@ -2,82 +2,8 @@
 #include "core/types/double.h"
 
 // ============================================================================
-// NUMBER CONVERSION IMPLEMENTATIONS
+// NUMBER CONVERSION IMPLEMENTATIONS (non-constexpr — use DOUBLE operations)
 // ============================================================================
-
-USIZE String::IntToStr(INT64 value, Span<CHAR> buffer) noexcept
-{
-	if (buffer.Size() < 2)
-		return 0;
-
-	CHAR temp[24];
-	USIZE pos = 0;
-	BOOL negative = false;
-
-	if (value < 0)
-	{
-		negative = true;
-	}
-
-	// Use unsigned to handle INT64_MIN correctly (negating INT64_MIN is UB)
-	UINT64 uval = negative ? (UINT64)0 - (UINT64)value : (UINT64)value;
-
-	if (uval == 0)
-	{
-		temp[pos++] = '0';
-	}
-	else
-	{
-		while (uval > 0 && pos < 22)
-		{
-			temp[pos++] = '0' + (CHAR)(uval % 10);
-			uval = uval / 10;
-		}
-	}
-
-	if (negative && pos < 22)
-	{
-		temp[pos++] = '-';
-	}
-
-	USIZE copyLen = pos < buffer.Size() - 1 ? pos : buffer.Size() - 1;
-	for (USIZE i = 0; i < copyLen; i++)
-	{
-		buffer[i] = temp[pos - 1 - i];
-	}
-	buffer[copyLen] = '\0';
-	return copyLen;
-}
-
-USIZE String::UIntToStr(UINT64 value, Span<CHAR> buffer) noexcept
-{
-	if (buffer.Size() < 2)
-		return 0;
-
-	CHAR temp[24];
-	USIZE pos = 0;
-
-	if (value == 0)
-	{
-		temp[pos++] = '0';
-	}
-	else
-	{
-		while (value > 0 && pos < 22)
-		{
-			temp[pos++] = '0' + (CHAR)(value % 10);
-			value = value / 10;
-		}
-	}
-
-	USIZE copyLen = pos < buffer.Size() - 1 ? pos : buffer.Size() - 1;
-	for (USIZE i = 0; i < copyLen; i++)
-	{
-		buffer[i] = temp[pos - 1 - i];
-	}
-	buffer[copyLen] = '\0';
-	return copyLen;
-}
 
 USIZE String::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) noexcept
 {
@@ -145,63 +71,6 @@ USIZE String::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) noexc
 	return pos;
 }
 
-Result<INT64, Error> String::ParseInt64(Span<const CHAR> str) noexcept
-{
-	if (str.Size() == 0)
-	{
-		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
-	}
-
-	USIZE i = 0;
-	BOOL negative = false;
-
-	while (i < str.Size() && (str[i] == ' ' || str[i] == '\t'))
-	{
-		i++;
-	}
-
-	if (i < str.Size() && str[i] == '-')
-	{
-		negative = true;
-		i++;
-	}
-	else if (i < str.Size() && str[i] == '+')
-	{
-		i++;
-	}
-
-	UINT64 value = 0;
-	BOOL hasDigits = false;
-	constexpr UINT64 maxPositive = 0x7FFFFFFFFFFFFFFFULL;
-	constexpr UINT64 maxNegative = 0x8000000000000000ULL;
-	UINT64 limit = negative ? maxNegative : maxPositive;
-
-	while (i < str.Size() && str[i] >= '0' && str[i] <= '9')
-	{
-		UINT64 digit = (UINT64)(str[i] - '0');
-		if (value > (limit - digit) / 10)
-			return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
-		value = value * 10 + digit;
-		hasDigits = true;
-		i++;
-	}
-
-	if (!hasDigits)
-	{
-		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
-	}
-
-	INT64 result = negative ? -(INT64)value : (INT64)value;
-	return Result<INT64, Error>::Ok(result);
-}
-
-Result<INT64, Error> String::ParseInt64(PCCHAR str) noexcept
-{
-	if (!str)
-		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
-	return ParseInt64(Span<const CHAR>(str, Length(str)));
-}
-
 Result<DOUBLE, Error> String::StrToFloat(Span<const CHAR> str) noexcept
 {
 	if (str.Size() == 0)
@@ -219,73 +88,6 @@ Result<DOUBLE, Error> String::StrToFloat(Span<const CHAR> str) noexcept
 
 	DOUBLE result = DOUBLE::Parse(buffer);
 	return Result<DOUBLE, Error>::Ok(result);
-}
-
-UINT32 String::ParseHex(Span<const CHAR> str) noexcept
-{
-	UINT32 result = 0;
-	for (USIZE i = 0; i < str.Size(); i++)
-	{
-		CHAR c = str[i];
-		UINT32 digit = 0;
-
-		if (c >= '0' && c <= '9')
-		{
-			digit = c - '0';
-		}
-		else if (c >= 'a' && c <= 'f')
-		{
-			digit = 10 + (c - 'a');
-		}
-		else if (c >= 'A' && c <= 'F')
-		{
-			digit = 10 + (c - 'A');
-		}
-		else
-		{
-			break;
-		}
-
-		result = (result << 4) | digit;
-	}
-	return result;
-}
-
-USIZE String::WriteDecimal(Span<CHAR> buffer, UINT32 num) noexcept
-{
-	return UIntToStr((UINT64)num, buffer);
-}
-
-USIZE String::WriteHex(Span<CHAR> buffer, UINT32 num, BOOL uppercase) noexcept
-{
-	if (buffer.Size() < 2)
-		return 0;
-
-	if (num == 0)
-	{
-		buffer[0] = '0';
-		buffer[1] = '\0';
-		return 1;
-	}
-
-	CHAR temp[9];
-	INT32 i = 0;
-	CHAR baseChar = uppercase ? 'A' : 'a';
-
-	while (num > 0)
-	{
-		UINT32 digit = num & 0xF;
-		temp[i++] = (digit < 10) ? ('0' + digit) : (baseChar + digit - 10);
-		num >>= 4;
-	}
-
-	INT32 j = 0;
-	while (i > 0 && j < (INT32)buffer.Size() - 1)
-	{
-		buffer[j++] = temp[--i];
-	}
-	buffer[j] = '\0';
-	return (USIZE)j;
 }
 
 // ============================================================================

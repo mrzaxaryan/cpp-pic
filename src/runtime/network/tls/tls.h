@@ -92,8 +92,8 @@ public:
         return *this;
     }
 
-    BOOL IsValid() const { return context.IsValid(); }
-    BOOL IsSecure() const { return secure; }
+    constexpr BOOL IsValid() const { return context.IsValid(); }
+    constexpr BOOL IsSecure() const { return secure; }
     [[nodiscard]] Result<void, Error> Open();
     [[nodiscard]] Result<void, Error> Close();
     [[nodiscard]] Result<SSIZE, Error> Read(Span<CHAR> buffer);

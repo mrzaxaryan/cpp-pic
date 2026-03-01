@@ -14,10 +14,10 @@ private:
 
 public:
     // Default constructor - owns memory, write mode
-    TlsBuffer() : buffer(nullptr), capacity(0), size(0), readPos(0), ownsMemory(true) {}
+    constexpr TlsBuffer() : buffer(nullptr), capacity(0), size(0), readPos(0), ownsMemory(true) {}
 
     // Constructor for wrapping existing data - read mode (does not own memory)
-    TlsBuffer(Span<CHAR> data) : buffer(data.Data()), capacity((INT32)data.Size()), size((INT32)data.Size()), readPos(0), ownsMemory(false) {}
+    constexpr TlsBuffer(Span<CHAR> data) : buffer(data.Data()), capacity((INT32)data.Size()), size((INT32)data.Size()), readPos(0), ownsMemory(false) {}
 
     ~TlsBuffer()
     {
@@ -84,15 +84,15 @@ public:
     UINT32 ReadU24BE();
 
     // Accessors
-    INT32 GetSize() const { return size; }
-    PCHAR GetBuffer() const { return buffer; }
-    VOID SetBuffer(PCHAR buf)
+    constexpr INT32 GetSize() const { return size; }
+    constexpr PCHAR GetBuffer() const { return buffer; }
+    constexpr VOID SetBuffer(PCHAR buf)
     {
         buffer = buf;
         if (!ownsMemory)
             size = 0;
     }
-    INT32 GetReadPosition() const { return readPos; }
-    VOID AdvanceReadPosition(INT32 sz) { readPos += sz; }
-    VOID ResetReadPos() { readPos = 0; }
+    constexpr INT32 GetReadPosition() const { return readPos; }
+    constexpr VOID AdvanceReadPosition(INT32 sz) { readPos += sz; }
+    constexpr VOID ResetReadPos() { readPos = 0; }
 };

@@ -253,7 +253,7 @@ public:
      * @brief Checks if the ECC instance is initialized with a valid curve
      * @return true if initialized, false otherwise
      */
-    BOOL IsValid() const { return eccBytes != 0; }
+    constexpr BOOL IsValid() const { return eccBytes != 0; }
 
     /**
      * @brief Initializes ECC with specified curve

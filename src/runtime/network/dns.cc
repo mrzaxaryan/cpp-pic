@@ -38,25 +38,25 @@
  * @see RFC 4035 Section 3.2.2 — AD and CD bit definitions
  *      https://datatracker.ietf.org/doc/html/rfc4035#section-3.2.2
  */
-typedef struct DNS_REQUEST_HEADER
+typedef struct _DNS_REQUEST_HEADER
 {
-	UINT16 id;        ///< Transaction ID — copied from query to response for matching
-	UCHAR rd : 1;     ///< Recursion Desired — set to 1 to request recursive resolution
-	UCHAR tc : 1;     ///< TrunCation — set if the message was truncated (>512 bytes over UDP)
-	UCHAR aa : 1;     ///< Authoritative Answer — set if the responding server is authoritative
-	UCHAR opcode : 4; ///< Operation code — 0=QUERY, 1=IQUERY, 2=STATUS (RFC 1035 Section 4.1.1)
-	UCHAR qr : 1;     ///< Query/Response — 0=query, 1=response
+	UINT16 Id;        ///< Transaction ID — copied from query to response for matching
+	UCHAR Rd : 1;     ///< Recursion Desired — set to 1 to request recursive resolution
+	UCHAR Tc : 1;     ///< TrunCation — set if the message was truncated (>512 bytes over UDP)
+	UCHAR Aa : 1;     ///< Authoritative Answer — set if the responding server is authoritative
+	UCHAR Opcode : 4; ///< Operation code — 0=QUERY, 1=IQUERY, 2=STATUS (RFC 1035 Section 4.1.1)
+	UCHAR Qr : 1;     ///< Query/Response — 0=query, 1=response
 
-	UCHAR rcode : 4;  ///< Response code — 0=NoError, 1=FormErr, 2=ServFail, 3=NXDomain (RFC 1035 Section 4.1.1)
-	UCHAR cd : 1;     ///< Checking Disabled — disables DNSSEC validation (RFC 4035)
-	UCHAR ad : 1;     ///< Authenticated Data — indicates DNSSEC-validated response (RFC 4035)
-	UCHAR z : 1;      ///< Reserved — must be zero in all queries and responses (RFC 1035)
-	UCHAR ra : 1;     ///< Recursion Available — set by server if it supports recursion
+	UCHAR Rcode : 4;  ///< Response code — 0=NoError, 1=FormErr, 2=ServFail, 3=NXDomain (RFC 1035 Section 4.1.1)
+	UCHAR Cd : 1;     ///< Checking Disabled — disables DNSSEC validation (RFC 4035)
+	UCHAR Ad : 1;     ///< Authenticated Data — indicates DNSSEC-validated response (RFC 4035)
+	UCHAR Z : 1;      ///< Reserved — must be zero in all queries and responses (RFC 1035)
+	UCHAR Ra : 1;     ///< Recursion Available — set by server if it supports recursion
 
-	UINT16 qCount;    ///< QDCOUNT — number of entries in the question section
-	UINT16 ansCount;  ///< ANCOUNT — number of resource records in the answer section
-	UINT16 authCount; ///< NSCOUNT — number of name server resource records in the authority section
-	UINT16 addCount;  ///< ARCOUNT — number of resource records in the additional records section
+	UINT16 QdCount;   ///< QDCOUNT — number of entries in the question section
+	UINT16 AnsCount;  ///< ANCOUNT — number of resource records in the answer section
+	UINT16 AuthCount; ///< NSCOUNT — number of name server resource records in the authority section
+	UINT16 AddCount;  ///< ARCOUNT — number of resource records in the additional records section
 } DNS_REQUEST_HEADER, *PDNS_REQUEST_HEADER;
 
 /**
@@ -68,39 +68,14 @@ typedef struct DNS_REQUEST_HEADER
  * @see RFC 1035 Section 4.1.2 — Question section format
  *      https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.2
  */
-typedef struct DNS_REQUEST_QUESTION
+typedef struct _DNS_REQUEST_QUESTION
 {
-	UINT16 qtype;  ///< QTYPE — type of the query (e.g., A=1, AAAA=28, CNAME=5)
-	UINT16 qclass; ///< QCLASS — class of the query (IN=1 for Internet)
+	UINT16 QType;  ///< QTYPE — type of the query (e.g., A=1, AAAA=28, CNAME=5)
+	UINT16 QClass; ///< QCLASS — class of the query (IN=1 for Internet)
 } DNS_REQUEST_QUESTION, *PDNS_REQUEST_QUESTION;
 
 static_assert(sizeof(DNS_REQUEST_HEADER) == 12, "DNS header must be 12 bytes (no padding)");
 static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (no padding)");
-
-/**
- * @brief Checks if the hostname is "localhost" and returns the loopback address
- * @param host Null-terminated hostname to check
- * @param result Output — populated with 127.0.0.1 (IPv4) or ::1 (IPv6) if host is "localhost"
- * @param type Record type — determines whether to return IPv4 (A) or IPv6 (AAAA) loopback
- * @return true if host is "localhost" and result was populated, false otherwise
- *
- * @details Short-circuits DNS resolution for the special "localhost" name, avoiding
- * unnecessary network round-trips. Returns IPv6 loopback (::1) when type is AAAA,
- * or IPv4 loopback (127.0.0.1) when type is A.
- *
- * @see RFC 6761 Section 6.3 — Special-Use Domain Name "localhost"
- *      https://datatracker.ietf.org/doc/html/rfc6761#section-6.3
- */
-[[nodiscard]] FORCE_INLINE static BOOL IsLocalhost(PCCHAR host, IPAddress &result, RequestType type)
-{
-	auto localhost = "localhost"_embed;
-	if (String::Compare<CHAR>(Span<const CHAR>(host, String::Length(host)), localhost))
-	{
-		result = IPAddress::LocalHost(type == AAAA);
-		return true;
-	}
-	return false;
-}
 
 /**
  * @brief Skips over a DNS domain name in wire format (labels or compressed pointer)
@@ -158,9 +133,8 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 /**
  * @brief Parses the answer section of a DNS response and extracts the first A or AAAA record
  * @param data Span of bytes covering the answer section (starting after the question section)
- * @param cnt Number of answer resource records (ANCOUNT from the header)
- * @param ipAddress Output — populated with the resolved IP address on success
- * @return Ok on success (A or AAAA record found), or Err(Dns_ParseFailed) if no matching record
+ * @param answerCount Number of answer resource records (ANCOUNT from the header)
+ * @return Ok(IPAddress) with the resolved IP address, or Err(Dns_ParseFailed) if no matching record
  *
  * @details Iterates through the answer section resource records (RRs) as defined in
  * RFC 1035 Section 4.1.3. Each RR has the format:
@@ -192,14 +166,14 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  * @see RFC 3596 Section 2.2 — AAAA RDATA format (IPv6)
  *      https://datatracker.ietf.org/doc/html/rfc3596#section-2.2
  */
-[[nodiscard]] static Result<void, Error> ParseAnswer(Span<const UINT8> data, INT32 cnt, IPAddress &ipAddress)
+[[nodiscard]] static Result<IPAddress, Error> ParseAnswer(Span<const UINT8> data, INT32 answerCount)
 {
 	// type(2) + class(2) + ttl(4) + rdlength(2)
 	constexpr INT32 FIXED_FIELDS_SIZE = 10;
 
 	BinaryReader reader(data);
 
-	while (cnt > 0)
+	while (answerCount > 0)
 	{
 		if (reader.Remaining() == 0)
 			break;
@@ -229,32 +203,30 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 			break;
 		}
 
-		if (type == A && rdlength == 4)
+		if (type == static_cast<UINT16>(DnsRecordType::A) && rdlength == 4)
 		{
 			UINT32 ipv4;
 			Memory::Copy(&ipv4, reader.Current(), 4);
-			ipAddress = IPAddress::FromIPv4(ipv4);
-			return Result<void, Error>::Ok();
+			return Result<IPAddress, Error>::Ok(IPAddress::FromIPv4(ipv4));
 		}
-		else if (type == AAAA && rdlength == 16)
+		else if (type == static_cast<UINT16>(DnsRecordType::AAAA) && rdlength == 16)
 		{
 			UINT8 ipv6Bytes[16];
 			Memory::Copy(ipv6Bytes, reader.Current(), 16);
-			ipAddress = IPAddress::FromIPv6(ipv6Bytes);
-			return Result<void, Error>::Ok();
+			return Result<IPAddress, Error>::Ok(IPAddress::FromIPv6(ipv6Bytes));
 		}
 
 		reader.Skip(rdlength);
-		cnt--;
+		answerCount--;
 	}
 
-	return Result<void, Error>::Err(Error::Dns_ParseFailed);
+	return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 }
 
 /**
  * @brief Parses the question section of a DNS response, advancing past all question entries
  * @param data Span of bytes starting at the question section
- * @param cnt Number of question entries to parse (QDCOUNT from the header)
+ * @param questionCount Number of question entries to parse (QDCOUNT from the header)
  * @return Ok(total bytes consumed) on success, or Err(Dns_ParseFailed) on malformed input
  *
  * @details Each question entry consists of a variable-length QNAME followed by a fixed
@@ -264,11 +236,11 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  * @see RFC 1035 Section 4.1.2 — Question section format
  *      https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.2
  */
-[[nodiscard]] static Result<INT32, Error> ParseQuery(Span<const UINT8> data, INT32 cnt)
+[[nodiscard]] static Result<INT32, Error> ParseQuery(Span<const UINT8> data, INT32 questionCount)
 {
 	BinaryReader reader(data);
 
-	while (cnt > 0)
+	while (questionCount > 0)
 	{
 		if (reader.Remaining() == 0)
 		{
@@ -291,7 +263,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 		}
 
 		reader.Skip((USIZE)entrySize);
-		cnt--;
+		questionCount--;
 	}
 	return Result<INT32, Error>::Ok((INT32)reader.GetOffset());
 }
@@ -299,8 +271,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 /**
  * @brief Parses a complete DNS response message and extracts the resolved IP address
  * @param data Span of bytes containing the full DNS response (header + question + answer sections)
- * @param ipAddress Output — populated with the first A or AAAA record from the answer section
- * @return Ok on success, or Err(Dns_ParseFailed) on any parse error or missing answer
+ * @return Ok(IPAddress) on success, or Err(Dns_ParseFailed) on any parse error or missing answer
  *
  * @details Validates and parses a DNS response message per RFC 1035 Section 4.1:
  *   1. Reads the 12-byte header and verifies QR=1 (response) and RCODE=0 (no error)
@@ -313,12 +284,12 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  * @see RFC 1035 Section 4.1.1 — Header section format (QR, RCODE fields)
  *      https://datatracker.ietf.org/doc/html/rfc1035#section-4.1.1
  */
-[[nodiscard]] static Result<void, Error> ParseDnsResponse(Span<const UINT8> data, IPAddress &ipAddress)
+[[nodiscard]] static Result<IPAddress, Error> ParseDnsResponse(Span<const UINT8> data)
 {
-	if (data.Data() == nullptr || (INT32)data.Size() < (INT32)sizeof(DNS_REQUEST_HEADER))
+	if ((INT32)data.Size() < (INT32)sizeof(DNS_REQUEST_HEADER))
 	{
 		LOG_WARNING("ParseDnsResponse: invalid parameters");
-		return Result<void, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
 	BinaryReader reader(data);
@@ -331,7 +302,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	if (!(flags & 0x8000))
 	{
 		LOG_WARNING("ParseDnsResponse: not a response");
-		return Result<void, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
 	// RCODE (low 4 bits) — 0 means no error (RFC 1035 Section 4.1.1)
@@ -339,7 +310,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	if (rcode != 0)
 	{
 		LOG_WARNING("ParseDnsResponse: server returned error (rcode=%d)", rcode);
-		return Result<void, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
 	UINT16 qCount = reader.ReadU16BE();
@@ -348,13 +319,13 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	if (ansCount == 0 || ansCount > 20)
 	{
 		LOG_WARNING("ParseDnsResponse: invalid answer count: %d", ansCount);
-		return Result<void, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
 	if (qCount > 10)
 	{
 		LOG_WARNING("ParseDnsResponse: suspicious question count: %d", qCount);
-		return Result<void, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
 	// Skip NSCOUNT and ARCOUNT (4 bytes total)
@@ -366,7 +337,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 		if (!queryResult)
 		{
 			LOG_WARNING("ParseDnsResponse: invalid query section");
-			return Result<void, Error>::Err(Error::Dns_ParseFailed);
+			return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 		}
 		reader.Skip((USIZE)queryResult.Value());
 	}
@@ -374,10 +345,10 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	if (reader.Remaining() == 0)
 	{
 		LOG_WARNING("ParseDnsResponse: no space for answer section");
-		return Result<void, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
-	return ParseAnswer(Span<const UINT8>((const UINT8 *)reader.Current(), reader.Remaining()), ansCount, ipAddress);
+	return ParseAnswer(Span<const UINT8>((const UINT8 *)reader.Current(), reader.Remaining()), ansCount);
 }
 
 /**
@@ -407,7 +378,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  */
 [[nodiscard]] static Result<INT32, Error> FormatDnsName(Span<UINT8> output, PCCHAR host)
 {
-	if (output.Data() == nullptr || !host || output.Size() == 0)
+	if (!host || output.Size() == 0)
 		return Result<INT32, Error>::Err(Error::Dns_QueryFailed);
 
 	UINT32 hostLen = (UINT32)String::Length(host);
@@ -474,28 +445,28 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  * @see RFC 8484 Section 4.1 — DNS Wire Format (POST method, no TCP length prefix)
  *      https://datatracker.ietf.org/doc/html/rfc8484#section-4.1
  */
-[[nodiscard]] static Result<UINT32, Error> GenerateQuery(PCCHAR host, RequestType dnstype, Span<CHAR> buffer)
+[[nodiscard]] static Result<UINT32, Error> GenerateQuery(PCCHAR host, DnsRecordType dnstype, Span<CHAR> buffer)
 {
 	if (buffer.Size() < sizeof(DNS_REQUEST_HEADER) + sizeof(DNS_REQUEST_QUESTION) + 2)
 		return Result<UINT32, Error>::Err(Error::Dns_QueryFailed);
 
 	PDNS_REQUEST_HEADER pHeader = (PDNS_REQUEST_HEADER)buffer.Data();
 
-	pHeader->id = (UINT16)0x24a1;
-	pHeader->qr = 0;
-	pHeader->opcode = 0;
-	pHeader->aa = 0;
-	pHeader->tc = 0;
-	pHeader->rd = 1;
-	pHeader->ra = 0;
-	pHeader->z = 0;
-	pHeader->ad = 0;
-	pHeader->cd = 0;
-	pHeader->rcode = 0;
-	pHeader->qCount = UINT16SwapByteOrder(1);
-	pHeader->ansCount = 0;
-	pHeader->authCount = 0;
-	pHeader->addCount = 0;
+	pHeader->Id = (UINT16)0x24a1;
+	pHeader->Qr = 0;
+	pHeader->Opcode = 0;
+	pHeader->Aa = 0;
+	pHeader->Tc = 0;
+	pHeader->Rd = 1;
+	pHeader->Ra = 0;
+	pHeader->Z = 0;
+	pHeader->Ad = 0;
+	pHeader->Cd = 0;
+	pHeader->Rcode = 0;
+	pHeader->QdCount = UINT16SwapByteOrder(1);
+	pHeader->AnsCount = 0;
+	pHeader->AuthCount = 0;
+	pHeader->AddCount = 0;
 
 	UINT8 *qname = (UINT8 *)buffer.Data() + sizeof(DNS_REQUEST_HEADER);
 	INT32 nameSpaceLeft = (INT32)(buffer.Size() - sizeof(DNS_REQUEST_HEADER) - sizeof(DNS_REQUEST_QUESTION));
@@ -508,8 +479,8 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	INT32 nameLen = nameResult.Value();
 
 	PDNS_REQUEST_QUESTION pQuestion = (PDNS_REQUEST_QUESTION)(qname + nameLen);
-	pQuestion->qclass = UINT16SwapByteOrder(1);
-	pQuestion->qtype = UINT16SwapByteOrder(dnstype);
+	pQuestion->QClass = UINT16SwapByteOrder(1);
+	pQuestion->QType = UINT16SwapByteOrder(static_cast<UINT16>(dnstype));
 
 	return Result<UINT32, Error>::Ok((UINT32)(sizeof(DNS_REQUEST_HEADER) + nameLen + sizeof(DNS_REQUEST_QUESTION)));
 }
@@ -517,8 +488,8 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 /**
  * @brief Resolves a hostname via DNS-over-HTTPS (DoH) to a single DoH server
  * @param host Null-terminated hostname to resolve
- * @param DNSServerIp IP address of the DoH server
- * @param DNSServerName TLS SNI hostname for certificate validation
+ * @param dnsServerIp IP address of the DoH server
+ * @param dnsServerName TLS SNI hostname for certificate validation
  * @param dnstype Record type — A (IPv4) or AAAA (IPv6)
  * @return Ok(IPAddress) on success, or Err with a DNS error code on failure
  *
@@ -540,19 +511,20 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  * @see RFC 8484 Section 4.2 — HTTP Response (Content-Type: application/dns-message)
  *      https://datatracker.ietf.org/doc/html/rfc8484#section-4.2
  */
-Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSServerIp, PCCHAR DNSServerName, RequestType dnstype)
+Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &dnsServerIp, PCCHAR dnsServerName, DnsRecordType dnstype)
 {
-	IPAddress localhostResult;
-	if (IsLocalhost(host, localhostResult, dnstype))
-		return Result<IPAddress, Error>::Ok(localhostResult);
+	// Short-circuit for "localhost" — return loopback without network I/O (RFC 6761 Section 6.3)
+	auto localhost = "localhost"_embed;
+	if (String::Equals<CHAR>(Span<const CHAR>(host, String::Length(host)), localhost))
+		return Result<IPAddress, Error>::Ok(IPAddress::LocalHost(dnstype == DnsRecordType::AAAA));
 
-	auto tlsResult = TlsClient::Create(DNSServerName, DNSServerIp, 443);
+	auto tlsResult = TlsClient::Create(dnsServerName, dnsServerIp, 443);
 	if (!tlsResult)
 	{
 		LOG_WARNING("Failed to create TLS client for DNS server");
 		return Result<IPAddress, Error>::Err(Error::Dns_ConnectFailed);
 	}
-	TlsClient &tlsClient = tlsResult.Value();
+	auto& tlsClient = tlsResult.Value();
 
 	if (!tlsClient.Open())
 	{
@@ -583,7 +555,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSS
 
 	// Send HTTP/1.1 POST request per RFC 8484 Section 4.1
 	if (!writeStr("POST /dns-query HTTP/1.1\r\nHost: "_embed) ||
-		!writeStr(DNSServerName) ||
+		!writeStr(dnsServerName) ||
 		!writeStr("\r\nContent-Type: application/dns-message\r\nAccept: application/dns-message\r\nContent-Length: "_embed) ||
 		!writeStr(sizeBuf) ||
 		!writeStr("\r\n\r\n"_embed))
@@ -626,14 +598,14 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSS
 		totalRead += (UINT32)readResult.Value();
 	}
 
-	IPAddress ipAddress;
-	if (!ParseDnsResponse(Span<const UINT8>((const UINT8 *)binaryResponse, (USIZE)contentLength), ipAddress))
+	auto parseResult = ParseDnsResponse(Span<const UINT8>((const UINT8 *)binaryResponse, (USIZE)contentLength));
+	if (!parseResult)
 	{
 		LOG_WARNING("Failed to parse DNS response");
 		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
 	}
 
-	return Result<IPAddress, Error>::Ok(ipAddress);
+	return parseResult;
 }
 
 /**
@@ -650,7 +622,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSS
  *
  * @see https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/
  */
-Result<IPAddress, Error> DNS::CloudflareResolve(PCCHAR host, RequestType dnstype)
+Result<IPAddress, Error> DNS::CloudflareResolve(PCCHAR host, DnsRecordType dnstype)
 {
 	auto serverName = "one.one.one.one"_embed;
 	IPAddress ips[] = {IPAddress::FromIPv4(0x01010101), IPAddress::FromIPv4(0x01000001)};
@@ -671,7 +643,7 @@ Result<IPAddress, Error> DNS::CloudflareResolve(PCCHAR host, RequestType dnstype
  *
  * @see https://developers.google.com/speed/public-dns/docs/doh
  */
-Result<IPAddress, Error> DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
+Result<IPAddress, Error> DNS::GoogleResolve(PCCHAR host, DnsRecordType dnstype)
 {
 	auto serverName = "dns.google"_embed;
 	IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x08080404)};
@@ -694,7 +666,7 @@ Result<IPAddress, Error> DNS::GoogleResolve(PCCHAR host, RequestType dnstype)
  * The AAAA→A fallback handles environments without IPv6 connectivity or hosts
  * that only have A records.
  */
-Result<IPAddress, Error> DNS::Resolve(PCCHAR host, RequestType dnstype)
+Result<IPAddress, Error> DNS::Resolve(PCCHAR host, DnsRecordType dnstype)
 {
 	LOG_DEBUG("Resolve(host: %s) called", host);
 
@@ -702,12 +674,12 @@ Result<IPAddress, Error> DNS::Resolve(PCCHAR host, RequestType dnstype)
 	if (!result)
 		result = GoogleResolve(host, dnstype);
 
-	if (!result && dnstype == AAAA)
+	if (!result && dnstype == DnsRecordType::AAAA)
 	{
 		LOG_DEBUG("IPv6 resolution failed, falling back to IPv4 (A) for %s", host);
-		result = CloudflareResolve(host, A);
+		result = CloudflareResolve(host, DnsRecordType::A);
 		if (!result)
-			result = GoogleResolve(host, A);
+			result = GoogleResolve(host, DnsRecordType::A);
 	}
 
 	return result;

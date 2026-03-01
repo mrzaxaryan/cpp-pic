@@ -147,7 +147,7 @@ public:
 	 * @see RFC 1700 — Assigned Numbers (network byte order)
 	 *      https://datatracker.ietf.org/doc/html/rfc1700
 	 */
-	FORCE_INLINE UINT16 ReadU16BE()
+	constexpr FORCE_INLINE UINT16 ReadU16BE()
 	{
 		if (offset + 2 > maxSize)
 			return 0;
@@ -168,7 +168,7 @@ public:
 	 * @see RFC 8446 Section 5.1 — Record Layer (TLS 1.3 record format uses 24-bit length)
 	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
 	 */
-	FORCE_INLINE UINT32 ReadU24BE()
+	constexpr FORCE_INLINE UINT32 ReadU24BE()
 	{
 		if (offset + 3 > maxSize)
 			return 0;
@@ -189,7 +189,7 @@ public:
 	 * @see RFC 1700 — Assigned Numbers (network byte order)
 	 *      https://datatracker.ietf.org/doc/html/rfc1700
 	 */
-	FORCE_INLINE UINT32 ReadU32BE()
+	constexpr FORCE_INLINE UINT32 ReadU32BE()
 	{
 		if (offset + 4 > maxSize)
 			return 0;
@@ -209,7 +209,7 @@ public:
 	 * @param count Number of bytes to skip
 	 * @return true if skip succeeded, false if it would exceed maxSize
 	 */
-	FORCE_INLINE BOOL Skip(USIZE count)
+	constexpr FORCE_INLINE BOOL Skip(USIZE count)
 	{
 		if (offset + count > maxSize)
 			return false;
@@ -232,7 +232,7 @@ public:
 	 * @param newOffset New offset in bytes from base address
 	 * @return true if offset is valid, false if it exceeds maxSize
 	 */
-	FORCE_INLINE BOOL SetOffset(USIZE newOffset)
+	constexpr FORCE_INLINE BOOL SetOffset(USIZE newOffset)
 	{
 		if (newOffset > maxSize)
 			return false;

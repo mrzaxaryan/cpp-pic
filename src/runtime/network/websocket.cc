@@ -25,7 +25,7 @@ Result<void, Error> WebSocketClient::Open()
 	{
 		LOG_DEBUG("Failed to open network transport for WebSocket client using IPv6 address, attempting IPv4 fallback");
 
-		auto dnsResult = DNS::Resolve(hostName, A);
+		auto dnsResult = DNS::Resolve(hostName, DnsRecordType::A);
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve IPv4 address for %s, cannot connect to WebSocket server", hostName);
@@ -514,7 +514,7 @@ Result<WebSocketClient, Error> WebSocketClient::Create(PCCHAR url)
 	// IPv6 socket creation can fail on platforms without IPv6 support (e.g. UEFI)
 	if (!tlsResult && ip.IsIPv6())
 	{
-		auto dnsResultV4 = DNS::Resolve(host, A);
+		auto dnsResultV4 = DNS::Resolve(host, DnsRecordType::A);
 		if (dnsResultV4)
 		{
 			ip = dnsResultV4.Value();

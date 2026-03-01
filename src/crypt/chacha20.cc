@@ -709,7 +709,7 @@ ChaChaPoly1305::~ChaChaPoly1305()
     this->unused = 0;
 }
 
-ChaChaPoly1305::ChaChaPoly1305(ChaChaPoly1305 &&other)
+ChaChaPoly1305::ChaChaPoly1305(ChaChaPoly1305 &&other) noexcept
 {
     Memory::Copy(&this->input, &other.input, sizeof(this->input));
     Memory::Copy(&this->ks, &other.ks, sizeof(this->ks));
@@ -719,7 +719,7 @@ ChaChaPoly1305::ChaChaPoly1305(ChaChaPoly1305 &&other)
     other.unused = 0;
 }
 
-ChaChaPoly1305 &ChaChaPoly1305::operator=(ChaChaPoly1305 &&other)
+ChaChaPoly1305 &ChaChaPoly1305::operator=(ChaChaPoly1305 &&other) noexcept
 {
     if (this != &other)
     {

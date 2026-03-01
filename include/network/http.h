@@ -36,7 +36,7 @@ public:
     HttpClient(const HttpClient &) = delete;
     HttpClient &operator=(const HttpClient &) = delete;
 
-    HttpClient(HttpClient &&other)
+    HttpClient(HttpClient &&other) noexcept
         : ipAddress(other.ipAddress), port(other.port),
           tlsContext(static_cast<TLSClient &&>(other.tlsContext))
     {
@@ -45,7 +45,7 @@ public:
         other.port = 0;
     }
 
-    HttpClient &operator=(HttpClient &&other)
+    HttpClient &operator=(HttpClient &&other) noexcept
     {
         if (this != &other)
         {

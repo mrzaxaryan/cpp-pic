@@ -194,8 +194,8 @@ public:
     ChaChaPoly1305 &operator=(const ChaChaPoly1305 &) = delete;
 
     // Movable: transfers ownership and zeroes source
-    ChaChaPoly1305(ChaChaPoly1305 &&other);
-    ChaChaPoly1305 &operator=(ChaChaPoly1305 &&other);
+    ChaChaPoly1305(ChaChaPoly1305 &&other) noexcept;
+    ChaChaPoly1305 &operator=(ChaChaPoly1305 &&other) noexcept;
 
     /**
      * @brief Sets up the encryption key

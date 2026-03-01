@@ -71,7 +71,7 @@ public:
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
 
-    TlsCipher(TlsCipher &&other)
+    TlsCipher(TlsCipher &&other) noexcept
         : cipherCount(other.cipherCount)
         , clientSeqNum(other.clientSeqNum)
         , serverSeqNum(other.serverSeqNum)
@@ -92,7 +92,7 @@ public:
         Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
     }
 
-    TlsCipher &operator=(TlsCipher &&other)
+    TlsCipher &operator=(TlsCipher &&other) noexcept
     {
         if (this != &other)
         {

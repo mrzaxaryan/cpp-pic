@@ -28,7 +28,7 @@ public:
     TlsBuffer(const TlsBuffer &) = delete;
     TlsBuffer &operator=(const TlsBuffer &) = delete;
 
-    TlsBuffer(TlsBuffer &&other)
+    TlsBuffer(TlsBuffer &&other) noexcept
         : buffer(other.buffer), capacity(other.capacity), size(other.size), readPos(other.readPos), ownsMemory(other.ownsMemory)
     {
         other.buffer = nullptr;
@@ -37,7 +37,7 @@ public:
         other.readPos = 0;
         other.ownsMemory = false;
     }
-    TlsBuffer &operator=(TlsBuffer &&other)
+    TlsBuffer &operator=(TlsBuffer &&other) noexcept
     {
         if (this != &other)
         {

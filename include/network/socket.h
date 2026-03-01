@@ -147,11 +147,11 @@ public:
 	Socket(const Socket &) = delete;
 	Socket &operator=(const Socket &) = delete;
 
-	Socket(Socket &&other) : ip(other.ip), port(other.port), m_socket(other.m_socket)
+	Socket(Socket &&other) noexcept : ip(other.ip), port(other.port), m_socket(other.m_socket)
 	{
 		other.m_socket = nullptr;
 	}
-	Socket &operator=(Socket &&other)
+	Socket &operator=(Socket &&other) noexcept
 	{
 		if (this != &other)
 		{

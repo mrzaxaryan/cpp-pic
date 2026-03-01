@@ -86,7 +86,7 @@ public:
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
 
-    ChaCha20Encoder(ChaCha20Encoder &&other)
+    ChaCha20Encoder(ChaCha20Encoder &&other) noexcept
         : remoteCipher(static_cast<ChaChaPoly1305 &&>(other.remoteCipher)), localCipher(static_cast<ChaChaPoly1305 &&>(other.localCipher)), ivLength(other.ivLength), initialized(other.initialized)
     {
         Memory::Copy(remoteNonce, other.remoteNonce, TLS_CHACHA20_IV_LENGTH);
@@ -97,7 +97,7 @@ public:
         Memory::Zero(other.localNonce, TLS_CHACHA20_IV_LENGTH);
     }
 
-    ChaCha20Encoder &operator=(ChaCha20Encoder &&other)
+    ChaCha20Encoder &operator=(ChaCha20Encoder &&other) noexcept
     {
         if (this != &other)
         {

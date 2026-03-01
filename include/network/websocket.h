@@ -100,7 +100,7 @@ public:
 	WebSocketClient(const WebSocketClient &) = delete;
 	WebSocketClient &operator=(const WebSocketClient &) = delete;
 
-	WebSocketClient(WebSocketClient &&other)
+	WebSocketClient(WebSocketClient &&other) noexcept
 		: ipAddress(other.ipAddress), port(other.port),
 		  tlsContext(static_cast<TLSClient &&>(other.tlsContext)),
 		  isConnected(other.isConnected)
@@ -111,7 +111,7 @@ public:
 		other.isConnected = false;
 	}
 
-	WebSocketClient &operator=(WebSocketClient &&other)
+	WebSocketClient &operator=(WebSocketClient &&other) noexcept
 	{
 		if (this != &other)
 		{

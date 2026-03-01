@@ -60,7 +60,7 @@ public:
     TLSClient(const TLSClient &) = delete;
     TLSClient &operator=(const TLSClient &) = delete;
 
-    TLSClient(TLSClient &&other)
+    TLSClient(TLSClient &&other) noexcept
         : host(other.host), ip(other.ip), context(static_cast<Socket &&>(other.context)), crypto(static_cast<TlsCipher &&>(other.crypto)), secure(other.secure), stateIndex(other.stateIndex), sendBuffer(static_cast<TlsBuffer &&>(other.sendBuffer)), recvBuffer(static_cast<TlsBuffer &&>(other.recvBuffer)), channelBuffer(static_cast<TlsBuffer &&>(other.channelBuffer)), channelBytesRead(other.channelBytesRead)
     {
         other.host = nullptr;
@@ -69,7 +69,7 @@ public:
         other.channelBytesRead = 0;
     }
 
-    TLSClient &operator=(TLSClient &&other)
+    TLSClient &operator=(TLSClient &&other) noexcept
     {
         if (this != &other)
         {

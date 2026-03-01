@@ -1,7 +1,14 @@
 /**
- * efi_protocols.h - UEFI Protocol Definitions
+ * @file efi_protocols.h
+ * @brief Common EFI protocol definitions for console I/O.
  *
- * Defines common UEFI protocols used for I/O operations.
+ * @details Defines EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL for text-mode console output (OutputString,
+ *          ClearScreen, SetAttribute, SetCursorPosition, EnableCursor) and
+ *          EFI_SIMPLE_TEXT_INPUT_PROTOCOL for keyboard input (ReadKeyStroke, WaitForKey).
+ *          Includes text color attribute constants and the SIMPLE_TEXT_OUTPUT_MODE structure.
+ *
+ * @see UEFI Specification 2.10 — Section 12.3, Simple Text Input Protocol
+ * @see UEFI Specification 2.10 — Section 12.4, Simple Text Output Protocol
  */
 
 #pragma once

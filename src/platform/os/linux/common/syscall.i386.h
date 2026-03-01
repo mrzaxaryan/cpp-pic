@@ -1,8 +1,15 @@
+/**
+ * @file syscall.i386.h
+ * @brief i386 Linux syscall number definitions.
+ *
+ * @details Defines the syscall number constants for the i386 Linux kernel ABI.
+ * Notable differences from x86_64 include the use of SYS_MMAP2 instead of
+ * SYS_MMAP and the SYS_SOCKETCALL multiplexer with SOCKOP_* subcodes instead
+ * of individual socket syscalls.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux i386 syscall numbers
 
 // File I/O
 constexpr USIZE SYS_READ = 3;

@@ -3,11 +3,11 @@
 	// Indirect syscall with 0 arguments
 	static inline NTSTATUS Call(SYSCALL_ENTRY entry)
 	{
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"call *%[gadget]\n"
 			: "+r"(r_rax)
-			: [gadget] "r"(entry.syscallAddress)
+			: [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "rdx", "r8", "r9", "r10", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -16,11 +16,11 @@
 	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1)
 	{
 		register USIZE r_r10 __asm__("r10") = a1;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"call *%[gadget]\n"
 			: "+r"(r_rax), "+r"(r_r10)
-			: [gadget] "r"(entry.syscallAddress)
+			: [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "rdx", "r8", "r9", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -30,11 +30,11 @@
 	{
 		register USIZE r_r10 __asm__("r10") = a1;
 		register USIZE r_rdx __asm__("rdx") = a2;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"call *%[gadget]\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx)
-			: [gadget] "r"(entry.syscallAddress)
+			: [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r8", "r9", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -45,11 +45,11 @@
 		register USIZE r_r10 __asm__("r10") = a1;
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"call *%[gadget]\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8)
-			: [gadget] "r"(entry.syscallAddress)
+			: [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r9", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -61,11 +61,11 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"call *%[gadget]\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
-			: [gadget] "r"(entry.syscallAddress)
+			: [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -77,14 +77,14 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"sub $0x28, %%rsp\n"
 			"mov %[a5], 0x20(%%rsp)\n"
 			"call *%[gadget]\n"
 			"add $0x28, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
-			: [a5] "r"(a5), [gadget] "r"(entry.syscallAddress)
+			: [a5] "r"(a5), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -96,7 +96,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"sub $0x30, %%rsp\n"
 			"mov %[a5], 0x20(%%rsp)\n"
@@ -104,7 +104,7 @@
 			"call *%[gadget]\n"
 			"add $0x30, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
-			: [a5] "r"(a5), [a6] "r"(a6), [gadget] "r"(entry.syscallAddress)
+			: [a5] "r"(a5), [a6] "r"(a6), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -116,7 +116,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"sub $0x38, %%rsp\n"
 			"mov %[a5], 0x20(%%rsp)\n"
@@ -126,7 +126,7 @@
 			"add $0x38, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7),
-			  [gadget] "r"(entry.syscallAddress)
+			  [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -138,7 +138,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"sub $0x40, %%rsp\n"
 			"mov %[a5], 0x20(%%rsp)\n"
@@ -149,7 +149,7 @@
 			"add $0x40, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8),
-			  [gadget] "r"(entry.syscallAddress)
+			  [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -161,7 +161,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"sub $0x48, %%rsp\n"
 			"mov %[a5], 0x20(%%rsp)\n"
@@ -173,7 +173,7 @@
 			"add $0x48, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8),
-			  [a9] "r"(a9), [gadget] "r"(entry.syscallAddress)
+			  [a9] "r"(a9), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -185,7 +185,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"sub $0x50, %%rsp\n"
 			"mov %[a5],  0x20(%%rsp)\n"
@@ -198,7 +198,7 @@
 			"add $0x50, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8),
-			  [a9] "r"(a9), [a10] "r"(a10), [gadget] "r"(entry.syscallAddress)
+			  [a9] "r"(a9), [a10] "r"(a10), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -210,7 +210,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		__asm__ volatile(
 			"mov %[a11], %%rcx\n"
 			"sub $0x58, %%rsp\n"
@@ -225,7 +225,7 @@
 			"add $0x58, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8),
-			  [a9] "r"(a9), [a10] "r"(a10), [a11] "m"(a11), [gadget] "r"(entry.syscallAddress)
+			  [a9] "r"(a9), [a10] "r"(a10), [a11] "m"(a11), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -237,7 +237,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		USIZE args[] = {a5, a6, a7, a8, a9, a10, a11, a12};
 		__asm__ volatile(
 			"sub $0x60, %%rsp\n"
@@ -260,7 +260,7 @@
 			"call *%[gadget]\n"
 			"add $0x60, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
-			: [args] "r"(args), [gadget] "r"(entry.syscallAddress)
+			: [args] "r"(args), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -272,7 +272,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		USIZE args[] = {a5, a6, a7, a8, a9, a10, a11, a12, a13};
 		__asm__ volatile(
 			"sub $0x68, %%rsp\n"
@@ -297,7 +297,7 @@
 			"call *%[gadget]\n"
 			"add $0x68, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
-			: [args] "r"(args), [gadget] "r"(entry.syscallAddress)
+			: [args] "r"(args), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}
@@ -309,7 +309,7 @@
 		register USIZE r_rdx __asm__("rdx") = a2;
 		register USIZE r_r8 __asm__("r8") = a3;
 		register USIZE r_r9 __asm__("r9") = a4;
-		register USIZE r_rax __asm__("rax") = (USIZE)entry.ssn;
+		register USIZE r_rax __asm__("rax") = (USIZE)entry.Ssn;
 		USIZE args[] = {a5, a6, a7, a8, a9, a10, a11, a12, a13, a14};
 		__asm__ volatile(
 			"sub $0x70, %%rsp\n"
@@ -336,7 +336,7 @@
 			"call *%[gadget]\n"
 			"add $0x70, %%rsp\n"
 			: "+r"(r_rax), "+r"(r_r10), "+r"(r_rdx), "+r"(r_r8), "+r"(r_r9)
-			: [args] "r"(args), [gadget] "r"(entry.syscallAddress)
+			: [args] "r"(args), [gadget] "r"(entry.SyscallAddress)
 			: "rcx", "r11", "memory");
 		return (NTSTATUS)r_rax;
 	}

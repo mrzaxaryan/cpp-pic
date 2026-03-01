@@ -1,7 +1,15 @@
 /**
- * efi_ip4_config2_protocol.h - EFI IP4 Config2 Protocol
+ * @file efi_ip4_config2_protocol.h
+ * @brief EFI IPv4 Configuration 2 Protocol for network configuration.
  *
- * Used to configure IPv4 network settings (DHCP or static).
+ * @details Defines the EFI_IP4_CONFIG2_PROTOCOL for configuring IPv4 network parameters,
+ *          supporting both static and DHCP-based address assignment. Includes data type
+ *          enumerations (InterfaceInfo, Policy, ManualAddress, Gateway, DnsServer),
+ *          the EFI_IP4_CONFIG2_POLICY enum for selecting static vs. DHCP configuration,
+ *          EFI_IP4_CONFIG2_MANUAL_ADDRESS for static IP configuration, and
+ *          EFI_IP4_CONFIG2_INTERFACE_INFO for querying interface details.
+ *
+ * @see UEFI Specification 2.10 — Section 28.5, EFI IPv4 Configuration II Protocol
  */
 
 #pragma once

@@ -1,8 +1,14 @@
+/**
+ * @file system.aarch64.h
+ * @brief AArch64 Linux syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke Linux
+ * syscalls using the svc #0 supervisor call instruction. Arguments are passed
+ * in registers x0-x5 with the syscall number in x8. The return value is in x0.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux AArch64 syscall wrappers
 class System
 {
 public:

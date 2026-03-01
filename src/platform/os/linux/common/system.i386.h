@@ -1,8 +1,16 @@
+/**
+ * @file system.i386.h
+ * @brief i386 Linux syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke Linux
+ * syscalls using the int $0x80 software interrupt. Arguments are passed in
+ * registers ebx, ecx, edx, esi, edi with the syscall number in eax. The
+ * 6-argument variant manually saves/restores ebp to avoid frame pointer
+ * conflicts under LTO at higher optimization levels.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux i386 syscall wrappers
 class System
 {
 public:

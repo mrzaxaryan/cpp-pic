@@ -1,8 +1,15 @@
+/**
+ * @file system.x86_64.h
+ * @brief x86_64 Linux syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke Linux
+ * syscalls using the x86_64 syscall instruction. Arguments are passed in
+ * registers rdi, rsi, rdx, r10, r8, r9 with the syscall number in rax.
+ * The syscall instruction clobbers rcx and r11.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux x86_64 syscall wrappers
 class System
 {
 public:

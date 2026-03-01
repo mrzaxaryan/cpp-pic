@@ -5,7 +5,7 @@
 DateTime DateTime::Now()
 {
 	DateTime dt;
-	timespec ts;
+	Timespec ts;
 
 	// Get current time using clock_gettime syscall
 	SSIZE result = System::Call(SYS_CLOCK_GETTIME, CLOCK_REALTIME, (USIZE)&ts);
@@ -19,8 +19,8 @@ DateTime DateTime::Now()
 	}
 
 	// Convert Unix timestamp (seconds since 1970-01-01) to date/time
-	UINT64 totalSeconds = (UINT64)ts.tv_sec;
-	UINT64 nanoseconds = (UINT64)ts.tv_nsec;
+	UINT64 totalSeconds = (UINT64)ts.Sec;
+	UINT64 nanoseconds = (UINT64)ts.Nsec;
 
 	constexpr UINT64 SECONDS_PER_DAY = 86400;
 
@@ -33,7 +33,7 @@ DateTime DateTime::Now()
 
 UINT64 DateTime::GetMonotonicNanoseconds()
 {
-	timespec ts;
+	Timespec ts;
 
 	// Get monotonic time (not affected by system clock changes)
 	SSIZE result = System::Call(SYS_CLOCK_GETTIME, CLOCK_MONOTONIC, (USIZE)&ts);
@@ -44,6 +44,6 @@ UINT64 DateTime::GetMonotonicNanoseconds()
 	}
 
 	// Convert to nanoseconds
-	UINT64 nanoseconds = ((UINT64)ts.tv_sec * 1000000000ULL) + (UINT64)ts.tv_nsec;
+	UINT64 nanoseconds = ((UINT64)ts.Sec * 1000000000ULL) + (UINT64)ts.Nsec;
 	return nanoseconds;
 }

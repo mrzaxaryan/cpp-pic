@@ -12,9 +12,9 @@ static inline UINT64 GetHardwareTimestamp()
 
 #elif defined(ARCHITECTURE_AARCH64)
 	// ARM64: Standard 64-bit system counter access
-	UINT64 virtual_timer_value;
-	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
-	return virtual_timer_value;
+	UINT64 virtualTimerValue;
+	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(virtualTimerValue));
+	return virtualTimerValue;
 
 #elif defined(ARCHITECTURE_ARMV7A)
 	// ARMv7-A (32-bit): Use syscall-based monotonic timestamp

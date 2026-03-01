@@ -1,11 +1,18 @@
+/**
+ * @file system.i386.h
+ * @brief i386 Solaris syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke Solaris
+ * syscalls using the int $0x91 trap gate. Unlike Linux i386 (which passes
+ * arguments in registers via int $0x80), Solaris passes arguments on the stack
+ * with a dummy return address at ESP. The syscall number is in EAX, and the
+ * carry flag indicates error (positive errno in EAX). The inline assembly
+ * negates eax on error to normalize to the negative-return convention.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
 
-// Solaris/illumos i386 syscall wrappers
-// i386:   int $0x91 (trap gate), syscall number in EAX, arguments on the stack
-//         (kernel expects dummy return address at ESP, args at ESP+4, ESP+8, ...).
-//         Carry flag indicates error (EAX = positive errno). We negate on error.
 class System
 {
 public:

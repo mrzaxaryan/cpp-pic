@@ -1,11 +1,18 @@
+/**
+ * @file system.aarch64.h
+ * @brief AArch64 Solaris syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke Solaris
+ * syscalls using svc #0 with the syscall number in x8 (standard ARM64
+ * convention, not svc #0x80 / x16 as on macOS). Arguments are passed in
+ * x0-x5. Errors are indicated by the carry flag (C bit in NZCV); the inline
+ * assembly negates x0 on error to normalize to the negative-return convention.
+ * X1 is clobbered by the kernel's rval[1] secondary return value.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
 
-// Solaris/illumos AArch64 syscall wrappers
-// aarch64: svc #0 with X8 as the syscall number (standard ARM64
-//          convention, NOT svc #0x80 / X16 like macOS). Carry flag (C bit in NZCV)
-//          indicates error. We negate X0 on error to match the Linux convention.
 class System
 {
 public:

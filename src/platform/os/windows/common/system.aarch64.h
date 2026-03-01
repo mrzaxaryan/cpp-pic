@@ -19,7 +19,7 @@
 	static inline NTSTATUS Call(SYSCALL_ENTRY entry)
 	{
 		register USIZE x0 __asm__("x0");
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "=r"(x0), [stub] "+r"(stub)
@@ -34,7 +34,7 @@
 	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1)
 	{
 		register USIZE x0 __asm__("x0") = a1;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), [stub] "+r"(stub)
@@ -50,7 +50,7 @@
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), [stub] "+r"(stub)
@@ -67,7 +67,7 @@
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
 		register USIZE x2 __asm__("x2") = a3;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), "+r"(x2), [stub] "+r"(stub)
@@ -85,7 +85,7 @@
 		register USIZE x1 __asm__("x1") = a2;
 		register USIZE x2 __asm__("x2") = a3;
 		register USIZE x3 __asm__("x3") = a4;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3), [stub] "+r"(stub)
@@ -104,7 +104,7 @@
 		register USIZE x2 __asm__("x2") = a3;
 		register USIZE x3 __asm__("x3") = a4;
 		register USIZE x4 __asm__("x4") = a5;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3), "+r"(x4), [stub] "+r"(stub)
@@ -124,7 +124,7 @@
 		register USIZE x3 __asm__("x3") = a4;
 		register USIZE x4 __asm__("x4") = a5;
 		register USIZE x5 __asm__("x5") = a6;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3), "+r"(x4), "+r"(x5), [stub] "+r"(stub)
@@ -145,7 +145,7 @@
 		register USIZE x4 __asm__("x4") = a5;
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3), "+r"(x4), "+r"(x5), "+r"(x6), [stub] "+r"(stub)
@@ -167,7 +167,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"blr %[stub]\n"
 			: "+r"(x0), "+r"(x1), "+r"(x2), "+r"(x3), "+r"(x4), "+r"(x5), "+r"(x6), "+r"(x7), [stub] "+r"(stub)
@@ -188,7 +188,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #16\n"
 			"str %[a9], [sp]\n"
@@ -212,7 +212,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #16\n"
 			"str %[a9], [sp]\n"
@@ -237,7 +237,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #32\n"
 			"str %[a9], [sp]\n"
@@ -263,7 +263,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #32\n"
 			"str %[a9], [sp]\n"
@@ -290,7 +290,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #48\n"
 			"str %[a9], [sp]\n"
@@ -318,7 +318,7 @@
 		register USIZE x5 __asm__("x5") = a6;
 		register USIZE x6 __asm__("x6") = a7;
 		register USIZE x7 __asm__("x7") = a8;
-		register USIZE stub __asm__("x16") = (USIZE)entry.syscallAddress;
+		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #48\n"
 			"str %[a9], [sp]\n"

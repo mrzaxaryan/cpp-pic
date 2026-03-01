@@ -1,11 +1,18 @@
+/**
+ * @file system.x86_64.h
+ * @brief x86_64 macOS syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke macOS BSD
+ * syscalls using the x86_64 syscall instruction. Uses the same register
+ * convention as Linux (rdi, rsi, rdx, r10, r8, r9; number in rax), but macOS
+ * signals errors via the carry flag with a positive errno in rax. The inline
+ * assembly negates rax on error to normalize to the negative-return convention.
+ * RDX is clobbered by the kernel's rval[1] secondary return value.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
 
-// macOS BSD x86_64 syscall wrappers
-// x86_64: syscall instruction, same register convention as Linux, but carry flag
-//         indicates error (RAX = positive errno). We negate on error to match
-//         the Linux convention (negative return = error).
 class System
 {
 public:

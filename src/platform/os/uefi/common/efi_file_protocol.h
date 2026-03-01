@@ -1,8 +1,14 @@
 /**
- * efi_file_protocol.h - UEFI File System Protocol Definitions
+ * @file efi_file_protocol.h
+ * @brief EFI File Protocol and Simple File System Protocol definitions.
  *
- * Defines EFI_SIMPLE_FILE_SYSTEM_PROTOCOL and EFI_FILE_PROTOCOL
- * for file system operations in UEFI environment.
+ * @details Defines EFI_FILE_PROTOCOL for file I/O operations (open, close, read, write,
+ *          get/set position, get/set info, flush) and EFI_SIMPLE_FILE_SYSTEM_PROTOCOL for
+ *          opening the root directory of a file system volume. Includes EFI_FILE_INFO for
+ *          querying file metadata, file attribute constants, and open mode flags.
+ *
+ * @see UEFI Specification 2.10 — Section 13.4, Simple File System Protocol
+ * @see UEFI Specification 2.10 — Section 13.5, EFI File Protocol
  */
 
 #pragma once

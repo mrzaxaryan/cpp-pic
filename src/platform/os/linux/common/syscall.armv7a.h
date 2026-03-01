@@ -1,8 +1,15 @@
+/**
+ * @file syscall.armv7a.h
+ * @brief ARMv7-A Linux syscall number definitions.
+ *
+ * @details Defines the syscall number constants for the ARMv7-A (ARM EABI) Linux
+ * kernel ABI. Includes both direct socket syscalls and legacy socketcall
+ * multiplexer constants for compatibility. Uses SYS_MMAP2 and SYS_FCNTL64
+ * variants specific to the 32-bit ARM architecture.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux ARMv7 syscall numbers
 
 // File I/O
 constexpr USIZE SYS_READ = 3;

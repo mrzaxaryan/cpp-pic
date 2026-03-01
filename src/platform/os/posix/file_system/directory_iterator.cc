@@ -58,11 +58,13 @@ Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 	fd = System::Call(SYS_OPEN, (USIZE)utf8Path, O_RDONLY | O_DIRECTORY);
 #endif
 
-	if (fd >= 0)
+	if (fd < 0)
 	{
-		iter.handle = (PVOID)fd;
-		iter.first = true;
+		return Result<DirectoryIterator, Error>::Err(Error::Fs_OpenFailed);
 	}
+
+	iter.handle = (PVOID)fd;
+	iter.first = true;
 	return Result<DirectoryIterator, Error>::Ok(static_cast<DirectoryIterator &&>(iter));
 }
 
@@ -122,31 +124,31 @@ Result<void, Error> DirectoryIterator::Next()
 	}
 
 #if defined(PLATFORM_LINUX)
-	linux_dirent64 *d = (linux_dirent64 *)(buffer + bpos);
+	LinuxDirent64 *d = (LinuxDirent64 *)(buffer + bpos);
 #elif defined(PLATFORM_SOLARIS)
-	solaris_dirent64 *d = (solaris_dirent64 *)(buffer + bpos);
+	SolarisDirent64 *d = (SolarisDirent64 *)(buffer + bpos);
 #elif defined(PLATFORM_MACOS)
-	bsd_dirent64 *d = (bsd_dirent64 *)(buffer + bpos);
+	BsdDirent64 *d = (BsdDirent64 *)(buffer + bpos);
 #endif
 
-	StringUtils::Utf8ToWide(Span<const CHAR>(d->d_name, StringUtils::Length(d->d_name)), Span<WCHAR>(currentEntry.Name, 256));
+	StringUtils::Utf8ToWide(Span<const CHAR>(d->Name, StringUtils::Length(d->Name)), Span<WCHAR>(currentEntry.Name, 256));
 
 #if defined(PLATFORM_SOLARIS)
-	currentEntry.IsDirectory = false;       // Solaris dirent64 has no d_type; cannot determine without stat
+	currentEntry.IsDirectory = false;       // Solaris dirent64 has no Type; cannot determine without stat
 	currentEntry.Type = 0;                  // DT_UNKNOWN
 #else
-	currentEntry.IsDirectory = (d->d_type == DT_DIR);
-	currentEntry.Type = (UINT32)d->d_type;
+	currentEntry.IsDirectory = (d->Type == DT_DIR);
+	currentEntry.Type = (UINT32)d->Type;
 #endif
 	currentEntry.IsDrive = false;
-	currentEntry.IsHidden = (d->d_name[0] == '.');
+	currentEntry.IsHidden = (d->Name[0] == '.');
 	currentEntry.IsSystem = false;
 	currentEntry.IsReadOnly = false;
 	currentEntry.Size = 0;
 	currentEntry.CreationTime = 0;
 	currentEntry.LastModifiedTime = 0;
 
-	bpos += d->d_reclen;
+	bpos += d->Reclen;
 
 	return Result<void, Error>::Ok();
 }

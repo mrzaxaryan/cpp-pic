@@ -126,7 +126,7 @@ struct Error
 		Http_ParseUrlFailed         = 48, // URL format invalid
 
 		// -------------------------
-		// FileSystem errors (50–56)
+		// FileSystem errors (50–57)
 		// -------------------------
 		Fs_OpenFailed        = 50, // file open syscall failed
 		Fs_DeleteFailed      = 51, // file delete syscall failed
@@ -135,6 +135,7 @@ struct Error
 		Fs_CreateDirFailed   = 54, // directory create syscall failed
 		Fs_DeleteDirFailed   = 55, // directory delete syscall failed
 		Fs_PathResolveFailed = 56, // path name resolution failed
+		Fs_SeekFailed        = 57, // file seek/offset syscall failed
 
 		// -------------------------
 		// Crypto errors (60–63)

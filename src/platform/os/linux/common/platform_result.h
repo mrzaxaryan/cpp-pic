@@ -1,3 +1,12 @@
+/**
+ * @file platform_result.h
+ * @brief Linux syscall result to Result<T, Error> conversion.
+ *
+ * @details Provides the FromLinux() helper that converts raw Linux syscall return
+ * values into the PIR Result<T, Error> type. Linux syscalls return negative errno
+ * on failure; this function maps success (>= 0) to Result::Ok and failure to
+ * Result::Err with a POSIX error code.
+ */
 #pragma once
 
 #include "core/types/result.h"

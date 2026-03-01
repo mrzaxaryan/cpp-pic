@@ -1,10 +1,12 @@
 /**
- * environment.h - Environment Variable Access
+ * @file environment.h
+ * @brief Environment variable access
  *
- * Provides access to environment variables.
- * Position-independent, no .rdata dependencies.
- *
- * Part of RUNTIME (Runtime Abstraction Layer).
+ * @details Provides position-independent access to environment variables across
+ * platforms. On Windows, variables are read from the PEB environment block. On
+ * Linux, macOS, and Solaris, variables are retrieved from the process environ
+ * pointer. On UEFI, GetVariable() always returns 0 as environment variables are
+ * not available. No .rdata dependencies.
  */
 
 #pragma once

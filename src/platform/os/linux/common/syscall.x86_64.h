@@ -1,8 +1,14 @@
+/**
+ * @file syscall.x86_64.h
+ * @brief x86_64 Linux syscall number definitions.
+ *
+ * @details Defines the syscall number constants for the x86_64 Linux kernel ABI.
+ * Covers file I/O, file operations, directory operations, memory management,
+ * socket operations, time, random, and process control syscalls.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux x86_64 syscall numbers
 
 // File I/O
 constexpr USIZE SYS_READ = 0;

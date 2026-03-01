@@ -1,10 +1,18 @@
+/**
+ * @file system.aarch64.h
+ * @brief AArch64 macOS syscall implementation via inline assembly.
+ *
+ * @details Provides System::Call overloads (0-6 arguments) that invoke macOS BSD
+ * syscalls using svc #0x80 (not svc #0 as on Linux). The syscall number is
+ * passed in x16 (not x8 as on Linux), with arguments in x0-x5. Errors are
+ * indicated by the carry flag (C bit in NZCV); the inline assembly negates x0
+ * on error to normalize to the negative-return convention. X1 is clobbered by
+ * the kernel's rval[1] secondary return value.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
 
-// macOS BSD AArch64 syscall wrappers
-// aarch64: svc #0x80 (not svc #0), syscall number in X16 (not X8), carry flag
-//          in NZCV for error. We negate X0 on error.
 class System
 {
 public:

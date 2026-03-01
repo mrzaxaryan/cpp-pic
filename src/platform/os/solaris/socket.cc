@@ -7,7 +7,7 @@
 // Solaris uses direct socket syscalls (SYS_so_socket etc.), no multiplexing.
 // pollsys is used instead of poll/ppoll for connection timeout.
 
-static SSIZE solaris_pollsys(struct pollfd *fds, USIZE nfds, const struct timespec *timeout)
+static SSIZE SolarisPollsys(Pollfd *fds, USIZE nfds, const Timespec *timeout)
 {
 	return System::Call(SYS_POLLSYS, (USIZE)fds, nfds, (USIZE)timeout, 0);
 }
@@ -74,16 +74,16 @@ Result<void, Error> Socket::Open()
 	if (result != 0)
 	{
 		// Connect in progress — wait with 5-second timeout via pollsys
-		struct pollfd pfd;
-		pfd.fd = (INT32)sockfd;
-		pfd.events = POLLOUT;
-		pfd.revents = 0;
+		Pollfd pfd;
+		pfd.Fd = (INT32)sockfd;
+		pfd.Events = POLLOUT;
+		pfd.Revents = 0;
 
-		struct timespec timeout;
-		timeout.tv_sec = 5;
-		timeout.tv_nsec = 0;
+		Timespec timeout;
+		timeout.Sec = 5;
+		timeout.Nsec = 0;
 
-		SSIZE pollResult = solaris_pollsys(&pfd, 1, &timeout);
+		SSIZE pollResult = SolarisPollsys(&pfd, 1, &timeout);
 		if (pollResult <= 0)
 		{
 			(void)System::Call(SYS_FCNTL, sockfd, (USIZE)F_SETFL, (USIZE)flags);

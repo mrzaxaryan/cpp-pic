@@ -1,3 +1,14 @@
+/**
+ * @file platform_result.h
+ * @brief UEFI EFI_STATUS to Result<T, Error> conversion utilities.
+ *
+ * @details Provides the FromEfiStatus() helper in the result namespace, which converts
+ *          UEFI EFI_STATUS codes into the PIR Result<T, Error> type. Success is determined
+ *          by the sign bit of the status value: non-negative values indicate success, while
+ *          negative values (high bit set) indicate an error per the UEFI status code convention.
+ *
+ * @see UEFI Specification 2.10 — Appendix D, Status Codes
+ */
 #pragma once
 
 #include "core/types/result.h"

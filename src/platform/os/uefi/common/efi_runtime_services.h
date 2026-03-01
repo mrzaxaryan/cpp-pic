@@ -1,8 +1,19 @@
 /**
- * efi_runtime_services.h - EFI Runtime Services Table
+ * @file efi_runtime_services.h
+ * @brief EFI Runtime Services function table.
  *
- * Defines the Runtime Services table for time, variable access,
- * and virtual memory mapping.
+ * @details Defines the EFI_RUNTIME_SERVICES table and all associated function pointer typedefs
+ *          and data structures. Runtime Services persist after ExitBootServices() and provide
+ *          time services (GetTime, SetTime, GetWakeupTime, SetWakeupTime), variable services
+ *          (GetVariable, SetVariable, GetNextVariableName), virtual memory mapping
+ *          (SetVirtualAddressMap, ConvertPointer), system reset, and capsule update services.
+ *          Also defines EFI_TIME, EFI_TIME_CAPABILITIES, EFI_RESET_TYPE, and EFI_CAPSULE_HEADER.
+ *
+ * @see UEFI Specification 2.10 — Section 4.5, EFI Runtime Services Table
+ * @see UEFI Specification 2.10 — Section 8.1, Time Services
+ * @see UEFI Specification 2.10 — Section 8.2, Variable Services
+ * @see UEFI Specification 2.10 — Section 8.3, Virtual Memory Services
+ * @see UEFI Specification 2.10 — Section 8.5, Miscellaneous Runtime Services
  */
 
 #pragma once

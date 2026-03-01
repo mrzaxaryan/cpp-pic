@@ -168,7 +168,7 @@ BOOL File::IsValid() const
 }
 
 // Close the file handle
-void File::Close()
+VOID File::Close()
 {
 	if (IsValid())
 	{
@@ -214,11 +214,10 @@ Result<UINT32, Error> File::Write(Span<const UINT8> buffer)
 	return Result<UINT32, Error>::Err(writeResult, Error::Fs_WriteFailed);
 }
 
-// Get the current file offset
-USIZE File::GetOffset() const
+Result<USIZE, Error> File::GetOffset() const
 {
 	if (!IsValid())
-		return 0;
+		return Result<USIZE, Error>::Err(Error::Fs_SeekFailed);
 
 	FILE_POSITION_INFORMATION posFile;
 	IO_STATUS_BLOCK ioStatusBlock;
@@ -226,34 +225,32 @@ USIZE File::GetOffset() const
 	Memory::Zero(&ioStatusBlock, sizeof(ioStatusBlock));
 
 	auto queryResult = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posFile, sizeof(posFile), FilePositionInformation);
-
 	if (queryResult)
-	{
-		return (USIZE)posFile.CurrentByteOffset.QuadPart;
-	}
-	return 0;
+		return Result<USIZE, Error>::Ok((USIZE)posFile.CurrentByteOffset.QuadPart);
+	return Result<USIZE, Error>::Err(queryResult, Error::Fs_SeekFailed);
 }
 
-// Set the file offset to an absolute position
-void File::SetOffset(USIZE absoluteOffset)
+Result<void, Error> File::SetOffset(USIZE absoluteOffset)
 {
 	if (!IsValid())
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 
 	FILE_POSITION_INFORMATION posInfo;
 	IO_STATUS_BLOCK ioStatusBlock;
 	Memory::Zero(&posInfo, sizeof(FILE_POSITION_INFORMATION));
 	Memory::Zero(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
 	posInfo.CurrentByteOffset.QuadPart = (INT64)absoluteOffset;
-	// Set the file pointer to the specified absolute offset using ZwSetInformationFile
-	(void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+
+	auto setResult = NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+	if (setResult)
+		return Result<void, Error>::Ok();
+	return Result<void, Error>::Err(setResult, Error::Fs_SeekFailed);
 }
 
-// Move the file offset by a relative amount based on the specified origin
-void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
+Result<void, Error> File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 {
 	if (!IsValid())
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 
 	IO_STATUS_BLOCK ioStatusBlock;
 	FILE_POSITION_INFORMATION posInfo;
@@ -265,7 +262,7 @@ void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 
 	auto queryResult = NTDLL::ZwQueryInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
 	if (!queryResult)
-		return;
+		return Result<void, Error>::Err(queryResult, Error::Fs_SeekFailed);
 
 	switch (origin)
 	{
@@ -278,13 +275,16 @@ void File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 	case OffsetOrigin::End:
 		queryResult = NTDLL::ZwQueryInformationFile(fileHandle, &ioStatusBlock, &fileStandardInfo, sizeof(fileStandardInfo), FileStandardInformation);
 		if (!queryResult)
-			return;
+			return Result<void, Error>::Err(queryResult, Error::Fs_SeekFailed);
 		distance = fileStandardInfo.EndOfFile.QuadPart + relativeAmount;
 		break;
 	default:
-		LOG_ERROR("Invalid OffsetOrigin specified in MoveOffset");
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 	}
 	posInfo.CurrentByteOffset.QuadPart = distance;
-	(void)NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+
+	auto setResult = NTDLL::ZwSetInformationFile((PVOID)fileHandle, &ioStatusBlock, &posInfo, sizeof(posInfo), FilePositionInformation);
+	if (setResult)
+		return Result<void, Error>::Ok();
+	return Result<void, Error>::Err(setResult, Error::Fs_SeekFailed);
 }

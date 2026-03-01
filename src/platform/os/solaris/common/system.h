@@ -1,6 +1,13 @@
+/**
+ * @file system.h
+ * @brief Solaris System::Call dispatcher.
+ *
+ * @details Architecture-selection header that includes the correct arch-specific
+ * System::Call implementation for the current build target. Supported Solaris
+ * architectures are x86_64, i386, and AArch64.
+ */
 #pragma once
 
-// Solaris/illumos syscall wrappers — architecture-specific implementations
 #if defined(ARCHITECTURE_X86_64)
 #include "platform/os/solaris/common/system.x86_64.h"
 #elif defined(ARCHITECTURE_I386)

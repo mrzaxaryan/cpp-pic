@@ -1,3 +1,12 @@
+/**
+ * @file platform_result.h
+ * @brief Windows NTSTATUS to Result conversion
+ *
+ * @details Provides the result::FromNTSTATUS<T>() helper that converts a Windows
+ * NTSTATUS code into a Result<T, Error>. Success is determined by NT_SUCCESS
+ * semantics (status >= 0). On failure, the NTSTATUS is wrapped in an
+ * Error::Windows() value for uniform cross-platform error handling.
+ */
 #pragma once
 
 #include "core/types/result.h"

@@ -1,7 +1,17 @@
 /**
- * efi_tcp4_protocol.h - EFI TCP4 Protocol
+ * @file efi_tcp4_protocol.h
+ * @brief EFI TCP4 Protocol for IPv4 TCP networking.
  *
- * Defines the TCP4 protocol for IPv4 TCP networking in UEFI.
+ * @details Defines the EFI_TCP4_PROTOCOL interface and all supporting types for TCP/IPv4
+ *          communication in UEFI. Includes configuration structures (EFI_TCP4_CONFIG_DATA,
+ *          EFI_TCP4_ACCESS_POINT, EFI_TCP4_OPTION), connection state enumeration,
+ *          asynchronous I/O tokens (connection, listen, transmit, receive, close), fragment
+ *          data structures, and the protocol function table (GetModeData, Configure, Routes,
+ *          Connect, Accept, Transmit, Receive, Close, Cancel, Poll). Also defines protocol
+ *          and service binding GUIDs, and event/timer type constants.
+ *
+ * @see UEFI Specification 2.10 — Section 28.1, EFI TCP4 Service Binding Protocol
+ * @see UEFI Specification 2.10 — Section 28.1.2, EFI TCP4 Protocol
  */
 
 #pragma once

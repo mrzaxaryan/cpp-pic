@@ -1,3 +1,13 @@
+/**
+ * @file file.h
+ * @brief File I/O abstraction
+ *
+ * @details Provides a platform-independent RAII file handle wrapper with
+ * factory-based creation via File::Open(). Supports read, write, seek, delete,
+ * and existence checks. The File class is move-only (non-copyable) to prevent
+ * double-close bugs, and stack-only to avoid heap allocation. Open mode flags
+ * control read/write/append/create/truncate/binary behavior.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
@@ -5,41 +15,55 @@
 #include "core/types/error.h"
 #include "core/types/result.h"
 #include "platform/io/file_system/offset_origin.h"
-
-// Class to represent a file
 class File
 {
 private:
-	PVOID fileHandle; // File handle
-	USIZE fileSize;   // File size
+	PVOID fileHandle; ///< Platform-specific file handle (HANDLE on Windows, fd cast to PVOID on POSIX)
+	USIZE fileSize;   ///< Cached file size in bytes, set at open time
 
-	// Private constructor (trivial — never fails)
+	/// Private constructor (trivial -- never fails)
 	File(PVOID handle, USIZE size);
 
 public:
-	// Open mode flags (prefixed to avoid collision with Read()/Write() methods)
-	static constexpr INT32 ModeRead = 0x0001;
-	static constexpr INT32 ModeWrite = 0x0002;
-	static constexpr INT32 ModeAppend = 0x0004;
-	static constexpr INT32 ModeCreate = 0x0008;
-	static constexpr INT32 ModeTruncate = 0x0010;
-	static constexpr INT32 ModeBinary = 0x0020;
+	static constexpr INT32 ModeRead = 0x0001;     ///< Open for reading
+	static constexpr INT32 ModeWrite = 0x0002;     ///< Open for writing
+	static constexpr INT32 ModeAppend = 0x0004;    ///< Append to end of file
+	static constexpr INT32 ModeCreate = 0x0008;    ///< Create file if it does not exist
+	static constexpr INT32 ModeTruncate = 0x0010;  ///< Truncate existing file to zero length
+	static constexpr INT32 ModeBinary = 0x0020;    ///< Open in binary mode (no newline translation)
 
-	// Factory — opens a file at the given path with the specified flags
+	/**
+	 * @brief Opens a file at the given path with the specified mode flags.
+	 * @param path Null-terminated wide string file path.
+	 * @param flags Bitmask of ModeRead, ModeWrite, ModeAppend, ModeCreate, ModeTruncate, ModeBinary.
+	 * @return File handle on success, or an Error on failure.
+	 */
 	[[nodiscard]] static Result<File, Error> Open(PCWCHAR path, INT32 flags = 0);
 
-	// Static file operations
+	/**
+	 * @brief Deletes a file at the given path.
+	 * @param path Null-terminated wide string file path.
+	 * @return Void on success, or an Error on failure.
+	 */
 	[[nodiscard]] static Result<void, Error> Delete(PCWCHAR path);
+
+	/**
+	 * @brief Checks whether a file exists at the given path.
+	 * @param path Null-terminated wide string file path.
+	 * @return Void on success (file exists), or an Error if the file does not exist.
+	 */
 	[[nodiscard]] static Result<void, Error> Exists(PCWCHAR path);
 
-	// Default constructor and destructor
+	/// Default constructor; initializes to an invalid handle with zero size.
 	File() : fileHandle(InvalidFileHandle()), fileSize(0) {}
 
-	// Platform-neutral invalid handle sentinel.
-	// Windows: nullptr (INVALID_HANDLE_VALUE is -1, but nullptr is the "never opened" state).
-	// POSIX/UEFI: (PVOID)(SSIZE)-1, because fd 0 is a valid descriptor (stdin).
-	// Note: FORCE_INLINE function instead of constexpr because integer-to-pointer
-	// casts are not allowed in constant expressions.
+	/**
+	 * @brief Returns the platform-specific invalid file handle sentinel.
+	 * @details Windows uses nullptr. POSIX/UEFI uses (PVOID)(SSIZE)-1 because
+	 * fd 0 is a valid descriptor (stdin). Implemented as FORCE_INLINE rather
+	 * than constexpr because integer-to-pointer casts are not constant expressions.
+	 * @return The invalid handle value for the current platform.
+	 */
 	static FORCE_INLINE PVOID InvalidFileHandle()
 	{
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS)
@@ -50,32 +74,66 @@ public:
 	}
 	~File() { Close(); }
 
-	// Disable copying to prevent double-close bugs
 	File(const File &) = delete;
 	File &operator=(const File &) = delete;
 
-	// Enable moving (transferring ownership)
 	File(File &&other) noexcept;
 	File &operator=(File &&other) noexcept;
 
-	// Stack-only
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
-	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; } // Result needs this
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 
-	// Check if the file handle is valid
+	/**
+	 * @brief Checks whether this file handle is valid (i.e., the file is open).
+	 * @return TRUE if the handle is valid, FALSE otherwise.
+	 */
 	BOOL IsValid() const;
-	// Close the file handle
+
+	/**
+	 * @brief Closes the file handle and releases platform resources.
+	 * @details Safe to call on an already-closed or default-constructed File.
+	 */
 	VOID Close();
 
-	// Read and write methods
+	/**
+	 * @brief Reads data from the file into the provided buffer.
+	 * @param buffer Writable span to receive the data.
+	 * @return Number of bytes actually read, or an Error on failure.
+	 */
 	[[nodiscard]] Result<UINT32, Error> Read(Span<UINT8> buffer);
+
+	/**
+	 * @brief Writes data from the provided buffer to the file.
+	 * @param buffer Read-only span containing the data to write.
+	 * @return Number of bytes actually written, or an Error on failure.
+	 */
 	[[nodiscard]] Result<UINT32, Error> Write(Span<const UINT8> buffer);
 
-	// Get the size of the file
+	/**
+	 * @brief Returns the cached file size in bytes.
+	 * @return File size as set when the file was opened.
+	 */
 	constexpr USIZE GetSize() const { return fileSize; }
-	// Get, set and move the file offset
-	USIZE GetOffset() const;
-	VOID SetOffset(USIZE absoluteOffset);
-	VOID MoveOffset(SSIZE relativeAmount, OffsetOrigin origin = OffsetOrigin::Current);
+
+	/**
+	 * @brief Gets the current file pointer position.
+	 * @return Absolute byte offset from the beginning of the file, or an Error on failure.
+	 */
+	[[nodiscard]] Result<USIZE, Error> GetOffset() const;
+
+	/**
+	 * @brief Sets the file pointer to an absolute byte offset from the beginning.
+	 * @param absoluteOffset Byte offset from the start of the file.
+	 * @return Void on success, or an Error on failure.
+	 */
+	[[nodiscard]] Result<void, Error> SetOffset(USIZE absoluteOffset);
+
+	/**
+	 * @brief Moves the file pointer by a relative amount from the specified origin.
+	 * @param relativeAmount Signed byte offset to move (positive = forward, negative = backward).
+	 * @param origin Reference point for the seek (Start, Current, or End).
+	 * @return Void on success, or an Error on failure.
+	 */
+	[[nodiscard]] Result<void, Error> MoveOffset(SSIZE relativeAmount, OffsetOrigin origin = OffsetOrigin::Current);
 };

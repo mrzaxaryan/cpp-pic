@@ -5,7 +5,7 @@
 #include "platform/os/windows/common/ntdll.h"
 
 // Helper to fill the entry from FILE_BOTH_DIR_INFORMATION
-static void FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &data)
+static VOID FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &data)
 {
 	// 1. Copy Name (FileNameLength is in bytes, divide by sizeof(WCHAR))
 	UINT32 nameLen = data.FileNameLength / sizeof(WCHAR);

@@ -1,7 +1,14 @@
 /**
- * efi_simple_network_protocol.h - EFI Simple Network Protocol
+ * @file efi_simple_network_protocol.h
+ * @brief EFI Simple Network Protocol for low-level NIC control.
  *
- * Low-level network interface control for starting/initializing the NIC.
+ * @details Defines the EFI_SIMPLE_NETWORK_PROTOCOL for basic network interface card management,
+ *          including Start, Stop, Initialize, Shutdown, Reset, Transmit, and Receive operations.
+ *          Also provides ReceiveFilters, StationAddress, Statistics, MCastIpToMac, NvData, and
+ *          GetStatus functions. Includes EFI_SIMPLE_NETWORK_MODE for querying NIC capabilities
+ *          (MAC address, media status, packet sizes) and EFI_SIMPLE_NETWORK_STATE enumeration.
+ *
+ * @see UEFI Specification 2.10 — Section 24.1, Simple Network Protocol
  */
 
 #pragma once

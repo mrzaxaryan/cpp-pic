@@ -1,8 +1,15 @@
+/**
+ * @file syscall.aarch64.h
+ * @brief AArch64 Linux syscall number definitions.
+ *
+ * @details Defines the syscall number constants for the AArch64 Linux kernel ABI.
+ * AArch64 exclusively uses *at-style syscalls (openat, unlinkat, mkdirat) with
+ * AT_FDCWD, and replaces legacy calls with modern equivalents (clone instead of
+ * fork, dup3 instead of dup2, pipe2 instead of pipe).
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// Linux AArch64 syscall numbers
 
 // aarch64 uses *at syscalls - AT_FDCWD (-100) means use current working dir
 constexpr SSIZE AT_FDCWD = -100;

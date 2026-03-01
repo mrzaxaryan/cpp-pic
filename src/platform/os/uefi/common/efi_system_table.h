@@ -1,8 +1,14 @@
 /**
- * efi_system_table.h - EFI System Table
+ * @file efi_system_table.h
+ * @brief EFI System Table and configuration table structures.
  *
- * Defines the EFI System Table structure, which is the primary
- * interface between the UEFI firmware and the application.
+ * @details Defines the EFI_SYSTEM_TABLE, which is the primary entry point structure passed
+ *          to every UEFI application. It provides access to console I/O protocols, Boot Services,
+ *          Runtime Services, and firmware configuration tables (ACPI, SMBIOS). Also defines
+ *          EFI_CONFIGURATION_TABLE and well-known configuration table GUIDs.
+ *
+ * @see UEFI Specification 2.10 — Section 4.3, EFI System Table
+ * @see UEFI Specification 2.10 — Section 4.6, EFI Configuration Table & Properties Table
  */
 
 #pragma once

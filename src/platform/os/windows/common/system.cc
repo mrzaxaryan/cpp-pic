@@ -6,8 +6,8 @@
 SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 {
 	SYSCALL_ENTRY result;
-	result.ssn            = SYSCALL_SSN_INVALID;
-	result.syscallAddress = nullptr;
+	result.Ssn            = SYSCALL_SSN_INVALID;
+	result.SyscallAddress = nullptr;
 
 	PVOID ntdllBase = GetModuleHandleFromPEB(Djb2::HashCompileTime(L"ntdll.dll"));
 	if (!ntdllBase)
@@ -60,11 +60,11 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 			{
 				if (funcAddr[k] == 0x0F && funcAddr[k + 1] == 0x05 && funcAddr[k + 2] == 0xC3)
 				{
-					result.syscallAddress = (PVOID)(funcAddr + k);
+					result.SyscallAddress = (PVOID)(funcAddr + k);
 					break;
 				}
 			}
-			if (!result.syscallAddress)
+			if (!result.SyscallAddress)
 				return result;
 		}
 #elif defined(ARCHITECTURE_AARCH64)
@@ -79,11 +79,11 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 			{
 				if ((instrs[k] & 0xFFE0001F) == 0xD4000001 && instrs[k + 1] == 0xD65F03C0)
 				{
-					result.syscallAddress = (PVOID)&instrs[k];
+					result.SyscallAddress = (PVOID)&instrs[k];
 					break;
 				}
 			}
-			if (!result.syscallAddress)
+			if (!result.SyscallAddress)
 				return result;
 		}
 #elif defined(ARCHITECTURE_I386)
@@ -113,20 +113,20 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 			PVOID rawAddr = *(PVOID*)(funcAddr + baOffset + 1);
 
 			if (funcAddr[baOffset + 5] == 0xFF && funcAddr[baOffset + 6] == 0x12)
-				result.syscallAddress = *(PVOID*)rawAddr;   // native: dereference pointer to KiFastSystemCall
+				result.SyscallAddress = *(PVOID*)rawAddr;   // native: dereference pointer to KiFastSystemCall
 			else if (funcAddr[baOffset + 5] == 0xFF && funcAddr[baOffset + 6] == 0xD2)
-				result.syscallAddress = rawAddr;            // WoW64: direct trampoline address
+				result.SyscallAddress = rawAddr;            // WoW64: direct trampoline address
 			else
 				return result;
 
 			// SSN is embedded directly in the stub — no counting needed
-			result.ssn = (INT32)(*(UINT32*)(funcAddr + 1));
+			result.Ssn = (INT32)(*(UINT32*)(funcAddr + 1));
 			return result;
 		}
 #endif
 
 		// Derive SSN by counting Zw* exports with lower RVA (x86_64/aarch64)
-		result.ssn = 0;
+		result.Ssn = 0;
 		for (UINT32 j = 0; j < numberOfNames; j++)
 		{
 			const CHAR* n = (const CHAR*)(base + nameRvaTable[j]);
@@ -138,7 +138,7 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 				continue;
 
 			if (rva < funcRva)
-				result.ssn++;
+				result.Ssn++;
 		}
 
 		return result;

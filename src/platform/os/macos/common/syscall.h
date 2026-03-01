@@ -1,12 +1,17 @@
+/**
+ * @file syscall.h
+ * @brief macOS syscall numbers and BSD type definitions.
+ *
+ * @details Defines macOS BSD syscall numbers (class 2, 0x2000000 prefix), POSIX/BSD
+ * constants, file descriptor flags, memory protection flags, socket options,
+ * errno values, and kernel structures (BsdDirent64, Timeval, Pollfd). Syscall
+ * numbers are shared across both x86_64 and AArch64 macOS architectures.
+ * Note that many constant values differ from Linux (e.g., O_CREAT, MAP_ANONYMOUS,
+ * SOL_SOCKET, EINPROGRESS).
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// =============================================================================
-// macOS BSD Syscall Numbers
-// =============================================================================
-// macOS uses BSD syscall class 2 (0x2000000 prefix) for all standard syscalls.
-// Both x86_64 and aarch64 share the same syscall numbers.
 
 // BSD syscall class prefix
 constexpr USIZE SYSCALL_CLASS_UNIX = 0x2000000;
@@ -146,32 +151,33 @@ constexpr SSIZE INVALID_FD = -1;
 // BSD Structures
 // =============================================================================
 
-// BSD dirent structure for directory iteration (getdirentries64)
-struct bsd_dirent64
+/// @brief BSD directory entry returned by the getdirentries64 syscall.
+struct BsdDirent64
 {
-	UINT64 d_ino;
-	UINT64 d_seekoff;
-	UINT16 d_reclen;
-	UINT16 d_namlen;
-	UINT8 d_type;
-	CHAR d_name[];
+	UINT64 Ino;    ///< Inode number
+	UINT64 Seekoff; ///< Seek offset for the next entry
+	UINT16 Reclen; ///< Total size of this record in bytes (including padding)
+	UINT16 Namlen; ///< Length of the filename in bytes (excluding null terminator)
+	UINT8 Type;    ///< File type (DT_REG, DT_DIR, DT_LNK, etc.)
+	CHAR Name[];   ///< Null-terminated filename
 };
 
-// Timeval structure (for gettimeofday and socket timeouts)
-// macOS kernel gettimeofday copies out user64_timeval for 64-bit processes:
-// both tv_sec and tv_usec are 8 bytes (int64_t), unlike the standard
-// userspace timeval where tv_usec is 4 bytes (__darwin_suseconds_t).
-// Since PIR calls the raw syscall (bypassing libc), we match the kernel layout.
-struct timeval
+/// @brief POSIX time value with microsecond precision, used for gettimeofday and socket timeouts.
+///
+/// @details The macOS kernel gettimeofday copies out user64_timeval for 64-bit processes:
+/// both Sec and Usec are 8 bytes (int64_t), unlike the standard userspace timeval where
+/// Usec is 4 bytes (__darwin_suseconds_t). Since PIR calls the raw syscall (bypassing
+/// libc), we match the kernel layout.
+struct Timeval
 {
-	SSIZE tv_sec;
-	SSIZE tv_usec;
+	SSIZE Sec;  ///< Seconds since the Unix epoch (1970-01-01T00:00:00Z)
+	SSIZE Usec; ///< Microseconds (0 to 999,999)
 };
 
-// pollfd structure (for poll)
-struct pollfd
+/// @brief File descriptor entry for the poll syscall.
+struct Pollfd
 {
-	INT32 fd;
-	INT16 events;
-	INT16 revents;
+	INT32 Fd;      ///< File descriptor to monitor
+	INT16 Events;  ///< Requested event bitmask (e.g., POLLOUT)
+	INT16 Revents; ///< Returned event bitmask filled by the kernel (e.g., POLLERR, POLLHUP)
 };

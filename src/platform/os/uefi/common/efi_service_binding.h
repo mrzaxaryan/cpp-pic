@@ -1,8 +1,14 @@
 /**
- * efi_service_binding.h - EFI Service Binding Protocol
+ * @file efi_service_binding.h
+ * @brief EFI Service Binding Protocol for child handle management.
  *
- * Defines the generic service binding protocol used to create
- * and destroy child handles for network protocols.
+ * @details Defines the EFI_SERVICE_BINDING_PROTOCOL, a generic protocol interface used by
+ *          network protocol drivers (TCP4, TCP6, UDP4, UDP6, etc.) to create and destroy
+ *          child handles. CreateChild produces a new child handle with the associated protocol
+ *          instance, and DestroyChild tears it down. This protocol is the foundation of the
+ *          UEFI network stack's per-connection handle model.
+ *
+ * @see UEFI Specification 2.10 — Section 10.6, EFI Service Binding Protocol
  */
 
 #pragma once

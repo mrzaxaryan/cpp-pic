@@ -1,6 +1,13 @@
+/**
+ * @file system.h
+ * @brief Linux System::Call dispatcher.
+ *
+ * @details Architecture-selection header that includes the correct arch-specific
+ * System::Call implementation for the current build target. Supported architectures
+ * are x86_64, i386, AArch64, and ARMv7-A.
+ */
 #pragma once
 
-// Linux syscall wrappers — architecture-specific implementations
 #if defined(ARCHITECTURE_X86_64)
 #include "platform/os/linux/common/system.x86_64.h"
 #elif defined(ARCHITECTURE_I386)

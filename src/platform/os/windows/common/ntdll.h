@@ -694,7 +694,7 @@ public:
 	 * @see ZwCurrentProcess
 	 *      https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/zwcurrentprocess
 	 */
-	static inline PVOID NtCurrentProcess() { return (PVOID)(USIZE)-1L; }
+	static FORCE_INLINE PVOID NtCurrentProcess() { return (PVOID)(USIZE)-1L; }
 
 	/**
 	 * @brief Returns a pseudo-handle to the current thread.
@@ -712,7 +712,7 @@ public:
 	 * @see ZwCurrentThread
 	 *      https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/zwcurrentthread
 	 */
-	static inline PVOID NtCurrentThread() { return (PVOID)(USIZE)-2L; }
+	static FORCE_INLINE PVOID NtCurrentThread() { return (PVOID)(USIZE)-2L; }
 
 	/**
 	 * @brief Creates a named pipe file object.

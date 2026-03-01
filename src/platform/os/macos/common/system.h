@@ -1,6 +1,13 @@
+/**
+ * @file system.h
+ * @brief macOS System::Call dispatcher.
+ *
+ * @details Architecture-selection header that includes the correct arch-specific
+ * System::Call implementation for the current build target. Supported macOS
+ * architectures are x86_64 and AArch64 (Apple Silicon).
+ */
 #pragma once
 
-// macOS BSD syscall wrappers — architecture-specific implementations
 #if defined(ARCHITECTURE_X86_64)
 #include "platform/os/macos/common/system.x86_64.h"
 #elif defined(ARCHITECTURE_AARCH64)

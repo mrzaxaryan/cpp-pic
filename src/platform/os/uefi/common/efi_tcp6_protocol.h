@@ -1,7 +1,17 @@
 /**
- * efi_tcp6_protocol.h - EFI TCP6 Protocol
+ * @file efi_tcp6_protocol.h
+ * @brief EFI TCP6 Protocol for IPv6 TCP networking.
  *
- * Defines the TCP6 protocol for IPv6 TCP networking in UEFI.
+ * @details Defines the EFI_TCP6_PROTOCOL interface and all supporting types for TCP/IPv6
+ *          communication in UEFI. Includes configuration structures (EFI_TCP6_CONFIG_DATA,
+ *          EFI_TCP6_ACCESS_POINT, EFI_TCP6_OPTION), connection state enumeration,
+ *          asynchronous I/O tokens (connection, listen, transmit, receive, close), fragment
+ *          data structures, and the protocol function table (GetModeData, Configure, Connect,
+ *          Accept, Transmit, Receive, Close, Cancel, Poll). Also defines protocol and service
+ *          binding GUIDs and the EFI_IPv6_ADDRESS type.
+ *
+ * @see UEFI Specification 2.10 — Section 28.2, EFI TCP6 Service Binding Protocol
+ * @see UEFI Specification 2.10 — Section 28.2.2, EFI TCP6 Protocol
  */
 
 #pragma once

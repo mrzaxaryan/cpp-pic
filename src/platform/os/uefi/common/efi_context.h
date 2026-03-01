@@ -1,9 +1,16 @@
 /**
- * efi_context.h - EFI Runtime Context
+ * @file efi_context.h
+ * @brief UEFI runtime context storage and access.
  *
- * Provides storage and access to EFI runtime context.
- * The ImageHandle and SystemTable are stored here after entry_point
- * receives them and can be accessed by all PLATFORM functions.
+ * @details Defines the EFI_CONTEXT structure that holds the EFI_HANDLE (ImageHandle),
+ *          EFI_SYSTEM_TABLE pointer, and network initialization state flags. The context
+ *          is populated at UEFI application entry and stored in a CPU register for fast
+ *          access throughout the platform layer. Architecture-specific context register
+ *          accessors (SetEfiContextRegister, GetEfiContext) are included via conditional
+ *          compilation for x86_64 (GS base MSR) and AArch64 (TPIDR_EL0).
+ *
+ * @see UEFI Specification 2.10 — Section 4.1, UEFI Image Entry Point
+ * @see UEFI Specification 2.10 — Section 4.3, EFI System Table
  */
 
 #pragma once

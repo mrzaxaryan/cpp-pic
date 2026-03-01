@@ -1,15 +1,20 @@
+/**
+ * @file syscall.h
+ * @brief Solaris syscall numbers and type definitions.
+ *
+ * @details Defines Solaris/illumos syscall numbers (sourced from illumos-gate
+ * usr/src/uts/common/sys/syscall.h), POSIX constants, file descriptor flags,
+ * memory protection flags, socket options, errno values, and kernel structures
+ * (SolarisDirent64, Timespec, Pollfd). Solaris uses the carry flag to indicate
+ * errors (like BSD/macOS), not negative return values (like Linux). Syscall
+ * numbers are the same across all supported architectures (x86_64, i386,
+ * AArch64), unlike Linux where they differ per architecture. Note that many
+ * constant values differ from Linux (e.g., O_CREAT, MAP_ANONYMOUS, AT_FDCWD,
+ * CLOCK_REALTIME, EINPROGRESS).
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// =============================================================================
-// Solaris/illumos Syscall Numbers
-// =============================================================================
-// Source: illumos-gate usr/src/uts/common/sys/syscall.h
-// Solaris uses the carry flag to indicate errors (like BSD/macOS),
-// NOT negative return values (like Linux).
-// Syscall numbers are the same across all architectures on Solaris
-// (unlike Linux where i386 and x86_64 have completely different numbers).
 
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_AARCH64)
 
@@ -177,27 +182,29 @@ constexpr SSIZE INVALID_FD = -1;
 // Solaris Structures
 // =============================================================================
 
-// Solaris dirent64 structure for directory iteration
-// Note: Solaris dirent64 has NO d_type field (unlike Linux)
-struct solaris_dirent64
+/// @brief Solaris directory entry returned by the getdents64 syscall.
+///
+/// @details Unlike Linux's LinuxDirent64, the Solaris variant has no Type field.
+/// File type must be determined through a separate stat call.
+struct SolarisDirent64
 {
-	UINT64 d_ino;
-	INT64 d_off;
-	UINT16 d_reclen;
-	CHAR d_name[];
+	UINT64 Ino;    ///< Inode number
+	INT64 Off;     ///< Offset to the next entry in the directory stream
+	UINT16 Reclen; ///< Total size of this record in bytes (including padding)
+	CHAR Name[];   ///< Null-terminated filename
 };
 
-// Timespec structure
-struct timespec
+/// @brief POSIX time specification with nanosecond precision.
+struct Timespec
 {
-	SSIZE tv_sec;
-	SSIZE tv_nsec;
+	SSIZE Sec;  ///< Seconds since the Unix epoch (1970-01-01T00:00:00Z)
+	SSIZE Nsec; ///< Nanoseconds (0 to 999,999,999)
 };
 
-// pollfd structure (for pollsys)
-struct pollfd
+/// @brief File descriptor entry for the pollsys syscall.
+struct Pollfd
 {
-	INT32 fd;
-	INT16 events;
-	INT16 revents;
+	INT32 Fd;      ///< File descriptor to monitor
+	INT16 Events;  ///< Requested event bitmask (e.g., POLLOUT)
+	INT16 Revents; ///< Returned event bitmask filled by the kernel (e.g., POLLERR, POLLHUP)
 };

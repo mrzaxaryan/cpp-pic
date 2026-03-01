@@ -1,3 +1,13 @@
+/**
+ * @file efi_context.aarch64.h
+ * @brief AArch64 UEFI context register access via TPIDR_EL0.
+ *
+ * @details Provides SetEfiContextRegister() and GetEfiContext() for storing and retrieving
+ *          the EFI_CONTEXT pointer in the TPIDR_EL0 (thread pointer) system register on
+ *          AArch64. This register is freely available in UEFI environments and provides a
+ *          fast, per-CPU storage location for the runtime context without requiring memory
+ *          indirection.
+ */
 #pragma once
 
 #include "core/types/primitives.h"

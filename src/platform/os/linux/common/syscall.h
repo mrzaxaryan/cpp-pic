@@ -1,10 +1,16 @@
+/**
+ * @file syscall.h
+ * @brief Linux syscall numbers and POSIX type definitions.
+ *
+ * @details Includes the architecture-specific syscall number header for the
+ * current build target and defines POSIX/Linux constants, file descriptor
+ * flags, memory protection flags, socket options, errno values, and kernel
+ * structures (dirent64, timespec, timeval, pollfd) shared across all
+ * Linux architectures.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
-
-// =============================================================================
-// Linux Syscall Numbers (Architecture-specific)
-// =============================================================================
 
 #if defined(ARCHITECTURE_X86_64)
 #include "platform/os/linux/common/syscall.x86_64.h"
@@ -109,34 +115,34 @@ constexpr SSIZE INVALID_FD = -1;
 // Linux Structures
 // =============================================================================
 
-// Linux dirent64 structure for directory iteration
-struct linux_dirent64
+/// @brief Linux directory entry returned by the getdents64 syscall.
+struct LinuxDirent64
 {
-	UINT64 d_ino;
-	INT64 d_off;
-	UINT16 d_reclen;
-	UINT8 d_type;
-	CHAR d_name[];
+	UINT64 Ino;    ///< Inode number
+	INT64 Off;     ///< Offset to the next entry in the directory stream
+	UINT16 Reclen; ///< Total size of this record in bytes (including padding)
+	UINT8 Type;    ///< File type (DT_REG, DT_DIR, DT_LNK, etc.)
+	CHAR Name[];   ///< Null-terminated filename
 };
 
-// Timespec structure
-struct timespec
+/// @brief POSIX time specification with nanosecond precision.
+struct Timespec
 {
-	SSIZE tv_sec;
-	SSIZE tv_nsec;
+	SSIZE Sec;  ///< Seconds since the Unix epoch (1970-01-01T00:00:00Z)
+	SSIZE Nsec; ///< Nanoseconds (0 to 999,999,999)
 };
 
-// Timeval structure (for socket timeouts)
-struct timeval
+/// @brief POSIX time value with microsecond precision, used for socket timeouts.
+struct Timeval
 {
-	SSIZE tv_sec;
-	SSIZE tv_usec;
+	SSIZE Sec;  ///< Seconds since the Unix epoch (1970-01-01T00:00:00Z)
+	SSIZE Usec; ///< Microseconds (0 to 999,999)
 };
 
-// pollfd structure (for poll/ppoll)
-struct pollfd
+/// @brief File descriptor entry for the poll/ppoll syscall.
+struct Pollfd
 {
-	INT32 fd;
-	INT16 events;
-	INT16 revents;
+	INT32 Fd;      ///< File descriptor to monitor
+	INT16 Events;  ///< Requested event bitmask (e.g., POLLOUT)
+	INT16 Revents; ///< Returned event bitmask filled by the kernel (e.g., POLLERR, POLLHUP)
 };

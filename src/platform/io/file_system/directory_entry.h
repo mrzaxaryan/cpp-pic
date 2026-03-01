@@ -10,20 +10,20 @@
 
 #include "core/types/primitives.h"
 
-#pragma pack(push, 1) // Ensure no padding in structures
-// Directory entry structure
+#pragma pack(push, 1)
+/// Directory entry structure returned by DirectoryIterator.
 struct DirectoryEntry
 {
-	WCHAR Name[256];         // File or directory name
-	UINT64 CreationTime;     // Filetime format
-	UINT64 LastModifiedTime; // Filetime format
-	UINT64 Size;             // Size in bytes
-	UINT32 Type;             // Store DriveType (2=Removable, 3=Fixed, etc.)
-	BOOL IsDirectory;        // Set if the entry is a directory
-	BOOL IsDrive;            // Set if the entry represents a root (e.g., C:\)
-	BOOL IsHidden;           // Flag for hidden files
-	BOOL IsSystem;           // Flag for system files
-	BOOL IsReadOnly;         // Flag for read-only files
+	WCHAR Name[256];         ///< File or directory name (null-terminated)
+	UINT64 CreationTime;     ///< Creation timestamp in platform filetime format
+	UINT64 LastModifiedTime; ///< Last modification timestamp in platform filetime format
+	UINT64 Size;             ///< File size in bytes
+	UINT32 Type;             ///< Drive type when IsDrive is set (2=Removable, 3=Fixed, etc.)
+	BOOL IsDirectory;        ///< TRUE if the entry is a directory
+	BOOL IsDrive;            ///< TRUE if the entry represents a drive root (e.g., C:\)
+	BOOL IsHidden;           ///< TRUE if the file has the hidden attribute
+	BOOL IsSystem;           ///< TRUE if the file has the system attribute
+	BOOL IsReadOnly;         ///< TRUE if the file has the read-only attribute
 };
 
 #pragma pack(pop)

@@ -1,18 +1,13 @@
 /**
- * Logger.h - Structured Logging with ANSI Color Support
+ * @file logger.h
+ * @brief Structured logging with ANSI color support
  *
- * Provides log level filtering and colored console output without CRT dependencies.
- * All logging is performed via direct console syscalls with ANSI escape sequences.
- *
- * DESIGN PATTERN:
- *   - Type-erased arguments eliminate per-argument-type template instantiations
- *   - ANSI colors: Green (Info), Red (Error), Yellow (Warning/Debug)
- *   - Zero-overhead when LogLevel = None (code eliminated at compile-time)
- *
- * USAGE:
- *   LOG_INFO("Server started on port %d", 8080);
- *   LOG_ERROR("Failed to allocate %d bytes", size);
- *   LOG_DEBUG("Variable value: %d", x);
+ * @details Provides log level filtering and colored console output without CRT
+ * dependencies. All logging is performed via direct console syscalls with ANSI
+ * escape sequences. Log levels include Info (green), Error (red), Warning
+ * (yellow), and Debug (yellow). Type-erased arguments eliminate per-argument-type
+ * template instantiations, and logging is zero-overhead when disabled at compile
+ * time via the ENABLE_LOGGING and ENABLE_DEBUG_LOGGING preprocessor flags.
  */
 
 #pragma once

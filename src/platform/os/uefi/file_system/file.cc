@@ -290,30 +290,35 @@ Result<UINT32, Error> File::Write(Span<const UINT8> buffer)
 	return Result<UINT32, Error>::Ok((UINT32)writeSize);
 }
 
-USIZE File::GetOffset() const
+Result<USIZE, Error> File::GetOffset() const
 {
 	if (fileHandle == nullptr)
-		return 0;
+		return Result<USIZE, Error>::Err(Error::Fs_SeekFailed);
 
 	EFI_FILE_PROTOCOL *fp = (EFI_FILE_PROTOCOL *)fileHandle;
 	UINT64 position = 0;
-	fp->GetPosition(fp, &position);
-	return (USIZE)position;
+	EFI_STATUS status = fp->GetPosition(fp, &position);
+	if ((SSIZE)status >= 0)
+		return Result<USIZE, Error>::Ok((USIZE)position);
+	return Result<USIZE, Error>::Err(Error::Uefi((UINT32)status), Error::Fs_SeekFailed);
 }
 
-VOID File::SetOffset(USIZE absoluteOffset)
+Result<void, Error> File::SetOffset(USIZE absoluteOffset)
 {
 	if (fileHandle == nullptr)
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 
 	EFI_FILE_PROTOCOL *fp = (EFI_FILE_PROTOCOL *)fileHandle;
-	fp->SetPosition(fp, absoluteOffset);
+	EFI_STATUS status = fp->SetPosition(fp, absoluteOffset);
+	if ((SSIZE)status >= 0)
+		return Result<void, Error>::Ok();
+	return Result<void, Error>::Err(Error::Uefi((UINT32)status), Error::Fs_SeekFailed);
 }
 
-VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
+Result<void, Error> File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 {
 	if (fileHandle == nullptr)
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 
 	EFI_FILE_PROTOCOL *fp = (EFI_FILE_PROTOCOL *)fileHandle;
 	UINT64 newPosition = 0;
@@ -326,7 +331,9 @@ VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 	case OffsetOrigin::Current:
 	{
 		UINT64 currentPos = 0;
-		fp->GetPosition(fp, &currentPos);
+		EFI_STATUS getStatus = fp->GetPosition(fp, &currentPos);
+		if ((SSIZE)getStatus < 0)
+			return Result<void, Error>::Err(Error::Uefi((UINT32)getStatus), Error::Fs_SeekFailed);
 		if (relativeAmount >= 0)
 			newPosition = currentPos + relativeAmount;
 		else
@@ -341,7 +348,10 @@ VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 		break;
 	}
 
-	fp->SetPosition(fp, newPosition);
+	EFI_STATUS status = fp->SetPosition(fp, newPosition);
+	if ((SSIZE)status >= 0)
+		return Result<void, Error>::Ok();
+	return Result<void, Error>::Err(Error::Uefi((UINT32)status), Error::Fs_SeekFailed);
 }
 
 File::File(File &&other) noexcept

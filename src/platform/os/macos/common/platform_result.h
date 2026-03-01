@@ -1,3 +1,12 @@
+/**
+ * @file platform_result.h
+ * @brief macOS syscall result to Result<T, Error> conversion.
+ *
+ * @details Provides the FromMacOS() helper that converts raw macOS BSD syscall
+ * return values into the PIR Result<T, Error> type. After the carry-flag
+ * negation in the System::Call wrappers, negative return values indicate
+ * errors; this function maps them to Result::Err with a POSIX error code.
+ */
 #pragma once
 
 #include "core/types/result.h"

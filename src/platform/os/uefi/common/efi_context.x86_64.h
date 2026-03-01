@@ -1,3 +1,12 @@
+/**
+ * @file efi_context.x86_64.h
+ * @brief x86_64 UEFI context register access via GS base MSR.
+ *
+ * @details Provides SetEfiContextRegister() and GetEfiContext() for storing and retrieving
+ *          the EFI_CONTEXT pointer in the IA32_GS_BASE MSR (0xC0000101) on x86_64. WRMSR/RDMSR
+ *          are used instead of WRGSBASE/RDGSBASE because UEFI firmware may not enable
+ *          CR4.FSGSBASE. Since UEFI applications run in ring 0, MSR access is available.
+ */
 #pragma once
 
 #include "core/types/primitives.h"

@@ -1,28 +1,17 @@
 /**
- * console.h - Position-Independent Console I/O Interface
+ * @file console.h
+ * @brief Console I/O abstraction
  *
- * Provides printf-style console output without depending on:
- *   - C Runtime Library (CRT)
- *   - Standard I/O functions (printf, puts, etc.)
- *   - Dynamic memory allocation (malloc/free)
- *   - .rdata section for format strings
+ * @details Provides position-independent, printf-style console output without
+ * depending on the C Runtime Library, standard I/O functions, dynamic memory
+ * allocation, or the .rdata section. The Console class abstracts platform
+ * differences, providing a unified interface for writing to stdout/stderr
+ * using direct syscalls.
  *
- * The Console class abstracts platform differences between Windows and Linux,
- * providing a unified interface for writing to the console using direct syscalls.
- *
- * DESIGN PHILOSOPHY:
- *   ✓ Zero dependencies - calls kernel directly
- *   ✓ Position independent - works at any memory address
- *   ✓ Stack-based - no heap allocations
- *   ✓ Type-safe - C++ templates for compile-time dispatch
- *
- * PLATFORM IMPLEMENTATION:
- *   Windows: Uses NtDll syscalls to WriteConsoleW/WriteFile
- *   Linux:   Uses write() syscall directly (syscall number 1 on x64)
- *
- * USAGE EXAMPLE:
- *   Console::Write<WCHAR>(L"Hello"_embed);
- *   Console::WriteFormatted<WCHAR>(L"Value: %d\n"_embed, 42);
+ * On Windows, output is performed via NtDll syscalls (WriteConsoleW/WriteFile).
+ * On Linux, output uses the write() syscall directly. All operations are
+ * stack-based with no heap allocations, and type-safe via C++ templates for
+ * compile-time character type dispatch (CHAR and WCHAR).
  */
 
 #pragma once

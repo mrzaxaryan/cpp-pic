@@ -162,27 +162,32 @@ Result<UINT32, Error> File::Write(Span<const UINT8> buffer)
 	return Result<UINT32, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_WriteFailed);
 }
 
-USIZE File::GetOffset() const
+Result<USIZE, Error> File::GetOffset() const
 {
 	if (!IsValid())
-		return 0;
+		return Result<USIZE, Error>::Err(Error::Fs_SeekFailed);
 
 	SSIZE result = System::Call(SYS_LSEEK, (USIZE)fileHandle, 0, SEEK_CUR);
-	return (result >= 0) ? (USIZE)result : 0;
+	if (result >= 0)
+		return Result<USIZE, Error>::Ok((USIZE)result);
+	return Result<USIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_SeekFailed);
 }
 
-VOID File::SetOffset(USIZE absoluteOffset)
+Result<void, Error> File::SetOffset(USIZE absoluteOffset)
 {
 	if (!IsValid())
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 
-	System::Call(SYS_LSEEK, (USIZE)fileHandle, absoluteOffset, SEEK_SET);
+	SSIZE result = System::Call(SYS_LSEEK, (USIZE)fileHandle, absoluteOffset, SEEK_SET);
+	if (result >= 0)
+		return Result<void, Error>::Ok();
+	return Result<void, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_SeekFailed);
 }
 
-VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
+Result<void, Error> File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 {
 	if (!IsValid())
-		return;
+		return Result<void, Error>::Err(Error::Fs_SeekFailed);
 
 	INT32 whence = SEEK_CUR;
 	if (origin == OffsetOrigin::Start)
@@ -190,5 +195,8 @@ VOID File::MoveOffset(SSIZE relativeAmount, OffsetOrigin origin)
 	else if (origin == OffsetOrigin::End)
 		whence = SEEK_END;
 
-	System::Call(SYS_LSEEK, (USIZE)fileHandle, (USIZE)relativeAmount, whence);
+	SSIZE result = System::Call(SYS_LSEEK, (USIZE)fileHandle, (USIZE)relativeAmount, whence);
+	if (result >= 0)
+		return Result<void, Error>::Ok();
+	return Result<void, Error>::Err(Error::Posix((UINT32)(-result)), Error::Fs_SeekFailed);
 }

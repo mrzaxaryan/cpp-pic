@@ -1,3 +1,13 @@
+/**
+ * @file directory_iterator.h
+ * @brief Directory iteration
+ *
+ * @details Provides an RAII iterator for enumerating directory entries across
+ * platforms. Created via the DirectoryIterator::Create() factory method, the
+ * iterator is move-only and stack-only. On Windows it uses FindFirstFile/
+ * FindNextFile or drive bitmask enumeration. On Linux, macOS, and Solaris it
+ * buffers entries via getdents64/getdirentries64 syscalls.
+ */
 #pragma once
 
 #include "core/types/primitives.h"
@@ -5,51 +15,60 @@
 #include "core/types/error.h"
 #include "core/types/result.h"
 #include "platform/io/file_system/directory_entry.h"
-
-// Class to iterate over directory entries
 class DirectoryIterator
 {
 private:
-	PVOID handle;                // Handle to the directory or drive bitmask
-	DirectoryEntry currentEntry; // Current directory entry
-	BOOL first;                  // Flag for first call to Next()
+	PVOID handle;                ///< Platform handle to the directory (or drive bitmask on Windows)
+	DirectoryEntry currentEntry; ///< Most recently read directory entry
+	BOOL first;                  ///< TRUE before the first call to Next()
 #ifdef PLATFORM_WINDOWS
-	BOOL isBitMaskMode = false; // Flag for bitmask mode on Windows
+	BOOL isBitMaskMode = false;  ///< TRUE when enumerating logical drives via bitmask on Windows
 #endif
 
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS)
-	// Linux/macOS/Solaris-specific (directory entry buffering for getdents64/getdirentries64)
-	CHAR buffer[1024];
-	INT32 nread;
-	INT32 bpos;
+	CHAR buffer[1024]; ///< Kernel entry buffer for getdents64/getdirentries64
+	INT32 nread;       ///< Number of bytes returned by the last syscall
+	INT32 bpos;        ///< Current byte position within the buffer
 #endif
 
-	// Private constructor for factory use only
+	/// Private constructor for factory use only.
 	DirectoryIterator();
 
 public:
 	~DirectoryIterator();
 
-	// Non-copyable
 	DirectoryIterator(const DirectoryIterator &) = delete;
 	DirectoryIterator &operator=(const DirectoryIterator &) = delete;
 
-	// Movable (transfer ownership of directory handle)
 	DirectoryIterator(DirectoryIterator &&other) noexcept;
 	DirectoryIterator &operator=(DirectoryIterator &&other) noexcept;
 
-	// Stack-only (placement new allowed for Result<>)
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 
-	// Factory — creates and initializes an iterator for the given path
+	/**
+	 * @brief Creates and initializes a directory iterator for the given path.
+	 * @param path Null-terminated wide string directory path.
+	 * @return Initialized iterator on success, or an Error on failure.
+	 */
 	[[nodiscard]] static Result<DirectoryIterator, Error> Create(PCWCHAR path);
 
-	// Move to next entry. Ok = has entry, Err = done or syscall failed.
+	/**
+	 * @brief Advances the iterator to the next directory entry.
+	 * @return Void on success (entry available via Get()), or an Error when no more entries remain or a syscall fails.
+	 */
 	[[nodiscard]] Result<void, Error> Next();
-	// Get the current directory entry
+
+	/**
+	 * @brief Returns a reference to the current directory entry.
+	 * @return The most recently read DirectoryEntry.
+	 */
 	const DirectoryEntry &Get() const { return currentEntry; }
-	// Check if the iterator is valid
+
+	/**
+	 * @brief Checks whether the iterator holds a valid directory handle.
+	 * @return TRUE if the iterator is valid, FALSE otherwise.
+	 */
 	BOOL IsValid() const;
 };

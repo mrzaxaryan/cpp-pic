@@ -96,17 +96,17 @@ Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd)
 			System::Call(SYS_CLOSE, (USIZE)socketFd);
 		}
 
-		// Build argv for execve
-		CHAR *argv[2];
-		argv[0] = const_cast<CHAR *>(cmd);
-		argv[1] = nullptr;
+		// Build argv/envp as USIZE arrays to pass through System::Call
+		// directly, avoiding const_cast (execve does not modify these)
+		USIZE argv[2];
+		argv[0] = (USIZE)cmd;
+		argv[1] = 0;
 
-		// Empty environment
-		CHAR *envp[1];
-		envp[0] = nullptr;
+		USIZE envp[1];
+		envp[0] = 0;
 
 		// Execute the command - this should not return
-		(void)Execve(cmd, argv, envp);
+		System::Call(SYS_EXECVE, (USIZE)cmd, (USIZE)argv, (USIZE)envp);
 
 		// If execve returns, something went wrong - exit child
 		System::Call(SYS_EXIT, 1);

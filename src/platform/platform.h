@@ -1,8 +1,12 @@
 /**
- * platform.h - Platform Abstraction Layer
+ * @file platform.h
+ * @brief Platform Abstraction Layer aggregate header
  *
- * OS/hardware abstraction.
- * Depends on CORE.
+ * @details Includes all platform-layer headers for OS and hardware abstraction.
+ * This is the single entry point for consumers of the PLATFORM layer, pulling in
+ * memory allocation, system utilities, I/O services, networking, and process
+ * management. Platform-specific headers (UEFI, Windows, Linux, macOS, Solaris)
+ * are conditionally included based on the target platform. Depends on CORE.
  */
 
 #pragma once

@@ -1,8 +1,16 @@
 /**
- * efi_types.h - Core UEFI Type Definitions
+ * @file efi_types.h
+ * @brief Core UEFI type definitions and calling conventions.
  *
- * Defines fundamental UEFI types and calling conventions.
- * Compatible with UEFI 2.x specification.
+ * @details Defines the fundamental UEFI data types (EFI_STATUS, EFI_HANDLE, EFI_GUID, CHAR16),
+ *          memory type enumerations, status code macros, task priority levels, and the
+ *          EFI_TABLE_HEADER common to all UEFI system tables. The EFIAPI calling convention
+ *          macro is set per-architecture: Microsoft x64 ABI on x86_64, standard AAPCS64 on AArch64.
+ *
+ * @see UEFI Specification 2.10 — Section 2.3, Calling Conventions
+ * @see UEFI Specification 2.10 — Section 2.3.1, Data Types
+ * @see UEFI Specification 2.10 — Section 7.2, Memory Allocation Services
+ * @see UEFI Specification 2.10 — Appendix D, Status Codes
  */
 
 #pragma once

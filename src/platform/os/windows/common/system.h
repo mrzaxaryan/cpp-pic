@@ -43,13 +43,13 @@
  * to a syscall/sysenter instruction within ntdll. On ARM64 the syscall
  * address points to the ntdll stub itself (SVC #N; RET).
  *
- * If resolution fails, ssn is set to SYSCALL_SSN_INVALID and syscallAddress
+ * If resolution fails, Ssn is set to SYSCALL_SSN_INVALID and SyscallAddress
  * is nullptr.
  */
 typedef struct SYSCALL_ENTRY
 {
-	INT32 ssn;           ///< System Service Number (index into the SSDT), or SYSCALL_SSN_INVALID
-	PVOID syscallAddress; ///< Address of the syscall/sysenter gadget in ntdll, or the ntdll stub on ARM64
+	INT32 Ssn;           ///< System Service Number (index into the SSDT), or SYSCALL_SSN_INVALID
+	PVOID SyscallAddress; ///< Address of the syscall/sysenter gadget in ntdll, or the ntdll stub on ARM64
 } SYSCALL_ENTRY;
 
 /**
@@ -61,7 +61,7 @@ typedef struct SYSCALL_ENTRY
  *
  * Usage pattern:
  * 1. Resolve: `auto entry = ResolveSyscall("ZwFunctionName");`
- * 2. Validate: Check `entry.ssn != SYSCALL_SSN_INVALID`
+ * 2. Validate: Check `entry.Ssn != SYSCALL_SSN_INVALID`
  * 3. Dispatch: `NTSTATUS status = System::Call(entry, arg1, arg2, ...);`
  *
  * @see Using Nt and Zw Versions of the Native System Services Routines

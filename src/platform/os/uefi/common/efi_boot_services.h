@@ -1,8 +1,19 @@
 /**
- * efi_boot_services.h - EFI Boot Services Table
+ * @file efi_boot_services.h
+ * @brief EFI Boot Services function table.
  *
- * Defines the Boot Services table for memory allocation,
- * protocol handling, and application exit.
+ * @details Defines the EFI_BOOT_SERVICES table and all associated function pointer typedefs.
+ *          Boot Services provide memory allocation (AllocatePages, AllocatePool, FreePages, FreePool),
+ *          event and timer management, protocol handler services (HandleProtocol, OpenProtocol,
+ *          LocateProtocol, LocateHandleBuffer), image loading/starting, and miscellaneous utilities
+ *          (Stall, SetWatchdogTimer, CopyMem, SetMem). Boot Services are available only before
+ *          ExitBootServices() is called.
+ *
+ * @see UEFI Specification 2.10 — Section 4.4, EFI Boot Services Table
+ * @see UEFI Specification 2.10 — Section 7.1, Event, Timer, and Task Priority Services
+ * @see UEFI Specification 2.10 — Section 7.2, Memory Allocation Services
+ * @see UEFI Specification 2.10 — Section 7.3, Protocol Handler Services
+ * @see UEFI Specification 2.10 — Section 7.4, Image Services
  */
 
 #pragma once

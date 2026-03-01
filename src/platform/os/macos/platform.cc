@@ -11,7 +11,7 @@
 // would otherwise hide the symbol, preventing the linker from resolving the
 // default-visibility initial-undefine reference. The stub is never called
 // because -fvisibility=hidden eliminates all lazy-binding stubs.
-extern "C" __attribute__((visibility("default"))) void dyld_stub_binder() {}
+extern "C" __attribute__((visibility("default"))) VOID dyld_stub_binder() {}
 #endif
 
 // macOS process exit implementation

@@ -70,10 +70,10 @@ Result<void, Error> Socket::Open()
 	if (result != 0)
 	{
 		// Connect in progress — wait with 5-second timeout
-		struct pollfd pfd;
-		pfd.fd = (INT32)sockfd;
-		pfd.events = POLLOUT;
-		pfd.revents = 0;
+		Pollfd pfd;
+		pfd.Fd = (INT32)sockfd;
+		pfd.Events = POLLOUT;
+		pfd.Revents = 0;
 
 		// poll timeout is in milliseconds
 		SSIZE pollResult = System::Call(SYS_POLL, (USIZE)&pfd, 1, 5000);

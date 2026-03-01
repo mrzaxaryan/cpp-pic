@@ -1,3 +1,13 @@
+/**
+ * @file platform_result.h
+ * @brief Solaris syscall result to Result<T, Error> conversion.
+ *
+ * @details Provides the FromSolaris() helper that converts raw Solaris syscall
+ * return values into the PIR Result<T, Error> type. The carry-flag negation
+ * happens in the System::Call wrappers, so by the time values reach this
+ * function, negative return values indicate errors -- matching the Linux/macOS
+ * convention used throughout PIR.
+ */
 #pragma once
 
 #include "core/types/result.h"

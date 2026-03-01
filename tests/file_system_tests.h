@@ -404,26 +404,44 @@ private:
 			}
 
 			// Test SetOffset
-			file.SetOffset(10);
-			if (file.GetOffset() != 10)
+			auto setResult = file.SetOffset(10);
+			if (!setResult)
 			{
-				LOG_ERROR("SetOffset(10): GetOffset() returned %u", (UINT32)file.GetOffset());
+				LOG_ERROR("SetOffset(10) failed (error: %e)", setResult.Error());
+				return false;
+			}
+			auto getResult = file.GetOffset();
+			if (!getResult || getResult.Value() != 10)
+			{
+				LOG_ERROR("SetOffset(10): GetOffset() returned %u", getResult ? (UINT32)getResult.Value() : 0);
 				return false;
 			}
 
 			// Test MoveOffset from current position
-			file.MoveOffset(5, OffsetOrigin::Current);
-			if (file.GetOffset() != 15)
+			auto moveResult = file.MoveOffset(5, OffsetOrigin::Current);
+			if (!moveResult)
 			{
-				LOG_ERROR("MoveOffset(5, Current): GetOffset() returned %u", (UINT32)file.GetOffset());
+				LOG_ERROR("MoveOffset(5, Current) failed (error: %e)", moveResult.Error());
+				return false;
+			}
+			getResult = file.GetOffset();
+			if (!getResult || getResult.Value() != 15)
+			{
+				LOG_ERROR("MoveOffset(5, Current): GetOffset() returned %u", getResult ? (UINT32)getResult.Value() : 0);
 				return false;
 			}
 
 			// Test MoveOffset from start
-			file.MoveOffset(0, OffsetOrigin::Start);
-			if (file.GetOffset() != 0)
+			moveResult = file.MoveOffset(0, OffsetOrigin::Start);
+			if (!moveResult)
 			{
-				LOG_ERROR("MoveOffset(0, Start): GetOffset() returned %u", (UINT32)file.GetOffset());
+				LOG_ERROR("MoveOffset(0, Start) failed (error: %e)", moveResult.Error());
+				return false;
+			}
+			getResult = file.GetOffset();
+			if (!getResult || getResult.Value() != 0)
+			{
+				LOG_ERROR("MoveOffset(0, Start): GetOffset() returned %u", getResult ? (UINT32)getResult.Value() : 0);
 				return false;
 			}
 

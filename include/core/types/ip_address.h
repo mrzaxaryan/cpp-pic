@@ -56,9 +56,9 @@ enum class IPVersion : UINT8
  * @par Example Usage:
  * @code
  * // Create IPv4 address from string
- * IPAddress addr = IPAddress::FromString("192.168.1.1");
- * if (addr.IsValid() && addr.IsIPv4()) {
- *     UINT32 ip = addr.ToIPv4();  // Network byte order
+ * auto addrResult = IPAddress::FromString("192.168.1.1");
+ * if (addrResult && addrResult.Value().IsIPv4()) {
+ *     UINT32 ip = addrResult.Value().ToIPv4();  // Network byte order
  * }
  *
  * // Create IPv4 from raw value
@@ -128,9 +128,9 @@ public:
 	/**
 	 * @brief Parse IP address from string
 	 * @param ipString String representation (e.g., "192.168.1.1" or "::1")
-	 * @return IPAddress instance (Invalid if parsing fails)
+	 * @return Ok(IPAddress) on success, Err(IpAddress_ParseFailed) on failure
 	 */
-	static IPAddress FromString(PCCHAR ipString);
+	[[nodiscard]] static Result<IPAddress, Error> FromString(PCCHAR ipString);
 
 	/**
 	 * @brief Get loopback address (127.0.0.1 for IPv4, ::1 for IPv6)

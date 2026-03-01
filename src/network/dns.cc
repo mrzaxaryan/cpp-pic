@@ -197,7 +197,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	// type(2) + class(2) + ttl(4) + rdlength(2)
 	constexpr INT32 FIXED_FIELDS_SIZE = 10;
 
-	BinaryReader reader((PVOID)data.Data(), data.Size());
+	BinaryReader reader(data);
 
 	while (cnt > 0)
 	{
@@ -266,7 +266,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  */
 [[nodiscard]] static Result<INT32, Error> ParseQuery(Span<const UINT8> data, INT32 cnt)
 {
-	BinaryReader reader((PVOID)data.Data(), data.Size());
+	BinaryReader reader(data);
 
 	while (cnt > 0)
 	{
@@ -321,7 +321,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 		return Result<void, Error>::Err(Error::Dns_ParseFailed);
 	}
 
-	BinaryReader reader((PVOID)data.Data(), data.Size());
+	BinaryReader reader(data);
 
 	// Skip 2-byte transaction ID (RFC 1035 Section 4.1.1)
 	reader.Skip(2);

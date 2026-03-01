@@ -180,13 +180,14 @@ private:
 		LOG_INFO("Test: IP Address Conversion");
 
 		auto ipStr = "1.1.1.1"_embed;
-		IPAddress convertedIp = IPAddress::FromString((PCCHAR)ipStr);
+		auto convertedResult = IPAddress::FromString((PCCHAR)ipStr);
 
-		if (!convertedIp.IsValid())
+		if (!convertedResult)
 		{
 			LOG_ERROR("IP conversion failed for valid IP");
 			return false;
 		}
+		IPAddress convertedIp = convertedResult.Value();
 
 		if (convertedIp.ToIPv4() != TEST_SERVER_IP)
 		{
@@ -198,8 +199,8 @@ private:
 
 		LOG_INFO("  [D1] Testing invalid IP: 256.1.1.1");
 		auto invalidIp1 = "256.1.1.1"_embed;
-		IPAddress result1 = IPAddress::FromString((PCCHAR)invalidIp1);
-		if (result1.IsValid())
+		auto parseResult1 = IPAddress::FromString((PCCHAR)invalidIp1);
+		if (parseResult1)
 		{
 			LOG_ERROR("Failed to reject invalid IP: %s", (PCCHAR)invalidIp1);
 			return false;
@@ -207,8 +208,8 @@ private:
 
 		LOG_INFO("  [D2] Testing invalid IP: 192.168.1");
 		auto invalidIp2 = "192.168.1"_embed;
-		IPAddress result2 = IPAddress::FromString((PCCHAR)invalidIp2);
-		if (result2.IsValid())
+		auto parseResult2 = IPAddress::FromString((PCCHAR)invalidIp2);
+		if (parseResult2)
 		{
 			LOG_ERROR("Failed to reject invalid IP: %s", (PCCHAR)invalidIp2);
 			return false;
@@ -216,8 +217,8 @@ private:
 
 		LOG_INFO("  [D3] Testing invalid IP: abc.def.ghi.jkl");
 		auto invalidIp3 = "abc.def.ghi.jkl"_embed;
-		IPAddress result3 = IPAddress::FromString((PCCHAR)invalidIp3);
-		if (result3.IsValid())
+		auto parseResult3 = IPAddress::FromString((PCCHAR)invalidIp3);
+		if (parseResult3)
 		{
 			LOG_ERROR("Failed to reject invalid IP: %s", (PCCHAR)invalidIp3);
 			return false;
@@ -226,11 +227,17 @@ private:
 		LOG_INFO("  [D4] Testing IPv6: 2001:db8::1");
 		auto ipv6Str = "2001:db8::1"_embed;
 		LOG_INFO("  [D5] Calling FromString");
-		IPAddress ipv6Address = IPAddress::FromString((PCCHAR)ipv6Str);
-		LOG_INFO("  [D6] FromString done: valid=%d ipv6=%d", (INT32)ipv6Address.IsValid(), (INT32)ipv6Address.IsIPv6());
-		if (!ipv6Address.IsValid() || !ipv6Address.IsIPv6())
+		auto ipv6Result = IPAddress::FromString((PCCHAR)ipv6Str);
+		LOG_INFO("  [D6] FromString done: ok=%d", (INT32)(BOOL)ipv6Result);
+		if (!ipv6Result)
 		{
 			LOG_ERROR("IPv6 conversion failed for valid IPv6");
+			return false;
+		}
+		IPAddress ipv6Address = ipv6Result.Value();
+		if (!ipv6Address.IsIPv6())
+		{
+			LOG_ERROR("IPv6 conversion returned non-IPv6 address");
 			return false;
 		}
 
@@ -246,13 +253,14 @@ private:
 		LOG_INFO("Test: IPv6 Socket Connection (HTTP:80)");
 
 		auto ipv6Str = "2606:4700:4700::1111"_embed;
-		IPAddress ipv6Address = IPAddress::FromString((PCCHAR)ipv6Str);
+		auto ipv6Result = IPAddress::FromString((PCCHAR)ipv6Str);
 
-		if (!ipv6Address.IsValid() || !ipv6Address.IsIPv6())
+		if (!ipv6Result || !ipv6Result.Value().IsIPv6())
 		{
 			LOG_ERROR("Failed to parse IPv6 address: %s", (PCCHAR)ipv6Str);
 			return false;
 		}
+		IPAddress ipv6Address = ipv6Result.Value();
 
 		auto createResult = Socket::Create(ipv6Address, 80);
 		if (!createResult)

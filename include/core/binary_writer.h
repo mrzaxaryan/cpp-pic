@@ -88,6 +88,15 @@ public:
 	{
 	}
 
+	/**
+	 * @brief Construct a writer from a mutable byte span starting at offset zero
+	 * @param data Span of bytes to write into
+	 */
+	constexpr BinaryWriter(Span<UINT8> data)
+		: address((PVOID)data.Data()), offset(0), maxSize(data.Size())
+	{
+	}
+
 	/// @}
 	/// @name Write Operations
 	/// @{

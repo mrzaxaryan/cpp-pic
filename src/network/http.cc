@@ -28,7 +28,10 @@ Result<HttpClient, Error> HttpClient::Create(PCCHAR url, PCCHAR ipAddress)
     if (!parseResult)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
 
-    IPAddress ip = IPAddress::FromString(ipAddress);
+    auto ipResult = IPAddress::FromString(ipAddress);
+    if (!ipResult)
+        return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
+    IPAddress ip = ipResult.Value();
     auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
     if (!tlsResult)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);

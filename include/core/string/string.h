@@ -234,17 +234,6 @@ public:
 	/// @{
 
 	/**
-	 * @brief Copy string (no bounds checking)
-	 * @tparam TChar Character type (CHAR or WCHAR)
-	 * @param dest Destination buffer
-	 * @param src Source string
-	 * @return Pointer to destination buffer
-	 * @warning No bounds checking - use safe version with buffer size
-	 */
-	template <TCHAR TChar>
-	static constexpr TChar *Copy(TChar *dest, const TChar *src) noexcept;
-
-	/**
 	 * @brief Safe string copy with explicit buffer size
 	 * @tparam TChar Character type (CHAR or WCHAR)
 	 * @param dest Destination buffer span
@@ -662,19 +651,6 @@ constexpr SSIZE String::IndexOf(Span<const TChar> str, Span<const TChar> sub) no
 // ============================================================================
 // STRING COPY IMPLEMENTATIONS
 // ============================================================================
-
-template <TCHAR TChar>
-constexpr TChar *String::Copy(TChar *dest, const TChar *src) noexcept
-{
-	SSIZE i = 0;
-	while (src[i] != (TChar)'\0')
-	{
-		dest[i] = src[i];
-		i++;
-	}
-	dest[i] = (TChar)'\0';
-	return dest;
-}
 
 template <TCHAR TChar>
 constexpr USIZE String::Copy(Span<TChar> dest, Span<const TChar> src) noexcept

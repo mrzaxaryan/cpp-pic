@@ -276,8 +276,9 @@ public:
  *
  * @par Example Usage:
  * @code
- * auto ip = IPAddress::FromString("93.184.216.34");
- * auto createResult = Socket::Create(ip, 443);
+ * auto ipResult = IPAddress::FromString("93.184.216.34");
+ * if (!ipResult) return;
+ * auto createResult = Socket::Create(ipResult.Value(), 443);
  * if (!createResult) return;
  * Socket &sock = createResult.Value();
  *

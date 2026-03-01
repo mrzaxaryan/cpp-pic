@@ -88,6 +88,15 @@ public:
 	{
 	}
 
+	/**
+	 * @brief Construct a reader from a byte span starting at offset zero
+	 * @param data Span of bytes to read from
+	 */
+	constexpr BinaryReader(Span<const UINT8> data)
+		: address((PVOID)data.Data()), offset(0), maxSize(data.Size())
+	{
+	}
+
 	/// @}
 	/// @name Read Operations
 	/// @{

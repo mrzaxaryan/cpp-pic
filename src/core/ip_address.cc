@@ -69,11 +69,11 @@ IPAddress IPAddress::Invalid()
 }
 
 // Convert string to IPAddress (supports both IPv4 and IPv6)
-IPAddress IPAddress::FromString(PCCHAR ipString)
+Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 {
 	if (ipString == nullptr)
 	{
-		return Invalid();
+		return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 	}
 
 	// Check if it's IPv6 (contains ':')
@@ -156,7 +156,7 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
 			else
 			{
 				// Invalid character
-				return Invalid();
+				return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 			}
 		}
 
@@ -190,7 +190,7 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
 			}
 		}
 
-		return IPAddress(ipv6);
+		return Result<IPAddress, Error>::Ok(IPAddress(ipv6));
 	}
 	else
 	{
@@ -226,14 +226,14 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
 				{
 					if (currentOctetIndex > 2)
 					{
-						return Invalid();
+						return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 					}
 					currentOctet[currentOctetIndex] = *currentByte;
 					currentOctetIndex++;
 				}
 				else
 				{
-					return Invalid();
+					return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 				}
 			}
 
@@ -241,18 +241,18 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
 			{
 				if (currentOctetIndex == 0)
 				{
-					return Invalid();
+					return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 				}
 
 				octet = String::ParseInt64(currentOctet);
 				if (octet > 255)
 				{
-					return Invalid();
+					return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 				}
 
 				if (completedOctetCount >= 4)
 				{
-					return Invalid();
+					return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 				}
 
 				octets[completedOctetCount] = (UINT8)octet;
@@ -272,11 +272,11 @@ IPAddress IPAddress::FromString(PCCHAR ipString)
 
 		if (completedOctetCount != 4)
 		{
-			return Invalid();
+			return Result<IPAddress, Error>::Err(Error::IpAddress_ParseFailed);
 		}
 
 		Memory::Copy((PVOID)&addr, octets, 4);
-		return IPAddress(addr);
+		return Result<IPAddress, Error>::Ok(IPAddress(addr));
 	}
 }
 

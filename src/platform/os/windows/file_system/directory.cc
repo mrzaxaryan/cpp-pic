@@ -1,4 +1,4 @@
-#include "platform/io/file_system/directory.h"
+#include "platform/io/fs/directory.h"
 #include "platform/io/logger.h"
 #include "core/types/primitives.h"
 #include "core/memory/memory.h"

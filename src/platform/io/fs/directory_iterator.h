@@ -14,7 +14,7 @@
 #include "core/types/span.h"
 #include "core/types/error.h"
 #include "core/types/result.h"
-#include "platform/io/file_system/directory_entry.h"
+#include "platform/io/fs/directory_entry.h"
 class DirectoryIterator
 {
 private:

@@ -16,7 +16,7 @@
             "${workspaceFolder}/src/core/types/embedded",
             "${workspaceFolder}/src/platform",
             "${workspaceFolder}/src/platform/io",
-            "${workspaceFolder}/src/platform/io/file_system",
+            "${workspaceFolder}/src/platform/io/fs",
             "${workspaceFolder}/src/platform/memory",
             "${workspaceFolder}/src/platform/network",
             "${workspaceFolder}/src/platform/os",

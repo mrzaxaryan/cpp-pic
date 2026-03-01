@@ -4,8 +4,8 @@
  * Implements File class operations using EFI_FILE_PROTOCOL.
  */
 
-#include "platform/io/file_system/file.h"
-#include "platform/os/uefi/file_system/uefi_fs_helpers.h"
+#include "platform/io/fs/file.h"
+#include "platform/os/uefi/fs/uefi_fs_helpers.h"
 #include "core/memory/memory.h"
 
 // EFI_FILE_INFO_ID {09576E92-6D3F-11D2-8E39-00A0C969723B}

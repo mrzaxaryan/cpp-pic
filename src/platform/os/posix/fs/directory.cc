@@ -1,5 +1,5 @@
-#include "platform/io/file_system/directory.h"
-#include "platform/os/posix/file_system/posix_path.h"
+#include "platform/io/fs/directory.h"
+#include "platform/os/posix/fs/posix_path.h"
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 #if defined(PLATFORM_LINUX)

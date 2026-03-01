@@ -1,5 +1,5 @@
-#include "platform/io/file_system/directory_iterator.h"
-#include "platform/os/posix/file_system/posix_path.h"
+#include "platform/io/fs/directory_iterator.h"
+#include "platform/os/posix/fs/posix_path.h"
 #include "core/memory/memory.h"
 #if defined(PLATFORM_LINUX)
 #include "platform/os/linux/common/syscall.h"

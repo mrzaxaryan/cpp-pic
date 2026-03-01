@@ -1,5 +1,5 @@
-#include "platform/os/uefi/file_system/uefi_fs_helpers.h"
-#include "platform/io/file_system/path.h"
+#include "platform/os/uefi/fs/uefi_fs_helpers.h"
+#include "platform/io/fs/path.h"
 #include "core/memory/memory.h"
 
 // EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID {964E5B22-6459-11D2-8E39-00A0C969723B}

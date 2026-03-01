@@ -234,6 +234,7 @@ Platform-specific OS API wrappers (NTDLL, Kernel32) **must** include Doxygen doc
 - **WDK-documented functions** — most Zw* syscall wrappers are in the WDK DDI reference
 - **Partially documented functions** — some are only in Win32 DevNotes or under the Nt prefix; link to the closest available page
 - **Undocumented functions** (e.g., ZwCreateUserProcess, ZwSetInformationObject) — add `@note This function is undocumented by Microsoft.` and link to the closest documented Win32 equivalent
+- **Requirements** — every function must include a `@par Requirements` block listing the minimum supported Windows client and server versions (e.g., `Minimum supported client: Windows XP`, `Minimum supported server: Windows Server 2003`). Place it after `@return` and before `@see`/`@note`
 
 **When Microsoft Learn documentation is required:**
 - All NTDLL Zw*/Nt* syscall wrappers

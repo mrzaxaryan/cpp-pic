@@ -11,10 +11,6 @@
   "windows_x86_64_bin": "92.1 KB",
   "macos_x86_64_exe": "107.6 KB",
   "macos_x86_64_bin": "91.9 KB",
-  "solaris_i386_exe": "94.6 KB",
-  "solaris_i386_bin": "94.1 KB",
-  "solaris_aarch64_exe": "77.8 KB",
-  "solaris_aarch64_bin": "77.1 KB",
   "uefi_aarch64_exe": "90.5 KB",
   "uefi_aarch64_bin": "88.9 KB",
   "linux_x86_64_exe": "92.5 KB",
@@ -23,8 +19,6 @@
   "macos_aarch64_bin": "75.4 KB",
   "linux_aarch64_exe": "78.0 KB",
   "linux_aarch64_bin": "76.6 KB",
-  "solaris_x86_64_exe": "92.1 KB",
-  "solaris_x86_64_bin": "91.5 KB",
   "windows_i386_exe": "98.5 KB",
   "windows_i386_bin": "97.8 KB"
 }

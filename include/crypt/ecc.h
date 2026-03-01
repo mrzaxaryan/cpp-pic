@@ -45,6 +45,9 @@
 /** @brief Maximum 64-bit words needed for largest supported curve (P-384 = 6 words) */
 #define MAX_NUM_ECC_DIGITS (384 / 64)
 
+/** @brief Double-width product array size for multiplication results */
+#define ECC_PRODUCT_DIGITS (2 * MAX_NUM_ECC_DIGITS)
+
 /**
  * @struct UINT128_
  * @brief 128-bit unsigned integer for intermediate multiplication results
@@ -149,41 +152,41 @@ private:
     UINT128_ Add128_128(UINT128_ a, UINT128_ b);
 
     /** @brief Full multiplication: pResult = pLeft * pRight */
-    VOID VliMult(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight);
+    VOID VliMult(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Squaring: pResult = pLeft^2 */
-    VOID VliSquare(UINT64 *pResult, const UINT64 *pLeft);
+    VOID VliSquare(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS]);
 
     // =========================================================================
     // Modular Arithmetic
     // =========================================================================
 
     /** @brief Modular addition: pResult = (pLeft + pRight) mod pMod */
-    VOID VliModAdd(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight, const UINT64 *pMod);
+    VOID VliModAdd(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS], const UINT64 (&pMod)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Modular subtraction: pResult = (pLeft - pRight) mod pMod */
-    VOID VliModSub(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight, const UINT64 *pMod);
+    VOID VliModSub(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS], const UINT64 (&pMod)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Fast reduction mod p for 256-bit curves (P-256) */
-    VOID VliMmodFast256(UINT64 *pResult, const UINT64 *pProduct);
+    VOID VliMmodFast256(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pProduct)[ECC_PRODUCT_DIGITS]);
 
     /** @brief Helper for P-384 reduction */
-    VOID OmegaMult384(UINT64 *pResult, const UINT64 *pRight);
+    VOID OmegaMult384(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 *pRight);
 
     /** @brief Fast reduction mod p for 384-bit curves (P-384) */
-    VOID VliMmodFast384(UINT64 *pResult, UINT64 *pProduct);
+    VOID VliMmodFast384(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], UINT64 (&pProduct)[ECC_PRODUCT_DIGITS]);
 
     /** @brief Dispatches to curve-specific fast reduction */
-    VOID MmodFast(UINT64 *pResult, UINT64 *pProduct);
+    VOID MmodFast(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], UINT64 (&pProduct)[ECC_PRODUCT_DIGITS]);
 
     /** @brief Fast modular multiplication using curve-specific reduction */
-    VOID VliModMultFast(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight);
+    VOID VliModMultFast(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Fast modular squaring using curve-specific reduction */
-    VOID VliModSquareFast(UINT64 *pResult, const UINT64 *pLeft);
+    VOID VliModSquareFast(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Modular inverse: pResult = pInput^(-1) mod pMod */
-    VOID VliModInv(UINT64 *pResult, const UINT64 *pInput, const UINT64 *pMod);
+    VOID VliModInv(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pInput)[MAX_NUM_ECC_DIGITS], const UINT64 (&pMod)[MAX_NUM_ECC_DIGITS]);
 
     // =========================================================================
     // Elliptic Curve Point Operations

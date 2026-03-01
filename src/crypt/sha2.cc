@@ -171,8 +171,9 @@ SHABase<Traits>::SHABase()
 }
 
 template<typename Traits>
-VOID SHABase<Traits>::Transform(SHABase &ctx, const UINT8 *message, UINT64 block_nb)
+VOID SHABase<Traits>::Transform(SHABase &ctx, Span<const UINT8> message)
 {
+    UINT64 block_nb = message.Size() >> Traits::BLOCK_SHIFT;
     Word w[Traits::ROUND_COUNT];
     Word wv[8];
     Word k[Traits::ROUND_COUNT];
@@ -185,7 +186,7 @@ VOID SHABase<Traits>::Transform(SHABase &ctx, const UINT8 *message, UINT64 block
 
     for (i = 0; i < block_nb; i++)
     {
-        sub_block = message + (i << Traits::BLOCK_SHIFT);
+        sub_block = message.Data() + (i << Traits::BLOCK_SHIFT);
 
         for (j = 0; j < 16; j++)
         {
@@ -247,8 +248,8 @@ VOID SHABase<Traits>::Update(Span<const UINT8> message)
 
     shifted_message = message.Data() + rem_len;
 
-    SHABase<Traits>::Transform(*this, this->block, 1);
-    SHABase<Traits>::Transform(*this, shifted_message, block_nb);
+    SHABase<Traits>::Transform(*this, Span<const UINT8>(this->block, Traits::BLOCK_SIZE));
+    SHABase<Traits>::Transform(*this, Span<const UINT8>(shifted_message, block_nb << Traits::BLOCK_SHIFT));
 
     rem_len = new_len % Traits::BLOCK_SIZE;
 
@@ -290,7 +291,7 @@ VOID SHABase<Traits>::Final(Span<UINT8, Traits::DIGEST_SIZE> digest)
     len_ptr[1] = (UINT8)(len_b >> 48);
     len_ptr[0] = (UINT8)(len_b >> 56);
 
-    SHABase<Traits>::Transform(*this, this->block, block_nb);
+    SHABase<Traits>::Transform(*this, Span<const UINT8>(this->block, block_nb << Traits::BLOCK_SHIFT));
 
     for (i = 0; i < (INT32)Traits::OUTPUT_WORDS; i++)
     {

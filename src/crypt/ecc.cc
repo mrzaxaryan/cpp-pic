@@ -176,7 +176,7 @@ UINT128_ Ecc::Add128_128(UINT128_ a, UINT128_ b)
     return result;
 }
 
-VOID Ecc::VliMult(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight)
+VOID Ecc::VliMult(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS])
 {
     UINT128_ r01 = {0, 0};
     UINT64 r2 = 0;
@@ -202,7 +202,7 @@ VOID Ecc::VliMult(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight)
     pResult[this->numEccDigits * 2 - 1] = r01.low;
 }
 
-VOID Ecc::VliSquare(UINT64 *pResult, const UINT64 *pLeft)
+VOID Ecc::VliSquare(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS])
 {
     UINT128_ r01 = {0, 0};
     UINT64 r2 = 0;
@@ -234,7 +234,7 @@ VOID Ecc::VliSquare(UINT64 *pResult, const UINT64 *pLeft)
 
 /* Computes result = (left + right) % mod.
    Assumes that left < mod and right < mod, result != mod. */
-VOID Ecc::VliModAdd(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight, const UINT64 *pMod)
+VOID Ecc::VliModAdd(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS], const UINT64 (&pMod)[MAX_NUM_ECC_DIGITS])
 {
     UINT64 carry = this->VliAdd(pResult, pLeft, pRight);
     if (carry || this->VliCmp(pResult, pMod) >= 0)
@@ -245,7 +245,7 @@ VOID Ecc::VliModAdd(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight, 
 
 /* Computes result = (left - right) % mod.
    Assumes that left < mod and right < mod, result != mod. */
-VOID Ecc::VliModSub(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight, const UINT64 *pMod)
+VOID Ecc::VliModSub(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS], const UINT64 (&pMod)[MAX_NUM_ECC_DIGITS])
 {
     UINT64 borrow = this->VliSub(pResult, pLeft, pRight);
     if (borrow)
@@ -257,7 +257,7 @@ VOID Ecc::VliModSub(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight, 
 
 /* Computes result = product % curveP
    from http://www.nsa.gov/ia/_files/nist-routines.pdf */
-VOID Ecc::VliMmodFast256(UINT64 *pResult, const UINT64 *pProduct)
+VOID Ecc::VliMmodFast256(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pProduct)[ECC_PRODUCT_DIGITS])
 {
     UINT64 tmp[MAX_NUM_ECC_DIGITS];
     INT64 carry;
@@ -334,7 +334,7 @@ VOID Ecc::VliMmodFast256(UINT64 *pResult, const UINT64 *pProduct)
     }
 }
 
-VOID Ecc::OmegaMult384(UINT64 *pResult, const UINT64 *pRight)
+VOID Ecc::OmegaMult384(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 *pRight)
 {
     UINT64 tmp[MAX_NUM_ECC_DIGITS];
     UINT64 carry, diff;
@@ -364,7 +364,7 @@ VOID Ecc::OmegaMult384(UINT64 *pResult, const UINT64 *pRight)
 /* Computes p_result = p_product % curveP
     see PDF "Comparing Elliptic Curve Cryptography and RSA on 8-bit CPUs"
     section "Curve-Specific Optimizations" */
-VOID Ecc::VliMmodFast384(UINT64 *pResult, UINT64 *pProduct)
+VOID Ecc::VliMmodFast384(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], UINT64 (&pProduct)[ECC_PRODUCT_DIGITS])
 {
     UINT64 tmp[2 * MAX_NUM_ECC_DIGITS];
 
@@ -398,7 +398,7 @@ VOID Ecc::VliMmodFast384(UINT64 *pResult, UINT64 *pProduct)
 }
 
 /* Dispatches to the curve-specific fast reduction. */
-VOID Ecc::MmodFast(UINT64 *pResult, UINT64 *pProduct)
+VOID Ecc::MmodFast(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], UINT64 (&pProduct)[ECC_PRODUCT_DIGITS])
 {
     if (this->eccBytes == secp256r1)
         this->VliMmodFast256(pResult, pProduct);
@@ -407,7 +407,7 @@ VOID Ecc::MmodFast(UINT64 *pResult, UINT64 *pProduct)
 }
 
 /* Computes p_result = (p_left * p_right) % curve_p. */
-VOID Ecc::VliModMultFast(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRight)
+VOID Ecc::VliModMultFast(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS])
 {
     UINT64 product[2 * MAX_NUM_ECC_DIGITS];
     this->VliMult(product, pLeft, pRight);
@@ -415,7 +415,7 @@ VOID Ecc::VliModMultFast(UINT64 *pResult, const UINT64 *pLeft, const UINT64 *pRi
 }
 
 /* Computes p_result = p_left^2 % curveP. */
-VOID Ecc::VliModSquareFast(UINT64 *pResult, const UINT64 *pLeft)
+VOID Ecc::VliModSquareFast(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS])
 {
     UINT64 product[2 * MAX_NUM_ECC_DIGITS];
     this->VliSquare(product, pLeft);
@@ -425,7 +425,7 @@ VOID Ecc::VliModSquareFast(UINT64 *pResult, const UINT64 *pLeft)
 /* Computes p_result = (1 / p_input) % p_mod. All VL== are the same size.
    See "From Euclid's GCD to Montgomery Multiplication to the Great Divide"
    https://labs.oracle.com/techrep/2001/smli_tr-2001-95.pdf */
-VOID Ecc::VliModInv(UINT64 *pResult, const UINT64 *pInput, const UINT64 *pMod)
+VOID Ecc::VliModInv(UINT64 (&pResult)[MAX_NUM_ECC_DIGITS], const UINT64 (&pInput)[MAX_NUM_ECC_DIGITS], const UINT64 (&pMod)[MAX_NUM_ECC_DIGITS])
 {
     UINT64 a[MAX_NUM_ECC_DIGITS], b[MAX_NUM_ECC_DIGITS], u[MAX_NUM_ECC_DIGITS], v[MAX_NUM_ECC_DIGITS];
     UINT64 carry;

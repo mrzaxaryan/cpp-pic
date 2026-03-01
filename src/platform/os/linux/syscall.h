@@ -325,31 +325,31 @@ constexpr SSIZE INVALID_FD = -1;
 // Linux dirent64 structure for directory iteration
 struct linux_dirent64
 {
-    UINT64 d_ino;
-    INT64 d_off;
-    UINT16 d_reclen;
-    UINT8 d_type;
-    CHAR d_name[];
+	UINT64 d_ino;
+	INT64 d_off;
+	UINT16 d_reclen;
+	UINT8 d_type;
+	CHAR d_name[];
 };
 
 // Timespec structure
 struct timespec
 {
-    SSIZE tv_sec;
-    SSIZE tv_nsec;
+	SSIZE tv_sec;
+	SSIZE tv_nsec;
 };
 
 // Timeval structure (for socket timeouts)
 struct timeval
 {
-    SSIZE tv_sec;
-    SSIZE tv_usec;
+	SSIZE tv_sec;
+	SSIZE tv_usec;
 };
 
 // pollfd structure (for poll/ppoll)
 struct pollfd
 {
-    INT32 fd;
-    INT16 events;
-    INT16 revents;
+	INT32 fd;
+	INT16 events;
+	INT16 revents;
 };

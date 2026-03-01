@@ -14,7 +14,7 @@
 class Allocator
 {
 public:
-    // Platform-specific allocation (implemented in platform/windows/allocator.windows.cc)
-    static PVOID AllocateMemory(USIZE size);
-    static VOID ReleaseMemory(PVOID ptr, USIZE size);
+	// Platform-specific allocation (implemented in platform/windows/allocator.windows.cc)
+	static PVOID AllocateMemory(USIZE size);
+	static VOID ReleaseMemory(PVOID ptr, USIZE size);
 };

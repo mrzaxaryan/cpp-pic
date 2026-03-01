@@ -28,7 +28,7 @@ DateTime DateTime::Now()
 	if (status == EFI_SUCCESS)
 	{
 		dt.Years = efiTime.Year;
-		dt.Monthes = efiTime.Month;
+		dt.Months = efiTime.Month;
 		dt.Days = efiTime.Day;
 		dt.Hours = efiTime.Hour;
 		dt.Minutes = efiTime.Minute;
@@ -41,7 +41,7 @@ DateTime DateTime::Now()
 	{
 		// Default to epoch-like value on failure
 		dt.Years = 1970;
-		dt.Monthes = 1;
+		dt.Months = 1;
 		dt.Days = 1;
 		dt.Hours = 0;
 		dt.Minutes = 0;

@@ -309,7 +309,7 @@ class Socket
 private:
 	IPAddress ip;      ///< Remote IP address for this connection
 	UINT16 port;       ///< Remote port number in host byte order
-	PVOID m_socket;    ///< Platform-specific socket handle (fd on POSIX, HANDLE on Windows, UefiSocketContext* on UEFI)
+	PVOID handle;    ///< Platform-specific socket handle (fd on POSIX, HANDLE on Windows, UefiSocketContext* on UEFI)
 
 	/**
 	 * @brief Binds the socket to a local address
@@ -333,7 +333,7 @@ private:
 	 * @param ipAddress Remote IP address
 	 * @param portNum Remote port number
 	 */
-	Socket(const IPAddress &ipAddress, UINT16 portNum) : ip(ipAddress), port(portNum), m_socket(nullptr) {}
+	Socket(const IPAddress &ipAddress, UINT16 portNum) : ip(ipAddress), port(portNum), handle(nullptr) {}
 
 public:
 	/// @name Stack-Only Enforcement
@@ -346,7 +346,7 @@ public:
 	/**
 	 * @brief Default constructor — creates an invalid (unconnected) socket
 	 */
-	Socket() : ip(), port(0), m_socket(nullptr) {}
+	Socket() : ip(), port(0), handle(nullptr) {}
 
 	/**
 	 * @brief Creates a TCP stream socket for the specified remote endpoint
@@ -397,9 +397,9 @@ public:
 	 * @brief Move constructor — transfers socket ownership
 	 * @param other Source socket (invalidated after move)
 	 */
-	Socket(Socket &&other) noexcept : ip(other.ip), port(other.port), m_socket(other.m_socket)
+	Socket(Socket &&other) noexcept : ip(other.ip), port(other.port), handle(other.handle)
 	{
-		other.m_socket = nullptr;
+		other.handle = nullptr;
 	}
 
 	/**
@@ -415,8 +415,8 @@ public:
 				(void)Close();
 			ip = other.ip;
 			port = other.port;
-			m_socket = other.m_socket;
-			other.m_socket = nullptr;
+			handle = other.handle;
+			other.handle = nullptr;
 		}
 		return *this;
 	}
@@ -426,13 +426,13 @@ public:
 	 * @brief Checks whether the socket holds a valid OS handle
 	 * @return true if the socket has a non-null handle, false otherwise
 	 */
-	constexpr BOOL IsValid() const { return m_socket != nullptr; }
+	constexpr BOOL IsValid() const { return handle != nullptr; }
 
 	/**
 	 * @brief Returns the raw file descriptor / handle value
 	 * @return Platform-specific socket descriptor cast to SSIZE
 	 */
-	SSIZE GetFd() const { return (SSIZE)m_socket; }
+	SSIZE GetFd() const { return (SSIZE)handle; }
 
 	/**
 	 * @brief Connects the socket to the remote endpoint

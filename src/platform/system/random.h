@@ -1,3 +1,11 @@
+/**
+ * @file random.h
+ * @brief Hardware-seeded pseudorandom number generator
+ * @details Wraps the CORE layer's Prng (xorshift64) with automatic hardware-timestamp
+ * seeding. Position-independent with no data section dependencies.
+ * Part of the PLATFORM layer of the Position-Independent Runtime (PIR).
+ */
+
 #pragma once
 
 #include "platform/platform.h"

@@ -101,7 +101,7 @@ static Result<NTSTATUS, Error> AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, N
 
 Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 {
-	LOG_DEBUG("Bind(handle: 0x%p, family: %d, shareType: %d)\n", m_socket, socketAddress.SinFamily, shareType);
+	LOG_DEBUG("Bind(handle: 0x%p, family: %d, shareType: %d)\n", handle, socketAddress.SinFamily, shareType);
 
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
@@ -122,7 +122,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 		BindConfig.ShareType = shareType;
 		BindConfig.Address   = (SockAddr6 &)socketAddress;
 
-		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
+		auto ioResult = NTDLL::ZwDeviceIoControlFile(handle, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_BIND,
 		                                             &BindConfig, sizeof(BindConfig),
 		                                             &OutputBlock, sizeof(OutputBlock));
@@ -140,7 +140,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 		BindConfig.ShareType = shareType;
 		BindConfig.Address   = socketAddress;
 
-		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
+		auto ioResult = NTDLL::ZwDeviceIoControlFile(handle, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_BIND,
 		                                             &BindConfig, sizeof(BindConfig),
 		                                             &OutputBlock, sizeof(OutputBlock));
@@ -214,7 +214,7 @@ Result<void, Error> Socket::Open()
 		Memory::Zero(&ConnectInfo, sizeof(ConnectInfo));
 		ConnectInfo.Address = addrBuffer.addr6;
 
-		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
+		auto ioResult = NTDLL::ZwDeviceIoControlFile(handle, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_CONNECT,
 		                                             &ConnectInfo, sizeof(ConnectInfo),
 		                                             nullptr, 0);
@@ -231,7 +231,7 @@ Result<void, Error> Socket::Open()
 		Memory::Zero(&ConnectInfo, sizeof(ConnectInfo));
 		ConnectInfo.Address = addrBuffer.addr4;
 
-		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
+		auto ioResult = NTDLL::ZwDeviceIoControlFile(handle, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_CONNECT,
 		                                             &ConnectInfo, sizeof(ConnectInfo),
 		                                             nullptr, 0);
@@ -281,8 +281,8 @@ Result<void, Error> Socket::Close()
 {
 	LOG_DEBUG("Close(handle: 0x%p)\n", this);
 
-	auto closeResult = NTDLL::ZwClose(m_socket);
-	m_socket = nullptr;
+	auto closeResult = NTDLL::ZwClose(handle);
+	handle = nullptr;
 
 	if (!closeResult)
 		return Result<void, Error>::Err(closeResult, Error::Socket_CloseFailed_Close);
@@ -292,10 +292,7 @@ Result<void, Error> Socket::Close()
 
 Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 {
-	PVOID bufferPtr = (PVOID)buffer.Data();
-	UINT32 bufferSize = (UINT32)buffer.Size();
-
-	LOG_DEBUG("Read(handle: 0x%p, bufferSize: %d)\n", this, bufferSize);
+	LOG_DEBUG("Read(handle: 0x%p, bufferSize: %d)\n", this, (UINT32)buffer.Size());
 
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
@@ -303,8 +300,8 @@ Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 		return Result<SSIZE, Error>::Err(evtResult, Error::Socket_ReadFailed_EventCreate);
 
 	AfdWsaBuf RecvBuffer;
-	RecvBuffer.Length = bufferSize;
-	RecvBuffer.Buffer = bufferPtr;
+	RecvBuffer.Length = (UINT32)buffer.Size();
+	RecvBuffer.Buffer = (PVOID)buffer.Data();
 
 	AfdSendRecvInfo RecvInfo;
 	Memory::Zero(&RecvInfo, sizeof(RecvInfo));
@@ -315,7 +312,7 @@ Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 	IO_STATUS_BLOCK IOSB;
 	Memory::Zero(&IOSB, sizeof(IOSB));
 
-	auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
+	auto ioResult = NTDLL::ZwDeviceIoControlFile(handle, SockEvent, nullptr, nullptr, &IOSB,
 	                                             IOCTL_AFD_RECV,
 	                                             &RecvInfo, sizeof(RecvInfo),
 	                                             nullptr, 0);
@@ -361,10 +358,7 @@ Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 
 Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 {
-	PCVOID bufferPtr = (PCVOID)buffer.Data();
-	UINT32 bufferLength = (UINT32)buffer.Size();
-
-	LOG_DEBUG("Write(handle: 0x%p, length: %d)\n", this, bufferLength);
+	LOG_DEBUG("Write(handle: 0x%p, length: %d)\n", this, (UINT32)buffer.Size());
 
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
@@ -382,11 +376,11 @@ Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 	do
 	{
 		Memory::Zero(&IOSB, sizeof(IOSB));
-		SendBuffer.Buffer    = (PVOID)((PCHAR)bufferPtr + totalSent);
-		SendBuffer.Length    = bufferLength - totalSent;
+		SendBuffer.Buffer    = (PVOID)((PCHAR)buffer.Data() + totalSent);
+		SendBuffer.Length    = (UINT32)buffer.Size() - totalSent;
 		SendInfo.BufferArray = &SendBuffer;
 
-		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
+		auto ioResult = NTDLL::ZwDeviceIoControlFile(handle, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_SEND,
 		                                             &SendInfo, sizeof(SendInfo),
 		                                             nullptr, 0);
@@ -432,7 +426,7 @@ Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 			(void)NTDLL::ZwClose(SockEvent);
 			return Result<UINT32, Error>::Err(Error::Socket_WriteFailed_Send);
 		}
-	} while (totalSent < bufferLength);
+	} while (totalSent < (UINT32)buffer.Size());
 
 	(void)NTDLL::ZwClose(SockEvent);
 	LOG_DEBUG("Write: sent %d bytes\n", totalSent);
@@ -469,7 +463,7 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 	Memory::Zero(&IOSB, sizeof(IOSB));
 	InitializeObjectAttributes(&Object, &AfdName, OBJ_CASE_INSENSITIVE | OBJ_INHERIT, 0, 0);
 
-	auto createResult = NTDLL::ZwCreateFile(&sock.m_socket,
+	auto createResult = NTDLL::ZwCreateFile(&sock.handle,
 	                                        GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE,
 	                                        &Object,
 	                                        &IOSB,
@@ -486,6 +480,6 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 		return Result<Socket, Error>::Err(createResult, Error::Socket_CreateFailed_Open);
 	}
 
-	LOG_DEBUG("Create: handle: 0x%p\n", sock.m_socket);
+	LOG_DEBUG("Create: handle: 0x%p\n", sock.handle);
 	return Result<Socket, Error>::Ok(static_cast<Socket &&>(sock));
 }

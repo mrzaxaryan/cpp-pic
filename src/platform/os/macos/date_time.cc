@@ -15,7 +15,7 @@ DateTime DateTime::Now()
 	{
 		// If syscall fails, return epoch time (1970-01-01 00:00:00)
 		dt.Years = 1970;
-		dt.Monthes = 1;
+		dt.Months = 1;
 		dt.Days = 1;
 		return dt;
 	}

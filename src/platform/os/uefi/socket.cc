@@ -367,7 +367,7 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 portNum)
 		sockCtx->Tcp4 = (EFI_TCP4_PROTOCOL *)TcpInterface;
 
 	Socket sock(ipAddress, portNum);
-	sock.m_socket = sockCtx;
+	sock.handle = sockCtx;
 	LOG_DEBUG("Socket: Create completed successfully");
 	return Result<Socket, Error>::Ok(static_cast<Socket &&>(sock));
 }
@@ -380,7 +380,7 @@ Result<void, Error> Socket::Open()
 {
 	LOG_DEBUG("Socket: Open() starting...");
 
-	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
+	UefiSocketContext *sockCtx = (UefiSocketContext *)handle;
 	if (sockCtx->IsConnected)
 	{
 		LOG_DEBUG("Socket: Open() - already connected");
@@ -533,7 +533,7 @@ Result<void, Error> Socket::Close()
 {
 	LOG_DEBUG("Socket: Close() starting...");
 
-	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
+	UefiSocketContext *sockCtx = (UefiSocketContext *)handle;
 	EFI_CONTEXT *ctx = GetEfiContext();
 	EFI_BOOT_SERVICES *bs = ctx->SystemTable->BootServices;
 
@@ -674,7 +674,7 @@ Result<void, Error> Socket::Close()
 
 	LOG_DEBUG("Socket: FreePool...");
 	bs->FreePool(sockCtx);
-	m_socket = nullptr;
+	handle = nullptr;
 	LOG_DEBUG("Socket: Close() completed");
 	return Result<void, Error>::Ok();
 }
@@ -701,7 +701,7 @@ Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 
 	LOG_DEBUG("Socket: Read(%u bytes) starting...", bufferLength);
 
-	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
+	UefiSocketContext *sockCtx = (UefiSocketContext *)handle;
 	if (!sockCtx->IsConnected)
 	{
 		return Result<SSIZE, Error>::Err(Error::Socket_ReadFailed_Recv);
@@ -799,7 +799,7 @@ Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 
 	LOG_DEBUG("Socket: Write(%u bytes) starting...", bufferLength);
 
-	UefiSocketContext *sockCtx = (UefiSocketContext *)m_socket;
+	UefiSocketContext *sockCtx = (UefiSocketContext *)handle;
 	if (!sockCtx->IsConnected)
 	{
 		LOG_DEBUG("Socket: Write() not connected");

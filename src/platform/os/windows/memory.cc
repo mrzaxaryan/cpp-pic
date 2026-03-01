@@ -4,14 +4,14 @@
 
 PVOID Allocator::AllocateMemory(USIZE len)
 {
-    PVOID base = nullptr;
-    USIZE size = len;
-    auto result = NTDLL::ZwAllocateVirtualMemory(NTDLL::NtCurrentProcess(), &base, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    return result ? base : nullptr;
+	PVOID base = nullptr;
+	USIZE size = len;
+	auto result = NTDLL::ZwAllocateVirtualMemory(NTDLL::NtCurrentProcess(), &base, 0, &size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	return result ? base : nullptr;
 }
 
 VOID Allocator::ReleaseMemory(PVOID ptr, USIZE)
 {
-    USIZE size = 0;
-    (void)NTDLL::ZwFreeVirtualMemory(NTDLL::NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
+	USIZE size = 0;
+	(void)NTDLL::ZwFreeVirtualMemory(NTDLL::NtCurrentProcess(), &ptr, &size, MEM_RELEASE);
 }

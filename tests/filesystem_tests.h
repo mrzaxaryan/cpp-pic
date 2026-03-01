@@ -497,14 +497,14 @@ private:
 			const DirectoryEntry &entry = iter.Get();
 
 			// Skip "." and ".." entries
-			if (entry.name[0] == L'.' &&
-				(entry.name[1] == L'\0' ||
-				 (entry.name[1] == L'.' && entry.name[2] == L'\0')))
+			if (entry.Name[0] == L'.' &&
+				(entry.Name[1] == L'\0' ||
+				 (entry.Name[1] == L'.' && entry.Name[2] == L'\0')))
 			{
 				continue;
 			}
 
-			if (entry.isDirectory)
+			if (entry.IsDirectory)
 			{
 				dirCount++;
 			}

@@ -326,17 +326,17 @@ Result<void, Error> DirectoryIterator::Next()
 	bsd_dirent64 *d = (bsd_dirent64 *)(buffer + bpos);
 #endif
 
-	StringUtils::Utf8ToWide(Span<const CHAR>(d->d_name, StringUtils::Length(d->d_name)), Span<WCHAR>(currentEntry.name, 256));
+	StringUtils::Utf8ToWide(Span<const CHAR>(d->d_name, StringUtils::Length(d->d_name)), Span<WCHAR>(currentEntry.Name, 256));
 
-	currentEntry.isDirectory = (d->d_type == DT_DIR);
-	currentEntry.isDrive = false;
-	currentEntry.type = (UINT32)d->d_type;
-	currentEntry.isHidden = (d->d_name[0] == '.');
-	currentEntry.isSystem = false;
-	currentEntry.isReadOnly = false;
-	currentEntry.size = 0;
-	currentEntry.creationTime = 0;
-	currentEntry.lastModifiedTime = 0;
+	currentEntry.IsDirectory = (d->d_type == DT_DIR);
+	currentEntry.IsDrive = false;
+	currentEntry.Type = (UINT32)d->d_type;
+	currentEntry.IsHidden = (d->d_name[0] == '.');
+	currentEntry.IsSystem = false;
+	currentEntry.IsReadOnly = false;
+	currentEntry.Size = 0;
+	currentEntry.CreationTime = 0;
+	currentEntry.LastModifiedTime = 0;
 
 	bpos += d->d_reclen;
 

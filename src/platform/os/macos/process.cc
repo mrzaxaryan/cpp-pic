@@ -62,7 +62,7 @@ Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR* cmd)
 		return Result<SSIZE, Error>::Err(forkResult, Error::Process_BindShellFailed);
 	}
 
-	SSIZE pid = forkResult.Value();
+	auto& pid = forkResult.Value();
 
 	if (pid == 0)
 	{

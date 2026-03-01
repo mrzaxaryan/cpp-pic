@@ -510,21 +510,21 @@ Result<void, Error> DirectoryIterator::Next()
 	INT32 i = 0;
 	while (FileInfo->FileName[i] != 0 && i < 255)
 	{
-		currentEntry.name[i] = FileInfo->FileName[i];
+		currentEntry.Name[i] = FileInfo->FileName[i];
 		i++;
 	}
-	currentEntry.name[i] = 0;
+	currentEntry.Name[i] = 0;
 
 	// Fill other fields
-	currentEntry.size = FileInfo->FileSize;
-	currentEntry.isDirectory = (FileInfo->Attribute & EFI_FILE_DIRECTORY) != 0;
-	currentEntry.isDrive = false;
-	currentEntry.isHidden = (FileInfo->Attribute & EFI_FILE_HIDDEN) != 0;
-	currentEntry.isSystem = (FileInfo->Attribute & EFI_FILE_SYSTEM) != 0;
-	currentEntry.isReadOnly = (FileInfo->Attribute & EFI_FILE_READ_ONLY) != 0;
-	currentEntry.type = 0;
-	currentEntry.creationTime = 0;
-	currentEntry.lastModifiedTime = 0;
+	currentEntry.Size = FileInfo->FileSize;
+	currentEntry.IsDirectory = (FileInfo->Attribute & EFI_FILE_DIRECTORY) != 0;
+	currentEntry.IsDrive = false;
+	currentEntry.IsHidden = (FileInfo->Attribute & EFI_FILE_HIDDEN) != 0;
+	currentEntry.IsSystem = (FileInfo->Attribute & EFI_FILE_SYSTEM) != 0;
+	currentEntry.IsReadOnly = (FileInfo->Attribute & EFI_FILE_READ_ONLY) != 0;
+	currentEntry.Type = 0;
+	currentEntry.CreationTime = 0;
+	currentEntry.LastModifiedTime = 0;
 
 	return Result<void, Error>::Ok();
 }

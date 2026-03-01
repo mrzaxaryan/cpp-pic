@@ -86,7 +86,7 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 	SSIZE fd = linux_socket(SocketAddressHelper::GetAddressFamily(sock.ip), SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0)
 		return Result<Socket, Error>::Err(Error::Posix((UINT32)(-fd)), Error::Socket_CreateFailed_Open);
-	sock.m_socket = (PVOID)fd;
+	sock.handle = (PVOID)fd;
 	return Result<Socket, Error>::Ok(static_cast<Socket &&>(sock));
 }
 
@@ -94,7 +94,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 {
 	(VOID)shareType; // not used on Linux
 
-	SSIZE sockfd  = (SSIZE)m_socket;
+	SSIZE sockfd  = (SSIZE)handle;
 	UINT32 addrLen = (socketAddress.SinFamily == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
 	SSIZE  result  = linux_bind(sockfd, &socketAddress, addrLen);
 	if (result != 0)
@@ -109,7 +109,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 
 Result<void, Error> Socket::Open()
 {
-	SSIZE sockfd = (SSIZE)m_socket;
+	SSIZE sockfd = (SSIZE)handle;
 
 	union
 	{
@@ -179,19 +179,16 @@ Result<void, Error> Socket::Open()
 
 Result<void, Error> Socket::Close()
 {
-	SSIZE sockfd = (SSIZE)m_socket;
+	SSIZE sockfd = (SSIZE)handle;
 	System::Call(SYS_CLOSE, sockfd);
-	m_socket = nullptr;
+	handle = nullptr;
 	return Result<void, Error>::Ok();
 }
 
 Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 {
-	PVOID bufferPtr = (PVOID)buffer.Data();
-	UINT32 bufferLength = (UINT32)buffer.Size();
-
-	SSIZE sockfd = (SSIZE)m_socket;
-	SSIZE result = linux_recv(sockfd, bufferPtr, bufferLength, 0);
+	SSIZE sockfd = (SSIZE)handle;
+	SSIZE result = linux_recv(sockfd, (PVOID)buffer.Data(), (UINT32)buffer.Size(), 0);
 	if (result < 0)
 	{
 		return Result<SSIZE, Error>::Err(
@@ -204,16 +201,13 @@ Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 
 Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 {
-	PCVOID bufferPtr = (PCVOID)buffer.Data();
-	UINT32 bufferLength = (UINT32)buffer.Size();
-
-	SSIZE  sockfd    = (SSIZE)m_socket;
+	SSIZE  sockfd    = (SSIZE)handle;
 	UINT32 totalSent = 0;
 
-	while (totalSent < bufferLength)
+	while (totalSent < (UINT32)buffer.Size())
 	{
-		SSIZE sent = linux_send(sockfd, (const CHAR *)bufferPtr + totalSent,
-		                        bufferLength - totalSent, 0);
+		SSIZE sent = linux_send(sockfd, (const CHAR *)buffer.Data() + totalSent,
+		                        (UINT32)buffer.Size() - totalSent, 0);
 		if (sent <= 0)
 		{
 			if (sent < 0)

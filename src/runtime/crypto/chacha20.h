@@ -120,14 +120,14 @@ public:
      * @param p Pointer to 4 bytes
      * @return 32-bit word
      */
-    static UINT32 U8TO32(const UCHAR *p);
+    static constexpr UINT32 U8TO32(const UCHAR *p);
 
     /**
      * @brief Converts 32-bit word to 4 bytes (little-endian)
      * @param p Output buffer for 4 bytes
      * @param v 32-bit word to convert
      */
-    static VOID U32TO8(PUCHAR p, UINT32 v);
+    static constexpr VOID U32TO8(PUCHAR p, UINT32 v);
 
     /**
      * @brief Generates Poly1305 key from ChaCha20 keystream

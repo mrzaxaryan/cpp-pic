@@ -146,10 +146,10 @@ private:
     UINT64 VliSub(Span<UINT64> pResult, Span<const UINT64> pLeft, Span<const UINT64> pRight);
 
     /** @brief 64x64 -> 128 bit multiplication */
-    UINT128_ Mul64_64(UINT64 left, UINT64 right);
+    constexpr UINT128_ Mul64_64(UINT64 left, UINT64 right);
 
     /** @brief 128-bit addition */
-    UINT128_ Add128_128(UINT128_ a, UINT128_ b);
+    constexpr UINT128_ Add128_128(UINT128_ a, UINT128_ b);
 
     /** @brief Full multiplication: pResult = pLeft * pRight */
     VOID VliMult(UINT64 (&pResult)[ECC_PRODUCT_DIGITS], const UINT64 (&pLeft)[MAX_NUM_ECC_DIGITS], const UINT64 (&pRight)[MAX_NUM_ECC_DIGITS]);

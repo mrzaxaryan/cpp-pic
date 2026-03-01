@@ -145,7 +145,7 @@ UINT64 Ecc::VliSub(Span<UINT64> pResult, Span<const UINT64> pLeft, Span<const UI
     return borrow;
 }
 
-UINT128_ Ecc::Mul64_64(UINT64 left, UINT64 right)
+constexpr UINT128_ Ecc::Mul64_64(UINT64 left, UINT64 right)
 {
     UINT32 a0 = (UINT32)left;
     UINT32 a1 = (UINT32)(left >> 32);
@@ -165,7 +165,7 @@ UINT128_ Ecc::Mul64_64(UINT64 left, UINT64 right)
     return result;
 }
 
-UINT128_ Ecc::Add128_128(UINT128_ a, UINT128_ b)
+constexpr UINT128_ Ecc::Add128_128(UINT128_ a, UINT128_ b)
 {
     UINT128_ result;
     result.low = a.low + b.low;

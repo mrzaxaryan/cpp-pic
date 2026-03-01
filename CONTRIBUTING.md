@@ -183,6 +183,19 @@ UINT32 val = embedded[0];                        // Unpacked at runtime
 - **`constexpr`/`consteval` everywhere possible:** mark every function and variable `constexpr` if it *can* be evaluated at compile time; use `consteval` when it *must* be compile-time only
 - **Cast to `USIZE`** when passing pointer/handle arguments to `System::Call`
 - **Includes:** `runtime.h` = everything; `platform.h` = CORE + PLATFORM; implementation files include own header first
+- **Include paths:** Always use full paths relative to `src/` — never bare filenames. This eliminates ambiguity, makes dependencies self-documenting, and does not rely on CMake include-path ordering:
+  ```cpp
+  // Good — unambiguous, self-documenting:
+  #include "core/types/primitives.h"
+  #include "core/string/string.h"
+  #include "platform/io/console.h"
+
+  // Bad — relies on search-path ordering, ambiguous origin:
+  #include "primitives.h"
+  #include "string.h"
+  #include "console.h"
+  ```
+  Exception: test files in `tests/` may use bare filenames for other test headers in the same directory (e.g., `#include "tests.h"`).
 
 ### Documentation & RFC References
 

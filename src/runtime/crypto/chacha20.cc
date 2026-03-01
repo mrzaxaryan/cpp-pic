@@ -76,7 +76,7 @@ Poly1305::~Poly1305()
     Memory::Zero(m_pad, sizeof(m_pad));
 }
 
-UINT32 Poly1305::U8TO32(const UCHAR *p)
+constexpr UINT32 Poly1305::U8TO32(const UCHAR *p)
 {
     return (((UINT32)(p[0] & 0xff)) |
             ((UINT32)(p[1] & 0xff) << 8) |
@@ -85,7 +85,7 @@ UINT32 Poly1305::U8TO32(const UCHAR *p)
 }
 
 /* store a 32 bit unsigned integer as four 8 bit unsigned integers in little endian */
-VOID Poly1305::U32TO8(PUCHAR p, UINT32 v)
+constexpr VOID Poly1305::U32TO8(PUCHAR p, UINT32 v)
 {
     p[0] = (v) & 0xff;
     p[1] = (v >> 8) & 0xff;

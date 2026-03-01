@@ -23,7 +23,7 @@ public:
     /// @return Number of characters written (excluding null terminator), 0 on overflow
 
     template <TCHAR TChar>
-    static USIZE Combine(const TChar *path1, const TChar *path2, Span<TChar> out)
+    static constexpr USIZE Combine(const TChar *path1, const TChar *path2, Span<TChar> out)
     {
         USIZE len1 = String::Length(path1);
         USIZE len2 = String::Length(path2);
@@ -54,7 +54,7 @@ public:
     /// @return Number of characters written (excluding null terminator), 0 on overflow
 
     template <TCHAR TChar>
-    static USIZE GetFileName(const TChar *fullPath, Span<TChar> out)
+    static constexpr USIZE GetFileName(const TChar *fullPath, Span<TChar> out)
     {
         USIZE len = String::Length(fullPath);
         SSIZE lastSeparator = -1;
@@ -84,7 +84,7 @@ public:
     /// @return Number of characters written (excluding null terminator), 0 on overflow
 
     template <TCHAR TChar>
-    static USIZE GetExtension(const TChar *fileName, Span<TChar> out)
+    static constexpr USIZE GetExtension(const TChar *fileName, Span<TChar> out)
     {
         if (out.Size() == 0)
             return 0;
@@ -121,7 +121,7 @@ public:
     /// @return Number of characters written (excluding null terminator), 0 on overflow
 
     template <TCHAR TChar>
-    static USIZE GetDirectoryName(const TChar *fullPath, Span<TChar> out)
+    static constexpr USIZE GetDirectoryName(const TChar *fullPath, Span<TChar> out)
     {
         if (out.Size() == 0)
             return 0;
@@ -157,7 +157,7 @@ public:
     /// @return true if the path is rooted, false otherwise
 
     template <TCHAR TChar>
-    static BOOL IsPathRooted(const TChar *path)
+    static constexpr BOOL IsPathRooted(const TChar *path)
     {
         // On Windows, a path is rooted if it starts with a drive letter or a backslash
         if (path == nullptr || path[0] == (TChar)0)
@@ -174,7 +174,7 @@ public:
     /// @param out Output buffer to write normalized path into
     /// @return Number of characters written (excluding null terminator), 0 on overflow or null input
 
-    static USIZE NormalizePath(PCWCHAR path, Span<WCHAR> out)
+    static constexpr USIZE NormalizePath(PCWCHAR path, Span<WCHAR> out)
     {
         if (path == nullptr || out.Size() == 0)
             return 0;

@@ -240,7 +240,7 @@ public:
 	 * @param ip IP address to query
 	 * @return AF_INET6 for IPv6 addresses, AF_INET otherwise
 	 */
-	static INT32 GetAddressFamily(const IPAddress &ip)
+	static constexpr INT32 GetAddressFamily(const IPAddress &ip)
 	{
 		return ip.IsIPv6() ? AF_INET6 : AF_INET;
 	}

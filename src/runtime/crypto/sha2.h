@@ -97,26 +97,26 @@ struct SHA256Traits
      * @param str Input byte array
      * @param x Output word reference
      */
-    static FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
+    static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
 
     /**
      * @brief Unpacks a 32-bit word into 4 bytes (big-endian)
      * @param x Input word
      * @param str Output byte array
      */
-    static FORCE_INLINE VOID Unpack(Word x, UINT8* str);
+    static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
 
     /** @brief SHA-256 Sigma0 function: ROTR(x,2) XOR ROTR(x,13) XOR ROTR(x,22) */
-    static FORCE_INLINE Word F1(Word x) { return BitOps::ROTR32(x, 2) ^ BitOps::ROTR32(x, 13) ^ BitOps::ROTR32(x, 22); }
+    static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::ROTR32(x, 2) ^ BitOps::ROTR32(x, 13) ^ BitOps::ROTR32(x, 22); }
 
     /** @brief SHA-256 Sigma1 function: ROTR(x,6) XOR ROTR(x,11) XOR ROTR(x,25) */
-    static FORCE_INLINE Word F2(Word x) { return BitOps::ROTR32(x, 6) ^ BitOps::ROTR32(x, 11) ^ BitOps::ROTR32(x, 25); }
+    static constexpr FORCE_INLINE Word F2(Word x) { return BitOps::ROTR32(x, 6) ^ BitOps::ROTR32(x, 11) ^ BitOps::ROTR32(x, 25); }
 
     /** @brief SHA-256 sigma0 function: ROTR(x,7) XOR ROTR(x,18) XOR SHR(x,3) */
-    static FORCE_INLINE Word F3(Word x) { return BitOps::ROTR32(x, 7) ^ BitOps::ROTR32(x, 18) ^ (x >> 3); }
+    static constexpr FORCE_INLINE Word F3(Word x) { return BitOps::ROTR32(x, 7) ^ BitOps::ROTR32(x, 18) ^ (x >> 3); }
 
     /** @brief SHA-256 sigma1 function: ROTR(x,17) XOR ROTR(x,19) XOR SHR(x,10) */
-    static FORCE_INLINE Word F4(Word x) { return BitOps::ROTR32(x, 17) ^ BitOps::ROTR32(x, 19) ^ (x >> 10); }
+    static constexpr FORCE_INLINE Word F4(Word x) { return BitOps::ROTR32(x, 17) ^ BitOps::ROTR32(x, 19) ^ (x >> 10); }
 };
 
 /**
@@ -157,26 +157,26 @@ struct SHA384Traits
      * @param str Input byte array
      * @param x Output word reference
      */
-    static FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
+    static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
 
     /**
      * @brief Unpacks a 64-bit word into 8 bytes (big-endian)
      * @param x Input word
      * @param str Output byte array
      */
-    static FORCE_INLINE VOID Unpack(Word x, UINT8* str);
+    static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
 
     /** @brief SHA-384 Sigma0 function: ROTR(x,28) XOR ROTR(x,34) XOR ROTR(x,39) */
-    static FORCE_INLINE Word F1(Word x) { return BitOps::ROTR64(x, 28) ^ BitOps::ROTR64(x, 34) ^ BitOps::ROTR64(x, 39); }
+    static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::ROTR64(x, 28) ^ BitOps::ROTR64(x, 34) ^ BitOps::ROTR64(x, 39); }
 
     /** @brief SHA-384 Sigma1 function: ROTR(x,14) XOR ROTR(x,18) XOR ROTR(x,41) */
-    static FORCE_INLINE Word F2(Word x) { return BitOps::ROTR64(x, 14) ^ BitOps::ROTR64(x, 18) ^ BitOps::ROTR64(x, 41); }
+    static constexpr FORCE_INLINE Word F2(Word x) { return BitOps::ROTR64(x, 14) ^ BitOps::ROTR64(x, 18) ^ BitOps::ROTR64(x, 41); }
 
     /** @brief SHA-384 sigma0 function: ROTR(x,1) XOR ROTR(x,8) XOR SHR(x,7) */
-    static FORCE_INLINE Word F3(Word x) { return BitOps::ROTR64(x, 1) ^ BitOps::ROTR64(x, 8) ^ (x >> 7); }
+    static constexpr FORCE_INLINE Word F3(Word x) { return BitOps::ROTR64(x, 1) ^ BitOps::ROTR64(x, 8) ^ (x >> 7); }
 
     /** @brief SHA-384 sigma1 function: ROTR(x,19) XOR ROTR(x,61) XOR SHR(x,6) */
-    static FORCE_INLINE Word F4(Word x) { return BitOps::ROTR64(x, 19) ^ BitOps::ROTR64(x, 61) ^ (x >> 6); }
+    static constexpr FORCE_INLINE Word F4(Word x) { return BitOps::ROTR64(x, 19) ^ BitOps::ROTR64(x, 61) ^ (x >> 6); }
 };
 
 /**

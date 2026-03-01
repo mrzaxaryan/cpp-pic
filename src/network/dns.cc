@@ -333,13 +333,13 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(PCCHAR host, const IPAddress &DNSS
     if (IsLocalhost(host, localhostResult, dnstype))
         return Result<IPAddress, Error>::Ok(localhostResult);
 
-    auto tlsResult = TLSClient::Create(DNSServerName, DNSServerIp, 443);
+    auto tlsResult = TlsClient::Create(DNSServerName, DNSServerIp, 443);
     if (!tlsResult)
     {
         LOG_WARNING("Failed to create TLS client for DNS server");
         return Result<IPAddress, Error>::Err(Error::Dns_ConnectFailed);
     }
-    TLSClient &tlsClient = tlsResult.Value();
+    TlsClient &tlsClient = tlsResult.Value();
 
     if (!tlsClient.Open())
     {

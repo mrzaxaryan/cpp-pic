@@ -5,13 +5,13 @@
 #include "tls_cipher.h"
 
 // TLS state
-typedef struct _tlsstate
+struct TlsState
 {
     INT32 contentType;   // TLS content type
     INT32 handshakeType; // TLS handshake type
-} tlsstate;
+};
 
-class TLSClient final
+class TlsClient final
 {
 private:
     PCCHAR host;
@@ -38,29 +38,29 @@ private:
     [[nodiscard]] Result<void, Error> SendPacket(INT32 packetType, INT32 ver, TlsBuffer &TlsBuffer);
 
     // Private trivial constructor — only used by Create()
-    TLSClient(PCCHAR host, const IPAddress &ipAddress, Socket &&socket, BOOL secure)
+    TlsClient(PCCHAR host, const IPAddress &ipAddress, Socket &&socket, BOOL secure)
         : host(host), ip(ipAddress), context(static_cast<Socket &&>(socket)), secure(secure), stateIndex(0), channelBytesRead(0) {}
 
 public:
     VOID *operator new(USIZE) = delete;
     VOID operator delete(VOID *) = delete;
-    // Placement new required by Result<TLSClient, Error>
+    // Placement new required by Result<TlsClient, Error>
     VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
-    TLSClient() : host(nullptr), ip(), secure(true), stateIndex(0), channelBytesRead(0) {}
+    TlsClient() : host(nullptr), ip(), secure(true), stateIndex(0), channelBytesRead(0) {}
 
     // Factory — caller MUST check the result (enforced by [[nodiscard]])
-    [[nodiscard]] static Result<TLSClient, Error> Create(PCCHAR host, const IPAddress &ipAddress, UINT16 port, BOOL secure = true);
+    [[nodiscard]] static Result<TlsClient, Error> Create(PCCHAR host, const IPAddress &ipAddress, UINT16 port, BOOL secure = true);
 
-    ~TLSClient()
+    ~TlsClient()
     {
         if (IsValid())
             (void)Close();
     }
 
-    TLSClient(const TLSClient &) = delete;
-    TLSClient &operator=(const TLSClient &) = delete;
+    TlsClient(const TlsClient &) = delete;
+    TlsClient &operator=(const TlsClient &) = delete;
 
-    TLSClient(TLSClient &&other) noexcept
+    TlsClient(TlsClient &&other) noexcept
         : host(other.host), ip(other.ip), context(static_cast<Socket &&>(other.context)), crypto(static_cast<TlsCipher &&>(other.crypto)), secure(other.secure), stateIndex(other.stateIndex), sendBuffer(static_cast<TlsBuffer &&>(other.sendBuffer)), recvBuffer(static_cast<TlsBuffer &&>(other.recvBuffer)), channelBuffer(static_cast<TlsBuffer &&>(other.channelBuffer)), channelBytesRead(other.channelBytesRead)
     {
         other.host = nullptr;
@@ -69,7 +69,7 @@ public:
         other.channelBytesRead = 0;
     }
 
-    TLSClient &operator=(TLSClient &&other) noexcept
+    TlsClient &operator=(TlsClient &&other) noexcept
     {
         if (this != &other)
         {

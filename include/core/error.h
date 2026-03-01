@@ -95,7 +95,8 @@ struct Error
 		Ecc_InitFailed         = 60, // curve not recognized or random gen failed
 		Ecc_ExportKeyFailed    = 61, // null buffer or insufficient size
 		Ecc_SharedSecretFailed = 62, // invalid key format or point at infinity
-		ChaCha20_DecodeFailed  = 63, // Poly1305 authentication failed
+		ChaCha20_DecodeFailed      = 63, // Poly1305 authentication failed
+		ChaCha20_GenerateKeyFailed = 64, // invalid nonce size in Poly1305 key generation
 
 		// -------------------------
 		// TlsCipher errors (70–73)
@@ -143,7 +144,7 @@ struct Error
 		// -------------------------
 		// Factory creation errors (102–104)
 		// -------------------------
-		Tls_CreateFailed  = 102, // Socket::Create() failed in TLSClient::Create()
+		Tls_CreateFailed  = 102, // Socket::Create() failed in TlsClient::Create()
 		Http_CreateFailed = 103, // URL parse / DNS / TLS create failed in HttpClient::Create()
 		Ws_CreateFailed   = 104, // URL parse / DNS / TLS create failed in WebSocketClient::Create()
 	};

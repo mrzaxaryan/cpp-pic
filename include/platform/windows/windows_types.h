@@ -105,7 +105,7 @@ typedef struct _IO_STATUS_BLOCK
     USIZE Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
-typedef struct OBJECT_ATTRIBUTES
+typedef struct _OBJECT_ATTRIBUTES
 {
     UINT32 Length;
     PVOID RootDirectory;

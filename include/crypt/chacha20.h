@@ -135,12 +135,12 @@ public:
      * @param nonce Span of nonce bytes (8 or 12 bytes)
      * @param poly_key Output buffer for 32-byte Poly1305 key
      * @param counter ChaCha20 block counter (usually 0)
-     * @return 0 on success
+     * @return Ok on success, Err on invalid nonce size
      *
      * @details Derives the Poly1305 key by encrypting zeros with ChaCha20
      * using block counter 0, as specified in RFC 7539.
      */
-    static INT32 GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter);
+    [[nodiscard]] static Result<void, Error> GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter);
 };
 
 /**
@@ -281,11 +281,11 @@ public:
      * @param aad_len AAD length in bytes
      * @param poly_key 32-byte Poly1305 key
      * @param out Output: ciphertext followed by 16-byte tag
-     * @return 0 on success
+     * @return Ok on success
      *
      * @details Encrypts plaintext and computes authentication tag over AAD and ciphertext.
      */
-    INT32 Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out);
+    [[nodiscard]] Result<void, Error> Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out);
 
     /**
      * @brief Performs AEAD decryption with Poly1305 verification

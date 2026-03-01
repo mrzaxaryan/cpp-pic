@@ -476,7 +476,7 @@ C++20 concepts and `requires` clauses enforce type safety. Use Clang builtins, n
 
 ### Guard and Validation
 
-- **Factory-created types** (`Socket`, `TLSClient`): do **not** add `IsValid()` guards — the factory + RAII pattern ensures validity
+- **Factory-created types** (`Socket`, `TlsClient`): do **not** add `IsValid()` guards — the factory + RAII pattern ensures validity
 - **Non-factory types** parsing external input: validate at entry, return `Result::Err` on failure
 - Only validate at system boundaries — trust internal code
 

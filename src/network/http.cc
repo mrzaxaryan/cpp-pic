@@ -29,11 +29,11 @@ Result<HttpClient, Error> HttpClient::Create(PCCHAR url, PCCHAR ipAddress)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
 
     IPAddress ip = IPAddress::FromString(ipAddress);
-    auto tlsResult = TLSClient::Create(host, ip, port, isSecure);
+    auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
     if (!tlsResult)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
 
-    HttpClient client(host, parsedPath, ip, port, static_cast<TLSClient &&>(tlsResult.Value()));
+    HttpClient client(host, parsedPath, ip, port, static_cast<TlsClient &&>(tlsResult.Value()));
     return Result<HttpClient, Error>::Ok(static_cast<HttpClient &&>(client));
 }
 
@@ -59,7 +59,7 @@ Result<HttpClient, Error> HttpClient::Create(PCCHAR url)
     }
     IPAddress ip = dnsResult.Value();
 
-    auto tlsResult = TLSClient::Create(host, ip, port, isSecure);
+    auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
 
     // IPv6 socket creation can fail on platforms without IPv6 support (e.g. UEFI)
     if (!tlsResult && ip.IsIPv6())
@@ -68,14 +68,14 @@ Result<HttpClient, Error> HttpClient::Create(PCCHAR url)
         if (dnsResultV4)
         {
             ip = dnsResultV4.Value();
-            tlsResult = TLSClient::Create(host, ip, port, isSecure);
+            tlsResult = TlsClient::Create(host, ip, port, isSecure);
         }
     }
 
     if (!tlsResult)
         return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
 
-    HttpClient client(host, parsedPath, ip, port, static_cast<TLSClient &&>(tlsResult.Value()));
+    HttpClient client(host, parsedPath, ip, port, static_cast<TlsClient &&>(tlsResult.Value()));
     return Result<HttpClient, Error>::Ok(static_cast<HttpClient &&>(client));
 }
 
@@ -324,7 +324,7 @@ Result<void, Error> HttpClient::ParseUrl(PCCHAR url, CHAR (&host)[254], CHAR (&p
     return Result<void, Error>::Ok();
 }
 
-Result<INT64, Error> HttpClient::ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus)
+Result<INT64, Error> HttpClient::ReadResponseHeaders(TlsClient &client, UINT16 expectedStatus)
 {
     // Compute expected "XYZ " pattern for the rolling window (big-endian byte order)
     UINT32 expectedTail =

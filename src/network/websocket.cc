@@ -28,13 +28,13 @@ Result<void, Error> WebSocketClient::Open()
 		ipAddress = dnsResult.Value();
 
 		(void)tlsContext.Close();
-		auto tlsResult = TLSClient::Create(hostName, ipAddress, port, isSecure);
+		auto tlsResult = TlsClient::Create(hostName, ipAddress, port, isSecure);
 		if (!tlsResult)
 		{
 			LOG_ERROR("Failed to create TLS client for IPv4 fallback (error: %e)", tlsResult.Error());
 			return Result<void, Error>::Err(Error::Ws_TransportFailed);
 		}
-		tlsContext = static_cast<TLSClient &&>(tlsResult.Value());
+		tlsContext = static_cast<TlsClient &&>(tlsResult.Value());
 		openResult = tlsContext.Open();
 	}
 
@@ -435,7 +435,7 @@ Result<WebSocketClient, Error> WebSocketClient::Create(PCCHAR url)
 	}
 	IPAddress ip = dnsResult.Value();
 
-	auto tlsResult = TLSClient::Create(host, ip, port, isSecure);
+	auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
 
 	// IPv6 socket creation can fail on platforms without IPv6 support (e.g. UEFI)
 	if (!tlsResult && ip.IsIPv6())
@@ -444,13 +444,13 @@ Result<WebSocketClient, Error> WebSocketClient::Create(PCCHAR url)
 		if (dnsResultV4)
 		{
 			ip = dnsResultV4.Value();
-			tlsResult = TLSClient::Create(host, ip, port, isSecure);
+			tlsResult = TlsClient::Create(host, ip, port, isSecure);
 		}
 	}
 
 	if (!tlsResult)
 		return Result<WebSocketClient, Error>::Err(Error::Ws_CreateFailed);
 
-	WebSocketClient client(host, parsedPath, ip, port, static_cast<TLSClient &&>(tlsResult.Value()));
+	WebSocketClient client(host, parsedPath, ip, port, static_cast<TlsClient &&>(tlsResult.Value()));
 	return Result<WebSocketClient, Error>::Ok(static_cast<WebSocketClient &&>(client));
 }

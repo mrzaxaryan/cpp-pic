@@ -11,11 +11,11 @@ private:
     CHAR path[2048];    // De facto max URL path length
     IPAddress ipAddress;
     UINT16 port;
-    TLSClient tlsContext;
+    TlsClient tlsContext;
 
     // Private constructor — only used by Create()
-    HttpClient(const CHAR (&host)[254], const CHAR (&parsedPath)[2048], const IPAddress &ip, UINT16 portNum, TLSClient &&tls)
-        : ipAddress(ip), port(portNum), tlsContext(static_cast<TLSClient &&>(tls))
+    HttpClient(const CHAR (&host)[254], const CHAR (&parsedPath)[2048], const IPAddress &ip, UINT16 portNum, TlsClient &&tls)
+        : ipAddress(ip), port(portNum), tlsContext(static_cast<TlsClient &&>(tls))
     {
         Memory::Copy(hostName, host, sizeof(hostName));
         Memory::Copy(path, parsedPath, sizeof(path));
@@ -38,7 +38,7 @@ public:
 
     HttpClient(HttpClient &&other) noexcept
         : ipAddress(other.ipAddress), port(other.port),
-          tlsContext(static_cast<TLSClient &&>(other.tlsContext))
+          tlsContext(static_cast<TlsClient &&>(other.tlsContext))
     {
         Memory::Copy(hostName, other.hostName, sizeof(hostName));
         Memory::Copy(path, other.path, sizeof(path));
@@ -55,7 +55,7 @@ public:
             Memory::Copy(path, other.path, sizeof(path));
             ipAddress = other.ipAddress;
             port = other.port;
-            tlsContext = static_cast<TLSClient &&>(other.tlsContext);
+            tlsContext = static_cast<TlsClient &&>(other.tlsContext);
             other.port = 0;
         }
         return *this;
@@ -80,5 +80,5 @@ public:
     // Read HTTP response headers using a rolling window (no buffer needed).
     // Returns Ok(contentLength) if headers were read and status matches expectedStatus.
     // contentLength is the Content-Length value or -1 if not present.
-    [[nodiscard]] static Result<INT64, Error> ReadResponseHeaders(TLSClient &client, UINT16 expectedStatus);
+    [[nodiscard]] static Result<INT64, Error> ReadResponseHeaders(TlsClient &client, UINT16 expectedStatus);
 };

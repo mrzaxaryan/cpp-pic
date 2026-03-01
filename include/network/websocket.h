@@ -74,7 +74,7 @@ private:
 	CHAR path[2048];     // De facto max URL path length
 	IPAddress ipAddress;
 	UINT16 port;
-	TLSClient tlsContext;
+	TlsClient tlsContext;
 	BOOL isConnected;
 
 	[[nodiscard]] Result<void, Error> ReceiveRestrict(Span<CHAR> buffer);
@@ -82,8 +82,8 @@ private:
 	static VOID MaskFrame(WebSocketFrame &frame, UINT32 maskKey);
 
 	// Private constructor — only used by Create()
-	WebSocketClient(const CHAR (&host)[254], const CHAR (&parsedPath)[2048], const IPAddress &ip, UINT16 portNum, TLSClient &&tls)
-		: ipAddress(ip), port(portNum), tlsContext(static_cast<TLSClient &&>(tls)), isConnected(false)
+	WebSocketClient(const CHAR (&host)[254], const CHAR (&parsedPath)[2048], const IPAddress &ip, UINT16 portNum, TlsClient &&tls)
+		: ipAddress(ip), port(portNum), tlsContext(static_cast<TlsClient &&>(tls)), isConnected(false)
 	{
 		Memory::Copy(hostName, host, sizeof(hostName));
 		Memory::Copy(path, parsedPath, sizeof(path));
@@ -102,7 +102,7 @@ public:
 
 	WebSocketClient(WebSocketClient &&other) noexcept
 		: ipAddress(other.ipAddress), port(other.port),
-		  tlsContext(static_cast<TLSClient &&>(other.tlsContext)),
+		  tlsContext(static_cast<TlsClient &&>(other.tlsContext)),
 		  isConnected(other.isConnected)
 	{
 		Memory::Copy(hostName, other.hostName, sizeof(hostName));
@@ -121,7 +121,7 @@ public:
 			Memory::Copy(path, other.path, sizeof(path));
 			ipAddress = other.ipAddress;
 			port = other.port;
-			tlsContext = static_cast<TLSClient &&>(other.tlsContext);
+			tlsContext = static_cast<TlsClient &&>(other.tlsContext);
 			isConnected = other.isConnected;
 			other.port = 0;
 			other.isConnected = false;

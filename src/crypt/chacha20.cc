@@ -169,7 +169,7 @@ VOID Poly1305::ProcessBlocks(Span<const UCHAR> data)
     m_h[4] = h4;
 }
 
-INT32 Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter)
+Result<void, Error> Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter)
 {
     ChaChaPoly1305 ctx;
     UINT64 ctr;
@@ -186,11 +186,11 @@ INT32 Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<cons
     }
     else
     {
-        return -1;
+        return Result<void, Error>::Err(Error::ChaCha20_GenerateKeyFailed);
     }
 
     ctx.Block(poly_key.Data(), POLY1305_KEYLEN);
-    return 0;
+    return Result<void, Error>::Ok();
 }
 
 VOID Poly1305::Update(Span<const UCHAR> data)
@@ -608,7 +608,7 @@ VOID ChaChaPoly1305::Block(PUCHAR c, UINT32 len)
     this->input[12] = PLUSONE(this->input[12]);
 }
 
-INT32 ChaChaPoly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
+Result<void, Error> ChaChaPoly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
 {
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
@@ -636,7 +636,7 @@ INT32 ChaChaPoly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const 
     poly.Update(Span<const UCHAR>(trail));
     poly.Finish(out.Last<POLY1305_TAGLEN>());
 
-    return (INT32)len + POLY1305_TAGLEN;
+    return Result<void, Error>::Ok();
 }
 
 Result<INT32, Error> ChaChaPoly1305::Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
@@ -692,7 +692,7 @@ VOID ChaChaPoly1305::Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> poly1305_key)
     UCHAR nonce[12];
     this->Key(key);
     this->Nonce(nonce);
-    Poly1305::GenerateKey(key, nonce, poly1305_key, 0);
+    (void)Poly1305::GenerateKey(key, nonce, poly1305_key, 0);
 }
 
 ChaChaPoly1305::ChaChaPoly1305()

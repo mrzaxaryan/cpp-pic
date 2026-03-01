@@ -54,7 +54,7 @@ VOID ChaCha20Encoder::Encode(TlsBuffer &out, Span<const CHAR> packet, Span<const
     LOG_DEBUG("Chacha20 encoder updated IV with sequence: %p, counter: %d", sequence, counter);
     this->localCipher.Poly1305Key(poly1305_key);
     LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
-    this->localCipher.Poly1305Aead(
+    (void)this->localCipher.Poly1305Aead(
         Span<UCHAR>((UINT8 *)packet.Data(), packetSize),
         Span<const UCHAR>((UINT8 *)aad.Data(), aadSize),
         poly1305_key,

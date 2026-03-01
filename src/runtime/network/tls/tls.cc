@@ -459,6 +459,99 @@ Result<void, Error> TlsClient::OnServerFinished()
 	return Result<void, Error>::Ok();
 }
 
+/// @brief Handle a TLS handshake message by dispatching to the appropriate handler
+/// @param handshakeType Handshake message type (e.g., MSG_SERVER_HELLO, MSG_FINISHED)
+/// @param reader Buffer positioned after the handshake type byte
+/// @return Result indicating success or Tls_OnPacketFailed error
+/// @see RFC 8446 Section 4 — Handshake Protocol
+///      https://datatracker.ietf.org/doc/html/rfc8446#section-4
+
+Result<void, Error> TlsClient::HandleHandshakeMessage(INT32 handshakeType, TlsBuffer &reader)
+{
+	if (handshakeType == MSG_SERVER_HELLO)
+	{
+		LOG_DEBUG("Processing ServerHello for client: %p", this);
+		auto r = OnServerHello(reader);
+		if (!r)
+		{
+			LOG_DEBUG("Failed to process handshake packet for client: %p, handshake type: %d", this, handshakeType);
+			(void)Close();
+			return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
+		}
+	}
+	else if (handshakeType == MSG_CERTIFICATE)
+	{
+		LOG_DEBUG("Processing Server Certificate for client: %p", this);
+	}
+	else if (handshakeType == MSG_CERTIFICATE_VERIFY)
+	{
+		LOG_DEBUG("Processing Server Certificate Verify for client: %p", this);
+	}
+	else if (handshakeType == MSG_SERVER_HELLO_DONE)
+	{
+		LOG_DEBUG("Processing Server Hello Done for client: %p", this);
+		auto r = OnServerHelloDone();
+		if (!r)
+		{
+			LOG_DEBUG("Failed to process Server Hello Done for client: %p", this);
+			return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
+		}
+	}
+	else if (handshakeType == MSG_FINISHED)
+	{
+		LOG_DEBUG("Processing Server Finished for client: %p", this);
+		auto r = VerifyFinished(reader);
+		if (!r)
+		{
+			LOG_DEBUG("Failed to verify Finished for client: %p", this);
+			return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
+		}
+		LOG_DEBUG("Server Finished verified successfully for client: %p", this);
+		crypto.UpdateHash(Span<const CHAR>(reader.GetBuffer(), reader.GetSize()));
+		auto r2 = OnServerFinished();
+		if (!r2)
+		{
+			LOG_DEBUG("Failed to process Server Finished for client: %p", this);
+			return Result<void, Error>::Err(r2, Error::Tls_OnPacketFailed);
+		}
+		LOG_DEBUG("Server Finished processed successfully for client: %p", this);
+	}
+	return Result<void, Error>::Ok();
+}
+
+/// @brief Handle a TLS alert message
+/// @param reader Buffer containing the alert data
+/// @return Result indicating success or Tls_OnPacketFailed error
+/// @see RFC 8446 Section 6 — Alert Protocol
+///      https://datatracker.ietf.org/doc/html/rfc8446#section-6
+
+Result<void, Error> TlsClient::HandleAlertMessage(TlsBuffer &reader)
+{
+	LOG_DEBUG("Processing Alert for client: %p", this);
+	if (reader.GetSize() >= 2)
+	{
+		[[maybe_unused]] INT32 level = reader.Read<INT8>();
+		[[maybe_unused]] INT32 code = reader.Read<INT8>();
+		LOG_ERROR("TLS Alert received for client: %p, level: %d, code: %d", this, level, code);
+		return Result<void, Error>::Err(Error::Tls_OnPacketFailed);
+	}
+	LOG_DEBUG("TLS Alert received for client: %p, but buffer size is less than 2 bytes", this);
+	return Result<void, Error>::Ok();
+}
+
+/// @brief Handle decrypted TLS application data by appending to the channel buffer
+/// @param reader Buffer containing the application data
+/// @return Result indicating success
+/// @see RFC 8446 Section 5.1 — Record Layer
+///      https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
+
+Result<void, Error> TlsClient::HandleApplicationData(TlsBuffer &reader)
+{
+	LOG_DEBUG("Processing Application Data for client: %p, size: %d bytes", this, reader.GetSize());
+	channelBuffer.Append(Span<const CHAR>(reader.GetBuffer(), reader.GetSize()));
+	return Result<void, Error>::Ok();
+}
+
 /// @brief Process incoming TLS packets from the server, handle different packet types and advance the TLS handshake state accordingly
 /// @param packetType Type of the incoming TLS packet (e.g., handshake, alert)
 /// @param version Version of TLS used in the packet
@@ -537,76 +630,24 @@ Result<void, Error> TlsClient::OnPacket(INT32 packetType, INT32 version, TlsBuff
 			LOG_DEBUG("Processing handshake packet for client: %p, handshake type: %d", this, reader_sig.GetBuffer()[0]);
 			INT32 handshakeType = reader_sig.Read<INT8>();
 			LOG_DEBUG("Handshake type: %d", handshakeType);
-			if (handshakeType == MSG_SERVER_HELLO)
-			{
-				LOG_DEBUG("Processing ServerHello for client: %p", this);
-				auto r = OnServerHello(reader_sig);
-				if (!r)
-				{
-					LOG_DEBUG("Failed to process handshake packet for client: %p, handshake type: %d", this, handshakeType);
-					(void)Close();
-					return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
-				}
-			}
-
-			else if (handshakeType == MSG_CERTIFICATE)
-			{
-				LOG_DEBUG("Processing Server Certificate for client: %p", this);
-			}
-
-			else if (handshakeType == MSG_CERTIFICATE_VERIFY)
-			{
-				LOG_DEBUG("Processing Server Certificate Verify for client: %p", this);
-			}
-			else if (handshakeType == MSG_SERVER_HELLO_DONE)
-			{
-				LOG_DEBUG("Processing Server Hello Done for client: %p", this);
-				auto r = OnServerHelloDone();
-				if (!r)
-				{
-					LOG_DEBUG("Failed to process Server Hello Done for client: %p", this);
-					return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
-				}
-			}
-			else if (handshakeType == MSG_FINISHED)
-			{
-				LOG_DEBUG("Processing Server Finished for client: %p", this);
-				auto r = VerifyFinished(reader_sig);
-				if (!r)
-				{
-					LOG_DEBUG("Failed to verify Finished for client: %p", this);
-					return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
-				}
-				LOG_DEBUG("Server Finished verified successfully for client: %p", this);
-				crypto.UpdateHash(Span<const CHAR>(reader_sig.GetBuffer(), reader_sig.GetSize()));
-				auto r2 = OnServerFinished();
-				if (!r2)
-				{
-					LOG_DEBUG("Failed to process Server Finished for client: %p", this);
-					return Result<void, Error>::Err(r2, Error::Tls_OnPacketFailed);
-				}
-				LOG_DEBUG("Server Finished processed successfully for client: %p", this);
-			}
+			auto r = HandleHandshakeMessage(handshakeType, reader_sig);
+			if (!r)
+				return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
 		}
 		else if (packetType == CONTENT_CHANGECIPHERSPEC)
 		{
 		}
 		else if (packetType == CONTENT_ALERT)
 		{
-			LOG_DEBUG("Processing Alert for client: %p", this);
-			if (reader_sig.GetSize() >= 2)
-			{
-				[[maybe_unused]] INT32 level = reader_sig.Read<INT8>();
-				[[maybe_unused]] INT32 code = reader_sig.Read<INT8>();
-				LOG_ERROR("TLS Alert received for client: %p, level: %d, code: %d", this, level, code);
-				return Result<void, Error>::Err(Error::Tls_OnPacketFailed);
-			}
-			LOG_DEBUG("TLS Alert received for client: %p, but buffer size is less than 2 bytes", this);
+			auto r = HandleAlertMessage(reader_sig);
+			if (!r)
+				return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
 		}
 		else if (packetType == CONTENT_APPLICATION_DATA)
 		{
-			LOG_DEBUG("Processing Application Data for client: %p, size: %d bytes", this, reader_sig.GetSize());
-			channelBuffer.Append(Span<const CHAR>(reader_sig.GetBuffer(), reader_sig.GetSize()));
+			auto r = HandleApplicationData(reader_sig);
+			if (!r)
+				return Result<void, Error>::Err(r, Error::Tls_OnPacketFailed);
 		}
 		tlsReader.AdvanceReadPosition(seg_size);
 	}

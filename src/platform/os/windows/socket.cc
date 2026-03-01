@@ -93,7 +93,7 @@ static Result<NTSTATUS, Error> AfdWait(PVOID SockEvent, PIO_STATUS_BLOCK IOSB, N
 		// subsequent !NT_SUCCESS(Status) check in the caller catches it.
 		return Result<NTSTATUS, Error>::Err(waitResult, Error::Socket_WaitFailed);
 	}
-	NTSTATUS waitStatus = waitResult.Value();
+	const auto& waitStatus = waitResult.Value();
 	if (waitStatus != (NTSTATUS)STATUS_TIMEOUT)
 		*Status = IOSB->Status;
 	return Result<NTSTATUS, Error>::Ok(waitStatus);

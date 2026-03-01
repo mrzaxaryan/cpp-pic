@@ -14,20 +14,20 @@
 #include "core/core.h"
 
 /**
- * Environment - Static class for environment variable access
+ * @class Environment
+ * @brief Static class for environment variable access.
  */
 class Environment
 {
 public:
 	/**
-	 * GetVariable - Get an environment variable value
+	 * @brief Retrieves the value of an environment variable.
 	 *
-	 * @param name Variable name (CHAR* for cross-platform, null-terminated)
-	 * @param buffer Output buffer for the value
-	 * @param bufferSize Size of the output buffer
-	 * @return Length of the value, or 0 if not found
+	 * @param name Variable name (null-terminated).
+	 * @param buffer Output buffer to receive the value.
+	 * @return Length of the value written, or 0 if not found.
 	 *
-	 * NOTE: On UEFI, this always returns 0 (no environment variables).
+	 * @note On UEFI, this always returns 0 (no environment variables).
 	 */
 	static USIZE GetVariable(const CHAR* name, Span<CHAR> buffer) noexcept;
 

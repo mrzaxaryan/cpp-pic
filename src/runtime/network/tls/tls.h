@@ -47,6 +47,9 @@ private:
 	[[nodiscard]] Result<INT32, Error> ReadChannel(Span<CHAR> output);
 	[[nodiscard]] Result<void, Error> ProcessReceive();
 	[[nodiscard]] Result<void, Error> OnPacket(INT32 packetType, INT32 version, TlsBuffer &tlsReader);
+	[[nodiscard]] NOINLINE Result<void, Error> HandleHandshakeMessage(INT32 handshakeType, TlsBuffer &reader);
+	[[nodiscard]] NOINLINE Result<void, Error> HandleAlertMessage(TlsBuffer &reader);
+	[[nodiscard]] NOINLINE Result<void, Error> HandleApplicationData(TlsBuffer &reader);
 	[[nodiscard]] Result<void, Error> OnServerFinished();
 	[[nodiscard]] Result<void, Error> VerifyFinished(TlsBuffer &tlsReader);
 	[[nodiscard]] Result<void, Error> OnServerHelloDone();

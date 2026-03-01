@@ -46,6 +46,7 @@ public:
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+	VOID operator delete(VOID *, PVOID) noexcept {}
 
 	/**
 	 * @brief Creates and initializes a directory iterator for the given path.

@@ -294,10 +294,9 @@ Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 				buffer[offset++] = '.';
 			}
 			CHAR temp[4];
-			String::WriteDecimal(temp, octets[i]);
-			UINT32 len = String::Length(temp);
+			USIZE len = String::WriteDecimal(Span<CHAR>(temp), octets[i]);
 			Memory::Copy(&buffer[offset], temp, len);
-			offset += len;
+			offset += (UINT32)len;
 		}
 		buffer[offset] = '\0';
 		return Result<void, Error>::Ok();
@@ -321,10 +320,9 @@ Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 
 			// Convert to hex
 			CHAR hexStr[5];
-			String::WriteHex(hexStr, group);
-			UINT32 hexLen = String::Length(hexStr);
+			USIZE hexLen = String::WriteHex(Span<CHAR>(hexStr), group);
 			Memory::Copy(&buffer[offset], hexStr, hexLen);
-			offset += hexLen;
+			offset += (UINT32)hexLen;
 		}
 		buffer[offset] = '\0';
 		return Result<void, Error>::Ok();

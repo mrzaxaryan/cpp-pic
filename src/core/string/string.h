@@ -349,20 +349,20 @@ public:
 
 	/**
 	 * @brief Write decimal number to buffer
-	 * @param buffer Destination buffer
+	 * @param buffer Destination buffer span
 	 * @param num Number to write
-	 * @return Pointer to null terminator
+	 * @return Number of characters written (excluding null terminator)
 	 */
-	static PCHAR WriteDecimal(PCHAR buffer, UINT32 num) noexcept;
+	static USIZE WriteDecimal(Span<CHAR> buffer, UINT32 num) noexcept;
 
 	/**
 	 * @brief Write hexadecimal number to buffer
-	 * @param buffer Destination buffer
+	 * @param buffer Destination buffer span
 	 * @param num Number to write
 	 * @param uppercase true for A-F, false for a-f
-	 * @return Pointer to null terminator
+	 * @return Number of characters written (excluding null terminator)
 	 */
-	static PCHAR WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase = false) noexcept;
+	static USIZE WriteHex(Span<CHAR> buffer, UINT32 num, BOOL uppercase = false) noexcept;
 
 	/**
 	 * @brief Convert DOUBLE to string
@@ -393,15 +393,6 @@ public:
 	 * @return Result containing parsed DOUBLE value, or Error::String_ParseFloatFailed
 	 */
 	[[nodiscard]] static Result<DOUBLE, Error> StrToFloat(Span<const CHAR> str) noexcept;
-
-	/**
-	 * @brief Parse string to specified type
-	 * @tparam T Target type
-	 * @param str String to parse
-	 * @return Parsed value
-	 */
-	template <typename T>
-	static T ParseString(const CHAR *str);
 
 	/// @}
 	/// @name UTF Conversion

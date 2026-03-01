@@ -57,8 +57,11 @@ enum class IPVersion : UINT8
  * @code
  * // Create IPv4 address from string
  * auto addrResult = IPAddress::FromString("192.168.1.1");
- * if (addrResult && addrResult.Value().IsIPv4()) {
- *     UINT32 ip = addrResult.Value().ToIPv4();  // Network byte order
+ * if (!addrResult)
+ *     return;
+ * auto& addr = addrResult.Value();
+ * if (addr.IsIPv4()) {
+ *     UINT32 ip = addr.ToIPv4();  // Network byte order
  * }
  *
  * // Create IPv4 from raw value

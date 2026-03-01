@@ -213,7 +213,7 @@ Result<DOUBLE, Error> String::StrToFloat(Span<const CHAR> str) noexcept
 	USIZE copyLen = str.Size() < 63 ? str.Size() : 63;
 	for (USIZE i = 0; i < copyLen; i++)
 	{
-		buffer[i] = str.Data()[i];
+		buffer[i] = str[i];
 	}
 	buffer[copyLen] = '\0';
 
@@ -252,19 +252,21 @@ UINT32 String::ParseHex(PCCHAR str) noexcept
 	return result;
 }
 
-PCHAR String::WriteDecimal(PCHAR buffer, UINT32 num) noexcept
+USIZE String::WriteDecimal(Span<CHAR> buffer, UINT32 num) noexcept
 {
-	USIZE len = UIntToStr((UINT64)num, Span<CHAR>(buffer, 12));
-	return buffer + len;
+	return UIntToStr((UINT64)num, buffer);
 }
 
-PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) noexcept
+USIZE String::WriteHex(Span<CHAR> buffer, UINT32 num, BOOL uppercase) noexcept
 {
+	if (buffer.Size() < 2)
+		return 0;
+
 	if (num == 0)
 	{
 		buffer[0] = '0';
 		buffer[1] = '\0';
-		return buffer + 1;
+		return 1;
 	}
 
 	CHAR temp[9];
@@ -279,12 +281,12 @@ PCHAR String::WriteHex(PCHAR buffer, UINT32 num, BOOL uppercase) noexcept
 	}
 
 	INT32 j = 0;
-	while (i > 0)
+	while (i > 0 && j < (INT32)buffer.Size() - 1)
 	{
 		buffer[j++] = temp[--i];
 	}
 	buffer[j] = '\0';
-	return buffer + j;
+	return (USIZE)j;
 }
 
 // ============================================================================

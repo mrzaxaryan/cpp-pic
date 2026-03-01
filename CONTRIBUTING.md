@@ -315,7 +315,7 @@ Platform-specific OS API wrappers (NTDLL, Kernel32) **must** include Doxygen doc
 
 **Prefer references over pointers** — Use reference parameters (`T&` / `const T&`) by default for non-null arguments. References provide a compile-time non-null guarantee, which means the callee never needs a null check — any null guard inside the function is dead code and a sign the parameter should be a reference. Reserve pointers only for output parameters, nullable arguments, and Windows API compatibility.
 
-**`Span<T>`** — **Use `Span<T>` instead of `(T*, USIZE)` pairs** for functions that operate on contiguous buffers. This eliminates size-mismatch bugs at zero runtime cost:
+**`Span<T>`** — **Use `Span<T>` instead of raw pointer buffer parameters** for functions that operate on contiguous buffers. This applies to both `(T*, USIZE)` pairs and bare `T*` pointers without any size — bare pointers are worse since no bounds checking is possible at all. This eliminates size-mismatch bugs at zero runtime cost:
 
 ```cpp
 // Bad — caller can pass wrong size:
@@ -343,7 +343,7 @@ while (offset < maxLen) { ... }
 while (offset < (INT32)data.Size()) { ... }
 ```
 
-**`[[nodiscard]] Result<T, Error>`** — **All fallible functions must return `Result<T, Error>` and also `[[nodiscard]]`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. This ensures a uniform error-handling interface across the codebase:
+**`[[nodiscard]] Result<T, Error>`** — **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. The `Result` class itself is declared `class [[nodiscard]] Result`, so all Result-returning functions automatically warn on discard. Adding `[[nodiscard]]` on the function declaration as well is encouraged for explicitness but not strictly required. This ensures a uniform error-handling interface across the codebase:
 
 ```cpp
 [[nodiscard]] Result<IPAddress, Error> Resolve(PCCHAR host);
@@ -357,7 +357,7 @@ IPAddress &ip = result.Value();  // borrow; Result still owns it
 [[nodiscard]] Result<void, Error> Open();
 ```
 
-**Do not copy `Result::Value()`** into local variables — `Value()` is `FORCE_INLINE`, call it directly. When calling methods on the result value, use a local variable to avoid chaining:
+**Do not copy `Result::Value()`** into local variables — `Value()` returns a reference to the value owned by `Result`, so copying it creates an unnecessary duplicate. Pass `Value()` directly to functions, or bind to `auto&` when you need to call methods on it (to avoid chaining `.Value().Method()`):
 
 ```cpp
 // Good — pass Value() directly to functions:
@@ -469,7 +469,7 @@ LOG_ERROR("Operation failed (error: %e)", result.Error());
 
 ### Error Rules
 
-- `[[nodiscard]]` is **required** on all Result-returning functions. It **may also** be used on factory methods and functions where discarding the return value is always a bug.
+- `[[nodiscard]]` on Result-returning functions is **encouraged for explicitness** (the `Result` class itself already carries `[[nodiscard]]`, so all returns are protected automatically). It **may also** be used on factory methods and functions where discarding the return value is always a bug.
 - **Never use `Result<bool, Error>`** — use `Result<void, Error>` instead. `Result` itself is already bool-testable via `operator BOOL`, so wrapping a `bool` value creates confusing double-boolean checks (`!r || !r.Value()`). With `Result<void, Error>`, truthy means success and falsy means failure — clean and unambiguous.
 - OS errors: use factory methods — `Error::Windows()`, `Error::Posix()`, `Error::Uefi()`
 - Runtime errors: pass bare — `Result::Err(Error::Socket_WriteFailed_Send)`

@@ -179,7 +179,7 @@ private:
 
 		// Verify the string matches
 		auto expected = "192.168.1.1"_embed;
-		if (!String::Compare((PCCHAR)buffer, (PCCHAR)expected))
+		if (!String::Equals((PCCHAR)buffer, (PCCHAR)expected))
 		{
 			LOG_ERROR("ToString mismatch: got '%s', expected '%s'", buffer, (PCCHAR)expected);
 			return false;

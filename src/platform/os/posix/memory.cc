@@ -1,6 +1,14 @@
 #include "platform/memory/allocator.h"
+#if defined(PLATFORM_LINUX)
 #include "platform/os/linux/common/syscall.h"
 #include "platform/os/linux/common/system.h"
+#elif defined(PLATFORM_MACOS)
+#include "platform/os/macos/common/syscall.h"
+#include "platform/os/macos/common/system.h"
+#elif defined(PLATFORM_SOLARIS)
+#include "platform/os/solaris/common/syscall.h"
+#include "platform/os/solaris/common/system.h"
+#endif
 
 // Memory allocator using mmap/munmap
 // Each allocation is a separate mmap, which is simple but not efficient for
@@ -21,12 +29,11 @@ PVOID Allocator::AllocateMemory(USIZE size)
 	INT32 prot = PROT_READ | PROT_WRITE;
 	INT32 flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
-#if defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
-	// 32-bit architectures use mmap2 with page-shifted offset
-	USIZE offset = 0; // No offset for anonymous mapping
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A))
+	// 32-bit Linux architectures use mmap2 with page-shifted offset
+	USIZE offset = 0;
 	SSIZE result = System::Call(SYS_MMAP2, (USIZE)addr, size, prot, flags, -1, offset);
 #else
-	// 64-bit architectures use mmap
 	USIZE offset = 0;
 	SSIZE result = System::Call(SYS_MMAP, (USIZE)addr, size, prot, flags, -1, offset);
 #endif

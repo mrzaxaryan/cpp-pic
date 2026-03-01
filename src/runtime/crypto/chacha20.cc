@@ -610,32 +610,48 @@ VOID ChaCha20Poly1305::Block(Span<UCHAR> output)
     this->input[12] = PLUSONE(this->input[12]);
 }
 
-Result<void, Error> ChaCha20Poly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
+/**
+ * @brief Feeds AAD and ciphertext into Poly1305 with RFC 8439 padding and length trailer
+ *
+ * @details Implements the Poly1305 construction from RFC 8439 Section 2.8:
+ *   1. Update with AAD, pad to 16-byte boundary
+ *   2. Update with ciphertext, pad to 16-byte boundary
+ *   3. Update with 8-byte little-endian AAD length + 8-byte little-endian ciphertext length
+ *
+ * @see RFC 8439 Section 2.8 — AEAD Construction
+ *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
+ */
+static NOINLINE VOID Poly1305PadAndTrail(Poly1305 &poly, Span<const UCHAR> aad, Span<const UCHAR> ciphertext)
 {
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
 
+    poly.Update(aad);
+    INT32 rem = (INT32)aad.Size() % 16;
+    if (rem)
+        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
+    poly.Update(ciphertext);
+    rem = (INT32)ciphertext.Size() % 16;
+    if (rem)
+        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
+
+    UCHAR trail[16];
+    Poly1305::U32TO8(trail, (UINT32)aad.Size());
+    Memory::Zero(trail + 4, 4);
+    Poly1305::U32TO8(trail + 8, (UINT32)ciphertext.Size());
+    Memory::Zero(trail + 12, 4);
+    poly.Update(Span<const UCHAR>(trail));
+}
+
+Result<void, Error> ChaCha20Poly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
+{
     UINT32 len = (UINT32)pt.Size();
     UINT32 counter = 1;
     this->IVSetup96BitNonce(nullptr, (PUCHAR)&counter);
     this->EncryptBytes(Span<const UINT8>(pt.Data(), len), Span<UINT8>(out.Data(), len));
 
     Poly1305 poly(poly_key);
-    poly.Update(aad);
-    INT32 rem = (INT32)aad.Size() % 16;
-    if (rem)
-        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
-    poly.Update(Span<const UCHAR>(out.Data(), len));
-    rem = (INT32)len % 16;
-    if (rem)
-        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
-    UCHAR trail[16];
-    Poly1305::U32TO8(trail, (UINT32)aad.Size());
-    Memory::Zero(trail + 4, 4);
-    Poly1305::U32TO8(trail + 8, len);
-    Memory::Zero(trail + 12, 4);
-
-    poly.Update(Span<const UCHAR>(trail));
+    Poly1305PadAndTrail(poly, aad, Span<const UCHAR>(out.Data(), len));
     poly.Finish(out.Last<POLY1305_TAGLEN>());
 
     return Result<void, Error>::Ok();
@@ -651,24 +667,9 @@ Result<INT32, Error> ChaCha20Poly1305::Poly1305Decode(Span<UCHAR> pt, Span<const
     // Authenticate BEFORE decrypting (AEAD requirement)
     // poly_key is already computed by the caller; use it directly
     Poly1305 poly(poly_key);
-    poly.Update(aad);
-    UCHAR zeropad[15];
-    Memory::Zero(zeropad, sizeof(zeropad));
-    INT32 rem = (INT32)aad.Size() % 16;
-    if (rem)
-        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
-    poly.Update(Span<const UCHAR>(pt.Data(), len));
-    rem = (INT32)len % 16;
-    if (rem)
-        poly.Update(Span<const UCHAR>(zeropad, 16 - rem));
-    UCHAR trail[16];
-    Poly1305::U32TO8(&trail[0], (UINT32)aad.Size());
-    Memory::Zero(trail + 4, 4);
-    Poly1305::U32TO8(&trail[8], len);
-    Memory::Zero(trail + 12, 4);
+    Poly1305PadAndTrail(poly, aad, Span<const UCHAR>(pt.Data(), len));
 
     UCHAR mac_tag[POLY1305_TAGLEN];
-    poly.Update(Span<const UCHAR>(trail));
     poly.Finish(mac_tag);
 
     // Constant-time comparison to prevent timing oracle

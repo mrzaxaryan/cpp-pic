@@ -1,8 +1,7 @@
 #include "platform/io/file_system/file.h"
-#include "platform/io/file_system/path.h"
+#include "platform/os/posix/file_system/posix_path.h"
 #include "core/memory/memory.h"
 #include "core/string/string.h"
-#include "core/encoding/utf16.h"
 #if defined(PLATFORM_LINUX)
 #include "platform/os/linux/common/syscall.h"
 #include "platform/os/linux/common/system.h"
@@ -13,20 +12,6 @@
 #include "platform/os/solaris/common/syscall.h"
 #include "platform/os/solaris/common/system.h"
 #endif
-
-// =============================================================================
-// Helper: Normalize a wide path to a null-terminated UTF-8 string.
-// =============================================================================
-
-static NOINLINE USIZE NormalizePathToUtf8(PCWCHAR path, Span<CHAR> utf8Out)
-{
-	WCHAR normalizedPath[1024];
-	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen),
-								   Span<CHAR>(utf8Out.Data(), utf8Out.Size() - 1));
-	utf8Out.Data()[utf8Len] = '\0';
-	return utf8Len;
-}
 
 // --- Internal Constructor (trivial — never fails) ---
 File::File(PVOID handle, USIZE size) : fileHandle(handle), fileSize(size) {}

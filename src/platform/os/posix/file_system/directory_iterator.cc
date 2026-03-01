@@ -1,4 +1,5 @@
 #include "platform/io/file_system/directory_iterator.h"
+#include "platform/os/posix/file_system/posix_path.h"
 #include "core/memory/memory.h"
 #if defined(PLATFORM_LINUX)
 #include "platform/os/linux/common/syscall.h"
@@ -11,22 +12,6 @@
 #include "platform/os/solaris/common/system.h"
 #endif
 #include "core/string/string.h"
-#include "core/encoding/utf16.h"
-#include "platform/io/file_system/path.h"
-
-// =============================================================================
-// Helper: Normalize a wide path to a null-terminated UTF-8 string.
-// =============================================================================
-
-static NOINLINE USIZE NormalizePathToUtf8(PCWCHAR path, Span<CHAR> utf8Out)
-{
-	WCHAR normalizedPath[1024];
-	USIZE pathLen = Path::NormalizePath(path, Span<WCHAR>(normalizedPath));
-	USIZE utf8Len = UTF16::ToUTF8(Span<const WCHAR>(normalizedPath, pathLen),
-								   Span<CHAR>(utf8Out.Data(), utf8Out.Size() - 1));
-	utf8Out.Data()[utf8Len] = '\0';
-	return utf8Len;
-}
 
 // =============================================================================
 // DirectoryIterator Implementation

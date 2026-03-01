@@ -9,11 +9,11 @@
 
 INT32 TlsBuffer::Append(Span<const CHAR> data)
 {
-    INT32 dataSize = (INT32)data.Size();
-    CheckSize(dataSize);
-    Memory::Copy(buffer + this->size, (PVOID)data.Data(), dataSize);
-    this->size += dataSize;
-    return this->size - dataSize;
+	INT32 dataSize = (INT32)data.Size();
+	CheckSize(dataSize);
+	Memory::Copy(buffer + this->size, (PVOID)data.Data(), dataSize);
+	this->size += dataSize;
+	return this->size - dataSize;
 }
 
 /// @brief Append a single character to the TLS buffer
@@ -27,9 +27,9 @@ INT32 TlsBuffer::Append(Span<const CHAR> data)
 
 INT32 TlsBuffer::AppendSize(INT32 size)
 {
-    CheckSize(size);
-    this->size += size;
-    return this->size - size;
+	CheckSize(size);
+	this->size += size;
+	return this->size - size;
 }
 
 /// @brief Set the size of the TLS buffer
@@ -38,9 +38,9 @@ INT32 TlsBuffer::AppendSize(INT32 size)
 
 VOID TlsBuffer::SetSize(INT32 size)
 {
-    this->size = 0;
-    CheckSize(size);
-    this->size = size;
+	this->size = 0;
+	CheckSize(size);
+	this->size = size;
 }
 
 /// @brief Clean up the TLS buffer by freeing memory if owned and resetting size and capacity
@@ -48,14 +48,14 @@ VOID TlsBuffer::SetSize(INT32 size)
 
 VOID TlsBuffer::Clear()
 {
-    if (this->buffer && this->ownsMemory)
-    {
-        delete[] this->buffer;
-        this->buffer = nullptr;
-    }
-    this->size = 0;
-    this->capacity = 0;
-    this->readPos = 0;
+	if (this->buffer && this->ownsMemory)
+	{
+		delete[] this->buffer;
+		this->buffer = nullptr;
+	}
+	this->size = 0;
+	this->capacity = 0;
+	this->readPos = 0;
 }
 
 /// @brief Ensure there is enough capacity in the TLS buffer to append additional data
@@ -64,44 +64,44 @@ VOID TlsBuffer::Clear()
 
 VOID TlsBuffer::CheckSize(INT32 appendSize)
 {
-    if (this->size + appendSize <= this->capacity)
-    {
-        LOG_DEBUG("Buffer size is sufficient: %d + %d <= %d\n", this->size, appendSize, this->capacity);
-        return;
-    }
+	if (this->size + appendSize <= this->capacity)
+	{
+		LOG_DEBUG("Buffer size is sufficient: %d + %d <= %d\n", this->size, appendSize, this->capacity);
+		return;
+	}
 
-    PCHAR oldBuffer = buffer;
-    INT32 newLen = (this->size + appendSize) * 4;
-    if (newLen < 256)
-    {
-        newLen = 256;
-    }
+	PCHAR oldBuffer = buffer;
+	INT32 newLen = (this->size + appendSize) * 4;
+	if (newLen < 256)
+	{
+		newLen = 256;
+	}
 
-    PCHAR newBuffer = (PCHAR) new CHAR[newLen];
-    if (!newBuffer)
-    {
-        // Allocation failed: restore invariant so the buffer stays valid (empty)
-        this->size = 0;
-        this->capacity = 0;
-        if (oldBuffer && this->ownsMemory)
-            delete[] oldBuffer;
-        this->buffer = nullptr;
-        this->ownsMemory = true;
-        return;
-    }
-    if (this->size > 0)
-    {
-        LOG_DEBUG("Resizing buffer from %d to %d bytes\n", this->capacity, newLen);
-        Memory::Copy(newBuffer, oldBuffer, this->size);
-    }
-    if (oldBuffer && this->ownsMemory)
-    {
-        delete[] oldBuffer;
-        oldBuffer = nullptr;
-    }
-    buffer = newBuffer;
-    this->capacity = newLen;
-    this->ownsMemory = true;
+	PCHAR newBuffer = (PCHAR) new CHAR[newLen];
+	if (!newBuffer)
+	{
+		// Allocation failed: restore invariant so the buffer stays valid (empty)
+		this->size = 0;
+		this->capacity = 0;
+		if (oldBuffer && this->ownsMemory)
+			delete[] oldBuffer;
+		this->buffer = nullptr;
+		this->ownsMemory = true;
+		return;
+	}
+	if (this->size > 0)
+	{
+		LOG_DEBUG("Resizing buffer from %d to %d bytes\n", this->capacity, newLen);
+		Memory::Copy(newBuffer, oldBuffer, this->size);
+	}
+	if (oldBuffer && this->ownsMemory)
+	{
+		delete[] oldBuffer;
+		oldBuffer = nullptr;
+	}
+	buffer = newBuffer;
+	this->capacity = newLen;
+	this->ownsMemory = true;
 }
 
 /// @brief Read a value of type T from the TLS buffer
@@ -111,9 +111,9 @@ VOID TlsBuffer::CheckSize(INT32 appendSize)
 template <typename T>
 T TlsBuffer::Read()
 {
-    T value = *(T *)(this->buffer + this->readPos);
-    this->readPos += sizeof(T);
-    return value;
+	T value = *(T *)(this->buffer + this->readPos);
+	this->readPos += sizeof(T);
+	return value;
 }
 
 /// @brief Read 2-byte value from the TLS buffer
@@ -122,10 +122,10 @@ T TlsBuffer::Read()
 template <>
 INT16 TlsBuffer::Read<INT16>()
 {
-    INT16 value;
-    Memory::Copy(&value, this->buffer + this->readPos, sizeof(INT16));
-    this->readPos += sizeof(INT16);
-    return value;
+	INT16 value;
+	Memory::Copy(&value, this->buffer + this->readPos, sizeof(INT16));
+	this->readPos += sizeof(INT16);
+	return value;
 }
 
 /// @brief Read a single byte from the TLS buffer
@@ -134,10 +134,10 @@ INT16 TlsBuffer::Read<INT16>()
 template <>
 INT8 TlsBuffer::Read<INT8>()
 {
-    INT8 value;
-    Memory::Copy(&value, this->buffer + this->readPos, sizeof(INT8));
-    this->readPos += sizeof(INT8);
-    return value;
+	INT8 value;
+	Memory::Copy(&value, this->buffer + this->readPos, sizeof(INT8));
+	this->readPos += sizeof(INT8);
+	return value;
 }
 
 /// @brief Read a block of data from the TLS buffer
@@ -147,8 +147,8 @@ INT8 TlsBuffer::Read<INT8>()
 
 VOID TlsBuffer::Read(Span<CHAR> buf)
 {
-    Memory::Copy(buf.Data(), this->buffer + this->readPos, buf.Size());
-    this->readPos += (INT32)buf.Size();
+	Memory::Copy(buf.Data(), this->buffer + this->readPos, buf.Size());
+	this->readPos += (INT32)buf.Size();
 }
 
 /// @brief Read a 24-bit big-endian unsigned integer from the TLS buffer
@@ -156,9 +156,9 @@ VOID TlsBuffer::Read(Span<CHAR> buf)
 
 UINT32 TlsBuffer::ReadU24BE()
 {
-    UINT8 b0 = (UINT8)this->buffer[this->readPos];
-    UINT8 b1 = (UINT8)this->buffer[this->readPos + 1];
-    UINT8 b2 = (UINT8)this->buffer[this->readPos + 2];
-    this->readPos += 3;
-    return ((UINT32)b0 << 16) | ((UINT32)b1 << 8) | (UINT32)b2;
+	UINT8 b0 = (UINT8)this->buffer[this->readPos];
+	UINT8 b1 = (UINT8)this->buffer[this->readPos + 1];
+	UINT8 b2 = (UINT8)this->buffer[this->readPos + 2];
+	this->readPos += 3;
+	return ((UINT32)b0 << 16) | ((UINT32)b1 << 8) | (UINT32)b2;
 }

@@ -99,9 +99,9 @@ static Result<NTSTATUS, Error> AfdWait(PVOID SockEvent, IO_STATUS_BLOCK &IOSB, N
 	return Result<NTSTATUS, Error>::Ok(waitStatus);
 }
 
-Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
+Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 {
-	LOG_DEBUG("Bind(handle: 0x%p, family: %d, ShareType: %d)\n", m_socket, SocketAddress.sin_family, ShareType);
+	LOG_DEBUG("Bind(handle: 0x%p, family: %d, shareType: %d)\n", m_socket, socketAddress.SinFamily, shareType);
 
 	PVOID SockEvent = nullptr;
 	auto evtResult = NTDLL::ZwCreateEvent(&SockEvent, EVENT_ALL_ACCESS, nullptr, SynchronizationEvent, false);
@@ -115,12 +115,12 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	Memory::Zero(&OutputBlock, sizeof(OutputBlock));
 
 	NTSTATUS Status;
-	if (SocketAddress.sin_family == AF_INET6)
+	if (socketAddress.SinFamily == AF_INET6)
 	{
 		AfdBindData6 BindConfig;
 		Memory::Zero(&BindConfig, sizeof(BindConfig));
-		BindConfig.ShareType = ShareType;
-		BindConfig.Address   = (SockAddr6 &)SocketAddress;
+		BindConfig.ShareType = shareType;
+		BindConfig.Address   = (SockAddr6 &)socketAddress;
 
 		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_BIND,
@@ -137,8 +137,8 @@ Result<void, Error> Socket::Bind(SockAddr &SocketAddress, INT32 ShareType)
 	{
 		AfdBindData BindConfig;
 		Memory::Zero(&BindConfig, sizeof(BindConfig));
-		BindConfig.ShareType = ShareType;
-		BindConfig.Address   = SocketAddress;
+		BindConfig.ShareType = shareType;
+		BindConfig.Address   = socketAddress;
 
 		auto ioResult = NTDLL::ZwDeviceIoControlFile(m_socket, SockEvent, nullptr, nullptr, &IOSB,
 		                                             IOCTL_AFD_BIND,

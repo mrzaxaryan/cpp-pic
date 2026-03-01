@@ -246,7 +246,7 @@ All public APIs and protocol implementations **must** include Doxygen documentat
 **Inline RFC references** — use `///` comments for enum values, struct members, and implementation comments:
 
 ```cpp
-OPCODE_TEXT = 0x1, ///< Text data frame — payload is UTF-8 (RFC 6455 Section 5.6)
+Text = 0x1, ///< Text data frame — payload is UTF-8 (RFC 6455 Section 5.6)
 ```
 
 **When RFC documentation is required:**

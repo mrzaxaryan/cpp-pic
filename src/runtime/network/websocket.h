@@ -10,14 +10,14 @@
  * @see RFC 6455 Section 11.8 — WebSocket Opcode Registry
  *      https://datatracker.ietf.org/doc/html/rfc6455#section-11.8
  */
-enum WebSocketOpcode : INT8
+enum class WebSocketOpcode : INT8
 {
-	OPCODE_CONTINUE = 0x0, ///< Continuation frame (RFC 6455 Section 5.4)
-	OPCODE_TEXT     = 0x1, ///< Text data frame — payload is UTF-8 (RFC 6455 Section 5.6)
-	OPCODE_BINARY   = 0x2, ///< Binary data frame (RFC 6455 Section 5.6)
-	OPCODE_CLOSE    = 0x8, ///< Connection close control frame (RFC 6455 Section 5.5.1)
-	OPCODE_PING     = 0x9, ///< Ping control frame (RFC 6455 Section 5.5.2)
-	OPCODE_PONG     = 0xA  ///< Pong control frame (RFC 6455 Section 5.5.3)
+	Continue = 0x0, ///< Continuation frame (RFC 6455 Section 5.4)
+	Text     = 0x1, ///< Text data frame — payload is UTF-8 (RFC 6455 Section 5.6)
+	Binary   = 0x2, ///< Binary data frame (RFC 6455 Section 5.6)
+	Close    = 0x8, ///< Connection close control frame (RFC 6455 Section 5.5.1)
+	Ping     = 0x9, ///< Ping control frame (RFC 6455 Section 5.5.2)
+	Pong     = 0xA  ///< Pong control frame (RFC 6455 Section 5.5.3)
 };
 
 /**
@@ -38,6 +38,48 @@ struct WebSocketFrame
 	UINT8 rsv1;            ///< RSV1 extension bit — must be 0 unless an extension is negotiated
 	UINT8 rsv2;            ///< RSV2 extension bit — must be 0 unless an extension is negotiated
 	UINT8 rsv3;            ///< RSV3 extension bit — must be 0 unless an extension is negotiated
+
+	WebSocketFrame() : data(nullptr), length(0), opcode(WebSocketOpcode::Continue), fin(0), mask(0), rsv1(0), rsv2(0), rsv3(0) {}
+
+	~WebSocketFrame()
+	{
+		if (data)
+		{
+			delete[] data;
+			data = nullptr;
+		}
+	}
+
+	WebSocketFrame(const WebSocketFrame &) = delete;
+	WebSocketFrame &operator=(const WebSocketFrame &) = delete;
+
+	WebSocketFrame(WebSocketFrame &&other) noexcept
+		: data(other.data), length(other.length), opcode(other.opcode),
+		  fin(other.fin), mask(other.mask), rsv1(other.rsv1), rsv2(other.rsv2), rsv3(other.rsv3)
+	{
+		other.data = nullptr;
+		other.length = 0;
+	}
+
+	WebSocketFrame &operator=(WebSocketFrame &&other) noexcept
+	{
+		if (this != &other)
+		{
+			if (data)
+				delete[] data;
+			data = other.data;
+			length = other.length;
+			opcode = other.opcode;
+			fin = other.fin;
+			mask = other.mask;
+			rsv1 = other.rsv1;
+			rsv2 = other.rsv2;
+			rsv3 = other.rsv3;
+			other.data = nullptr;
+			other.length = 0;
+		}
+		return *this;
+	}
 };
 
 /**
@@ -54,7 +96,7 @@ struct WebSocketMessage
 	USIZE length;          ///< Total message payload length in bytes
 	WebSocketOpcode opcode;///< Message type captured from the first (non-continuation) frame
 
-	WebSocketMessage() : data(nullptr), length(0), opcode(OPCODE_BINARY) {}
+	WebSocketMessage() : data(nullptr), length(0), opcode(WebSocketOpcode::Binary) {}
 
 	~WebSocketMessage()
 	{
@@ -289,7 +331,7 @@ public:
 	/**
 	 * @brief Sends a WebSocket data or control frame with client-to-server masking
 	 * @param buffer Payload data to send
-	 * @param opcode Frame opcode (default: OPCODE_BINARY)
+	 * @param opcode Frame opcode (default: WebSocketOpcode::Binary)
 	 * @return Ok(bytesSent) on success, Err(Ws_WriteFailed | Ws_NotConnected) on failure
 	 *
 	 * @details Implements frame construction and masking per RFC 6455 Section 5.2 and 5.3:
@@ -308,5 +350,5 @@ public:
 	 * @see RFC 6455 Section 5.3 — Client-to-Server Masking
 	 *      https://datatracker.ietf.org/doc/html/rfc6455#section-5.3
 	 */
-	[[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer, WebSocketOpcode opcode = OPCODE_BINARY);
+	[[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer, WebSocketOpcode opcode = WebSocketOpcode::Binary);
 };

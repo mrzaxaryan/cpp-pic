@@ -93,10 +93,10 @@
  */
 struct SockAddr
 {
-	INT16 sin_family;   ///< Address family (AF_INET)
-	UINT16 sin_port;    ///< Port number in network byte order
-	UINT32 sin_addr;    ///< IPv4 address in network byte order
-	CHAR sin_zero[8];   ///< Padding to match sockaddr size (must be zeroed)
+	INT16 SinFamily;   ///< Address family (AF_INET)
+	UINT16 SinPort;    ///< Port number in network byte order
+	UINT32 SinAddr;    ///< IPv4 address in network byte order
+	CHAR SinZero[8];   ///< Padding to match sockaddr size (must be zeroed)
 };
 
 /**
@@ -113,11 +113,11 @@ struct SockAddr
  */
 struct SockAddr6
 {
-	UINT16 sin6_family;    ///< Address family (AF_INET6)
-	UINT16 sin6_port;      ///< Port number in network byte order
-	UINT32 sin6_flowinfo;  ///< IPv6 flow information (RFC 8200 Section 7)
-	UINT8 sin6_addr[16];   ///< 128-bit IPv6 address
-	UINT32 sin6_scope_id;  ///< Scope ID for link-local addresses (RFC 3493 Section 3.3)
+	UINT16 Sin6Family;    ///< Address family (AF_INET6)
+	UINT16 Sin6Port;      ///< Port number in network byte order
+	UINT32 Sin6Flowinfo;  ///< IPv6 flow information (RFC 8200 Section 7)
+	UINT8 Sin6Addr[16];   ///< 128-bit IPv6 address
+	UINT32 Sin6ScopeId;  ///< Scope ID for link-local addresses (RFC 3493 Section 3.3)
 };
 
 /**
@@ -159,15 +159,15 @@ public:
 
 			SockAddr6 *addr6 = (SockAddr6 *)addrBuffer.Data();
 			Memory::Zero(addr6, sizeof(SockAddr6));
-			addr6->sin6_family = AF_INET6;
-			addr6->sin6_port = UINT16SwapByteOrder(port);
-			addr6->sin6_flowinfo = 0;
-			addr6->sin6_scope_id = 0;
+			addr6->Sin6Family = AF_INET6;
+			addr6->Sin6Port = UINT16SwapByteOrder(port);
+			addr6->Sin6Flowinfo = 0;
+			addr6->Sin6ScopeId = 0;
 
 			const UINT8 *ipv6Addr = ip.ToIPv6();
 			if (ipv6Addr != nullptr)
 			{
-				Memory::Copy(addr6->sin6_addr, ipv6Addr, 16);
+				Memory::Copy(addr6->Sin6Addr, ipv6Addr, 16);
 			}
 
 			return sizeof(SockAddr6);
@@ -179,9 +179,9 @@ public:
 
 			SockAddr *addr = (SockAddr *)addrBuffer.Data();
 			Memory::Zero(addr, sizeof(SockAddr));
-			addr->sin_family = AF_INET;
-			addr->sin_port = UINT16SwapByteOrder(port);
-			addr->sin_addr = ip.ToIPv4();
+			addr->SinFamily = AF_INET;
+			addr->SinPort = UINT16SwapByteOrder(port);
+			addr->SinAddr = ip.ToIPv4();
 
 			return sizeof(SockAddr);
 		}
@@ -212,8 +212,8 @@ public:
 
 			SockAddr6 *addr6 = (SockAddr6 *)addrBuffer.Data();
 			Memory::Zero(addr6, sizeof(SockAddr6));
-			addr6->sin6_family = AF_INET6;
-			addr6->sin6_port = UINT16SwapByteOrder(port);
+			addr6->Sin6Family = AF_INET6;
+			addr6->Sin6Port = UINT16SwapByteOrder(port);
 
 			return sizeof(SockAddr6);
 		}
@@ -224,8 +224,8 @@ public:
 
 			SockAddr *addr = (SockAddr *)addrBuffer.Data();
 			Memory::Zero(addr, sizeof(SockAddr));
-			addr->sin_family = AF_INET;
-			addr->sin_port = UINT16SwapByteOrder(port);
+			addr->SinFamily = AF_INET;
+			addr->SinPort = UINT16SwapByteOrder(port);
 
 			return sizeof(SockAddr);
 		}
@@ -319,14 +319,14 @@ private:
 	 * a wildcard address. On Linux/macOS the kernel performs an implicit bind
 	 * during connect(), so this is only called internally when needed.
 	 *
-	 * @param SocketAddress Local address to bind to
-	 * @param ShareType Address sharing flags (Windows AFD_SHARE_* flags; ignored on POSIX)
+	 * @param socketAddress Local address to bind to
+	 * @param shareType Address sharing flags (Windows AFD_SHARE_* flags; ignored on POSIX)
 	 * @return Result<void, Error> — Ok on success, Err on bind failure
 	 *
 	 * @see RFC 9293 Section 3.1 — Header Format (local port assignment)
 	 *      https://datatracker.ietf.org/doc/html/rfc9293#section-3.1
 	 */
-	[[nodiscard]] Result<void, Error> Bind(SockAddr &SocketAddress, INT32 ShareType);
+	[[nodiscard]] Result<void, Error> Bind(SockAddr &socketAddress, INT32 shareType);
 
 	/**
 	 * @brief Private constructor for factory use

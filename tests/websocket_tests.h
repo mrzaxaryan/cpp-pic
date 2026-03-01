@@ -54,7 +54,7 @@ private:
 		return true;
 	}
 
-	// Test 4: WebSocket text message echo (OPCODE_TEXT)
+	// Test 4: WebSocket text message echo (WebSocketOpcode::Text)
 	static BOOL TestWebSocketTextEcho()
 	{
 		LOG_INFO("Test: WebSocket Text Echo");
@@ -83,7 +83,7 @@ private:
 
 		// Send text message
 		auto testMessage = "Hello, WebSocket!"_embed;
-		auto writeResult = wsClient.Write(Span<const CHAR>((PCCHAR)testMessage, testMessage.Length()), OPCODE_TEXT);
+		auto writeResult = wsClient.Write(Span<const CHAR>((PCCHAR)testMessage, testMessage.Length()), WebSocketOpcode::Text);
 
 		if (!writeResult)
 		{
@@ -104,9 +104,9 @@ private:
 
 		WebSocketMessage &response = readResult.Value();
 
-		if (response.opcode != OPCODE_TEXT)
+		if (response.opcode != WebSocketOpcode::Text)
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", OPCODE_TEXT, response.opcode);
+			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", (INT8)WebSocketOpcode::Text, (INT8)response.opcode);
 			(void)wsClient.Close();
 			return false;
 		}
@@ -127,7 +127,7 @@ private:
 		return true;
 	}
 
-	// Test 5: WebSocket binary message echo (OPCODE_BINARY)
+	// Test 5: WebSocket binary message echo (WebSocketOpcode::Binary)
 	static BOOL TestWebSocketBinaryEcho()
 	{
 		LOG_INFO("Test: WebSocket Binary Echo");
@@ -163,7 +163,7 @@ private:
 		}
 		UINT32 dataLength = sizeof(binaryData);
 
-		auto writeResult = wsClient.Write(Span<const CHAR>((PCHAR)binaryData, dataLength), OPCODE_BINARY);
+		auto writeResult = wsClient.Write(Span<const CHAR>((PCHAR)binaryData, dataLength), WebSocketOpcode::Binary);
 
 		if (!writeResult)
 		{
@@ -186,14 +186,14 @@ private:
 
 		WebSocketMessage &response = readResult.Value();
 
-		if (response.opcode != OPCODE_BINARY)
+		if (response.opcode != WebSocketOpcode::Binary)
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", OPCODE_BINARY, response.opcode);
+			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", (INT8)WebSocketOpcode::Binary, (INT8)response.opcode);
 			(void)wsClient.Close();
 			return false;
 		}
 
-		LOG_INFO("Received binary echo (opcode: %d, length: %d)", response.opcode, response.length);
+		LOG_INFO("Received binary echo (opcode: %d, length: %d)", (INT8)response.opcode, response.length);
 
 		// Verify echo matches sent data
 		BOOL matches = (response.length == dataLength) &&
@@ -241,7 +241,7 @@ private:
 		auto msg3 = "Third message"_embed;
 
 		// Send and receive message 1
-		auto write1 = wsClient.Write(Span<const CHAR>((PCCHAR)msg1, msg1.Length()), OPCODE_TEXT);
+		auto write1 = wsClient.Write(Span<const CHAR>((PCCHAR)msg1, msg1.Length()), WebSocketOpcode::Text);
 		if (!write1)
 		{
 			LOG_ERROR("Failed to send message 1 (error: %e)", write1.Error());
@@ -264,7 +264,7 @@ private:
 		}
 
 		// Send and receive message 2
-		auto write2 = wsClient.Write(Span<const CHAR>((PCCHAR)msg2, msg2.Length()), OPCODE_TEXT);
+		auto write2 = wsClient.Write(Span<const CHAR>((PCCHAR)msg2, msg2.Length()), WebSocketOpcode::Text);
 		if (!write2)
 		{
 			LOG_ERROR("Failed to send message 2 (error: %e)", write2.Error());
@@ -287,7 +287,7 @@ private:
 		}
 
 		// Send and receive message 3
-		auto write3 = wsClient.Write(Span<const CHAR>((PCCHAR)msg3, msg3.Length()), OPCODE_TEXT);
+		auto write3 = wsClient.Write(Span<const CHAR>((PCCHAR)msg3, msg3.Length()), WebSocketOpcode::Text);
 		if (!write3)
 		{
 			LOG_ERROR("Failed to send message 3 (error: %e)", write3.Error());
@@ -356,7 +356,7 @@ private:
 		largeMessage[largeMessageSize] = '\0';
 
 		// Send large message
-		auto writeResult = wsClient.Write(Span<const CHAR>(largeMessage, largeMessageSize), OPCODE_TEXT);
+		auto writeResult = wsClient.Write(Span<const CHAR>(largeMessage, largeMessageSize), WebSocketOpcode::Text);
 
 		if (!writeResult)
 		{
@@ -381,7 +381,7 @@ private:
 
 		WebSocketMessage &response = readResult.Value();
 
-		LOG_INFO("Received large echo response (opcode: %d, length: %d)", response.opcode, response.length);
+		LOG_INFO("Received large echo response (opcode: %d, length: %d)", (INT8)response.opcode, response.length);
 
 		// Verify echo matches sent message
 		BOOL matches = (response.length == largeMessageSize) &&

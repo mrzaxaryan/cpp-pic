@@ -106,7 +106,7 @@ Result<void, Error> WebSocketClient::Close()
 	{
 		// RFC 6455 Section 5.5.1: Send Close frame with status code 1000 (Normal Closure, big-endian)
 		UINT16 statusCode = UINT16SwapByteOrder(1000);
-		(void)Write(Span<const CHAR>((const CHAR *)&statusCode, sizeof(statusCode)), OPCODE_CLOSE);
+		(void)Write(Span<const CHAR>((const CHAR *)&statusCode, sizeof(statusCode)), WebSocketOpcode::Close);
 	}
 
 	isConnected = false;
@@ -126,8 +126,7 @@ Result<void, Error> WebSocketClient::Close()
  */
 Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketOpcode opcode)
 {
-	UINT32 bufferLength = (UINT32)buffer.Size();
-	if (!isConnected && opcode != OPCODE_CLOSE)
+	if (!isConnected && opcode != WebSocketOpcode::Close)
 	{
 		return Result<UINT32, Error>::Err(Error::Ws_NotConnected);
 	}
@@ -137,7 +136,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	UINT32 headerLength;
 
 	// RFC 6455 Section 5.2: byte 0 = FIN (bit 7) | opcode (bits 0-3)
-	header[0] = (UINT8)(opcode | 0x80);
+	header[0] = (UINT8)((INT8)opcode | 0x80);
 
 	// Generate masking key from a single random value
 	Random random;
@@ -145,16 +144,16 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	PUINT8 maskKey = (PUINT8)&maskKeyVal;
 
 	// RFC 6455 Section 5.2: byte 1 = MASK (bit 7) | payload length (bits 0-6)
-	if (bufferLength <= 125)
+	if (buffer.Size() <= 125)
 	{
-		header[1] = (UINT8)(bufferLength | 0x80);
+		header[1] = (UINT8)(buffer.Size() | 0x80);
 		Memory::Copy(header + 2, maskKey, 4);
 		headerLength = 6;
 	}
-	else if (bufferLength <= 0xFFFF)
+	else if (buffer.Size() <= 0xFFFF)
 	{
 		header[1] = (126 | 0x80);
-		UINT16 len16 = UINT16SwapByteOrder((UINT16)bufferLength);
+		UINT16 len16 = UINT16SwapByteOrder((UINT16)buffer.Size());
 		Memory::Copy(header + 2, &len16, 2);
 		Memory::Copy(header + 4, maskKey, 4);
 		headerLength = 8;
@@ -162,7 +161,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	else
 	{
 		header[1] = (127 | 0x80);
-		UINT64 len64 = UINT64SwapByteOrder((UINT64)bufferLength);
+		UINT64 len64 = UINT64SwapByteOrder((UINT64)buffer.Size());
 		Memory::Copy(header + 2, &len64, 8);
 		Memory::Copy(header + 10, maskKey, 4);
 		headerLength = 14;
@@ -172,22 +171,22 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	UINT8 chunk[256];
 
 	// Small frames: combine header + masked payload into a single write
-	if (bufferLength <= sizeof(chunk) - headerLength)
+	if (buffer.Size() <= sizeof(chunk) - headerLength)
 	{
 		Memory::Copy(chunk, header, headerLength);
 		PUINT8 dst = chunk + headerLength;
 		PUINT8 src = (PUINT8)buffer.Data();
-		for (UINT32 i = 0; i < bufferLength; i++)
+		for (UINT32 i = 0; i < (UINT32)buffer.Size(); i++)
 			dst[i] = src[i] ^ maskKey[i & 3];
 
-		UINT32 frameLength = headerLength + bufferLength;
+		UINT32 frameLength = headerLength + (UINT32)buffer.Size();
 		auto smallWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, frameLength));
 		if (!smallWrite || smallWrite.Value() != frameLength)
 		{
 			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 		}
 
-		return Result<UINT32, Error>::Ok(bufferLength);
+		return Result<UINT32, Error>::Ok((UINT32)buffer.Size());
 	}
 
 	// Large frames: write header, then mask and write payload in chunks
@@ -199,7 +198,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 
 	PUINT8 src = (PUINT8)buffer.Data();
 	UINT32 offset = 0;
-	UINT32 remaining = bufferLength;
+	UINT32 remaining = (UINT32)buffer.Size();
 
 	while (remaining > 0)
 	{
@@ -217,7 +216,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 		remaining -= chunkSize;
 	}
 
-	return Result<UINT32, Error>::Ok(bufferLength);
+	return Result<UINT32, Error>::Ok((UINT32)buffer.Size());
 }
 
 /**
@@ -228,11 +227,10 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
  */
 Result<void, Error> WebSocketClient::ReceiveRestrict(Span<CHAR> buffer)
 {
-	UINT32 size = (UINT32)buffer.Size();
 	UINT32 totalBytesRead = 0;
-	while (totalBytesRead < size)
+	while (totalBytesRead < (UINT32)buffer.Size())
 	{
-		auto readResult = tlsContext.Read(Span<CHAR>(buffer.Data() + totalBytesRead, size - totalBytesRead));
+		auto readResult = tlsContext.Read(Span<CHAR>(buffer.Data() + totalBytesRead, buffer.Size() - totalBytesRead));
 		if (!readResult || readResult.Value() <= 0)
 			return Result<void, Error>::Err(readResult, Error::Ws_ReceiveFailed);
 		totalBytesRead += (UINT32)readResult.Value();
@@ -393,16 +391,17 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 		if (!frameResult)
 			break;
 
-		if (frame.opcode == OPCODE_TEXT || frame.opcode == OPCODE_BINARY || frame.opcode == OPCODE_CONTINUE)
+		if (frame.opcode == WebSocketOpcode::Text || frame.opcode == WebSocketOpcode::Binary || frame.opcode == WebSocketOpcode::Continue)
 		{
-			if (frame.opcode == OPCODE_CONTINUE && message.data == nullptr)
+			if (frame.opcode == WebSocketOpcode::Continue && message.data == nullptr)
 			{
 				delete[] frame.data;
+				frame.data = nullptr;
 				break;
 			}
 
 			// Capture opcode from the initial (non-continuation) frame
-			if (frame.opcode != OPCODE_CONTINUE)
+			if (frame.opcode != WebSocketOpcode::Continue)
 				message.opcode = frame.opcode;
 
 			if (frame.length > 0)
@@ -413,6 +412,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 					if (newLength < message.length)
 					{
 						delete[] frame.data;
+						frame.data = nullptr;
 						delete[] message.data;
 						message.data = nullptr;
 						break;
@@ -421,6 +421,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 					if (!tempBuffer)
 					{
 						delete[] frame.data;
+						frame.data = nullptr;
 						delete[] message.data;
 						message.data = nullptr;
 						break;
@@ -431,10 +432,12 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 					message.data = tempBuffer;
 					message.length = newLength;
 					delete[] frame.data;
+					frame.data = nullptr;
 				}
 				else
 				{
 					message.data = frame.data;
+					frame.data = nullptr;
 					message.length = (UINT32)frame.length;
 				}
 			}
@@ -445,26 +448,30 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
 				break;
 			}
 		}
-		else if (frame.opcode == OPCODE_CLOSE)
+		else if (frame.opcode == WebSocketOpcode::Close)
 		{
 			// RFC 6455 Section 5.5.1: echo the 2-byte status code back in the Close response
-			(void)Write(Span<const CHAR>(frame.data, (frame.length >= 2) ? 2 : 0), OPCODE_CLOSE);
+			(void)Write(Span<const CHAR>(frame.data, (frame.length >= 2) ? 2 : 0), WebSocketOpcode::Close);
 			delete[] frame.data;
+			frame.data = nullptr;
 			isConnected = false;
 			return Result<WebSocketMessage, Error>::Err(Error::Ws_ConnectionClosed);
 		}
-		else if (frame.opcode == OPCODE_PING)
+		else if (frame.opcode == WebSocketOpcode::Ping)
 		{
-			(void)Write(Span<const CHAR>(frame.data, (UINT32)frame.length), OPCODE_PONG);
+			(void)Write(Span<const CHAR>(frame.data, (UINT32)frame.length), WebSocketOpcode::Pong);
 			delete[] frame.data;
+			frame.data = nullptr;
 		}
-		else if (frame.opcode == OPCODE_PONG)
+		else if (frame.opcode == WebSocketOpcode::Pong)
 		{
 			delete[] frame.data;
+			frame.data = nullptr;
 		}
 		else
 		{
 			delete[] frame.data;
+			frame.data = nullptr;
 			break;
 		}
 	}

@@ -1,83 +1,144 @@
 #pragma once
 
+/**
+ * @file http.h
+ * @brief HTTP/1.1 client with TLS 1.3 support for HTTPS connections
+ *
+ * @details Implements a minimal HTTP/1.1 client that supports both plaintext HTTP
+ * and encrypted HTTPS (via TLS 1.3). The client resolves hostnames using DNS-over-HTTPS,
+ * parses URLs into host/path/port components, and performs GET and POST requests.
+ *
+ * Response parsing uses a rolling-window approach to read HTTP headers without
+ * requiring a large buffer, extracting the status code and Content-Length header.
+ *
+ * @see RFC 9110 — HTTP Semantics
+ *      https://datatracker.ietf.org/doc/html/rfc9110
+ * @see RFC 9112 — HTTP/1.1
+ *      https://datatracker.ietf.org/doc/html/rfc9112
+ * @see RFC 2818 — HTTP Over TLS
+ *      https://datatracker.ietf.org/doc/html/rfc2818
+ */
+
 #include "platform/platform.h"
 #include "runtime/network/tls/tls.h"
 
-// HttpClient class for making HTTP requests, supporting both secure (HTTPS) and non-secure (HTTP) connections
+/// HTTP client for making HTTP/1.1 requests over plaintext or TLS 1.3 connections
 class HttpClient
 {
 private:
-    CHAR hostName[254]; // RFC 1035: max 253 chars + null
-    CHAR path[2048];    // De facto max URL path length
-    IPAddress ipAddress;
-    UINT16 port;
-    TlsClient tlsContext;
+	CHAR hostName[254]; // RFC 1035: max 253 chars + null
+	CHAR path[2048];    // De facto max URL path length
+	IPAddress ipAddress;
+	UINT16 port;
+	TlsClient tlsContext;
 
-    // Private constructor — only used by Create()
-    HttpClient(const CHAR (&host)[254], const CHAR (&parsedPath)[2048], const IPAddress &ip, UINT16 portNum, TlsClient &&tls)
-        : ipAddress(ip), port(portNum), tlsContext(static_cast<TlsClient &&>(tls))
-    {
-        Memory::Copy(hostName, host, sizeof(hostName));
-        Memory::Copy(path, parsedPath, sizeof(path));
-    }
+	// Private constructor — only used by Create()
+	HttpClient(const CHAR (&host)[254], const CHAR (&parsedPath)[2048], const IPAddress &ip, UINT16 portNum, TlsClient &&tls)
+		: ipAddress(ip), port(portNum), tlsContext(static_cast<TlsClient &&>(tls))
+	{
+		Memory::Copy(hostName, host, sizeof(hostName));
+		Memory::Copy(path, parsedPath, sizeof(path));
+	}
 
 public:
-    VOID *operator new(USIZE) = delete;
-    VOID operator delete(VOID *) = delete;
-    // Placement new required by Result<HttpClient, Error>
-    VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+	VOID *operator new(USIZE) = delete;
+	VOID operator delete(VOID *) = delete;
+	// Placement new required by Result<HttpClient, Error>
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 
-    ~HttpClient()
-    {
-        if (IsValid())
-            (void)Close();
-    }
+	~HttpClient()
+	{
+		if (IsValid())
+			(void)Close();
+	}
 
-    HttpClient(const HttpClient &) = delete;
-    HttpClient &operator=(const HttpClient &) = delete;
+	HttpClient(const HttpClient &) = delete;
+	HttpClient &operator=(const HttpClient &) = delete;
 
-    HttpClient(HttpClient &&other) noexcept
-        : ipAddress(other.ipAddress), port(other.port),
-          tlsContext(static_cast<TlsClient &&>(other.tlsContext))
-    {
-        Memory::Copy(hostName, other.hostName, sizeof(hostName));
-        Memory::Copy(path, other.path, sizeof(path));
-        other.port = 0;
-    }
+	HttpClient(HttpClient &&other) noexcept
+		: ipAddress(other.ipAddress), port(other.port),
+		  tlsContext(static_cast<TlsClient &&>(other.tlsContext))
+	{
+		Memory::Copy(hostName, other.hostName, sizeof(hostName));
+		Memory::Copy(path, other.path, sizeof(path));
+		other.port = 0;
+	}
 
-    HttpClient &operator=(HttpClient &&other) noexcept
-    {
-        if (this != &other)
-        {
-            if (IsValid())
-                (void)Close();
-            Memory::Copy(hostName, other.hostName, sizeof(hostName));
-            Memory::Copy(path, other.path, sizeof(path));
-            ipAddress = other.ipAddress;
-            port = other.port;
-            tlsContext = static_cast<TlsClient &&>(other.tlsContext);
-            other.port = 0;
-        }
-        return *this;
-    }
+	HttpClient &operator=(HttpClient &&other) noexcept
+	{
+		if (this != &other)
+		{
+			if (IsValid())
+				(void)Close();
+			Memory::Copy(hostName, other.hostName, sizeof(hostName));
+			Memory::Copy(path, other.path, sizeof(path));
+			ipAddress = other.ipAddress;
+			port = other.port;
+			tlsContext = static_cast<TlsClient &&>(other.tlsContext);
+			other.port = 0;
+		}
+		return *this;
+	}
 
-    // Factory — caller MUST check the result (enforced by [[nodiscard]])
-    [[nodiscard]] static Result<HttpClient, Error> Create(Span<const CHAR> url);
+	/**
+	 * @brief Create an HttpClient from a URL string
+	 * @param url The URL to connect to (e.g., "https://example.com/path")
+	 * @return The constructed HttpClient, or an error if URL parsing or DNS resolution fails
+	 */
+	[[nodiscard]] static Result<HttpClient, Error> Create(Span<const CHAR> url);
 
-    constexpr BOOL IsValid() const { return tlsContext.IsValid(); }
-    constexpr BOOL IsSecure() const { return tlsContext.IsSecure(); }
-    // Operations with HttpClient
-    [[nodiscard]] Result<void, Error> Open();
-    [[nodiscard]] Result<void, Error> Close();
-    [[nodiscard]] Result<SSIZE, Error> Read(Span<CHAR> buffer);
-    [[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer);
+	constexpr BOOL IsValid() const { return tlsContext.IsValid(); }
+	constexpr BOOL IsSecure() const { return tlsContext.IsSecure(); }
 
-    [[nodiscard]] Result<void, Error> SendGetRequest();
-    [[nodiscard]] Result<void, Error> SendPostRequest(Span<const CHAR> data);
-    // Static method to parse a URL into its components (host, path, port, secure) and validate the format
-    [[nodiscard]] static Result<void, Error> ParseUrl(Span<const CHAR> url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
-    // Read HTTP response headers using a rolling window (no buffer needed).
-    // Returns Ok(contentLength) if headers were read and status matches expectedStatus.
-    // contentLength is the Content-Length value or -1 if not present.
-    [[nodiscard]] static Result<INT64, Error> ReadResponseHeaders(TlsClient &client, UINT16 expectedStatus);
+	/**
+	 * @brief Open the connection to the remote server
+	 * @return Ok on success, or an error if the connection or TLS handshake fails
+	 */
+	[[nodiscard]] Result<void, Error> Open();
+	/**
+	 * @brief Close the connection and release resources
+	 * @return Ok on success, or an error if the shutdown fails
+	 */
+	[[nodiscard]] Result<void, Error> Close();
+	/**
+	 * @brief Read data from the connection into the provided buffer
+	 * @param buffer The buffer to read into
+	 * @return The number of bytes read, or an error
+	 */
+	[[nodiscard]] Result<SSIZE, Error> Read(Span<CHAR> buffer);
+	/**
+	 * @brief Write data to the connection
+	 * @param buffer The data to write
+	 * @return The number of bytes written, or an error
+	 */
+	[[nodiscard]] Result<UINT32, Error> Write(Span<const CHAR> buffer);
+
+	/**
+	 * @brief Send an HTTP GET request using the stored host and path
+	 * @return Ok on success, or an error if the write fails
+	 */
+	[[nodiscard]] Result<void, Error> SendGetRequest();
+	/**
+	 * @brief Send an HTTP POST request with the given body data
+	 * @param data The request body to send
+	 * @return Ok on success, or an error if the write fails
+	 */
+	[[nodiscard]] Result<void, Error> SendPostRequest(Span<const CHAR> data);
+	/**
+	 * @brief Parse a URL into its components and validate the format
+	 * @param url The URL string to parse
+	 * @param host Output buffer for the hostname (max 253 chars + null)
+	 * @param path Output buffer for the path component
+	 * @param port Output for the port number (defaults to 80 or 443)
+	 * @param secure Output flag indicating HTTPS (true) or HTTP (false)
+	 * @return Ok on success, or an error if the URL format is invalid
+	 */
+	[[nodiscard]] static Result<void, Error> ParseUrl(Span<const CHAR> url, CHAR (&host)[254], CHAR (&path)[2048], UINT16 &port, BOOL &secure);
+	/**
+	 * @brief Read HTTP response headers using a rolling window
+	 * @param client The TLS client to read from
+	 * @param expectedStatus The expected HTTP status code (e.g., 200)
+	 * @return The Content-Length value (-1 if not present), or an error if status mismatches
+	 */
+	[[nodiscard]] static Result<INT64, Error> ReadResponseHeaders(TlsClient &client, UINT16 expectedStatus);
 };

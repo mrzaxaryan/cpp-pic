@@ -1,149 +1,175 @@
 #pragma once
 
+/**
+ * @file tls_cipher.h
+ * @brief TLS 1.3 cipher suite management and record-layer encryption
+ *
+ * @details Manages cipher suite negotiation, ECDHE key exchange, handshake hashing,
+ * and record-layer encryption/decryption for TLS 1.3 connections. Supports
+ * ChaCha20-Poly1305 (RFC 8439) as the AEAD cipher and secp256r1/secp384r1
+ * (RFC 8422) for elliptic curve key exchange.
+ *
+ * @see RFC 8446 Section 5 — Record Protocol
+ *      https://datatracker.ietf.org/doc/html/rfc8446#section-5
+ * @see RFC 8439 — ChaCha20 and Poly1305 for IETF Protocols
+ *      https://datatracker.ietf.org/doc/html/rfc8439
+ * @see RFC 8422 — Elliptic Curve Cryptography (ECC) Cipher Suites for TLS
+ *      https://datatracker.ietf.org/doc/html/rfc8422
+ */
+
 #include "core/core.h"
 #include "runtime/network/tls/tls_buffer.h"
 #include "runtime/crypto/ecc.h"
 #include "runtime/network/tls/tls_hash.h"
 #include "runtime/crypto/chacha20_encoder.h"
 
+/// Number of supported ECC curves
 #define ECC_COUNT 2
+/// Size of random nonce in bytes (RFC 8446 Section 4.1.2)
 #define RAND_SIZE 32
+/// Maximum hash output length in bytes (SHA-384 = 48, with padding)
 #define MAX_HASH_LEN 64
+/// Maximum public key buffer size in bytes
 #define MAX_PUBKEY_SIZE 2048
+/// Maximum symmetric key size in bytes
 #define MAX_KEY_SIZE 32
+/// Maximum IV (nonce) size in bytes (RFC 8446 Section 5.3)
 #define MAX_IV_SIZE 12
+/// ChaCha20-Poly1305 key size in bytes (RFC 8439 Section 2.3)
 #define CIPHER_KEY_SIZE 32
+/// ChaCha20-Poly1305 authentication tag size in bytes (RFC 8439 Section 2.5)
 #define CIPHER_HASH_SIZE 32
+/// TLS content type for application data (RFC 8446 Section 5.1)
 #define CONTENT_APPLICATION_DATA 0x17
 
-// https://tools.ietf.org/html/rfc4492#section-5.1.1
-// https://tools.ietf.org/html/rfc8422#section-5.1.1
-// https://tools.ietf.org/html/rfc7919
-
-typedef enum ECC_GROUP
+/// @brief Supported elliptic curve groups for TLS key exchange
+/// @see RFC 8422 Section 5.1.1 — Supported Elliptic Curves Extension
+///      https://datatracker.ietf.org/doc/html/rfc8422#section-5.1.1
+/// @see RFC 7919 — Negotiated Finite Field Diffie-Hellman Ephemeral Parameters
+///      https://datatracker.ietf.org/doc/html/rfc7919
+enum class EccGroup : UINT16
 {
-    ECC_NONE = 0,           // No ECC Support. It is also used to imply RSA
-    ECC_secp256r1 = 0x0017, // Supported Group: secp256r1(0x0017)
-    ECC_secp384r1 = 0x0018, // Supported Group: secp384r1 (0x0018)
-} ECC_GROUP;
+	None = 0,           ///< No ECC support; implies RSA key exchange
+	Secp256r1 = 0x0017, ///< secp256r1 (NIST P-256) curve (RFC 8422 Section 5.1.1)
+	Secp384r1 = 0x0018, ///< secp384r1 (NIST P-384) curve (RFC 8422 Section 5.1.1)
+};
 
-
-// TLS cipher structure
+/// TLS 1.3 cipher suite management and record-layer encryption/decryption
 class TlsCipher
 {
 private:
-    INT32 cipherCount;              // Number of supported ciphers
-    UINT64 clientSeqNum;            // Client sequence number
-    UINT64 serverSeqNum;            // Server sequence number
-    Ecc *privateEccKeys[ECC_COUNT]; // Private ECC keys
-    TlsBuffer publicKey;            // Public key buffer
-    TlsBuffer decodeBuffer;         // Buffer for decoded data
-    TlsHash handshakeHash;          // Hash for handshake
+	INT32 cipherCount;              // Number of supported ciphers
+	UINT64 clientSeqNum;            // Client sequence number
+	UINT64 serverSeqNum;            // Server sequence number
+	Ecc *privateEccKeys[ECC_COUNT]; // Private ECC keys
+	TlsBuffer publicKey;            // Public key buffer
+	TlsBuffer decodeBuffer;         // Buffer for decoded data
+	TlsHash handshakeHash;          // Hash for handshake
 
-    union
-    {
-        struct
-        {
-            UINT8 mainSecret[MAX_HASH_LEN];      // Main secret
-            UINT8 handshakeSecret[MAX_HASH_LEN]; // Handshake secret
-            UINT8 pseudoRandomKey[MAX_HASH_LEN]; // Pseudo-random key
-        } data13;
-        struct
-        {
-            UINT8 clientRandom[RAND_SIZE]; // Client random value
-            UINT8 serverRandom[RAND_SIZE]; // Server random value
-            UINT8 masterKey[48];           // Master key
-        } data12;
-    };
-    INT32 cipherIndex;               // Current cipher index
-    ChaCha20Encoder chacha20Context; // ChaCha20 encoder context
-    BOOL isEncoding;                 // Encoding status
+	union
+	{
+		struct
+		{
+			UINT8 mainSecret[MAX_HASH_LEN];      // Main secret
+			UINT8 handshakeSecret[MAX_HASH_LEN]; // Handshake secret
+			UINT8 pseudoRandomKey[MAX_HASH_LEN]; // Pseudo-random key
+		} data13;
+		struct
+		{
+			UINT8 clientRandom[RAND_SIZE]; // Client random value
+			UINT8 serverRandom[RAND_SIZE]; // Server random value
+			UINT8 masterKey[48];           // Master key
+		} data12;
+	};
+	INT32 cipherIndex;               // Current cipher index
+	ChaCha20Encoder chacha20Context; // ChaCha20 encoder context
+	BOOL isEncoding;                 // Encoding status
 
 public:
-    // Constructor — trivial, call Reset() before use
-    TlsCipher() : cipherCount(0), clientSeqNum(0), serverSeqNum(0), privateEccKeys{}, cipherIndex(-1), isEncoding(false) {}
-    ~TlsCipher() { Destroy(); }
+	// Constructor — trivial, call Reset() before use
+	TlsCipher() : cipherCount(0), clientSeqNum(0), serverSeqNum(0), privateEccKeys{}, cipherIndex(-1), isEncoding(false) {}
+	~TlsCipher() { Destroy(); }
 
-    TlsCipher(const TlsCipher &) = delete;
-    TlsCipher &operator=(const TlsCipher &) = delete;
+	TlsCipher(const TlsCipher &) = delete;
+	TlsCipher &operator=(const TlsCipher &) = delete;
 
-    // Stack-only
-    VOID *operator new(USIZE) = delete;
-    VOID operator delete(VOID *) = delete;
+	// Stack-only
+	VOID *operator new(USIZE) = delete;
+	VOID operator delete(VOID *) = delete;
 
-    TlsCipher(TlsCipher &&other) noexcept
-        : cipherCount(other.cipherCount)
-        , clientSeqNum(other.clientSeqNum)
-        , serverSeqNum(other.serverSeqNum)
-        , publicKey(static_cast<TlsBuffer &&>(other.publicKey))
-        , decodeBuffer(static_cast<TlsBuffer &&>(other.decodeBuffer))
-        , handshakeHash(static_cast<TlsHash &&>(other.handshakeHash))
-        , cipherIndex(other.cipherIndex)
-        , chacha20Context(static_cast<ChaCha20Encoder &&>(other.chacha20Context))
-        , isEncoding(other.isEncoding)
-    {
-        for (INT32 i = 0; i < ECC_COUNT; i++)
-        {
-            privateEccKeys[i] = other.privateEccKeys[i];
-            other.privateEccKeys[i] = nullptr;
-        }
-        Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
-        // Zero sensitive key material in the moved-from object immediately after copying
-        Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
-    }
+	TlsCipher(TlsCipher &&other) noexcept
+		: cipherCount(other.cipherCount)
+		, clientSeqNum(other.clientSeqNum)
+		, serverSeqNum(other.serverSeqNum)
+		, publicKey(static_cast<TlsBuffer &&>(other.publicKey))
+		, decodeBuffer(static_cast<TlsBuffer &&>(other.decodeBuffer))
+		, handshakeHash(static_cast<TlsHash &&>(other.handshakeHash))
+		, cipherIndex(other.cipherIndex)
+		, chacha20Context(static_cast<ChaCha20Encoder &&>(other.chacha20Context))
+		, isEncoding(other.isEncoding)
+	{
+		for (INT32 i = 0; i < ECC_COUNT; i++)
+		{
+			privateEccKeys[i] = other.privateEccKeys[i];
+			other.privateEccKeys[i] = nullptr;
+		}
+		Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
+		// Zero sensitive key material in the moved-from object immediately after copying
+		Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
+	}
 
-    TlsCipher &operator=(TlsCipher &&other) noexcept
-    {
-        if (this != &other)
-        {
-            Destroy();
-            cipherCount = other.cipherCount;
-            clientSeqNum = other.clientSeqNum;
-            serverSeqNum = other.serverSeqNum;
-            publicKey = static_cast<TlsBuffer &&>(other.publicKey);
-            decodeBuffer = static_cast<TlsBuffer &&>(other.decodeBuffer);
-            handshakeHash = static_cast<TlsHash &&>(other.handshakeHash);
-            cipherIndex = other.cipherIndex;
-            chacha20Context = static_cast<ChaCha20Encoder &&>(other.chacha20Context);
-            isEncoding = other.isEncoding;
-            for (INT32 i = 0; i < ECC_COUNT; i++)
-            {
-                privateEccKeys[i] = other.privateEccKeys[i];
-                other.privateEccKeys[i] = nullptr;
-            }
-            Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
-            // Zero sensitive key material in the moved-from object immediately after copying
-            Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
-        }
-        return *this;
-    }
+	TlsCipher &operator=(TlsCipher &&other) noexcept
+	{
+		if (this != &other)
+		{
+			Destroy();
+			cipherCount = other.cipherCount;
+			clientSeqNum = other.clientSeqNum;
+			serverSeqNum = other.serverSeqNum;
+			publicKey = static_cast<TlsBuffer &&>(other.publicKey);
+			decodeBuffer = static_cast<TlsBuffer &&>(other.decodeBuffer);
+			handshakeHash = static_cast<TlsHash &&>(other.handshakeHash);
+			cipherIndex = other.cipherIndex;
+			chacha20Context = static_cast<ChaCha20Encoder &&>(other.chacha20Context);
+			isEncoding = other.isEncoding;
+			for (INT32 i = 0; i < ECC_COUNT; i++)
+			{
+				privateEccKeys[i] = other.privateEccKeys[i];
+				other.privateEccKeys[i] = nullptr;
+			}
+			Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
+			// Zero sensitive key material in the moved-from object immediately after copying
+			Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
+		}
+		return *this;
+	}
 
-    // Reset function
-    VOID Reset();
-    // Destroy function to clean up resources
-    VOID Destroy();
-    PINT8 CreateClientRand();
-    // Function to update server information
-    [[nodiscard]] Result<void, Error> UpdateServerInfo();
-    // Function to get and update the current handshake hash
-    VOID GetHash(Span<CHAR> out);
-    VOID UpdateHash(Span<const CHAR> in);
-    // Key computation functions
-    [[nodiscard]] Result<void, Error> ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
-    [[nodiscard]] Result<void, Error> ComputePreKey(ECC_GROUP ecc, Span<const CHAR> serverKey, TlsBuffer &premasterKey);
-    [[nodiscard]] Result<void, Error> ComputeKey(ECC_GROUP ecc, Span<const CHAR> serverKey, Span<CHAR> finishedHash);
-    VOID ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
-    // Functions for encoding and decoding TLS records
-    VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);
-    [[nodiscard]] Result<void, Error> Decode(TlsBuffer &inout, INT32 version);
-    constexpr VOID SetEncoding(BOOL encoding) { isEncoding = encoding; }
-    // Function to reset sequence numbers
-    constexpr VOID ResetSequenceNumber() { clientSeqNum = 0; serverSeqNum = 0; }
-    // Check if the cipher is in a valid state
-    constexpr BOOL IsValid() const { return cipherCount > 0; }
-    // Accessor functions
-    constexpr BOOL GetEncoding() const { return isEncoding; }
-    constexpr INT32 GetCipherCount() const { return cipherCount; }
-    TlsBuffer &GetPubKey() { return publicKey; }
-    constexpr VOID SetCipherCount(INT32 count) { cipherCount = count; }
+	// Reset function
+	VOID Reset();
+	// Destroy function to clean up resources
+	VOID Destroy();
+	PINT8 CreateClientRand();
+	// Function to update server information
+	[[nodiscard]] Result<void, Error> UpdateServerInfo();
+	// Function to get and update the current handshake hash
+	VOID GetHash(Span<CHAR> out);
+	VOID UpdateHash(Span<const CHAR> in);
+	// Key computation functions
+	[[nodiscard]] Result<void, Error> ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
+	[[nodiscard]] Result<void, Error> ComputePreKey(EccGroup ecc, Span<const CHAR> serverKey, TlsBuffer &premasterKey);
+	[[nodiscard]] Result<void, Error> ComputeKey(EccGroup ecc, Span<const CHAR> serverKey, Span<CHAR> finishedHash);
+	VOID ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
+	// Functions for encoding and decoding TLS records
+	VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);
+	[[nodiscard]] Result<void, Error> Decode(TlsBuffer &inout, INT32 version);
+	constexpr VOID SetEncoding(BOOL encoding) { isEncoding = encoding; }
+	// Function to reset sequence numbers
+	constexpr VOID ResetSequenceNumber() { clientSeqNum = 0; serverSeqNum = 0; }
+	// Check if the cipher is in a valid state
+	constexpr BOOL IsValid() const { return cipherCount > 0; }
+	// Accessor functions
+	constexpr BOOL GetEncoding() const { return isEncoding; }
+	constexpr INT32 GetCipherCount() const { return cipherCount; }
+	TlsBuffer &GetPubKey() { return publicKey; }
+	constexpr VOID SetCipherCount(INT32 count) { cipherCount = count; }
 };

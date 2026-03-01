@@ -95,7 +95,7 @@ Result<void, Error> Socket::Bind(SockAddr &socketAddress, INT32 shareType)
 	(VOID)shareType; // not used on Linux
 
 	SSIZE sockfd  = (SSIZE)m_socket;
-	UINT32 addrLen = (socketAddress.sin_family == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
+	UINT32 addrLen = (socketAddress.SinFamily == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
 	SSIZE  result  = linux_bind(sockfd, &socketAddress, addrLen);
 	if (result != 0)
 	{

@@ -8,10 +8,16 @@
  * - Binary file formats
  * - Cross-platform data exchange
  *
+ * Internet protocols use big-endian (network) byte order as defined in RFC 1700.
+ * These macros convert between host byte order and network byte order.
+ *
  * All operations are constant-time and typically compile to single CPU instructions:
  * - x86/x64: BSWAP instruction
  * - ARM: REV instruction
  * - RISC-V: Sequence of shifts and ORs
+ *
+ * @see RFC 1700 — Assigned Numbers (defines network byte order as big-endian)
+ *      https://datatracker.ietf.org/doc/html/rfc1700
  *
  * @ingroup core
  *

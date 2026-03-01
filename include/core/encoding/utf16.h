@@ -7,10 +7,16 @@
  * and text processing that requires UTF-8 encoding.
  *
  * Features:
- * - UTF-16 surrogate pair handling for characters beyond BMP
+ * - UTF-16 surrogate pair handling for characters beyond BMP (U+10000–U+10FFFF)
  * - Single codepoint conversion
  * - Full string conversion
  * - No CRT dependencies
+ *
+ * @see RFC 3629 — UTF-8, a transformation format of ISO 10646
+ *      https://datatracker.ietf.org/doc/html/rfc3629
+ * @see RFC 2781 — UTF-16, an encoding of ISO 10646
+ *      https://datatracker.ietf.org/doc/html/rfc2781
+ * @see The Unicode Standard — https://www.unicode.org/versions/latest/
  *
  * @note Windows uses UTF-16LE (Little Endian) for wide strings (WCHAR).
  *
@@ -59,9 +65,13 @@ public:
      *
      * @details Processes one Unicode codepoint from the UTF-16 input. For characters
      * in the BMP (U+0000 to U+FFFF), consumes one code unit. For characters
-     * outside the BMP (U+10000 to U+10FFFF), consumes a surrogate pair.
+     * outside the BMP (U+10000 to U+10FFFF), consumes a surrogate pair
+     * (high surrogate 0xD800-0xDBFF followed by low surrogate 0xDC00-0xDFFF).
      *
      * @note The inputIndex parameter is advanced past the consumed code unit(s).
+     *
+     * @see RFC 2781 Section 2.1 — Encoding UTF-16 (surrogate pair algorithm)
+     *      https://datatracker.ietf.org/doc/html/rfc2781#section-2.1
      */
     static USIZE CodepointToUTF8(Span<const WCHAR> input, USIZE& inputIndex, Span<CHAR> output)
     {
@@ -90,11 +100,14 @@ public:
      * @param output Buffer to receive UTF-8 bytes (must be at least 4 bytes)
      * @return Number of UTF-8 bytes written (1-4), or 0 for invalid codepoint
      *
-     * @details UTF-8 encoding scheme:
+     * @details UTF-8 encoding scheme (RFC 3629 Section 3):
      * - U+0000 to U+007F: 1 byte  (0xxxxxxx)
      * - U+0080 to U+07FF: 2 bytes (110xxxxx 10xxxxxx)
      * - U+0800 to U+FFFF: 3 bytes (1110xxxx 10xxxxxx 10xxxxxx)
      * - U+10000 to U+10FFFF: 4 bytes (11110xxx 10xxxxxx 10xxxxxx 10xxxxxx)
+     *
+     * @see RFC 3629 Section 3 — UTF-8 definition
+     *      https://datatracker.ietf.org/doc/html/rfc3629#section-3
      */
     static USIZE CodepointToUTF8Bytes(UINT32 codepoint, Span<CHAR> output)
     {
@@ -149,6 +162,11 @@ public:
      *
      * @warning Does not null-terminate the output. Caller must add null terminator
      * if needed.
+     *
+     * @see RFC 3629 — UTF-8, a transformation format of ISO 10646
+     *      https://datatracker.ietf.org/doc/html/rfc3629
+     * @see RFC 2781 — UTF-16, an encoding of ISO 10646
+     *      https://datatracker.ietf.org/doc/html/rfc2781
      */
     static USIZE ToUTF8(Span<const WCHAR> input, Span<CHAR> output)
     {

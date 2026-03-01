@@ -1,27 +1,107 @@
+/**
+ * @file binary_writer.h
+ * @brief Sequential Binary Data Writer
+ *
+ * @details Provides a position-tracked, bounds-checked writer for sequential
+ * binary data serialization. Used throughout the runtime for constructing network
+ * protocol messages, certificate structures, and binary file formats.
+ *
+ * The writer maintains an internal offset that advances automatically as data
+ * is written. All write operations perform bounds checking against a maximum
+ * size to prevent buffer overruns.
+ *
+ * Multi-byte integer writes use big-endian (network) byte order, matching the
+ * wire format of most Internet protocols.
+ *
+ * @see RFC 1700 — Assigned Numbers (network byte order convention)
+ *      https://datatracker.ietf.org/doc/html/rfc1700
+ *
+ * @note All functions are position-independent with no .rdata dependencies.
+ *
+ * @ingroup core
+ *
+ * @defgroup binary_writer Binary Writer
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 #include "span.h"
 #include "memory.h"
 
+/**
+ * @class BinaryWriter
+ * @brief Sequential, bounds-checked binary data writer
+ *
+ * @details Wraps a raw memory buffer with a position cursor and maximum size.
+ * Each write operation advances the cursor by the number of bytes written.
+ * Out-of-bounds writes return nullptr rather than corrupting memory.
+ *
+ * Multi-byte writes (WriteU16BE, WriteU24BE, WriteU32BE) serialize in big-endian
+ * (network) byte order as specified by RFC 1700.
+ *
+ * @par Example Usage:
+ * @code
+ * UINT8 packet[128];
+ * BinaryWriter writer(packet, sizeof(packet));
+ *
+ * writer.WriteU8(0x16);                 // Content type
+ * writer.WriteU16BE(0x0303);            // TLS version
+ * writer.WriteU24BE(payloadLength);     // Record length (24-bit)
+ * writer.WriteBytes(Span(payload));     // Payload data
+ * @endcode
+ *
+ * @see RFC 1700 — Assigned Numbers (network byte order convention)
+ *      https://datatracker.ietf.org/doc/html/rfc1700
+ */
 class BinaryWriter
 {
 private:
-	PVOID address;
-	USIZE offset;
-	USIZE maxSize;
+	PVOID address;  ///< Base address of the output buffer
+	USIZE offset;   ///< Current write position (bytes from base)
+	USIZE maxSize;  ///< Maximum writable size in bytes
 
 public:
+	/// @name Constructors
+	/// @{
+
+	/**
+	 * @brief Construct a writer with explicit initial offset
+	 * @param address Base address of the output buffer
+	 * @param offset Initial write offset in bytes
+	 * @param maxSize Maximum number of bytes that can be written
+	 */
 	constexpr BinaryWriter(PVOID address, USIZE offset, USIZE maxSize)
 		: address(address), offset(offset), maxSize(maxSize)
 	{
 	}
 
+	/**
+	 * @brief Construct a writer starting at offset zero
+	 * @param address Base address of the output buffer
+	 * @param maxSize Maximum number of bytes that can be written
+	 */
 	constexpr BinaryWriter(PVOID address, USIZE maxSize)
 		: address(address), offset(0), maxSize(maxSize)
 	{
 	}
 
+	/// @}
+	/// @name Write Operations
+	/// @{
+
+	/**
+	 * @brief Write a value of type T and advance the cursor
+	 * @tparam T Type to write (must be trivially copyable)
+	 * @param value Value to write
+	 * @return Base address on success, nullptr if insufficient space remains
+	 *
+	 * @details Copies sizeof(T) bytes from the value into the buffer at the
+	 * current position using Memory::Copy. The cursor advances by sizeof(T)
+	 * bytes on success.
+	 */
 	template <typename T>
 	PVOID Write(T value)
 	{
@@ -33,6 +113,11 @@ public:
 		return address;
 	}
 
+	/**
+	 * @brief Write raw bytes from a span and advance the cursor
+	 * @param data Source data span
+	 * @return Base address on success, nullptr if insufficient space remains
+	 */
 	PVOID WriteBytes(Span<const CHAR> data)
 	{
 		if (offset + data.Size() > maxSize)
@@ -43,6 +128,11 @@ public:
 		return address;
 	}
 
+	/**
+	 * @brief Write a single byte and advance the cursor
+	 * @param value Byte value to write
+	 * @return Base address on success, nullptr if insufficient space remains
+	 */
 	FORCE_INLINE PVOID WriteU8(UINT8 value)
 	{
 		if (offset + 1 > maxSize)
@@ -53,6 +143,17 @@ public:
 		return address;
 	}
 
+	/**
+	 * @brief Write a 16-bit unsigned integer in big-endian (network) byte order
+	 * @param value The 16-bit value to write
+	 * @return Base address on success, nullptr if insufficient space remains
+	 *
+	 * @details Writes 2 bytes in big-endian order (MSB first),
+	 * as specified by the network byte order convention in RFC 1700.
+	 *
+	 * @see RFC 1700 — Assigned Numbers (network byte order)
+	 *      https://datatracker.ietf.org/doc/html/rfc1700
+	 */
 	FORCE_INLINE PVOID WriteU16BE(UINT16 value)
 	{
 		if (offset + 2 > maxSize)
@@ -65,6 +166,17 @@ public:
 		return address;
 	}
 
+	/**
+	 * @brief Write a 24-bit unsigned integer in big-endian (network) byte order
+	 * @param value The value to write (lower 24 bits used)
+	 * @return Base address on success, nullptr if insufficient space remains
+	 *
+	 * @details Writes 3 bytes in big-endian order (MSB first).
+	 * Common in TLS record headers where the record length is a 24-bit field.
+	 *
+	 * @see RFC 8446 Section 5.1 — Record Layer (TLS 1.3 record format uses 24-bit length)
+	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
+	 */
 	FORCE_INLINE PVOID WriteU24BE(UINT32 value)
 	{
 		if (offset + 3 > maxSize)
@@ -78,6 +190,17 @@ public:
 		return address;
 	}
 
+	/**
+	 * @brief Write a 32-bit unsigned integer in big-endian (network) byte order
+	 * @param value The 32-bit value to write
+	 * @return Base address on success, nullptr if insufficient space remains
+	 *
+	 * @details Writes 4 bytes in big-endian order (MSB first),
+	 * as specified by the network byte order convention in RFC 1700.
+	 *
+	 * @see RFC 1700 — Assigned Numbers (network byte order)
+	 *      https://datatracker.ietf.org/doc/html/rfc1700
+	 */
 	FORCE_INLINE PVOID WriteU32BE(UINT32 value)
 	{
 		if (offset + 4 > maxSize)
@@ -92,6 +215,15 @@ public:
 		return address;
 	}
 
+	/// @}
+	/// @name Cursor Control
+	/// @{
+
+	/**
+	 * @brief Skip forward by a number of bytes (leaves bytes unwritten)
+	 * @param count Number of bytes to skip
+	 * @return true if skip succeeded, false if it would exceed maxSize
+	 */
 	FORCE_INLINE BOOL Skip(USIZE count)
 	{
 		if (offset + count > maxSize)
@@ -101,12 +233,29 @@ public:
 		return true;
 	}
 
+	/**
+	 * @brief Get the number of writable bytes remaining
+	 * @return Bytes remaining from current offset to maxSize
+	 */
 	constexpr USIZE Remaining() const
 	{
 		return (offset < maxSize) ? (maxSize - offset) : 0;
 	}
 
+	/// @}
+	/// @name Accessors
+	/// @{
+
+	/** @brief Get the base address of the output buffer */
 	constexpr PVOID GetAddress() const { return address; }
+
+	/** @brief Get the current write offset in bytes */
 	constexpr USIZE GetOffset() const { return offset; }
+
+	/** @brief Get the maximum writable size in bytes */
 	constexpr USIZE GetMaxSize() const { return maxSize; }
+
+	/// @}
 };
+
+/** @} */ // end of binary_writer group

@@ -422,7 +422,16 @@ public:
      * @brief Convert UTF-8 string to UTF-16 (wide string)
      * @param utf8 Source UTF-8 string (null-terminated)
      * @param wide Destination wide string buffer span
-     * @return Number of wide characters written
+     * @return Number of wide characters written (excluding null terminator)
+     *
+     * @details Decodes UTF-8 multibyte sequences (1-4 bytes per codepoint) and
+     * encodes them as UTF-16 code units. Codepoints above U+FFFF are encoded
+     * as surrogate pairs per RFC 2781.
+     *
+     * @see RFC 3629 — UTF-8, a transformation format of ISO 10646
+     *      https://datatracker.ietf.org/doc/html/rfc3629
+     * @see RFC 2781 — UTF-16, an encoding of ISO 10646
+     *      https://datatracker.ietf.org/doc/html/rfc2781
      */
     static USIZE Utf8ToWide(PCCHAR utf8, Span<WCHAR> wide);
 

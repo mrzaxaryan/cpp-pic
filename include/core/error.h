@@ -1,14 +1,61 @@
+/**
+ * @file error.h
+ * @brief Unified Error Type for Result-Based Error Handling
+ *
+ * @details Provides a compact error representation used by the `Result<T, Error>`
+ * type throughout the codebase. Each Error is a (Code, Platform) pair that
+ * identifies either a PIR runtime failure point or a raw OS error code.
+ *
+ * Design principles:
+ * - Zero-cost: Error is 8 bytes, stored directly in Result (no heap allocation)
+ * - Single slot: no error chain — each layer picks the most useful code to surface
+ * - Platform-aware: factory methods tag errors with their OS origin for formatting
+ *
+ * @see result.h — Result<T, Error> tagged union that stores Error on failure
+ *
+ * @ingroup core
+ *
+ * @defgroup error Error Type
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 
-// Unified error code — identifies a single failure point.
-// Result<T, Error> stores a single Error directly (zero-cost, no chain overhead).
+/**
+ * @struct Error
+ * @brief Unified error code identifying a single failure point
+ *
+ * @details Stores a (Code, Platform) pair. When Platform is Runtime, Code is
+ * an ErrorCodes enumerator identifying the PIR failure site. When Platform is
+ * Windows/Posix/Uefi, Code holds the raw OS error value (NTSTATUS, errno, or
+ * EFI_STATUS).
+ *
+ * Result<T, Error> stores a single Error directly — zero-cost, no chain overhead.
+ *
+ * @par Example Usage:
+ * @code
+ * // Runtime error:
+ * return Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
+ *
+ * // OS error (Windows NTSTATUS):
+ * return Result<void, Error>::Err(Error::Windows(status));
+ *
+ * // OS error (POSIX errno):
+ * return Result<void, Error>::Err(Error::Posix((UINT32)(-result)));
+ * @endcode
+ */
 struct Error
 {
-	// PIR runtime failure points — one unique value per failure site.
-	// OS error codes (NTSTATUS, errno, EFI_STATUS) are stored directly in
-	// Error.Code when Platform != Runtime; they are not listed here.
+	/**
+	 * @enum ErrorCodes
+	 * @brief PIR runtime failure points — one unique value per failure site
+	 *
+	 * @details OS error codes (NTSTATUS, errno, EFI_STATUS) are stored directly
+	 * in Error.Code when Platform != Runtime; they are not listed here.
+	 */
 	enum ErrorCodes : UINT32
 	{
 		None = 0, // no error / empty slot
@@ -150,27 +197,67 @@ struct Error
 		Ws_CreateFailed   = 104, // URL parse / DNS / TLS create failed in WebSocketClient::Create()
 	};
 
-	// Which OS layer this code came from.
-	// When Platform != Runtime, Code holds the raw OS error value.
+	/**
+	 * @enum PlatformKind
+	 * @brief Identifies which OS layer produced the error code
+	 *
+	 * @details When Platform != Runtime, Code holds the raw OS error value
+	 * rather than an ErrorCodes enumerator. The platform tag drives
+	 * formatting in %e (hex for Windows/UEFI, decimal for Posix).
+	 */
 	enum class PlatformKind : UINT8
 	{
-		Runtime = 0, // PIR runtime layer — Code is an ErrorCodes enumerator
-		Windows = 1, // NTSTATUS  — Code holds the raw NTSTATUS value
-		Posix   = 2, // errno     — Code holds errno as a positive UINT32
-		Uefi    = 3, // EFI_STATUS — Code holds the raw EFI_STATUS value
+		Runtime = 0, ///< PIR runtime layer — Code is an ErrorCodes enumerator
+		Windows = 1, ///< NTSTATUS — Code holds the raw NTSTATUS value
+		Posix   = 2, ///< errno — Code holds errno as a positive UINT32
+		Uefi    = 3, ///< EFI_STATUS — Code holds the raw EFI_STATUS value
 	};
 
-	// Fields — Error IS a single error code.
-	ErrorCodes   Code;
-	PlatformKind Platform;
+	ErrorCodes   Code;     ///< Error code value (ErrorCodes enumerator or raw OS code)
+	PlatformKind Platform; ///< OS layer that produced this code
 
+	/**
+	 * @brief Construct an error with explicit code and platform
+	 * @param code Error code value
+	 * @param platform Platform origin (defaults to Runtime)
+	 */
 	constexpr Error(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
 		: Code((ErrorCodes)code), Platform(platform)
 	{
 	}
 
-	// Platform-specific factory methods — concise alternative to the constructor.
+	/// @name Platform Factory Methods
+	/// @{
+
+	/**
+	 * @brief Create a Windows NTSTATUS error
+	 * @param ntstatus Raw NTSTATUS value
+	 * @return Error tagged with PlatformKind::Windows
+	 *
+	 * @see https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-25e5c5b64e7c
+	 */
 	[[nodiscard]] static constexpr Error Windows(UINT32 ntstatus) { return Error(ntstatus, PlatformKind::Windows); }
+
+	/**
+	 * @brief Create a POSIX errno error
+	 * @param errnoVal errno value (stored as positive UINT32)
+	 * @return Error tagged with PlatformKind::Posix
+	 *
+	 * @see https://pubs.opengroup.org/onlinepubs/9699919799/functions/errno.html
+	 */
 	[[nodiscard]] static constexpr Error Posix(UINT32 errnoVal)   { return Error(errnoVal, PlatformKind::Posix); }
+
+	/**
+	 * @brief Create a UEFI EFI_STATUS error
+	 * @param efiStatus Raw EFI_STATUS value
+	 * @return Error tagged with PlatformKind::Uefi
+	 *
+	 * @see UEFI Specification — Appendix D (Status Codes)
+	 *      https://uefi.org/specs/UEFI/2.10/Apx_D_Status_Codes.html
+	 */
 	[[nodiscard]] static constexpr Error Uefi(UINT32 efiStatus)   { return Error(efiStatus, PlatformKind::Uefi); }
+
+	/// @}
 };
+
+/** @} */ // end of error group

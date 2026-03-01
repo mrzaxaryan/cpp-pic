@@ -9,6 +9,14 @@
  * The Memory class provides a clean C++ interface to low-level memory operations
  * that are essential for shellcode and position-independent code.
  *
+ * These functions conform to the semantics defined by the ISO C standard:
+ * - memset: ISO/IEC 9899:2018 (C17) Section 7.24.6.1
+ * - memcpy: ISO/IEC 9899:2018 (C17) Section 7.24.2.1
+ * - memcmp: ISO/IEC 9899:2018 (C17) Section 7.24.4.1
+ *
+ * @see ISO/IEC 9899:2018 — Programming languages — C (C17 standard)
+ *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
+ *
  * @note All functions are implemented in memory.cc without CRT dependencies.
  *
  * @ingroup core
@@ -32,7 +40,12 @@
  * @param ch Value to set (converted to unsigned char)
  * @param count Number of bytes to set
  * @return Pointer to the destination memory block
- * @note Implemented in memory.cc without CRT dependencies
+ *
+ * @details Custom CRT-free implementation of the C standard library memset.
+ * Conforms to the semantics defined in ISO/IEC 9899:2018 Section 7.24.6.1.
+ *
+ * @see ISO/IEC 9899:2018 Section 7.24.6.1 — The memset function
+ *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
  */
 extern "C" PVOID memset(PVOID dest, INT32 ch, USIZE count);
 
@@ -42,18 +55,29 @@ extern "C" PVOID memset(PVOID dest, INT32 ch, USIZE count);
  * @param src Pointer to the source memory block
  * @param count Number of bytes to copy
  * @return Pointer to the destination memory block
- * @warning Memory regions must not overlap; use memmove for overlapping regions
- * @note Implemented in memory.cc without CRT dependencies
+ *
+ * @details Custom CRT-free implementation of the C standard library memcpy.
+ * Conforms to the semantics defined in ISO/IEC 9899:2018 Section 7.24.2.1.
+ *
+ * @warning Memory regions must not overlap; use memmove for overlapping regions.
+ *
+ * @see ISO/IEC 9899:2018 Section 7.24.2.1 — The memcpy function
+ *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
  */
 extern "C" PVOID memcpy(PVOID dest, const VOID *src, USIZE count);
 
 /**
- * @brief Compares two blocks of memory
+ * @brief Compares two blocks of memory byte by byte
  * @param ptr1 Pointer to the first memory block
  * @param ptr2 Pointer to the second memory block
  * @param num Number of bytes to compare
  * @return 0 if equal, negative if ptr1 < ptr2, positive if ptr1 > ptr2
- * @note Implemented in memory.cc without CRT dependencies
+ *
+ * @details Custom CRT-free implementation of the C standard library memcmp.
+ * Conforms to the semantics defined in ISO/IEC 9899:2018 Section 7.24.4.1.
+ *
+ * @see ISO/IEC 9899:2018 Section 7.24.4.1 — The memcmp function
+ *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
  */
 extern "C" INT32 memcmp(const VOID *ptr1, const VOID *ptr2, USIZE num);
 

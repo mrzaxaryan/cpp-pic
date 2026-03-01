@@ -1,27 +1,106 @@
+/**
+ * @file binary_reader.h
+ * @brief Sequential Binary Data Reader
+ *
+ * @details Provides a position-tracked, bounds-checked reader for sequential
+ * binary data parsing. Used throughout the runtime for deserializing network
+ * protocol messages, certificate structures, and binary file formats.
+ *
+ * The reader maintains an internal offset that advances automatically as data
+ * is consumed. All read operations perform bounds checking against a maximum
+ * size to prevent buffer overruns.
+ *
+ * Multi-byte integer reads use big-endian (network) byte order, matching the
+ * wire format of most Internet protocols.
+ *
+ * @see RFC 1700 — Assigned Numbers (network byte order convention)
+ *      https://datatracker.ietf.org/doc/html/rfc1700
+ *
+ * @note All functions are position-independent with no .rdata dependencies.
+ *
+ * @ingroup core
+ *
+ * @defgroup binary_reader Binary Reader
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
 #include "span.h"
 #include "memory.h"
 
+/**
+ * @class BinaryReader
+ * @brief Sequential, bounds-checked binary data reader
+ *
+ * @details Wraps a raw memory buffer with a position cursor and maximum size.
+ * Each read operation advances the cursor by the number of bytes consumed.
+ * Out-of-bounds reads return zero/false rather than accessing invalid memory.
+ *
+ * Multi-byte reads (ReadU16BE, ReadU24BE, ReadU32BE) deserialize in big-endian
+ * (network) byte order as specified by RFC 1700.
+ *
+ * @par Example Usage:
+ * @code
+ * UINT8 packet[128];
+ * // ... fill packet from network ...
+ * BinaryReader reader(packet, sizeof(packet));
+ *
+ * UINT16 type   = reader.ReadU16BE();   // 2 bytes, big-endian
+ * UINT32 length = reader.ReadU24BE();   // 3 bytes, big-endian
+ * reader.Skip(length);                  // Skip payload
+ * @endcode
+ *
+ * @see RFC 1700 — Assigned Numbers (network byte order convention)
+ *      https://datatracker.ietf.org/doc/html/rfc1700
+ */
 class BinaryReader
 {
 private:
-	PVOID address;
-	USIZE offset;
-	USIZE maxSize;
+	PVOID address;  ///< Base address of the data buffer
+	USIZE offset;   ///< Current read position (bytes from base)
+	USIZE maxSize;  ///< Maximum readable size in bytes
 
 public:
+	/// @name Constructors
+	/// @{
+
+	/**
+	 * @brief Construct a reader with explicit initial offset
+	 * @param address Base address of the data buffer
+	 * @param offset Initial read offset in bytes
+	 * @param maxSize Maximum number of bytes that can be read
+	 */
 	constexpr BinaryReader(PVOID address, USIZE offset, USIZE maxSize)
 		: address(address), offset(offset), maxSize(maxSize)
 	{
 	}
 
+	/**
+	 * @brief Construct a reader starting at offset zero
+	 * @param address Base address of the data buffer
+	 * @param maxSize Maximum number of bytes that can be read
+	 */
 	constexpr BinaryReader(PVOID address, USIZE maxSize)
 		: address(address), offset(0), maxSize(maxSize)
 	{
 	}
 
+	/// @}
+	/// @name Read Operations
+	/// @{
+
+	/**
+	 * @brief Read a value of type T and advance the cursor
+	 * @tparam T Type to read (must be trivially copyable)
+	 * @return The read value, or T{} if insufficient bytes remain
+	 *
+	 * @details Copies sizeof(T) bytes from the current position into a
+	 * local value using Memory::Copy (no alignment requirements on the source).
+	 * The cursor advances by sizeof(T) bytes on success.
+	 */
 	template <typename T>
 	T Read()
 	{
@@ -34,6 +113,11 @@ public:
 		return value;
 	}
 
+	/**
+	 * @brief Read raw bytes into a buffer and advance the cursor
+	 * @param buffer Destination buffer span
+	 * @return Number of bytes read (buffer.Size() on success, 0 if out of bounds)
+	 */
 	USIZE ReadBytes(Span<CHAR> buffer)
 	{
 		if (offset + buffer.Size() > maxSize)
@@ -44,6 +128,16 @@ public:
 		return buffer.Size();
 	}
 
+	/**
+	 * @brief Read a 16-bit unsigned integer in big-endian (network) byte order
+	 * @return The 16-bit value, or 0 if insufficient bytes remain
+	 *
+	 * @details Reads 2 bytes and assembles them in big-endian order (MSB first),
+	 * as specified by the network byte order convention in RFC 1700.
+	 *
+	 * @see RFC 1700 — Assigned Numbers (network byte order)
+	 *      https://datatracker.ietf.org/doc/html/rfc1700
+	 */
 	FORCE_INLINE UINT16 ReadU16BE()
 	{
 		if (offset + 2 > maxSize)
@@ -55,6 +149,16 @@ public:
 		return value;
 	}
 
+	/**
+	 * @brief Read a 24-bit unsigned integer in big-endian (network) byte order
+	 * @return The 24-bit value stored in a UINT32, or 0 if insufficient bytes remain
+	 *
+	 * @details Reads 3 bytes and assembles them in big-endian order (MSB first).
+	 * Common in TLS record headers where the record length is a 24-bit field.
+	 *
+	 * @see RFC 8446 Section 5.1 — Record Layer (TLS 1.3 record format uses 24-bit length)
+	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
+	 */
 	FORCE_INLINE UINT32 ReadU24BE()
 	{
 		if (offset + 3 > maxSize)
@@ -66,6 +170,16 @@ public:
 		return value;
 	}
 
+	/**
+	 * @brief Read a 32-bit unsigned integer in big-endian (network) byte order
+	 * @return The 32-bit value, or 0 if insufficient bytes remain
+	 *
+	 * @details Reads 4 bytes and assembles them in big-endian order (MSB first),
+	 * as specified by the network byte order convention in RFC 1700.
+	 *
+	 * @see RFC 1700 — Assigned Numbers (network byte order)
+	 *      https://datatracker.ietf.org/doc/html/rfc1700
+	 */
 	FORCE_INLINE UINT32 ReadU32BE()
 	{
 		if (offset + 4 > maxSize)
@@ -77,6 +191,15 @@ public:
 		return value;
 	}
 
+	/// @}
+	/// @name Cursor Control
+	/// @{
+
+	/**
+	 * @brief Skip forward by a number of bytes
+	 * @param count Number of bytes to skip
+	 * @return true if skip succeeded, false if it would exceed maxSize
+	 */
 	FORCE_INLINE BOOL Skip(USIZE count)
 	{
 		if (offset + count > maxSize)
@@ -86,11 +209,20 @@ public:
 		return true;
 	}
 
+	/**
+	 * @brief Get the number of unread bytes remaining
+	 * @return Bytes remaining from current offset to maxSize
+	 */
 	constexpr USIZE Remaining() const
 	{
 		return (offset < maxSize) ? (maxSize - offset) : 0;
 	}
 
+	/**
+	 * @brief Set the read cursor to an absolute offset
+	 * @param newOffset New offset in bytes from base address
+	 * @return true if offset is valid, false if it exceeds maxSize
+	 */
 	FORCE_INLINE BOOL SetOffset(USIZE newOffset)
 	{
 		if (newOffset > maxSize)
@@ -100,12 +232,29 @@ public:
 		return true;
 	}
 
+	/// @}
+	/// @name Accessors
+	/// @{
+
+	/**
+	 * @brief Get a pointer to the current read position
+	 * @return Pointer to the byte at the current offset
+	 */
 	constexpr PVOID Current() const
 	{
 		return (PCHAR)address + offset;
 	}
 
+	/** @brief Get the base address of the data buffer */
 	constexpr PVOID GetAddress() const { return address; }
+
+	/** @brief Get the current read offset in bytes */
 	constexpr USIZE GetOffset() const { return offset; }
+
+	/** @brief Get the maximum readable size in bytes */
 	constexpr USIZE GetMaxSize() const { return maxSize; }
+
+	/// @}
 };
+
+/** @} */ // end of binary_reader group

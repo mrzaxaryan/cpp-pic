@@ -1,3 +1,33 @@
+/**
+ * @file span.h
+ * @brief Non-Owning Contiguous Buffer Views (Span)
+ *
+ * @details Provides a non-owning, bounds-aware view over contiguous memory,
+ * replacing raw `(T*, USIZE)` parameter pairs throughout the codebase.
+ * Two forms exist:
+ *
+ * - **Span<T>** (dynamic extent): stores pointer + runtime size
+ * - **Span<T, N>** (static extent): stores pointer only; size is a compile-time constant
+ *
+ * Key properties:
+ * - Zero runtime cost: all methods are constexpr FORCE_INLINE
+ * - Implicit Span<T> -> Span<const T> conversion (writable-to-readonly)
+ * - Implicit Span<T, N> -> Span<T> conversion (static-to-dynamic)
+ * - Compile-time slicing preserves static extent through the chain
+ * - Stack-only: heap allocation is deleted
+ *
+ * Modeled after C++20 std::span but without STL dependencies, using
+ * Clang builtins (__is_same_as, __is_const) for concept constraints.
+ *
+ * @see C++20 std::span — https://en.cppreference.com/w/cpp/container/span
+ *
+ * @ingroup core
+ *
+ * @defgroup span Span
+ * @ingroup core
+ * @{
+ */
+
 #pragma once
 
 #include "primitives.h"
@@ -67,31 +97,59 @@ public:
 		requires(__is_same_as(T, const U) && !__is_const(U) && N != DYNAMIC_EXTENT)
 	constexpr FORCE_INLINE Span(const Span<U, N> &other) : m_data(other.Data()), m_size(N) {}
 
-	constexpr FORCE_INLINE T *Data() const { return m_data; }
-	constexpr FORCE_INLINE USIZE Size() const { return m_size; }
-	constexpr FORCE_INLINE USIZE SizeBytes() const { return m_size * sizeof(T); }
-	constexpr FORCE_INLINE BOOL IsEmpty() const { return m_size == 0; }
+	/// @name Element Access
+	/// @{
 
+	/** @brief Get pointer to the underlying data */
+	constexpr FORCE_INLINE T *Data() const { return m_data; }
+	/** @brief Get the number of elements */
+	constexpr FORCE_INLINE USIZE Size() const { return m_size; }
+	/** @brief Get the size in bytes (Size() * sizeof(T)) */
+	constexpr FORCE_INLINE USIZE SizeBytes() const { return m_size * sizeof(T); }
+	/** @brief Check if the span is empty */
+	constexpr FORCE_INLINE BOOL IsEmpty() const { return m_size == 0; }
+	/** @brief Access element by index (no bounds checking) */
 	constexpr FORCE_INLINE T &operator[](USIZE index) const { return m_data[index]; }
 
-	// Runtime slicing — extent unknown at compile time
+	/// @}
+	/// @name Runtime Slicing
+	/// @{
+
+	/** @brief Get a subspan from offset to end */
 	constexpr FORCE_INLINE Span Subspan(USIZE offset) const { return Span(m_data + offset, m_size - offset); }
+	/** @brief Get a subspan of count elements starting at offset */
 	constexpr FORCE_INLINE Span Subspan(USIZE offset, USIZE count) const { return Span(m_data + offset, count); }
+	/** @brief Get the first count elements */
 	constexpr FORCE_INLINE Span First(USIZE count) const { return Span(m_data, count); }
+	/** @brief Get the last count elements */
 	constexpr FORCE_INLINE Span Last(USIZE count) const { return Span(m_data + m_size - count, count); }
 
-	// Compile-time slicing — count baked into return type, eliminating m_size in callee
+	/// @}
+	/// @name Compile-Time Slicing
+	/// @{
+
+	/** @brief Get the first Count elements as a static-extent Span */
 	template <USIZE Count>
 	constexpr FORCE_INLINE Span<T, Count> First() const { return Span<T, Count>(m_data); }
 
+	/** @brief Get the last Count elements as a static-extent Span */
 	template <USIZE Count>
 	constexpr FORCE_INLINE Span<T, Count> Last() const { return Span<T, Count>(m_data + m_size - Count); }
 
+	/** @brief Get Count elements starting at Offset as a static-extent Span */
 	template <USIZE Offset, USIZE Count>
 	constexpr FORCE_INLINE Span<T, Count> Subspan() const { return Span<T, Count>(m_data + Offset); }
 
+	/// @}
+	/// @name Iterators
+	/// @{
+
+	/** @brief Iterator to the first element */
 	constexpr FORCE_INLINE T *begin() const { return m_data; }
+	/** @brief Iterator past the last element */
 	constexpr FORCE_INLINE T *end() const { return m_data + m_size; }
+
+	/// @}
 
 	// Stack-only
 	VOID *operator new(USIZE) = delete;
@@ -155,20 +213,38 @@ public:
 		requires(__is_same_as(T, const U))
 	constexpr FORCE_INLINE Span(const Span<U, Extent> &other) : m_data(other.Data()) {}
 
-	constexpr FORCE_INLINE T *Data() const { return m_data; }
-	constexpr FORCE_INLINE USIZE Size() const { return Extent; }
-	constexpr FORCE_INLINE USIZE SizeBytes() const { return Extent * sizeof(T); }
-	constexpr FORCE_INLINE BOOL IsEmpty() const { return Extent == 0; }
+	/// @name Element Access
+	/// @{
 
+	/** @brief Get pointer to the underlying data */
+	constexpr FORCE_INLINE T *Data() const { return m_data; }
+	/** @brief Get the number of elements (compile-time constant) */
+	constexpr FORCE_INLINE USIZE Size() const { return Extent; }
+	/** @brief Get the size in bytes (Extent * sizeof(T), compile-time constant) */
+	constexpr FORCE_INLINE USIZE SizeBytes() const { return Extent * sizeof(T); }
+	/** @brief Check if the span is empty (compile-time constant) */
+	constexpr FORCE_INLINE BOOL IsEmpty() const { return Extent == 0; }
+	/** @brief Access element by index (no bounds checking) */
 	constexpr FORCE_INLINE T &operator[](USIZE index) const { return m_data[index]; }
 
-	// Runtime slicing — returns dynamic extent (extent becomes runtime value)
+	/// @}
+	/// @name Runtime Slicing
+	/// @{
+
+	/** @brief Get a subspan from offset to end (returns dynamic extent) */
 	constexpr FORCE_INLINE Span<T> Subspan(USIZE offset) const { return Span<T>(m_data + offset, Extent - offset); }
+	/** @brief Get a subspan of count elements starting at offset (returns dynamic extent) */
 	constexpr FORCE_INLINE Span<T> Subspan(USIZE offset, USIZE count) const { return Span<T>(m_data + offset, count); }
+	/** @brief Get the first count elements (returns dynamic extent) */
 	constexpr FORCE_INLINE Span<T> First(USIZE count) const { return Span<T>(m_data, count); }
+	/** @brief Get the last count elements (returns dynamic extent) */
 	constexpr FORCE_INLINE Span<T> Last(USIZE count) const { return Span<T>(m_data + Extent - count, count); }
 
-	// Compile-time slicing — extent baked into return type, zero runtime cost
+	/// @}
+	/// @name Compile-Time Slicing
+	/// @{
+
+	/** @brief Get the first Count elements as a static-extent Span */
 	template <USIZE Count>
 	constexpr FORCE_INLINE Span<T, Count> First() const
 	{
@@ -176,6 +252,7 @@ public:
 		return Span<T, Count>(m_data);
 	}
 
+	/** @brief Get the last Count elements as a static-extent Span */
 	template <USIZE Count>
 	constexpr FORCE_INLINE Span<T, Count> Last() const
 	{
@@ -183,6 +260,7 @@ public:
 		return Span<T, Count>(m_data + Extent - Count);
 	}
 
+	/** @brief Get Count elements starting at Offset as a static-extent Span */
 	template <USIZE Offset, USIZE Count>
 	constexpr FORCE_INLINE Span<T, Count> Subspan() const
 	{
@@ -191,7 +269,7 @@ public:
 		return Span<T, Count>(m_data + Offset);
 	}
 
-	/// Subspan from Offset to end; resulting count (Extent - Offset) is deduced from type.
+	/** @brief Get elements from Offset to end; count (Extent - Offset) deduced from type */
 	template <USIZE Offset>
 	constexpr FORCE_INLINE Span<T, Extent - Offset> Subspan() const
 	{
@@ -199,11 +277,21 @@ public:
 		return Span<T, Extent - Offset>(m_data + Offset);
 	}
 
+	/// @}
+	/// @name Iterators
+	/// @{
+
+	/** @brief Iterator to the first element */
 	constexpr FORCE_INLINE T *begin() const { return m_data; }
+	/** @brief Iterator past the last element */
 	constexpr FORCE_INLINE T *end() const { return m_data + Extent; }
+
+	/// @}
 
 	// Stack-only
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 };
+
+/** @} */ // end of span group

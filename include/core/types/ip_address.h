@@ -8,9 +8,18 @@
  *
  * Features:
  * - Unified IPv4/IPv6 representation
- * - String parsing and formatting
+ * - String parsing and formatting (dotted-decimal for IPv4, colon-hex for IPv6)
  * - Factory methods for construction
  * - Comparison operators
+ *
+ * @see RFC 791 — Internet Protocol (IPv4 addressing)
+ *      https://datatracker.ietf.org/doc/html/rfc791
+ * @see RFC 8200 — Internet Protocol, Version 6 (IPv6) Specification
+ *      https://datatracker.ietf.org/doc/html/rfc8200
+ * @see RFC 5952 — A Recommendation for IPv6 Address Text Representation
+ *      https://datatracker.ietf.org/doc/html/rfc5952
+ * @see RFC 4291 Section 2.2 — Text Representation of Addresses
+ *      https://datatracker.ietf.org/doc/html/rfc4291#section-2.2
  *
  * @ingroup core
  *

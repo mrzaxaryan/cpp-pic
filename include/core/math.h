@@ -41,10 +41,12 @@ class Math
 {
 public:
     /**
-     * Returns the maximum of two values.
+     * @brief Returns the maximum of two values
+     * @tparam T First value type
+     * @tparam U Second value type
      * @param a First value
      * @param b Second value
-     * @return The larger of the two values
+     * @return The larger of the two values, using the common type of T and U
      */
     template <typename T, typename U>
     static constexpr FORCE_INLINE auto Max(const T& a, const U& b) noexcept
@@ -56,10 +58,12 @@ public:
     }
 
     /**
-     * Returns the minimum of two values.
+     * @brief Returns the minimum of two values
+     * @tparam T First value type
+     * @tparam U Second value type
      * @param a First value
      * @param b Second value
-     * @return The smaller of the two values
+     * @return The smaller of the two values, using the common type of T and U
      */
     template <typename T, typename U>
     static constexpr FORCE_INLINE auto Min(const T& a, const U& b) noexcept
@@ -71,7 +75,8 @@ public:
     }
 
     /**
-     * Returns the absolute value of a number.
+     * @brief Returns the absolute value of a number
+     * @tparam T Signed numeric type
      * @param x Value to get absolute value of
      * @return The absolute value of x
      */
@@ -82,7 +87,8 @@ public:
     }
 
     /**
-     * Clamps a value between a minimum and maximum.
+     * @brief Clamps a value between a minimum and maximum
+     * @tparam T Numeric type
      * @param x Value to clamp
      * @param minVal Minimum allowed value
      * @param maxVal Maximum allowed value

@@ -3,18 +3,18 @@
     "enableConfigurationSquiggles": true,
     "env": {
         "commonInclude": [
-            "${workspaceFolder}",
-            "${workspaceFolder}/core",
-            "${workspaceFolder}/core/algorithms",
-            "${workspaceFolder}/core/encoding",
-            "${workspaceFolder}/core/string",
-            "${workspaceFolder}/core/types",
-            "${workspaceFolder}/core/types/embedded",
-            "${workspaceFolder}/platform",
-            "${workspaceFolder}/runtime",
-            "${workspaceFolder}/runtime/crypto",
-            "${workspaceFolder}/runtime/network",
-            "${workspaceFolder}/runtime/network/tls",
+            "${workspaceFolder}/src",
+            "${workspaceFolder}/src/core",
+            "${workspaceFolder}/src/core/algorithms",
+            "${workspaceFolder}/src/core/encoding",
+            "${workspaceFolder}/src/core/string",
+            "${workspaceFolder}/src/core/types",
+            "${workspaceFolder}/src/core/types/embedded",
+            "${workspaceFolder}/src/platform",
+            "${workspaceFolder}/src/runtime",
+            "${workspaceFolder}/src/runtime/crypto",
+            "${workspaceFolder}/src/runtime/network",
+            "${workspaceFolder}/src/runtime/network/tls",
             "${workspaceFolder}/tests"
         ]
     },
@@ -34,7 +34,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/windows"
+                "${workspaceFolder}/src/platform/windows"
             ]
         },
         {
@@ -52,7 +52,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/windows"
+                "${workspaceFolder}/src/platform/windows"
             ]
         },
         {
@@ -70,7 +70,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/windows"
+                "${workspaceFolder}/src/platform/windows"
             ]
         },
         {
@@ -88,7 +88,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/linux"
+                "${workspaceFolder}/src/platform/linux"
             ]
         },
         {
@@ -106,7 +106,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/linux"
+                "${workspaceFolder}/src/platform/linux"
             ]
         },
         {
@@ -124,7 +124,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/linux"
+                "${workspaceFolder}/src/platform/linux"
             ]
         },
         {
@@ -142,7 +142,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/linux"
+                "${workspaceFolder}/src/platform/linux"
             ]
         },
         {
@@ -160,7 +160,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/macos"
+                "${workspaceFolder}/src/platform/macos"
             ]
         },
         {
@@ -178,7 +178,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/macos"
+                "${workspaceFolder}/src/platform/macos"
             ]
         },
         {
@@ -196,7 +196,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/uefi"
+                "${workspaceFolder}/src/platform/uefi"
             ]
         },
         {
@@ -214,7 +214,7 @@
             ],
             "includePath": [
                 "${commonInclude}",
-                "${workspaceFolder}/platform/uefi"
+                "${workspaceFolder}/src/platform/uefi"
             ]
         }
     ]

@@ -9,11 +9,11 @@ include_guard(GLOBAL)
 # =============================================================================
 # Auto-discover include paths (all subdirs containing headers)
 file(GLOB_RECURSE _all_headers CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/core/*.h"
-    "${CMAKE_SOURCE_DIR}/platform/*.h"
-    "${CMAKE_SOURCE_DIR}/runtime/*.h"
+    "${CMAKE_SOURCE_DIR}/src/core/*.h"
+    "${CMAKE_SOURCE_DIR}/src/platform/*.h"
+    "${CMAKE_SOURCE_DIR}/src/runtime/*.h"
 )
-set(PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/tests")
+set(PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/src" "${CMAKE_SOURCE_DIR}/tests")
 foreach(_hdr ${_all_headers})
     get_filename_component(_dir "${_hdr}" DIRECTORY)
     list(APPEND PIR_INCLUDE_PATHS "${_dir}")
@@ -21,15 +21,15 @@ endforeach()
 list(REMOVE_DUPLICATES PIR_INCLUDE_PATHS)
 
 file(GLOB_RECURSE PIR_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/core/*.cc"
-    "${CMAKE_SOURCE_DIR}/platform/*.cc"
-    "${CMAKE_SOURCE_DIR}/runtime/*.cc"
+    "${CMAKE_SOURCE_DIR}/src/core/*.cc"
+    "${CMAKE_SOURCE_DIR}/src/platform/*.cc"
+    "${CMAKE_SOURCE_DIR}/src/runtime/*.cc"
     "${CMAKE_SOURCE_DIR}/tests/*.cc"
 )
 file(GLOB_RECURSE PIR_HEADERS CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/core/*.h"
-    "${CMAKE_SOURCE_DIR}/platform/*.h"
-    "${CMAKE_SOURCE_DIR}/runtime/*.h"
+    "${CMAKE_SOURCE_DIR}/src/core/*.h"
+    "${CMAKE_SOURCE_DIR}/src/platform/*.h"
+    "${CMAKE_SOURCE_DIR}/src/runtime/*.h"
     "${CMAKE_SOURCE_DIR}/tests/*.h"
 )
 

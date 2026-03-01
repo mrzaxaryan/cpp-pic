@@ -12,7 +12,7 @@ endif()
 pir_get_target_info()
 pir_filter_sources(windows linux uefi)
 
-list(APPEND PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/platform/os/macos")
+list(APPEND PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/src/platform/os/macos")
 
 # macOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
@@ -104,7 +104,7 @@ endif()
 # which is inherently position-independent.
 if(PIR_BUILD_TYPE STREQUAL "release")
     set_source_files_properties(
-        "${CMAKE_SOURCE_DIR}/runtime/entry_point.cc"
+        "${CMAKE_SOURCE_DIR}/src/runtime/entry_point.cc"
         PROPERTIES
         COMPILE_FLAGS "-fno-lto"
     )

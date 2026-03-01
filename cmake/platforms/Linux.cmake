@@ -7,7 +7,7 @@ include_guard(GLOBAL)
 pir_get_target_info()
 pir_filter_sources(windows macos uefi)
 
-list(APPEND PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/platform/os/linux")
+list(APPEND PIR_INCLUDE_PATHS "${CMAKE_SOURCE_DIR}/src/platform/os/linux")
 
 # Linker configuration (ELF)
 pir_add_link_flags(

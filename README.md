@@ -317,7 +317,7 @@ The same issues remain: increased complexity, fragility, and sensitivity to comp
 
 #### Position-Independent Runtime Solution: Function Pointer Embedding
 
-We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](core/types/embedded/embedded_function_pointer.h).
+We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](src/core/types/embedded/embedded_function_pointer.h).
 
 ### Problem 4: 64-bit Arithmetic on 32-bit Systems
 

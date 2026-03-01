@@ -64,8 +64,8 @@ constexpr INT32 ECC_PRODUCT_DIGITS = 2 * MAX_NUM_ECC_DIGITS;
  */
 struct UInt128
 {
-	UINT64 low;  /**< @brief Lower 64 bits */
-	UINT64 high; /**< @brief Upper 64 bits */
+	UINT64 Low;  /**< @brief Lower 64 bits */
+	UINT64 High; /**< @brief Upper 64 bits */
 };
 
 /**
@@ -78,8 +78,8 @@ struct UInt128
  */
 struct ECCPoint
 {
-	UINT64 x[MAX_NUM_ECC_DIGITS]; /**< @brief X coordinate */
-	UINT64 y[MAX_NUM_ECC_DIGITS]; /**< @brief Y coordinate */
+	UINT64 X[MAX_NUM_ECC_DIGITS]; /**< @brief X coordinate */
+	UINT64 Y[MAX_NUM_ECC_DIGITS]; /**< @brief Y coordinate */
 };
 
 /**

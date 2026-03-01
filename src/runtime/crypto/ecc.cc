@@ -1,7 +1,6 @@
 
 #include "runtime/crypto/ecc.h"
 #include "platform/system/random.h"
-#include "platform/system/date_time.h"
 #include "platform/platform.h"
 #include "core/memory/memory.h"
 
@@ -147,16 +146,16 @@ constexpr UInt128 ECC::Mul64_64(UINT64 left, UINT64 right)
 	UINT64 mid = (m0 >> 32) + (UINT32)m1 + (UINT32)m2;
 
 	UInt128 result;
-	result.low = (m0 & 0xffffffffull) | (mid << 32);
-	result.high = m3 + (m1 >> 32) + (m2 >> 32) + (mid >> 32);
+	result.Low = (m0 & 0xffffffffull) | (mid << 32);
+	result.High = m3 + (m1 >> 32) + (m2 >> 32) + (mid >> 32);
 	return result;
 }
 
 constexpr UInt128 ECC::Add128_128(UInt128 a, UInt128 b)
 {
 	UInt128 result;
-	result.low = a.low + b.low;
-	result.high = a.high + b.high + (result.low < a.low);
+	result.Low = a.Low + b.Low;
+	result.High = a.High + b.High + (result.Low < a.Low);
 
 	return result;
 }
@@ -176,15 +175,15 @@ VOID ECC::VliMult(UINT64 (&result)[ECC_PRODUCT_DIGITS], const UINT64 (&left)[MAX
 		{
 			UInt128 product = this->Mul64_64(left[i], right[k - i]);
 			r01 = this->Add128_128(r01, product);
-			r2 += (r01.high < product.high);
+			r2 += (r01.High < product.High);
 		}
-		result[k] = r01.low;
-		r01.low = r01.high;
-		r01.high = r2;
+		result[k] = r01.Low;
+		r01.Low = r01.High;
+		r01.High = r2;
 		r2 = 0;
 	}
 
-	result[this->numEccDigits * 2 - 1] = r01.low;
+	result[this->numEccDigits * 2 - 1] = r01.Low;
 }
 
 VOID ECC::VliSquare(UINT64 (&result)[ECC_PRODUCT_DIGITS], const UINT64 (&left)[MAX_NUM_ECC_DIGITS])
@@ -201,20 +200,20 @@ VOID ECC::VliSquare(UINT64 (&result)[ECC_PRODUCT_DIGITS], const UINT64 (&left)[M
 			UInt128 product = this->Mul64_64(left[i], left[k - i]);
 			if (i < k - i)
 			{
-				r2 += product.high >> 63;
-				product.high = (product.high << 1) | (product.low >> 63);
-				product.low <<= 1;
+				r2 += product.High >> 63;
+				product.High = (product.High << 1) | (product.Low >> 63);
+				product.Low <<= 1;
 			}
 			r01 = this->Add128_128(r01, product);
-			r2 += (r01.high < product.high);
+			r2 += (r01.High < product.High);
 		}
-		result[k] = r01.low;
-		r01.low = r01.high;
-		r01.high = r2;
+		result[k] = r01.Low;
+		r01.Low = r01.High;
+		r01.High = r2;
 		r2 = 0;
 	}
 
-	result[this->numEccDigits * 2 - 1] = r01.low;
+	result[this->numEccDigits * 2 - 1] = r01.Low;
 }
 
 /// Computes result = (left + right) % mod.
@@ -505,7 +504,7 @@ VOID ECC::VliModInv(UINT64 (&result)[MAX_NUM_ECC_DIGITS], const UINT64 (&input)[
 /// Returns 1 if point is the point at infinity, 0 otherwise.
 BOOL ECC::IsZero(const ECCPoint &point)
 {
-	return (this->VliIsZero(point.x) && this->VliIsZero(point.y));
+	return (this->VliIsZero(point.X) && this->VliIsZero(point.Y));
 }
 
 /// Point multiplication algorithm using Montgomery's ladder with co-Z coordinates.
@@ -662,8 +661,8 @@ VOID ECC::Mult(ECCPoint &result, ECCPoint &point, UINT64 (&scalar)[MAX_NUM_ECC_D
 
 	INT32 i, nb;
 
-	this->VliSet(Rx[1], point.x);
-	this->VliSet(Ry[1], point.y);
+	this->VliSet(Rx[1], point.X);
+	this->VliSet(Ry[1], point.Y);
 
 	this->XYcZInitialDouble(Rx[1], Ry[1], Rx[0], Ry[0], initialZ);
 
@@ -680,9 +679,9 @@ VOID ECC::Mult(ECCPoint &result, ECCPoint &point, UINT64 (&scalar)[MAX_NUM_ECC_D
 	/* Find final 1/Z value. */
 	this->VliModSub(z, Rx[1], Rx[0], this->curveP); /* X1 - X0 */
 	this->VliModMultFast(z, z, Ry[1 - nb]);         /* Yb * (X1 - X0) */
-	this->VliModMultFast(z, z, point.x);            /* xP * Yb * (X1 - X0) */
+	this->VliModMultFast(z, z, point.X);            /* xP * Yb * (X1 - X0) */
 	this->VliModInv(z, z, this->curveP);            /* 1 / (xP * Yb * (X1 - X0)) */
-	this->VliModMultFast(z, z, point.y);            /* yP / (xP * Yb * (X1 - X0)) */
+	this->VliModMultFast(z, z, point.Y);            /* yP / (xP * Yb * (X1 - X0)) */
 	this->VliModMultFast(z, z, Rx[1 - nb]);         /* Xb * yP / (xP * Yb * (X1 - X0)) */
 	/* End 1/Z calculation */
 
@@ -690,8 +689,8 @@ VOID ECC::Mult(ECCPoint &result, ECCPoint &point, UINT64 (&scalar)[MAX_NUM_ECC_D
 
 	this->ApplyZ(Rx[0], Ry[0], z);
 
-	this->VliSet(result.x, Rx[0]);
-	this->VliSet(result.y, Ry[0]);
+	this->VliSet(result.X, Rx[0]);
+	this->VliSet(result.Y, Ry[0]);
 }
 
 VOID ECC::Bytes2Native(UINT64 (&native)[MAX_NUM_ECC_DIGITS], Span<const UINT8> bytes)
@@ -746,18 +745,18 @@ VOID ECC::ModSqrt(UINT64 (&a)[MAX_NUM_ECC_DIGITS])
 VOID ECC::PointDecompress(ECCPoint &point, Span<const UINT8> compressed)
 {
 	UINT64 negA[MAX_NUM_ECC_DIGITS] = {3}; /* -a = 3 */
-	this->Bytes2Native(point.x, compressed.Subspan(1));
+	this->Bytes2Native(point.X, compressed.Subspan(1));
 
-	this->VliModSquareFast(point.y, point.x);                      /* y = x^2 */
-	this->VliModSub(point.y, point.y, negA, this->curveP);          /* y = x^2 - 3 */
-	this->VliModMultFast(point.y, point.y, point.x);               /* y = x^3 - 3x */
-	this->VliModAdd(point.y, point.y, this->curveB, this->curveP); /* y = x^3 - 3x + b */
+	this->VliModSquareFast(point.Y, point.X);                      /* y = x^2 */
+	this->VliModSub(point.Y, point.Y, negA, this->curveP);          /* y = x^2 - 3 */
+	this->VliModMultFast(point.Y, point.Y, point.X);               /* y = x^3 - 3x */
+	this->VliModAdd(point.Y, point.Y, this->curveB, this->curveP); /* y = x^3 - 3x + b */
 
-	this->ModSqrt(point.y);
+	this->ModSqrt(point.Y);
 
-	if ((point.y[0] & 0x01) != (compressed[0] & 0x01))
+	if ((point.Y[0] & 0x01) != (compressed[0] & 0x01))
 	{
-		this->VliSub(point.y, this->curveP, point.y);
+		this->VliSub(point.Y, this->curveP, point.Y);
 	}
 }
 
@@ -783,12 +782,12 @@ Result<UINT32, Error> ECC::ComputeSharedSecret(Span<const UINT8> publicKey, Span
 	if (!random.GetArray(Span<UINT8>((UINT8 *)randomData, (USIZE)(this->numEccDigits * sizeof(UINT64)))))
 		return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
 
-	this->Bytes2Native(peerPoint.x, publicKey.Subspan(1, this->eccBytes));
-	this->Bytes2Native(peerPoint.y, publicKey.Subspan(1 + this->eccBytes, this->eccBytes));
+	this->Bytes2Native(peerPoint.X, publicKey.Subspan(1, this->eccBytes));
+	this->Bytes2Native(peerPoint.Y, publicKey.Subspan(1 + this->eccBytes, this->eccBytes));
 
 	ECCPoint product;
 	this->Mult(product, peerPoint, this->privateKey, randomData);
-	this->Native2Bytes(Span<UINT8>(secret.Data(), this->eccBytes), product.x);
+	this->Native2Bytes(Span<UINT8>(secret.Data(), this->eccBytes), product.X);
 
 	if (this->IsZero(product))
 		return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
@@ -808,8 +807,8 @@ Result<void, Error> ECC::Initialize(INT32 bytes)
 		constexpr UINT64 curveN[] = {0xF3B9CAC2FC632551, 0xBCE6FAADA7179E84, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFF00000000};
 		Memory::Copy(this->curveP, MakeEmbedArray(curveP), sizeof(curveP));
 		Memory::Copy(this->curveB, MakeEmbedArray(curveB), sizeof(curveB));
-		Memory::Copy(this->curveG.x, MakeEmbedArray(curveGx), sizeof(curveGx));
-		Memory::Copy(this->curveG.y, MakeEmbedArray(curveGy), sizeof(curveGy));
+		Memory::Copy(this->curveG.X, MakeEmbedArray(curveGx), sizeof(curveGx));
+		Memory::Copy(this->curveG.Y, MakeEmbedArray(curveGy), sizeof(curveGy));
 		Memory::Copy(this->curveN, MakeEmbedArray(curveN), sizeof(curveN));
 	}
 	else if (bytes == SECP384R1)
@@ -821,8 +820,8 @@ Result<void, Error> ECC::Initialize(INT32 bytes)
 		constexpr UINT64 curveN[] = {0xECEC196ACCC52973, 0x581A0DB248B0A77A, 0xC7634D81F4372DDF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF};
 		Memory::Copy(this->curveP, MakeEmbedArray(curveP), sizeof(curveP));
 		Memory::Copy(this->curveB, MakeEmbedArray(curveB), sizeof(curveB));
-		Memory::Copy(this->curveG.x, MakeEmbedArray(curveGx), sizeof(curveGx));
-		Memory::Copy(this->curveG.y, MakeEmbedArray(curveGy), sizeof(curveGy));
+		Memory::Copy(this->curveG.X, MakeEmbedArray(curveGx), sizeof(curveGx));
+		Memory::Copy(this->curveG.Y, MakeEmbedArray(curveGy), sizeof(curveGy));
 		Memory::Copy(this->curveN, MakeEmbedArray(curveN), sizeof(curveN));
 	}
 	else
@@ -853,7 +852,7 @@ Result<UINT32, Error> ECC::ExportPublicKey(Span<UINT8> publicKey)
 	if (publicKey.Size() < this->eccBytes * 2 + 1)
 		return Result<UINT32, Error>::Err(Error::Ecc_ExportKeyFailed);
 	publicKey[0] = 0x04;
-	this->Native2Bytes(publicKey.Subspan(1, this->eccBytes), this->publicKey.x);
-	this->Native2Bytes(publicKey.Subspan(1 + this->eccBytes, this->eccBytes), this->publicKey.y);
+	this->Native2Bytes(publicKey.Subspan(1, this->eccBytes), this->publicKey.X);
+	this->Native2Bytes(publicKey.Subspan(1 + this->eccBytes, this->eccBytes), this->publicKey.Y);
 	return Result<UINT32, Error>::Ok(this->eccBytes * 2 + 1);
 }

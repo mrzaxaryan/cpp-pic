@@ -101,7 +101,7 @@ Result<void, Error> ChaCha20Encoder::Decode(TlsBuffer &in, TlsBuffer &out, Span<
 }
 
 // Compute size for encoding or decoding
-INT32 ChaCha20Encoder::ComputeSize(INT32 size, INT32 encodeOrDecode)
+INT32 ChaCha20Encoder::ComputeSize(INT32 size, CipherDirection direction)
 {
-	return encodeOrDecode == 1 ? size - POLY1305_TAGLEN : size + POLY1305_TAGLEN;
+	return direction == CipherDirection::Decode ? size - POLY1305_TAGLEN : size + POLY1305_TAGLEN;
 }

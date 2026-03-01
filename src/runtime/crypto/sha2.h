@@ -15,17 +15,17 @@
  * @code
  * // One-shot hash
  * UINT8 digest[SHA256_DIGEST_SIZE];
- * SHA256::Hash(message, len, digest);
+ * SHA256::Hash(message, Span<UINT8, SHA256_DIGEST_SIZE>(digest));
  *
  * // Incremental hash
  * SHA256 ctx;
- * ctx.Update(part1, len1);
- * ctx.Update(part2, len2);
- * ctx.Final(digest);
+ * ctx.Update(part1);
+ * ctx.Update(part2);
+ * ctx.Final(Span<UINT8, SHA256_DIGEST_SIZE>(digest));
  *
  * // HMAC
  * UINT8 mac[SHA256_DIGEST_SIZE];
- * HMAC_SHA256::Compute(key, keyLen, message, msgLen, mac, sizeof(mac));
+ * HMAC_SHA256::Compute(key, message, Span<UCHAR>(mac));
  * @endcode
  *
  * @note All constants are embedded in code to avoid .rdata dependencies.
@@ -76,52 +76,52 @@ template<typename SHAType, typename Traits> class HMACBase;
  */
 struct SHA256Traits
 {
-    using Word = UINT32;                              /**< @brief Word type: 32-bit unsigned integer */
-    static constexpr USIZE BLOCK_SIZE    = SHA256_BLOCK_SIZE;  /**< @brief Block size in bytes */
-    static constexpr USIZE DIGEST_SIZE   = SHA256_DIGEST_SIZE; /**< @brief Digest size in bytes */
-    static constexpr USIZE ROUND_COUNT   = 64;        /**< @brief Number of compression rounds */
-    static constexpr USIZE OUTPUT_WORDS  = 8;         /**< @brief Number of output words */
-    static constexpr USIZE BLOCK_SHIFT   = 6;         /**< @brief Log2 of block size */
-    static constexpr USIZE WORD_SHIFT    = 2;         /**< @brief Log2 of word size */
-    static constexpr USIZE PADDING_OFFSET = 9;        /**< @brief Padding overhead in bytes */
+	using Word = UINT32;                              /**< @brief Word type: 32-bit unsigned integer */
+	static constexpr USIZE BlockSize     = SHA256_BLOCK_SIZE;  /**< @brief Block size in bytes */
+	static constexpr USIZE DigestSize    = SHA256_DIGEST_SIZE; /**< @brief Digest size in bytes */
+	static constexpr USIZE RoundCount    = 64;        /**< @brief Number of compression rounds */
+	static constexpr USIZE OutputWords   = 8;         /**< @brief Number of output words */
+	static constexpr USIZE BlockShift    = 6;         /**< @brief Log2 of block size */
+	static constexpr USIZE WordShift     = 2;         /**< @brief Log2 of word size */
+	static constexpr USIZE PaddingOffset = 9;         /**< @brief Padding overhead in bytes */
 
-    /**
-     * @brief Fills initial hash values (H0) for SHA-256
-     * @param out Output array for 8 initial hash values
-     */
-    static VOID FillH0(Word (&out)[8]);
+	/**
+	 * @brief Fills initial hash values (H0) for SHA-256
+	 * @param out Output array for 8 initial hash values
+	 */
+	static VOID FillH0(Word (&out)[8]);
 
-    /**
-     * @brief Fills round constants (K) for SHA-256
-     * @param out Output array for 64 round constants
-     */
-    static VOID FillK(Word (&out)[ROUND_COUNT]);
+	/**
+	 * @brief Fills round constants (K) for SHA-256
+	 * @param out Output array for 64 round constants
+	 */
+	static VOID FillK(Word (&out)[RoundCount]);
 
-    /**
-     * @brief Packs 4 bytes into a 32-bit word (big-endian)
-     * @param str Input byte array
-     * @param x Output word reference
-     */
-    static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
+	/**
+	 * @brief Packs 4 bytes into a 32-bit word (big-endian)
+	 * @param str Input byte array
+	 * @param x Output word reference
+	 */
+	static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
 
-    /**
-     * @brief Unpacks a 32-bit word into 4 bytes (big-endian)
-     * @param x Input word
-     * @param str Output byte array
-     */
-    static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
+	/**
+	 * @brief Unpacks a 32-bit word into 4 bytes (big-endian)
+	 * @param x Input word
+	 * @param str Output byte array
+	 */
+	static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
 
-    /** @brief SHA-256 Sigma0 function: ROTR(x,2) XOR ROTR(x,13) XOR ROTR(x,22) */
-    static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr32(x, 2) ^ BitOps::Rotr32(x, 13) ^ BitOps::Rotr32(x, 22); }
+	/** @brief SHA-256 Sigma0 function: ROTR(x,2) XOR ROTR(x,13) XOR ROTR(x,22) */
+	static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr32(x, 2) ^ BitOps::Rotr32(x, 13) ^ BitOps::Rotr32(x, 22); }
 
-    /** @brief SHA-256 Sigma1 function: ROTR(x,6) XOR ROTR(x,11) XOR ROTR(x,25) */
-    static constexpr FORCE_INLINE Word F2(Word x) { return BitOps::Rotr32(x, 6) ^ BitOps::Rotr32(x, 11) ^ BitOps::Rotr32(x, 25); }
+	/** @brief SHA-256 Sigma1 function: ROTR(x,6) XOR ROTR(x,11) XOR ROTR(x,25) */
+	static constexpr FORCE_INLINE Word F2(Word x) { return BitOps::Rotr32(x, 6) ^ BitOps::Rotr32(x, 11) ^ BitOps::Rotr32(x, 25); }
 
-    /** @brief SHA-256 sigma0 function: ROTR(x,7) XOR ROTR(x,18) XOR SHR(x,3) */
-    static constexpr FORCE_INLINE Word F3(Word x) { return BitOps::Rotr32(x, 7) ^ BitOps::Rotr32(x, 18) ^ (x >> 3); }
+	/** @brief SHA-256 sigma0 function: ROTR(x,7) XOR ROTR(x,18) XOR SHR(x,3) */
+	static constexpr FORCE_INLINE Word F3(Word x) { return BitOps::Rotr32(x, 7) ^ BitOps::Rotr32(x, 18) ^ (x >> 3); }
 
-    /** @brief SHA-256 sigma1 function: ROTR(x,17) XOR ROTR(x,19) XOR SHR(x,10) */
-    static constexpr FORCE_INLINE Word F4(Word x) { return BitOps::Rotr32(x, 17) ^ BitOps::Rotr32(x, 19) ^ (x >> 10); }
+	/** @brief SHA-256 sigma1 function: ROTR(x,17) XOR ROTR(x,19) XOR SHR(x,10) */
+	static constexpr FORCE_INLINE Word F4(Word x) { return BitOps::Rotr32(x, 17) ^ BitOps::Rotr32(x, 19) ^ (x >> 10); }
 };
 
 /**
@@ -136,52 +136,52 @@ struct SHA256Traits
  */
 struct SHA384Traits
 {
-    using Word = UINT64;                              /**< @brief Word type: 64-bit unsigned integer */
-    static constexpr USIZE BLOCK_SIZE    = SHA384_BLOCK_SIZE;  /**< @brief Block size in bytes */
-    static constexpr USIZE DIGEST_SIZE   = SHA384_DIGEST_SIZE; /**< @brief Digest size in bytes */
-    static constexpr USIZE ROUND_COUNT   = 80;        /**< @brief Number of compression rounds */
-    static constexpr USIZE OUTPUT_WORDS  = 6;         /**< @brief Number of output words (truncated) */
-    static constexpr USIZE BLOCK_SHIFT   = 7;         /**< @brief Log2 of block size */
-    static constexpr USIZE WORD_SHIFT    = 3;         /**< @brief Log2 of word size */
-    static constexpr USIZE PADDING_OFFSET = 17;       /**< @brief Padding overhead in bytes */
+	using Word = UINT64;                              /**< @brief Word type: 64-bit unsigned integer */
+	static constexpr USIZE BlockSize     = SHA384_BLOCK_SIZE;  /**< @brief Block size in bytes */
+	static constexpr USIZE DigestSize    = SHA384_DIGEST_SIZE; /**< @brief Digest size in bytes */
+	static constexpr USIZE RoundCount    = 80;        /**< @brief Number of compression rounds */
+	static constexpr USIZE OutputWords   = 6;         /**< @brief Number of output words (truncated) */
+	static constexpr USIZE BlockShift    = 7;         /**< @brief Log2 of block size */
+	static constexpr USIZE WordShift     = 3;         /**< @brief Log2 of word size */
+	static constexpr USIZE PaddingOffset = 17;        /**< @brief Padding overhead in bytes */
 
-    /**
-     * @brief Fills initial hash values (H0) for SHA-384
-     * @param out Output array for 8 initial hash values
-     */
-    static VOID FillH0(Word (&out)[8]);
+	/**
+	 * @brief Fills initial hash values (H0) for SHA-384
+	 * @param out Output array for 8 initial hash values
+	 */
+	static VOID FillH0(Word (&out)[8]);
 
-    /**
-     * @brief Fills round constants (K) for SHA-384
-     * @param out Output array for 80 round constants
-     */
-    static VOID FillK(Word (&out)[ROUND_COUNT]);
+	/**
+	 * @brief Fills round constants (K) for SHA-384
+	 * @param out Output array for 80 round constants
+	 */
+	static VOID FillK(Word (&out)[RoundCount]);
 
-    /**
-     * @brief Packs 8 bytes into a 64-bit word (big-endian)
-     * @param str Input byte array
-     * @param x Output word reference
-     */
-    static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
+	/**
+	 * @brief Packs 8 bytes into a 64-bit word (big-endian)
+	 * @param str Input byte array
+	 * @param x Output word reference
+	 */
+	static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
 
-    /**
-     * @brief Unpacks a 64-bit word into 8 bytes (big-endian)
-     * @param x Input word
-     * @param str Output byte array
-     */
-    static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
+	/**
+	 * @brief Unpacks a 64-bit word into 8 bytes (big-endian)
+	 * @param x Input word
+	 * @param str Output byte array
+	 */
+	static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
 
-    /** @brief SHA-384 Sigma0 function: ROTR(x,28) XOR ROTR(x,34) XOR ROTR(x,39) */
-    static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr64(x, 28) ^ BitOps::Rotr64(x, 34) ^ BitOps::Rotr64(x, 39); }
+	/** @brief SHA-384 Sigma0 function: ROTR(x,28) XOR ROTR(x,34) XOR ROTR(x,39) */
+	static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr64(x, 28) ^ BitOps::Rotr64(x, 34) ^ BitOps::Rotr64(x, 39); }
 
-    /** @brief SHA-384 Sigma1 function: ROTR(x,14) XOR ROTR(x,18) XOR ROTR(x,41) */
-    static constexpr FORCE_INLINE Word F2(Word x) { return BitOps::Rotr64(x, 14) ^ BitOps::Rotr64(x, 18) ^ BitOps::Rotr64(x, 41); }
+	/** @brief SHA-384 Sigma1 function: ROTR(x,14) XOR ROTR(x,18) XOR ROTR(x,41) */
+	static constexpr FORCE_INLINE Word F2(Word x) { return BitOps::Rotr64(x, 14) ^ BitOps::Rotr64(x, 18) ^ BitOps::Rotr64(x, 41); }
 
-    /** @brief SHA-384 sigma0 function: ROTR(x,1) XOR ROTR(x,8) XOR SHR(x,7) */
-    static constexpr FORCE_INLINE Word F3(Word x) { return BitOps::Rotr64(x, 1) ^ BitOps::Rotr64(x, 8) ^ (x >> 7); }
+	/** @brief SHA-384 sigma0 function: ROTR(x,1) XOR ROTR(x,8) XOR SHR(x,7) */
+	static constexpr FORCE_INLINE Word F3(Word x) { return BitOps::Rotr64(x, 1) ^ BitOps::Rotr64(x, 8) ^ (x >> 7); }
 
-    /** @brief SHA-384 sigma1 function: ROTR(x,19) XOR ROTR(x,61) XOR SHR(x,6) */
-    static constexpr FORCE_INLINE Word F4(Word x) { return BitOps::Rotr64(x, 19) ^ BitOps::Rotr64(x, 61) ^ (x >> 6); }
+	/** @brief SHA-384 sigma1 function: ROTR(x,19) XOR ROTR(x,61) XOR SHR(x,6) */
+	static constexpr FORCE_INLINE Word F4(Word x) { return BitOps::Rotr64(x, 19) ^ BitOps::Rotr64(x, 61) ^ (x >> 6); }
 };
 
 /**
@@ -197,77 +197,82 @@ struct SHA384Traits
  * @code
  * // One-shot hash
  * UINT8 digest[SHA256_DIGEST_SIZE];
- * SHA256::Hash(data, dataLen, digest);
+ * SHA256::Hash(data, Span<UINT8, SHA256_DIGEST_SIZE>(digest));
  *
  * // Incremental hash
  * SHA256 ctx;
- * ctx.Update(chunk1, chunk1Len);
- * ctx.Update(chunk2, chunk2Len);
- * ctx.Final(digest);
+ * ctx.Update(chunk1);
+ * ctx.Update(chunk2);
+ * ctx.Final(Span<UINT8, SHA256_DIGEST_SIZE>(digest));
  * @endcode
  */
 template<typename Traits>
 class SHABase
 {
 public:
-    using Word = typename Traits::Word;  /**< @brief Word type from traits */
+	using Word = typename Traits::Word;  /**< @brief Word type from traits */
 
-    // Stack-only
-    VOID *operator new(USIZE) = delete;
-    VOID operator delete(VOID *) = delete;
-    VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
-    VOID operator delete(VOID *, PVOID) noexcept {}
+	// Stack-only
+	VOID *operator new(USIZE) = delete;
+	VOID operator delete(VOID *) = delete;
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+	VOID operator delete(VOID *, PVOID) noexcept {}
 
 private:
-    UINT64 tot_len;                        /**< @brief Total message length processed */
-    UINT64 len;                            /**< @brief Current block buffer length */
-    UINT8 block[2 * Traits::BLOCK_SIZE];   /**< @brief Message block buffer */
-    Word h[8];                             /**< @brief Hash state (intermediate hash values) */
+	UINT64 totLen;                         /**< @brief Total message length processed */
+	UINT64 len;                            /**< @brief Current block buffer length */
+	UINT8 block[2 * Traits::BlockSize];    /**< @brief Message block buffer */
+	Word h[8];                             /**< @brief Hash state (intermediate hash values) */
 
 public:
-    /**
-     * @brief Default constructor - initializes hash state
-     * @details Sets initial hash values (H0) from traits.
-     */
-    SHABase();
+	/**
+	 * @brief Default constructor - initializes hash state
+	 * @details Sets initial hash values (H0) from traits.
+	 */
+	SHABase();
 
-    /**
-     * @brief Updates hash with additional message data
-     * @param message Span of message data bytes
-     *
-     * @details Can be called multiple times to hash large messages incrementally.
-     */
-    VOID Update(Span<const UINT8> message);
+	/**
+	 * @brief Destructor - securely clears hash state
+	 */
+	~SHABase();
 
-    /**
-     * @brief Finalizes hash computation and outputs digest
-     * @param digest Output span for hash digest (must be Traits::DIGEST_SIZE bytes)
-     *
-     * @details Applies padding, processes final block, and outputs the digest.
-     * @note After calling Final(), the context should not be reused without re-initialization.
-     */
-    VOID Final(Span<UINT8, Traits::DIGEST_SIZE> digest);
+	/**
+	 * @brief Updates hash with additional message data
+	 * @param message Span of message data bytes
+	 *
+	 * @details Can be called multiple times to hash large messages incrementally.
+	 */
+	VOID Update(Span<const UINT8> message);
 
-    /**
-     * @brief Computes hash of a complete message in one call
-     * @param message Span of message data bytes
-     * @param digest Output span for hash digest (must be Traits::DIGEST_SIZE bytes)
-     *
-     * @details Convenience method for hashing complete messages.
-     */
-    static VOID Hash(Span<const UINT8> message, Span<UINT8, Traits::DIGEST_SIZE> digest);
+	/**
+	 * @brief Finalizes hash computation and outputs digest
+	 * @param digest Output span for hash digest (must be Traits::DigestSize bytes)
+	 *
+	 * @details Applies padding, processes final block, and outputs the digest.
+	 * @note After calling Final(), the context should not be reused without re-initialization.
+	 */
+	VOID Final(Span<UINT8, Traits::DigestSize> digest);
 
-    /**
-     * @brief Processes message blocks through the compression function
-     * @param ctx SHA context
-     * @param message Span of message bytes (must be a multiple of BLOCK_SIZE)
-     * @param k Pre-filled round constants array
-     *
-     * @details Internal function that applies the SHA compression function.
-     * The caller is responsible for filling K via Traits::FillK() and passing
-     * it in, so that multi-block calls share a single K-table copy.
-     */
-    static NOINLINE VOID Transform(SHABase &ctx, Span<const UINT8> message, const Word (&k)[Traits::ROUND_COUNT]);
+	/**
+	 * @brief Computes hash of a complete message in one call
+	 * @param message Span of message data bytes
+	 * @param digest Output span for hash digest (must be Traits::DigestSize bytes)
+	 *
+	 * @details Convenience method for hashing complete messages.
+	 */
+	static VOID Hash(Span<const UINT8> message, Span<UINT8, Traits::DigestSize> digest);
+
+	/**
+	 * @brief Processes message blocks through the compression function
+	 * @param ctx SHA context
+	 * @param message Span of message bytes (must be a multiple of BlockSize)
+	 * @param k Pre-filled round constants array
+	 *
+	 * @details Internal function that applies the SHA compression function.
+	 * The caller is responsible for filling K via Traits::FillK() and passing
+	 * it in, so that multi-block calls share a single K-table copy.
+	 */
+	static NOINLINE VOID Transform(SHABase &ctx, Span<const UINT8> message, const Word (&k)[Traits::RoundCount]);
 };
 
 /** @brief SHA-256 hash algorithm (256-bit output) */
@@ -297,66 +302,78 @@ using SHA384 = SHABase<SHA384Traits>;
  * @code
  * // One-shot HMAC
  * UINT8 mac[SHA256_DIGEST_SIZE];
- * HMAC_SHA256::Compute(key, keyLen, message, msgLen, mac, sizeof(mac));
+ * HMAC_SHA256::Compute(key, message, Span<UCHAR>(mac));
  *
  * // Incremental HMAC
  * HMAC_SHA256 hmac;
- * hmac.Init(key, keyLen);
- * hmac.Update(chunk1, chunk1Len);
- * hmac.Update(chunk2, chunk2Len);
- * hmac.Final(mac, sizeof(mac));
+ * hmac.Init(key);
+ * hmac.Update(chunk1);
+ * hmac.Update(chunk2);
+ * hmac.Final(Span<UCHAR>(mac));
  * @endcode
  */
 template<typename SHAType, typename Traits>
 class HMACBase
 {
+public:
+	// Stack-only
+	VOID *operator new(USIZE) = delete;
+	VOID operator delete(VOID *) = delete;
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+	VOID operator delete(VOID *, PVOID) noexcept {}
+
 private:
-    SHAType ctx_inside;                       /**< @brief Inner hash context */
-    SHAType ctx_outside;                      /**< @brief Outer hash context */
-    SHAType ctx_inside_reinit;                /**< @brief Saved inner context for reinit */
-    SHAType ctx_outside_reinit;               /**< @brief Saved outer context for reinit */
-    UCHAR block_ipad[Traits::BLOCK_SIZE];     /**< @brief Inner padding block (K XOR ipad) */
-    UCHAR block_opad[Traits::BLOCK_SIZE];     /**< @brief Outer padding block (K XOR opad) */
+	SHAType ctxInside;                        /**< @brief Inner hash context */
+	SHAType ctxOutside;                       /**< @brief Outer hash context */
+	SHAType ctxInsideReinit;                  /**< @brief Saved inner context for reinit */
+	SHAType ctxOutsideReinit;                 /**< @brief Saved outer context for reinit */
+	UCHAR blockIpad[Traits::BlockSize];       /**< @brief Inner padding block (K XOR ipad) */
+	UCHAR blockOpad[Traits::BlockSize];       /**< @brief Outer padding block (K XOR opad) */
 
 public:
-    /**
-     * @brief Initializes HMAC with a secret key
-     * @param key Span of secret key bytes
-     *
-     * @details If key is longer than block size, it is hashed first.
-     * Key is padded with zeros to block size, then XORed with ipad/opad.
-     */
-    VOID Init(Span<const UCHAR> key);
+	/**
+	 * @brief Destructor - securely clears key material
+	 */
+	~HMACBase();
 
-    /**
-     * @brief Reinitializes HMAC for computing another MAC with same key
-     *
-     * @details Restores the context to state immediately after Init().
-     * More efficient than calling Init() again with the same key.
-     */
-    VOID Reinit();
+	/**
+	 * @brief Initializes HMAC with a secret key
+	 * @param key Span of secret key bytes
+	 *
+	 * @details If key is longer than block size, it is hashed first.
+	 * Key is padded with zeros to block size, then XORed with ipad/opad.
+	 */
+	VOID Init(Span<const UCHAR> key);
 
-    /**
-     * @brief Updates HMAC with additional message data
-     * @param message Span of message data bytes
-     */
-    VOID Update(Span<const UCHAR> message);
+	/**
+	 * @brief Reinitializes HMAC for computing another MAC with same key
+	 *
+	 * @details Restores the context to state immediately after Init().
+	 * More efficient than calling Init() again with the same key.
+	 */
+	VOID Reinit();
 
-    /**
-     * @brief Finalizes HMAC computation and outputs MAC
-     * @param mac Output span for MAC (can be less than digest size for truncation)
-     */
-    VOID Final(Span<UCHAR> mac);
+	/**
+	 * @brief Updates HMAC with additional message data
+	 * @param message Span of message data bytes
+	 */
+	VOID Update(Span<const UCHAR> message);
 
-    /**
-     * @brief Computes HMAC of a complete message in one call
-     * @param key Span of secret key bytes
-     * @param message Span of message data bytes
-     * @param mac Output span for MAC
-     *
-     * @details Convenience method for computing HMAC of complete messages.
-     */
-    static VOID Compute(Span<const UCHAR> key, Span<const UCHAR> message, Span<UCHAR> mac);
+	/**
+	 * @brief Finalizes HMAC computation and outputs MAC
+	 * @param mac Output span for MAC (can be less than digest size for truncation)
+	 */
+	VOID Final(Span<UCHAR> mac);
+
+	/**
+	 * @brief Computes HMAC of a complete message in one call
+	 * @param key Span of secret key bytes
+	 * @param message Span of message data bytes
+	 * @param mac Output span for MAC
+	 *
+	 * @details Convenience method for computing HMAC of complete messages.
+	 */
+	static VOID Compute(Span<const UCHAR> key, Span<const UCHAR> message, Span<UCHAR> mac);
 };
 
 /** @brief HMAC-SHA256 message authentication code */

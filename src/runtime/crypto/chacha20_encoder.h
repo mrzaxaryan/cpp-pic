@@ -38,6 +38,16 @@
 #include "runtime/network/tls/tls_buffer.h"
 
 /**
+ * @enum CipherDirection
+ * @brief Direction for cipher size computation
+ */
+enum class CipherDirection
+{
+	Encode, ///< Encoding direction (adds authentication tag)
+	Decode  ///< Decoding direction (removes authentication tag)
+};
+
+/**
  * @class ChaCha20Encoder
  * @brief Bidirectional TLS 1.3 record encryption/decryption
  *
@@ -89,6 +99,8 @@ public:
 	// Stack-only
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+	VOID operator delete(VOID *, PVOID) noexcept {}
 
 	ChaCha20Encoder(ChaCha20Encoder &&other) noexcept
 		: remoteCipher(static_cast<ChaCha20Poly1305 &&>(other.remoteCipher)), localCipher(static_cast<ChaCha20Poly1305 &&>(other.localCipher)), ivLength(other.ivLength), initialized(other.initialized)
@@ -172,13 +184,13 @@ public:
 	/**
 	 * @brief Computes output size for encoding or decoding
 	 * @param size Input size in bytes
-	 * @param encodeOrDecode 0 for encoding (adds tag), 1 for decoding (removes tag)
+	 * @param direction Cipher direction (Encode adds tag, Decode removes tag)
 	 * @return Output size in bytes
 	 *
 	 * @details For encoding: output = input + 16 (Poly1305 tag)
 	 * For decoding: output = input - 16 (remove tag)
 	 */
-	static INT32 ComputeSize(INT32 size, INT32 encodeOrDecode);
+	static INT32 ComputeSize(INT32 size, CipherDirection direction);
 
 	/**
 	 * @brief Returns the IV length

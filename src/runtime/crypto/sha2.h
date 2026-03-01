@@ -255,10 +255,13 @@ public:
      * @brief Processes message blocks through the compression function
      * @param ctx SHA context
      * @param message Span of message bytes (must be a multiple of BLOCK_SIZE)
+     * @param k Pre-filled round constants array
      *
      * @details Internal function that applies the SHA compression function.
+     * The caller is responsible for filling K via Traits::FillK() and passing
+     * it in, so that multi-block calls share a single K-table copy.
      */
-    static VOID Transform(SHABase &ctx, Span<const UINT8> message);
+    static NOINLINE VOID Transform(SHABase &ctx, Span<const UINT8> message, const Word (&k)[Traits::ROUND_COUNT]);
 };
 
 /** @brief SHA-256 hash algorithm (256-bit output) */

@@ -164,6 +164,70 @@ UINT32 val = embedded[0];                        // Unpacked at runtime
 - **Cast to `USIZE`** when passing pointer/handle arguments to `System::Call`
 - **Includes:** `runtime.h` = everything; `platform.h` = CORE + PLATFORM; implementation files include own header first
 
+### Documentation & RFC References
+
+All public APIs and protocol implementations **must** include Doxygen documentation with RFC references where applicable.
+
+**File-level documentation** — every header starts with `@file`, `@brief`, `@details`, and relevant `@see` RFC links:
+
+```cpp
+/**
+ * @file base64.h
+ * @brief Base64 Encoding and Decoding
+ *
+ * @details Platform-independent Base64 encoding and decoding implementing
+ * the standard alphabet defined in RFC 4648 Section 4.
+ *
+ * @see RFC 4648 — The Base16, Base32, and Base64 Data Encodings
+ *      https://datatracker.ietf.org/doc/html/rfc4648
+ * @see RFC 4648 Section 4 — Base 64 Encoding (alphabet and padding definition)
+ *      https://datatracker.ietf.org/doc/html/rfc4648#section-4
+ */
+```
+
+**Function/method documentation** — `@brief`, `@details` explaining the algorithm step-by-step, `@param`, `@return`, and `@see` with specific RFC section links:
+
+```cpp
+/**
+ * @brief Encodes binary data to Base64 format
+ *
+ * @details Implements the encoding procedure from RFC 4648 Section 4:
+ * 1. Input bytes are consumed in 3-byte (24-bit) groups
+ * 2. Each group is split into four 6-bit values ...
+ *
+ * @param input Input binary data
+ * @param output Output buffer
+ *
+ * @see RFC 4648 Section 4 — Base 64 Encoding
+ *      https://datatracker.ietf.org/doc/html/rfc4648#section-4
+ */
+```
+
+**RFC reference format** — always use the `@see` tag with both the human-readable citation and the full URL on the next line:
+
+```
+@see RFC XXXX Section Y.Z — Short description
+     https://datatracker.ietf.org/doc/html/rfcXXXX#section-Y.Z
+```
+
+**Inline RFC references** — use `///` comments for enum values, struct members, and implementation comments:
+
+```cpp
+OPCODE_TEXT = 0x1, ///< Text data frame — payload is UTF-8 (RFC 6455 Section 5.6)
+```
+
+**When RFC documentation is required:**
+- All cryptographic algorithms (SHA, HMAC, ChaCha20, ECC, etc.)
+- All network protocols (TLS, HTTP, WebSocket, DNS, etc.)
+- All encoding/decoding schemes (Base64, ASN.1/DER, etc.)
+- All wire-format structs and enums
+- Implementation comments referencing specific protocol steps or state machines
+
+**When RFC documentation is optional:**
+- Internal utility functions with no protocol specification
+- Platform-specific OS API wrappers (document the OS API instead)
+- Test files
+
 ### Naming
 
 | Kind | Convention | Examples |

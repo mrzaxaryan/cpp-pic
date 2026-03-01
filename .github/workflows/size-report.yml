@@ -306,9 +306,68 @@ jobs:
             build/**/output.efi
             build/**/output.bin
 
+  build-solaris:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-Linux-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz (no logging, no tests)
+        run: |
+          cmake --preset solaris-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset solaris-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          ELF=$(find build -type f -name "output.elf" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          ELF_SIZE=$(stat -c%s "$ELF" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=solaris-${{ matrix.arch }},$ELF_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-solaris-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.elf
+            build/**/output.bin
+
   update-readme:
     if: always()
-    needs: [build-windows, build-windows-aarch64, build-linux, build-macos, build-uefi]
+    needs: [build-windows, build-windows-aarch64, build-linux, build-macos, build-uefi, build-solaris]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -500,6 +559,9 @@ jobs:
               ("UEFI", [
                   ("x86_64", "uefi_x86_64"),
                   ("aarch64", "uefi_aarch64"),
+              ]),
+              ("Solaris", [
+                  ("x86_64", "solaris_x86_64"),
               ]),
           ]
 

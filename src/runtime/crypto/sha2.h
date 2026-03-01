@@ -212,6 +212,12 @@ class SHABase
 public:
     using Word = typename Traits::Word;  /**< @brief Word type from traits */
 
+    // Stack-only
+    VOID *operator new(USIZE) = delete;
+    VOID operator delete(VOID *) = delete;
+    VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+    VOID operator delete(VOID *, PVOID) noexcept {}
+
 private:
     UINT64 tot_len;                        /**< @brief Total message length processed */
     UINT64 len;                            /**< @brief Current block buffer length */

@@ -169,7 +169,7 @@ VOID Poly1305::ProcessBlocks(Span<const UCHAR> data)
     m_h[4] = h4;
 }
 
-Result<void, Error> Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter)
+Result<void, Error> Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> polyKey, UINT32 counter)
 {
     ChaCha20Poly1305 ctx;
     UINT64 ctr;
@@ -189,7 +189,7 @@ Result<void, Error> Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key
         return Result<void, Error>::Err(Error::ChaCha20_GenerateKeyFailed);
     }
 
-    ctx.Block(poly_key);
+    ctx.Block(polyKey);
     return Result<void, Error>::Ok();
 }
 
@@ -408,11 +408,11 @@ VOID ChaCha20Poly1305::IVUpdate(Span<const UINT8, TLS_CHACHA20_IV_LENGTH> iv, Sp
     this->input[15] = U8TO32_LITTLE(iv.Data() + 8) ^ U8TO32_LITTLE(aad.Data() + 4);
 }
 
-VOID ChaCha20Poly1305::EncryptBytes(Span<const UINT8> m_span, Span<UINT8> c_span)
+VOID ChaCha20Poly1305::EncryptBytes(Span<const UINT8> input, Span<UINT8> output)
 {
-    const UINT8 *m = m_span.Data();
-    UINT8 *c = c_span.Data();
-    UINT32 bytes = (UINT32)m_span.Size();
+    const UINT8 *m = input.Data();
+    UINT8 *c = output.Data();
+    UINT32 bytes = (UINT32)input.Size();
 
     UINT32 x0, x1, x2, x3, x4, x5, x6, x7;
     UINT32 x8, x9, x10, x11, x12, x13, x14, x15;
@@ -608,18 +608,7 @@ VOID ChaCha20Poly1305::Block(Span<UCHAR> output)
     this->input[12] = PLUSONE(this->input[12]);
 }
 
-/**
- * @brief Feeds AAD and ciphertext into Poly1305 with RFC 8439 padding and length trailer
- *
- * @details Implements the Poly1305 construction from RFC 8439 Section 2.8:
- *   1. Update with AAD, pad to 16-byte boundary
- *   2. Update with ciphertext, pad to 16-byte boundary
- *   3. Update with 8-byte little-endian AAD length + 8-byte little-endian ciphertext length
- *
- * @see RFC 8439 Section 2.8 — AEAD Construction
- *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
- */
-static NOINLINE VOID Poly1305PadAndTrail(Poly1305 &poly, Span<const UCHAR> aad, Span<const UCHAR> ciphertext)
+NOINLINE VOID ChaCha20Poly1305::Poly1305PadAndTrail(Poly1305 &poly, Span<const UCHAR> aad, Span<const UCHAR> ciphertext)
 {
     UCHAR zeropad[15];
     Memory::Zero(zeropad, sizeof(zeropad));
@@ -641,20 +630,18 @@ static NOINLINE VOID Poly1305PadAndTrail(Poly1305 &poly, Span<const UCHAR> aad, 
     poly.Update(Span<const UCHAR>(trail));
 }
 
-Result<void, Error> ChaCha20Poly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
+VOID ChaCha20Poly1305::Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&polyKey)[POLY1305_KEYLEN], Span<UCHAR> out)
 {
     UINT32 counter = 1;
     this->IVSetup96BitNonce(nullptr, (PUCHAR)&counter);
     this->EncryptBytes(Span<const UINT8>(pt.Data(), pt.Size()), Span<UINT8>(out.Data(), pt.Size()));
 
-    Poly1305 poly(poly_key);
-    Poly1305PadAndTrail(poly, aad, Span<const UCHAR>(out.Data(), pt.Size()));
+    Poly1305 poly(polyKey);
+    ChaCha20Poly1305::Poly1305PadAndTrail(poly, aad, Span<const UCHAR>(out.Data(), pt.Size()));
     poly.Finish(out.Last<POLY1305_TAGLEN>());
-
-    return Result<void, Error>::Ok();
 }
 
-Result<INT32, Error> ChaCha20Poly1305::Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out)
+Result<INT32, Error> ChaCha20Poly1305::Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&polyKey)[POLY1305_KEYLEN], Span<UCHAR> out)
 {
     if (pt.Size() < POLY1305_TAGLEN)
         return Result<INT32, Error>::Err(Error::ChaCha20_DecodeFailed);
@@ -662,37 +649,42 @@ Result<INT32, Error> ChaCha20Poly1305::Poly1305Decode(Span<UCHAR> pt, Span<const
     UINT32 len = (UINT32)pt.Size() - POLY1305_TAGLEN;
 
     // Authenticate BEFORE decrypting (AEAD requirement)
-    // poly_key is already computed by the caller; use it directly
-    Poly1305 poly(poly_key);
-    Poly1305PadAndTrail(poly, aad, Span<const UCHAR>(pt.Data(), len));
+    // polyKey is already computed by the caller; use it directly
+    Poly1305 poly(polyKey);
+    ChaCha20Poly1305::Poly1305PadAndTrail(poly, aad, Span<const UCHAR>(pt.Data(), len));
 
-    UCHAR mac_tag[POLY1305_TAGLEN];
-    poly.Finish(mac_tag);
+    UCHAR macTag[POLY1305_TAGLEN];
+    poly.Finish(macTag);
 
     // Constant-time comparison to prevent timing oracle
     UINT8 diff = 0;
     for (UINT32 i = 0; i < POLY1305_TAGLEN; i++)
-        diff |= mac_tag[i] ^ pt[len + i];
+        diff |= macTag[i] ^ pt[len + i];
 
     if (diff != 0)
     {
         LOG_ERROR("ChaCha20Poly1305::Poly1305Decode: Authentication tag mismatch");
+        Memory::Zero(macTag, sizeof(macTag));
         return Result<INT32, Error>::Err(Error::ChaCha20_DecodeFailed);
     }
 
     // Only decrypt after authentication succeeds
     this->EncryptBytes(Span<const UINT8>(pt.Data(), len), Span<UINT8>(out.Data(), len));
 
+    Memory::Zero(macTag, sizeof(macTag));
     return Result<INT32, Error>::Ok((INT32)len);
 }
 
-VOID ChaCha20Poly1305::Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> poly1305_key)
+VOID ChaCha20Poly1305::Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> polyKey)
 {
     UCHAR key[32];
     UCHAR nonce[12];
     this->Key(key);
     this->Nonce(nonce);
-    (void)Poly1305::GenerateKey(key, nonce, poly1305_key, 0);
+    // Nonce is always 12 bytes, so GenerateKey cannot fail
+    (void)Poly1305::GenerateKey(key, nonce, polyKey, 0);
+    Memory::Zero(key, sizeof(key));
+    Memory::Zero(nonce, sizeof(nonce));
 }
 
 ChaCha20Poly1305::ChaCha20Poly1305()

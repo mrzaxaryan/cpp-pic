@@ -3,7 +3,7 @@
  * @brief ChaCha20-Poly1305 AEAD Cipher Implementation
  *
  * @details Position-independent implementation of the ChaCha20 stream cipher
- * and Poly1305 message authentication code, as specified in RFC 7539.
+ * and Poly1305 message authentication code, as specified in RFC 8439.
  *
  * ChaCha20-Poly1305 is an Authenticated Encryption with Associated Data (AEAD)
  * algorithm that combines:
@@ -17,6 +17,15 @@
  * - PIC-safe: No .rdata dependencies
  *
  * @note Original ChaCha20 implementation by D. J. Bernstein, public domain.
+ *
+ * @see RFC 8439 — ChaCha20 and Poly1305 for IETF Protocols
+ *      https://datatracker.ietf.org/doc/html/rfc8439
+ * @see RFC 8439 Section 2.3 — The ChaCha20 Block Function
+ *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.3
+ * @see RFC 8439 Section 2.5 — The Poly1305 Algorithm
+ *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.5
+ * @see RFC 8439 Section 2.8 — AEAD Construction
+ *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
  *
  * @ingroup crypt
  *
@@ -103,6 +112,12 @@ public:
     Poly1305(const Poly1305 &) = delete;
     Poly1305 &operator=(const Poly1305 &) = delete;
 
+    // Stack-only
+    VOID *operator new(USIZE) = delete;
+    VOID operator delete(VOID *) = delete;
+    VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+    VOID operator delete(VOID *, PVOID) noexcept {}
+
     /**
      * @brief Updates MAC computation with additional data
      * @param data Span of input data bytes
@@ -140,7 +155,7 @@ public:
      * @details Derives the Poly1305 key by encrypting zeros with ChaCha20
      * using block counter 0, as specified in RFC 7539.
      */
-    [[nodiscard]] static Result<void, Error> GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> poly_key, UINT32 counter);
+    [[nodiscard]] static Result<void, Error> GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key256, Span<const UCHAR> nonce, Span<UCHAR, POLY1305_KEYLEN> polyKey, UINT32 counter);
 };
 
 /**
@@ -178,6 +193,17 @@ private:
     UINT8 ks[CHACHA_BLOCKLEN];     /**< @brief Keystream buffer for partial block handling */
     UINT8 unused;                  /**< @brief Unused bytes remaining in keystream buffer */
 
+    /**
+     * @brief Feeds AAD and ciphertext into Poly1305 with RFC 8439 padding and length trailer
+     * @param poly Poly1305 context to update
+     * @param aad Additional authenticated data
+     * @param ciphertext Ciphertext data
+     *
+     * @see RFC 8439 Section 2.8 — AEAD Construction
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
+     */
+    static NOINLINE VOID Poly1305PadAndTrail(Poly1305 &poly, Span<const UCHAR> aad, Span<const UCHAR> ciphertext);
+
 public:
     /**
      * @brief Default constructor - initializes state
@@ -193,17 +219,25 @@ public:
     ChaCha20Poly1305(const ChaCha20Poly1305 &) = delete;
     ChaCha20Poly1305 &operator=(const ChaCha20Poly1305 &) = delete;
 
+    // Stack-only
+    VOID *operator new(USIZE) = delete;
+    VOID operator delete(VOID *) = delete;
+    VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+    VOID operator delete(VOID *, PVOID) noexcept {}
+
     // Movable: transfers ownership and zeroes source
     ChaCha20Poly1305(ChaCha20Poly1305 &&other) noexcept;
     ChaCha20Poly1305 &operator=(ChaCha20Poly1305 &&other) noexcept;
 
     /**
      * @brief Sets up the encryption key
-     * @param k Pointer to key bytes
-     * @param kbits Key size in bits (128 or 256)
+     * @param key Span of key bytes (16 or 32 bytes)
      *
      * @details Initializes the ChaCha20 state with the provided key.
      * For 128-bit keys, the key is duplicated to fill 256 bits.
+     *
+     * @see RFC 8439 Section 2.3 — The ChaCha20 Block Function
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.3
      */
     VOID KeySetup(Span<const UINT8> key);
 
@@ -221,19 +255,25 @@ public:
 
     /**
      * @brief Sets up IV/nonce (64-bit nonce variant)
-     * @param iv 8-byte nonce
-     * @param counter 8-byte counter (little-endian)
+     * @param iv 8-byte nonce (nullable — if null, nonce is left unchanged)
+     * @param counter 8-byte counter (little-endian, nullable — if null, counter is set to 0)
      *
      * @details Original ChaCha20 IV setup with 64-bit nonce and 64-bit counter.
+     *
+     * @see RFC 8439 Section 2.3 — The ChaCha20 Block Function
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.3
      */
     VOID IVSetup(const UINT8 *iv, const UINT8 *counter);
 
     /**
      * @brief Sets up IV/nonce for TLS 1.3 (96-bit nonce)
-     * @param iv 12-byte nonce
-     * @param counter 4-byte counter (little-endian)
+     * @param iv 12-byte nonce (nullable — if null, nonce is left unchanged)
+     * @param counter 4-byte counter (little-endian, nullable — if null, counter is set to 0)
      *
-     * @details RFC 7539 compliant nonce setup with 96-bit nonce and 32-bit counter.
+     * @details RFC 8439 compliant nonce setup with 96-bit nonce and 32-bit counter.
+     *
+     * @see RFC 8439 Section 2.3 — The ChaCha20 Block Function
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.3
      */
     VOID IVSetup96BitNonce(const UINT8 *iv, const UINT8 *counter);
 
@@ -249,13 +289,15 @@ public:
 
     /**
      * @brief Encrypts/decrypts data using ChaCha20
-     * @param m Input data (plaintext or ciphertext)
-     * @param c Output data (ciphertext or plaintext)
-     * @param bytes Number of bytes to process
+     * @param input Input data (plaintext or ciphertext)
+     * @param output Output data (ciphertext or plaintext)
      *
      * @details XORs input with keystream. Same function for encryption and decryption.
+     *
+     * @see RFC 8439 Section 2.4 — The ChaCha20 Encryption Algorithm
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.4
      */
-    VOID EncryptBytes(Span<const UINT8> m_span, Span<UINT8> c_span);
+    VOID EncryptBytes(Span<const UINT8> input, Span<UINT8> output);
 
     /**
      * @brief Generates raw keystream block
@@ -265,41 +307,45 @@ public:
 
     /**
      * @brief Generates Poly1305 key from ChaCha20 block 0
-     * @param poly1305_key Output buffer for 32-byte Poly1305 key
+     * @param polyKey Output buffer for 32-byte Poly1305 key
      *
-     * @details Per RFC 7539, the Poly1305 key is derived by encrypting
+     * @details Per RFC 8439 Section 2.6, the Poly1305 key is derived by encrypting
      * a zero block with ChaCha20 using counter = 0.
+     *
+     * @see RFC 8439 Section 2.6 — Generating the Poly1305 Key Using ChaCha20
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.6
      */
-    VOID Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> poly1305_key);
+    VOID Poly1305Key(Span<UCHAR, POLY1305_KEYLEN> polyKey);
 
     /**
      * @brief Performs AEAD encryption with Poly1305 authentication
      * @param pt Plaintext to encrypt
-     * @param len Plaintext length in bytes
      * @param aad Additional authenticated data
-     * @param aad_len AAD length in bytes
-     * @param poly_key 32-byte Poly1305 key
+     * @param polyKey 32-byte Poly1305 key
      * @param out Output: ciphertext followed by 16-byte tag
-     * @return Ok on success
      *
      * @details Encrypts plaintext and computes authentication tag over AAD and ciphertext.
+     *
+     * @see RFC 8439 Section 2.8 — AEAD Construction
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
      */
-    [[nodiscard]] Result<void, Error> Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out);
+    VOID Poly1305Aead(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&polyKey)[POLY1305_KEYLEN], Span<UCHAR> out);
 
     /**
      * @brief Performs AEAD decryption with Poly1305 verification
      * @param pt Ciphertext with appended tag
-     * @param len Ciphertext length (including 16-byte tag)
      * @param aad Additional authenticated data
-     * @param aad_len AAD length in bytes
-     * @param poly_key 32-byte Poly1305 key
+     * @param polyKey 32-byte Poly1305 key
      * @param out Output buffer for plaintext
-     * @return 0 on success, non-zero if authentication fails
+     * @return Ok(decryptedLength) on success, Err if authentication fails
      *
      * @details Verifies authentication tag and decrypts if valid.
      * @warning Returns error if tag verification fails - do not use output in this case.
+     *
+     * @see RFC 8439 Section 2.8 — AEAD Construction
+     *      https://datatracker.ietf.org/doc/html/rfc8439#section-2.8
      */
-    [[nodiscard]] Result<INT32, Error> Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&poly_key)[POLY1305_KEYLEN], Span<UCHAR> out);
+    [[nodiscard]] Result<INT32, Error> Poly1305Decode(Span<UCHAR> pt, Span<const UCHAR> aad, const UCHAR (&polyKey)[POLY1305_KEYLEN], Span<UCHAR> out);
 };
 
 /** @} */ // end of chacha20 group

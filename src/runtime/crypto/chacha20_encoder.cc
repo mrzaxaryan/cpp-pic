@@ -48,16 +48,17 @@ VOID ChaCha20Encoder::Encode(TlsBuffer &out, Span<const CHAR> packet, Span<const
 	INT32 counter = 1;
 	LOG_DEBUG("Encoding packet with Chacha20 encoder, packet size: %d bytes", (INT32)packet.Size());
 	out.AppendSize((INT32)packet.Size() + POLY1305_TAGLEN);
-	UCHAR poly1305_key[POLY1305_KEYLEN];
+	UCHAR polyKey[POLY1305_KEYLEN];
 	this->localCipher.IVUpdate(this->localNonce, Span<const UINT8, 8>(sequence), (UINT8 *)&counter);
 	LOG_DEBUG("Chacha20 encoder updated IV with sequence: %p, counter: %d", sequence, counter);
-	this->localCipher.Poly1305Key(poly1305_key);
-	LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
-	(void)this->localCipher.Poly1305Aead(
+	this->localCipher.Poly1305Key(polyKey);
+	LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", polyKey);
+	this->localCipher.Poly1305Aead(
 		Span<UCHAR>((UINT8 *)packet.Data(), packet.Size()),
 		Span<const UCHAR>((UINT8 *)aad.Data(), aadSize),
-		poly1305_key,
+		polyKey,
 		Span<UCHAR>((UINT8 *)out.GetBuffer() + out.GetSize() - POLY1305_TAGLEN - (INT32)packet.Size(), (INT32)packet.Size() + POLY1305_TAGLEN));
+	Memory::Zero(polyKey, sizeof(polyKey));
 }
 
 // Decode data using ChaCha20 and Poly1305
@@ -76,23 +77,24 @@ Result<void, Error> ChaCha20Encoder::Decode(TlsBuffer &in, TlsBuffer &out, Span<
 	LOG_DEBUG("Chacha20 encoder updated IV with sequence: %p, counter: %d", sequence, counter);
 
 	// Generate Poly1305 key from current cipher state
-	UCHAR poly1305_key[POLY1305_KEYLEN];
-	this->remoteCipher.Poly1305Key(poly1305_key);
-	LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", poly1305_key);
+	UCHAR polyKey[POLY1305_KEYLEN];
+	this->remoteCipher.Poly1305Key(polyKey);
+	LOG_DEBUG("Chacha20 encoder computed Poly1305 key: %p", polyKey);
 
-	// Decode and verify (poly_key is already computed, don't regenerate inside Poly1305Decode)
+	// Decode and verify (polyKey is already computed, don't regenerate inside Poly1305Decode)
 	auto decodeResult = this->remoteCipher.Poly1305Decode(
 		Span<UCHAR>((UINT8 *)in.GetBuffer(), in.GetSize()),
 		Span<const UCHAR>((UINT8 *)aad.Data(), aadSize),
-		poly1305_key,
+		polyKey,
 		Span<UCHAR>((UINT8 *)out.GetBuffer(), in.GetSize()));
+	Memory::Zero(polyKey, sizeof(polyKey));
 	LOG_DEBUG("Chacha20 decode returned");
 	if (!decodeResult)
 	{
 		LOG_ERROR("Chacha20 Decode failed");
 		return Result<void, Error>::Err(Error::ChaCha20_DecodeFailed);
 	}
-	INT32 size = decodeResult.Value();
+	auto& size = decodeResult.Value();
 	LOG_DEBUG("Chacha20 Decode succeeded, output size: %d bytes", size);
 	out.SetSize(size);
 	return Result<void, Error>::Ok();

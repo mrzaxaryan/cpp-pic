@@ -1,5 +1,3 @@
-#pragma once
-
 /**
  * @file chacha20_encoder.h
  * @brief TLS 1.3 ChaCha20-Poly1305 Record Layer Encoder
@@ -18,6 +16,12 @@
  * The per-record nonce is constructed by XORing the IV with the 64-bit
  * record sequence number, left-padded with zeros to 12 bytes.
  *
+ * @see RFC 8446 Section 5.2 — Record Payload Protection
+ *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.2
+ * @see RFC 8446 Section 5.3 — Per-Record Nonce
+ *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.3
+ * @see RFC 8446 Section 7.3 — Traffic Key Calculation
+ *      https://datatracker.ietf.org/doc/html/rfc8446#section-7.3
  * @see chacha20.h for underlying cipher implementation
  *
  * @ingroup crypt
@@ -26,6 +30,8 @@
  * @ingroup crypt
  * @{
  */
+
+#pragma once
 
 #include "core/core.h"
 #include "runtime/crypto/chacha20.h"
@@ -124,6 +130,9 @@ public:
 	 * @details Keys and IVs are derived from the TLS 1.3 key schedule.
 	 * For client: local = client_write, remote = server_write
 	 * For server: local = server_write, remote = client_write
+	 *
+	 * @see RFC 8446 Section 7.3 — Traffic Key Calculation
+	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-7.3
 	 */
 	[[nodiscard]] Result<void, Error> Initialize(Span<const UINT8, POLY1305_KEYLEN> localKey, Span<const UINT8, POLY1305_KEYLEN> remoteKey, const UCHAR (&localIv)[TLS_CHACHA20_IV_LENGTH], const UCHAR (&remoteIv)[TLS_CHACHA20_IV_LENGTH]);
 
@@ -136,6 +145,9 @@ public:
 	 * @details Encrypts packet with ChaCha20, computes Poly1305 tag over AAD
 	 * and ciphertext, and appends the 16-byte tag to output.
 	 * Automatically increments the local sequence number.
+	 *
+	 * @see RFC 8446 Section 5.2 — Record Payload Protection
+	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.2
 	 */
 	VOID Encode(TlsBuffer &out, Span<const CHAR> packet, Span<const UCHAR> aad);
 
@@ -151,6 +163,9 @@ public:
 	 *
 	 * @warning Returns Err if authentication fails - output buffer contents
 	 * are undefined and MUST NOT be used.
+	 *
+	 * @see RFC 8446 Section 5.2 — Record Payload Protection
+	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.2
 	 */
 	[[nodiscard]] Result<void, Error> Decode(TlsBuffer &in, TlsBuffer &out, Span<const UCHAR> aad);
 

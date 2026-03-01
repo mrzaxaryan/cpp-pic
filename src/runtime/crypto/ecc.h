@@ -1,5 +1,3 @@
-#pragma once
-
 /**
  * @file ecc.h
  * @brief Elliptic Curve Cryptography (ECC) Implementation
@@ -46,6 +44,8 @@
  * @ingroup crypt
  * @{
  */
+
+#pragma once
 
 #include "core/core.h"
 
@@ -118,6 +118,9 @@ private:
 	// =========================================================================
 	// Variable Length Integer (VLI) Operations
 	// =========================================================================
+
+	/** @brief Tests if VLI is even (lowest bit is 0) */
+	static FORCE_INLINE BOOL IsVliEven(const UINT64 (&vli)[MAX_NUM_ECC_DIGITS]) { return !(vli[0] & 1); }
 
 	/** @brief Sets VLI to zero */
 	VOID VliClear(Span<UINT64> vli);

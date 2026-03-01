@@ -1,7 +1,23 @@
 {
     "version": 4,
     "enableConfigurationSquiggles": true,
-    "env": {},
+    "env": {
+        "commonInclude": [
+            "${workspaceFolder}",
+            "${workspaceFolder}/core",
+            "${workspaceFolder}/core/algorithms",
+            "${workspaceFolder}/core/encoding",
+            "${workspaceFolder}/core/string",
+            "${workspaceFolder}/core/types",
+            "${workspaceFolder}/core/types/embedded",
+            "${workspaceFolder}/platform",
+            "${workspaceFolder}/runtime",
+            "${workspaceFolder}/runtime/crypto",
+            "${workspaceFolder}/runtime/network",
+            "${workspaceFolder}/runtime/network/tls",
+            "${workspaceFolder}/tests"
+        ]
+    },
     "configurations": [
         {
             "name": "windows-i386",
@@ -9,6 +25,7 @@
             "intelliSenseMode": "windows-clang-x86",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_I386",
                 "PLATFORM_WINDOWS",
@@ -16,33 +33,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/windows",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/windows"
+            ]
         },
         {
             "name": "windows-x86_64",
@@ -50,6 +43,7 @@
             "intelliSenseMode": "windows-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_WINDOWS",
@@ -57,33 +51,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/windows",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/windows"
+            ]
         },
         {
             "name": "windows-aarch64",
@@ -91,6 +61,7 @@
             "intelliSenseMode": "windows-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_WINDOWS",
@@ -98,33 +69,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/windows",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/windows"
+            ]
         },
         {
             "name": "linux-i386",
@@ -132,6 +79,7 @@
             "intelliSenseMode": "linux-clang-x86",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_I386",
                 "PLATFORM_LINUX",
@@ -139,33 +87,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/linux",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/linux"
+            ]
         },
         {
             "name": "linux-x86_64",
@@ -173,6 +97,7 @@
             "intelliSenseMode": "linux-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_LINUX",
@@ -180,33 +105,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/linux",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/linux"
+            ]
         },
         {
             "name": "linux-armv7a",
@@ -214,6 +115,7 @@
             "intelliSenseMode": "linux-clang-arm",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_ARMV7A",
                 "PLATFORM_LINUX",
@@ -221,33 +123,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/linux",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/linux"
+            ]
         },
         {
             "name": "linux-aarch64",
@@ -255,6 +133,7 @@
             "intelliSenseMode": "linux-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_LINUX",
@@ -262,33 +141,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/linux",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/linux"
+            ]
         },
         {
             "name": "macos-x86_64",
@@ -296,6 +151,7 @@
             "intelliSenseMode": "macos-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_MACOS",
@@ -303,33 +159,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/macos",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/macos"
+            ]
         },
         {
             "name": "macos-aarch64",
@@ -337,6 +169,7 @@
             "intelliSenseMode": "macos-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_MACOS",
@@ -344,33 +177,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/macos",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/macos"
+            ]
         },
         {
             "name": "uefi-x86_64",
@@ -378,6 +187,7 @@
             "intelliSenseMode": "windows-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_UEFI",
@@ -385,33 +195,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/uefi",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/uefi"
+            ]
         },
         {
             "name": "uefi-aarch64",
@@ -419,6 +205,7 @@
             "intelliSenseMode": "windows-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
+            "configurationProvider": "ms-vscode.cmake-tools",
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_UEFI",
@@ -426,33 +213,9 @@
                 "ENABLE_LOGGING"
             ],
             "includePath": [
-                "${workspaceFolder}",
-                "${workspaceFolder}/include",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/include/core",
-                "${workspaceFolder}/include/algorithms",
-                "${workspaceFolder}/include/core/encoding",
-                "${workspaceFolder}/include/core/string",
-                "${workspaceFolder}/include/core/types",
-                "${workspaceFolder}/include/core/types/embedded",
-                "${workspaceFolder}/include/core/types/network",
-                "${workspaceFolder}/include/core/types/numeric",
-                "${workspaceFolder}/include/platform",
-                "${workspaceFolder}/include/platform/uefi",
-                "${workspaceFolder}/include/io",
-                "${workspaceFolder}/include/memory",
-                "${workspaceFolder}/include/network",
-                "${workspaceFolder}/include/network/tls",
-                "${workspaceFolder}/include/system",
-                "${workspaceFolder}/include/crypt"
-            ],
-            "browse": {
-                "path": [
-                    "${workspaceFolder}/src",
-                    "${workspaceFolder}/include",
-                    "${workspaceFolder}/tests"
-                ]
-            }
+                "${commonInclude}",
+                "${workspaceFolder}/platform/uefi"
+            ]
         }
     ]
 }

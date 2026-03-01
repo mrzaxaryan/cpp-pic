@@ -211,7 +211,7 @@ Write(writable.Subspan(4, 16));   // slicing
 
 Use `Span<T>` for writable buffers and `Span<const T>` for read-only views. `Span<T>` implicitly converts to `Span<const T>`.
 
-**`Result<T, Error>`** — **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. This ensures a uniform error-handling interface across the codebase:
+**`[[nodiscard]] Result<T, Error>`** — **All fallible functions must return `Result<T, Error>` and also `[[nodiscard]]`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. This ensures a uniform error-handling interface across the codebase:
 
 ```cpp
 [[nodiscard]] Result<IPAddress, Error> Resolve(PCCHAR host);

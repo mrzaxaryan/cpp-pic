@@ -343,17 +343,26 @@ Write(Span(ptr, len));            // explicit pointer + size
 Write(writable.Subspan(4, 16));   // slicing
 ```
 
-Use `Span<T>` for writable buffers and `Span<const T>` for read-only views. `Span<T>` implicitly converts to `Span<const T>`. Core primitives that Span itself is built on (e.g., `Memory::Copy`, `Memory::Set`, `Memory::Compare`) are exempt — they take raw `(PVOID, PCVOID, USIZE)` by design.
+Use `Span<T>` for writable buffers and `Span<const T>` for read-only views. `Span<T>` implicitly converts to `Span<const T>`. The following are exempt from this rule:
+- Core primitives that Span itself is built on (e.g., `Memory::Copy`, `Memory::Set`, `Memory::Compare`) — they take raw `(PVOID, PCVOID, USIZE)` by design.
+- Null-terminated string functions (e.g., `StringUtils::Length`, `StringUtils::Compare`, `StringUtils::Equals`) — they compute length from the null terminator, so they are string parameters with implicit length, not buffer parameters. These typically have `Span` overloads as well for callers that already know the length.
 
-**Do not cache `Span::Size()` into a local variable** — `Size()` is `constexpr FORCE_INLINE` and compiles to a direct member access, so there is no cost to calling it repeatedly. Caching it into a local adds a redundant variable with no benefit:
+**Do not cache `Span::Size()` into a read-only local variable** — `Size()` is `constexpr FORCE_INLINE` and compiles to a direct member access, so there is no cost to calling it repeatedly. Caching it into a local just for loop bounds or repeated comparisons adds a redundant variable with no benefit. Mutable counters initialized from `Size()` and derived computations from multiple `Size()` calls are fine:
 
 ```cpp
-// Bad — unnecessary local variable:
+// Bad — unnecessary read-only local for loop bound:
 INT32 maxLen = (INT32)data.Size();
 while (offset < maxLen) { ... }
 
 // Good — call Size() directly:
 while (offset < (INT32)data.Size()) { ... }
+
+// Good — mutable counter that gets modified:
+USIZE len = str.Size();
+while (len > 0 && IsSpace(str[len - 1])) { len--; }
+
+// Good — derived computation from multiple Size() calls:
+USIZE offset = str.Size() - suffix.Size();
 ```
 
 **`[[nodiscard]] Result<T, Error>`** — **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). Do not use raw `BOOL`, `NTSTATUS`, or `SSIZE` as return types for success/failure. The `Result` class itself is declared `class [[nodiscard]] Result`, so all Result-returning functions automatically warn on discard. Adding `[[nodiscard]]` on the function declaration as well is encouraged for explicitness but not strictly required. This ensures a uniform error-handling interface across the codebase:
@@ -370,22 +379,23 @@ IPAddress &ip = result.Value();  // borrow; Result still owns it
 [[nodiscard]] Result<void, Error> Open();
 ```
 
-**Do not copy `Result::Value()`** into local variables — `Value()` returns a reference to the value owned by `Result`, so copying it creates an unnecessary duplicate. Pass `Value()` directly to functions, or bind to `auto&` when you need to call methods on it (to avoid chaining `.Value().Method()`):
+**Do not copy `Result::Value()`** into local variables — `Value()` returns a reference to the value owned by `Result`, so copying it creates an unnecessary duplicate. Pass `Value()` directly to functions, or bind to `auto&` when you need to call multiple methods on it:
 
 ```cpp
 // Good — pass Value() directly to functions:
 auto createResult = Socket::Create(result.Value(), 443);
 
-// Good — local reference for method calls:
+// Good — single method call chaining is fine:
+result.Value().Method();
+
+// Good — local reference when calling multiple methods (avoids repeating .Value()):
 auto& x = result.Value();
-x.Method();
+x.Method1();
+x.Method2();
 
 // Bad — unnecessary copy just to pass as argument:
 IPAddress ip = result.Value();
 auto createResult = Socket::Create(ip, 443);
-
-// Bad — chaining Value() with method calls:
-result.Value().Method();
 ```
 
 Infallible functions (getters, pure computations, operators) return their value directly — they do not use `Result`.
@@ -482,7 +492,7 @@ LOG_ERROR("Operation failed (error: %e)", result.Error());
 
 ### Error Rules
 
-- `[[nodiscard]]` on Result-returning functions is **encouraged for explicitness** (the `Result` class itself already carries `[[nodiscard]]`, so all returns are protected automatically). It **may also** be used on factory methods and functions where discarding the return value is always a bug.
+- `[[nodiscard]]` — see [Parameters & Returns](#parameters--returns) for the full policy. Additionally, `[[nodiscard]]` **may** be used on factory methods and non-Result functions where discarding the return value is always a bug.
 - **Never use `Result<bool, Error>`** — use `Result<void, Error>` instead. `Result` itself is already bool-testable via `operator BOOL`, so wrapping a `bool` value creates confusing double-boolean checks (`!r || !r.Value()`). With `Result<void, Error>`, truthy means success and falsy means failure — clean and unambiguous.
 - OS errors: use factory methods — `Error::Windows()`, `Error::Posix()`, `Error::Uefi()`
 - Runtime errors: pass bare — `Result::Err(Error::Socket_WriteFailed_Send)`

@@ -193,35 +193,35 @@ private:
     INT32 IsZero(EccPoint &point);
 
     /** @brief Point doubling in Jacobian coordinates */
-    VOID DoubleJacobian(UINT64 *X1, UINT64 *Y1, UINT64 *Z1);
+    VOID DoubleJacobian(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&Z1)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Converts from Jacobian to affine coordinates */
-    VOID ApplyZ(UINT64 *X1, UINT64 *Y1, UINT64 *Z);
+    VOID ApplyZ(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&Z)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Initial doubling for co-Z arithmetic */
-    VOID XYcZInitialDouble(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2, UINT64 *initialZ);
+    VOID XYcZInitialDouble(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&X2)[MAX_NUM_ECC_DIGITS], UINT64 (&Y2)[MAX_NUM_ECC_DIGITS], UINT64 *initialZ);
 
     /** @brief Co-Z point addition */
-    VOID XYcZAdd(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2);
+    VOID XYcZAdd(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&X2)[MAX_NUM_ECC_DIGITS], UINT64 (&Y2)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Co-Z conjugate addition */
-    VOID XYcZAddC(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2);
+    VOID XYcZAddC(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&X2)[MAX_NUM_ECC_DIGITS], UINT64 (&Y2)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Scalar multiplication: result = pScalar * point */
-    VOID Mult(EccPoint &result, EccPoint &point, UINT64 *pScalar, UINT64 *pInitialZ);
+    VOID Mult(EccPoint &result, EccPoint &point, UINT64 (&pScalar)[MAX_NUM_ECC_DIGITS], UINT64 *pInitialZ);
 
     // =========================================================================
     // Serialization
     // =========================================================================
 
     /** @brief Converts big-endian bytes to native VLI format */
-    VOID Bytes2Native(UINT64 *pNative, const UINT8 *pBytes);
+    VOID Bytes2Native(UINT64 (&pNative)[MAX_NUM_ECC_DIGITS], const UINT8 *pBytes);
 
     /** @brief Converts native VLI format to big-endian bytes */
-    VOID Native2Bytes(UINT8 *pBytes, const UINT64 *pNative);
+    VOID Native2Bytes(UINT8 *pBytes, const UINT64 (&pNative)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Computes modular square root for point decompression */
-    VOID ModSqrt(UINT64 *pA);
+    VOID ModSqrt(UINT64 (&pA)[MAX_NUM_ECC_DIGITS]);
 
     /** @brief Decompresses point from compressed format (02/03 || x) */
     VOID PointDecompress(EccPoint &point, const UINT8 *pCompressed);

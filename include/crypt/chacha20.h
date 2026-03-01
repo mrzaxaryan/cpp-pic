@@ -259,10 +259,9 @@ public:
 
     /**
      * @brief Generates raw keystream block
-     * @param c Output buffer for keystream
-     * @param len Number of bytes to generate (up to 64)
+     * @param output Output buffer for keystream (up to 64 bytes)
      */
-    VOID Block(PUCHAR c, UINT32 len);
+    VOID Block(Span<UCHAR> output);
 
     /**
      * @brief Generates Poly1305 key from ChaCha20 block 0

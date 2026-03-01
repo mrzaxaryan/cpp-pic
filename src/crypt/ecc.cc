@@ -528,7 +528,7 @@ From http://eprint.iacr.org/2011/338.pdf
 */
 
 /* Double in place */
-VOID Ecc::DoubleJacobian(UINT64 *X1, UINT64 *Y1, UINT64 *Z1)
+VOID Ecc::DoubleJacobian(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&Z1)[MAX_NUM_ECC_DIGITS])
 {
     /* t1 = X, t2 = Y, t3 = Z */
     UINT64 t4[MAX_NUM_ECC_DIGITS];
@@ -576,7 +576,7 @@ VOID Ecc::DoubleJacobian(UINT64 *X1, UINT64 *Y1, UINT64 *Z1)
 }
 
 /* Modify (x1, y1) => (x1 * z^2, y1 * z^3) */
-VOID Ecc::ApplyZ(UINT64 *X1, UINT64 *Y1, UINT64 *Z)
+VOID Ecc::ApplyZ(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&Z)[MAX_NUM_ECC_DIGITS])
 {
     UINT64 t1[MAX_NUM_ECC_DIGITS];
 
@@ -587,7 +587,7 @@ VOID Ecc::ApplyZ(UINT64 *X1, UINT64 *Y1, UINT64 *Z)
 }
 
 /* P = (x1, y1) => 2P, (x2, y2) => P' */
-VOID Ecc::XYcZInitialDouble(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2, UINT64 *p_initialZ)
+VOID Ecc::XYcZInitialDouble(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&X2)[MAX_NUM_ECC_DIGITS], UINT64 (&Y2)[MAX_NUM_ECC_DIGITS], UINT64 *p_initialZ)
 {
     UINT64 z[MAX_NUM_ECC_DIGITS];
 
@@ -612,7 +612,7 @@ VOID Ecc::XYcZInitialDouble(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2, UINT
    Output P' = (x1', y1', Z3), P + Q = (x3, y3, Z3)
    or P => P', Q => P + Q
 */
-VOID Ecc::XYcZAdd(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2)
+VOID Ecc::XYcZAdd(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&X2)[MAX_NUM_ECC_DIGITS], UINT64 (&Y2)[MAX_NUM_ECC_DIGITS])
 {
     /* t1 = X1, t2 = Y1, t3 = X2, t4 = Y2 */
     UINT64 t5[MAX_NUM_ECC_DIGITS];
@@ -638,7 +638,7 @@ VOID Ecc::XYcZAdd(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2)
    Output P + Q = (x3, y3, Z3), P - Q = (x3', y3', Z3)
    or P => P - Q, Q => P + Q
 */
-VOID Ecc::XYcZAddC(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2)
+VOID Ecc::XYcZAddC(UINT64 (&X1)[MAX_NUM_ECC_DIGITS], UINT64 (&Y1)[MAX_NUM_ECC_DIGITS], UINT64 (&X2)[MAX_NUM_ECC_DIGITS], UINT64 (&Y2)[MAX_NUM_ECC_DIGITS])
 {
     /* t1 = X1, t2 = Y1, t3 = X2, t4 = Y2 */
     UINT64 t5[MAX_NUM_ECC_DIGITS];
@@ -671,7 +671,7 @@ VOID Ecc::XYcZAddC(UINT64 *X1, UINT64 *Y1, UINT64 *X2, UINT64 *Y2)
     this->VliSet(X1, t7);
 }
 
-VOID Ecc::Mult(EccPoint &result, EccPoint &point, UINT64 *pScalar, UINT64 *pInitialZ)
+VOID Ecc::Mult(EccPoint &result, EccPoint &point, UINT64 (&pScalar)[MAX_NUM_ECC_DIGITS], UINT64 *pInitialZ)
 {
     /* R0 and R1 */
     UINT64 Rx[2][MAX_NUM_ECC_DIGITS];
@@ -712,7 +712,7 @@ VOID Ecc::Mult(EccPoint &result, EccPoint &point, UINT64 *pScalar, UINT64 *pInit
     this->VliSet(result.y, Ry[0]);
 }
 
-VOID Ecc::Bytes2Native(UINT64 *pNative, const UINT8 *pBytes)
+VOID Ecc::Bytes2Native(UINT64 (&pNative)[MAX_NUM_ECC_DIGITS], const UINT8 *pBytes)
 {
     UINT32 i;
     for (i = 0; i < this->numEccDigits; ++i)
@@ -723,7 +723,7 @@ VOID Ecc::Bytes2Native(UINT64 *pNative, const UINT8 *pBytes)
     }
 }
 
-VOID Ecc::Native2Bytes(UINT8 *pBytes, const UINT64 *pNative)
+VOID Ecc::Native2Bytes(UINT8 *pBytes, const UINT64 (&pNative)[MAX_NUM_ECC_DIGITS])
 {
     UINT32 i;
     for (i = 0; i < this->numEccDigits; ++i)
@@ -741,7 +741,7 @@ VOID Ecc::Native2Bytes(UINT8 *pBytes, const UINT64 *pNative)
 }
 
 /* Compute a = sqrt(a) (mod curveP). */
-VOID Ecc::ModSqrt(UINT64 *pA)
+VOID Ecc::ModSqrt(UINT64 (&pA)[MAX_NUM_ECC_DIGITS])
 {
     UINT32 i;
     UINT64 p1[MAX_NUM_ECC_DIGITS] = {1};

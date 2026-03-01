@@ -189,7 +189,7 @@ Result<void, Error> Poly1305::GenerateKey(Span<const UCHAR, POLY1305_KEYLEN> key
         return Result<void, Error>::Err(Error::ChaCha20_GenerateKeyFailed);
     }
 
-    ctx.Block(poly_key.Data(), POLY1305_KEYLEN);
+    ctx.Block(poly_key);
     return Result<void, Error>::Ok();
 }
 
@@ -579,9 +579,11 @@ VOID ChaChaPoly1305::EncryptBytes(Span<const UINT8> m_span, Span<UINT8> c_span)
     }
 }
 
-VOID ChaChaPoly1305::Block(PUCHAR c, UINT32 len)
+VOID ChaChaPoly1305::Block(Span<UCHAR> output)
 {
     UINT32 i;
+    UINT32 len = (UINT32)output.Size();
+    PUCHAR c = output.Data();
 
     UINT32 state[16];
     for (i = 0; i < 16; i++)

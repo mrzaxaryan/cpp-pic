@@ -106,38 +106,38 @@ public:
 			ERROR_VALUE
 		};
 
-		Type type; ///< Type of stored value
+		Type Kind; ///< Type of stored value
 		union
 		{
-			INT32 i32;         ///< Signed 32-bit integer
-			UINT32 u32;        ///< Unsigned 32-bit integer
-			INT64 i64;         ///< Signed 64-bit integer
-			UINT64 u64;        ///< Unsigned 64-bit integer
-			DOUBLE dbl;        ///< Floating-point value
-			const CHAR *cstr;  ///< Narrow string pointer
-			const WCHAR *wstr; ///< Wide string pointer
-			PVOID ptr;         ///< Generic pointer
-			Error errValue;    ///< Single error value
+			INT32 I32;         ///< Signed 32-bit integer
+			UINT32 U32;        ///< Unsigned 32-bit integer
+			INT64 I64;         ///< Signed 64-bit integer
+			UINT64 U64;        ///< Unsigned 64-bit integer
+			DOUBLE Dbl;        ///< Floating-point value
+			const CHAR *Cstr;  ///< Narrow string pointer
+			const WCHAR *Wstr; ///< Wide string pointer
+			PVOID Ptr;         ///< Generic pointer
+			Error ErrValue;    ///< Single error value
 		};
 
 		/// @name Constructors
 		/// @{
-		Argument() : type(Type::INT32), i32(0) {}
-		Argument(INT32 v) : type(Type::INT32), i32(v) {}
-		Argument(UINT32 v) : type(Type::UINT32), u32(v) {}
-		Argument(DOUBLE v) : type(Type::DOUBLE), dbl(v) {}
-		Argument(const CHAR *v) : type(Type::CSTR), cstr(v) {}
-		Argument(CHAR *v) : type(Type::CSTR), cstr(v) {}
-		Argument(const WCHAR *v) : type(Type::WSTR), wstr(v) {}
-		Argument(WCHAR *v) : type(Type::WSTR), wstr(v) {}
-		Argument(PVOID v) : type(Type::PTR), ptr(v) {}
-		Argument(const void *v) : type(Type::PTR), ptr(const_cast<PVOID>(v)) {}
-		Argument(const Error &v) : type(Type::ERROR_VALUE), errValue(v) {}
-		Argument(INT64 v) : type(Type::INT64), i64(v) {}
-		Argument(UINT64 v) : type(Type::UINT64), u64(v) {}
+		Argument() : Kind(Type::INT32), I32(0) {}
+		Argument(INT32 v) : Kind(Type::INT32), I32(v) {}
+		Argument(UINT32 v) : Kind(Type::UINT32), U32(v) {}
+		Argument(DOUBLE v) : Kind(Type::DOUBLE), Dbl(v) {}
+		Argument(const CHAR *v) : Kind(Type::CSTR), Cstr(v) {}
+		Argument(CHAR *v) : Kind(Type::CSTR), Cstr(v) {}
+		Argument(const WCHAR *v) : Kind(Type::WSTR), Wstr(v) {}
+		Argument(WCHAR *v) : Kind(Type::WSTR), Wstr(v) {}
+		Argument(PVOID v) : Kind(Type::PTR), Ptr(v) {}
+		Argument(const void *v) : Kind(Type::PTR), Ptr(const_cast<PVOID>(v)) {}
+		Argument(const Error &v) : Kind(Type::ERROR_VALUE), ErrValue(v) {}
+		Argument(INT64 v) : Kind(Type::INT64), I64(v) {}
+		Argument(UINT64 v) : Kind(Type::UINT64), U64(v) {}
 #if defined(__LP64__) || defined(_LP64)
-		Argument(signed long v) : type(Type::INT64), i64(INT64(v)) {}
-		Argument(unsigned long v) : type(Type::UINT64), u64(UINT64(v)) {}
+		Argument(signed long v) : Kind(Type::INT64), I64(INT64(v)) {}
+		Argument(unsigned long v) : Kind(Type::UINT64), U64(UINT64(v)) {}
 #endif
 		/// @}
 	};
@@ -703,7 +703,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 				i++; // Skip 'X'
 				if (currentArg >= (INT32)args.Size())
 					continue;
-				UINT32 num = args[currentArg++].u32;
+				UINT32 num = args[currentArg++].U32;
 				// Format the number as uppercase hexadecimal.
 				j += StringFormatter::FormatUInt64AsHex(writer, context, (UINT64)num, fieldWidth, 1, zeroPad, addPrefix);
 
@@ -725,7 +725,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i++;
 					continue;
 				}
-				DOUBLE num = args[currentArg++].dbl;
+				DOUBLE num = args[currentArg++].Dbl;
 				j += StringFormatter::FormatDouble(writer, context, num, precision, fieldWidth, zeroPad);
 				i++; // Skip 'f'
 				continue;
@@ -737,7 +737,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i++;
 					continue;
 				}
-				INT32 num = args[currentArg++].i32;
+				INT32 num = args[currentArg++].I32;
 				j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 				i++; // Skip 'd'
 				continue;
@@ -749,7 +749,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i++;
 					continue;
 				}
-				UINT32 num = args[currentArg++].u32;
+				UINT32 num = args[currentArg++].U32;
 				j += StringFormatter::FormatUInt64(writer, context, UINT64(num), fieldWidth, zeroPad, leftAlign);
 				i++; // Skip 'u'
 				continue;
@@ -761,7 +761,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i++;
 					continue;
 				}
-				UINT32 num = args[currentArg++].u32;
+				UINT32 num = args[currentArg++].U32;
 				j += StringFormatter::FormatUInt64AsHex(writer, context, (UINT64)num, fieldWidth, 0, zeroPad, addPrefix);
 				i++; // Skip 'x'
 				continue;
@@ -771,7 +771,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 				i++; // Skip 'p'
 				if (currentArg >= (INT32)args.Size())
 					continue;
-				j += StringFormatter::FormatPointerAsHex(writer, context, args[currentArg++].ptr);
+				j += StringFormatter::FormatPointerAsHex(writer, context, args[currentArg++].Ptr);
 				continue;
 			}
 			else if (String::ToLowerCase<TChar>(format[i]) == (TChar)'c')
@@ -781,7 +781,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i++;
 					continue;
 				}
-				TChar ch = (TChar)args[currentArg++].i32;
+				TChar ch = (TChar)args[currentArg++].I32;
 				INT32 padding = fieldWidth > 1 ? fieldWidth - 1 : 0;
 
 				if (!leftAlign)
@@ -813,7 +813,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 				i++; // Skip 's'
 				if (currentArg >= (INT32)args.Size())
 					continue;
-				const CHAR *str = args[currentArg++].cstr;
+				const CHAR *str = args[currentArg++].Cstr;
 				if (str == nullptr)
 				{
 					if (!writer(context, (TChar)'?'))
@@ -865,7 +865,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i += 2; // Skip over "ws"
 					if (currentArg >= (INT32)args.Size())
 						continue;
-					j += FormatWideString<TChar>(writer, context, args[currentArg++].wstr, fieldWidth, leftAlign);
+					j += FormatWideString<TChar>(writer, context, args[currentArg++].Wstr, fieldWidth, leftAlign);
 					continue;
 				}
 				else
@@ -884,7 +884,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i += 2; // Skip over "ls"
 					if (currentArg >= (INT32)args.Size())
 						continue;
-					j += FormatWideString<TChar>(writer, context, args[currentArg++].wstr, fieldWidth, leftAlign);
+					j += FormatWideString<TChar>(writer, context, args[currentArg++].Wstr, fieldWidth, leftAlign);
 					continue;
 				}
 				// Handle other long variants (ld, lu, lld)
@@ -895,7 +895,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 						continue;
 					// Type-aware read: on LLP64 (Windows) long is 32-bit, stored as INT32
 					const Argument &arg = args[currentArg++];
-					INT64 num = (arg.type == Argument::Type::INT64) ? arg.i64 : (INT64)arg.i32;
+					INT64 num = (arg.Kind == Argument::Type::INT64) ? arg.I64 : (INT64)arg.I32;
 					j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 					continue;
 				}
@@ -906,7 +906,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 						continue;
 					// Type-aware read: on LLP64 (Windows) unsigned long is 32-bit, stored as UINT32
 					const Argument &arg = args[currentArg++];
-					UINT64 num = (arg.type == Argument::Type::UINT64) ? arg.u64 : (UINT64)arg.u32;
+					UINT64 num = (arg.Kind == Argument::Type::UINT64) ? arg.U64 : (UINT64)arg.U32;
 					j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 					continue;
 				}
@@ -915,7 +915,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i += 3; // Skip over "lld"
 					if (currentArg >= (INT32)args.Size())
 						continue;
-					INT64 num = args[currentArg++].i64;
+					INT64 num = args[currentArg++].I64;
 					j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 					continue;
 				}
@@ -924,7 +924,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i += 3; // Skip over "llu"
 					if (currentArg >= (INT32)args.Size())
 						continue;
-					UINT64 num = args[currentArg++].u64;
+					UINT64 num = args[currentArg++].U64;
 					j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 					continue;
 				}
@@ -934,7 +934,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					if (currentArg >= (INT32)args.Size())
 						continue;
 					const Argument &arg = args[currentArg++];
-					UINT64 num = (arg.type == Argument::Type::UINT64) ? arg.u64 : (UINT64)arg.u32;
+					UINT64 num = (arg.Kind == Argument::Type::UINT64) ? arg.U64 : (UINT64)arg.U32;
 					j += StringFormatter::FormatUInt64AsHex(writer, context, num, fieldWidth, 1, zeroPad, addPrefix);
 					continue;
 				}
@@ -944,7 +944,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					if (currentArg >= (INT32)args.Size())
 						continue;
 					const Argument &arg = args[currentArg++];
-					UINT64 num = (arg.type == Argument::Type::UINT64) ? arg.u64 : (UINT64)arg.u32;
+					UINT64 num = (arg.Kind == Argument::Type::UINT64) ? arg.U64 : (UINT64)arg.U32;
 					j += StringFormatter::FormatUInt64AsHex(writer, context, num, fieldWidth, 0, zeroPad, addPrefix);
 					continue;
 				}
@@ -953,7 +953,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i += 3; // Skip over "llX"
 					if (currentArg >= (INT32)args.Size())
 						continue;
-					UINT64 num = args[currentArg++].u64;
+					UINT64 num = args[currentArg++].U64;
 					j += StringFormatter::FormatUInt64AsHex(writer, context, num, fieldWidth, 1, zeroPad, addPrefix);
 					continue;
 				}
@@ -962,7 +962,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i += 3; // Skip over "llx"
 					if (currentArg >= (INT32)args.Size())
 						continue;
-					UINT64 num = args[currentArg++].u64;
+					UINT64 num = args[currentArg++].U64;
 					j += StringFormatter::FormatUInt64AsHex(writer, context, num, fieldWidth, 0, zeroPad, addPrefix);
 					continue;
 				}
@@ -984,7 +984,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 						continue;
 					// Type-aware read: on 32-bit platforms USIZE is stored as UINT32
 					const Argument &arg = args[currentArg++];
-					UINT64 num = (arg.type == Argument::Type::UINT64) ? arg.u64 : (UINT64)arg.u32;
+					UINT64 num = (arg.Kind == Argument::Type::UINT64) ? arg.U64 : (UINT64)arg.U32;
 					j += StringFormatter::FormatUInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 					continue;
 				}
@@ -995,7 +995,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 						continue;
 					// Type-aware read: on 32-bit platforms SSIZE is stored as INT32
 					const Argument &arg = args[currentArg++];
-					INT64 num = (arg.type == Argument::Type::INT64) ? arg.i64 : (INT64)arg.i32;
+					INT64 num = (arg.Kind == Argument::Type::INT64) ? arg.I64 : (INT64)arg.I32;
 					j += StringFormatter::FormatInt64(writer, context, num, fieldWidth, zeroPad, leftAlign);
 					continue;
 				}
@@ -1012,7 +1012,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 				i++; // Skip 'e'
 				if (currentArg >= (INT32)args.Size())
 					continue;
-				j += FormatError<TChar>(writer, context, args[currentArg++].errValue);
+				j += FormatError<TChar>(writer, context, args[currentArg++].ErrValue);
 				continue;
 			}
 			else if (format[i] == (TChar)'%')

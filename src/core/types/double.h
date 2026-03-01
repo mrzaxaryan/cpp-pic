@@ -73,8 +73,8 @@ class DOUBLE
 private:
 	UINT64 bits;
 
-	static constexpr INT32 SIGN_SHIFT = 63;
-	static constexpr INT32 EXP_SHIFT = 52;
+	static constexpr INT32 SignShift = 63;
+	static constexpr INT32 ExpShift = 52;
 
 	static constexpr UINT64 GetSignMask() noexcept { return 0x8000000000000000ULL; }
 	static constexpr UINT64 GetExpMask() noexcept { return 0x7FF0000000000000ULL; }
@@ -129,11 +129,11 @@ private:
 	// Comparison operation enum for shared helper
 	enum CmpOp
 	{
-		CMP_EQ,
-		CMP_LT,
-		CMP_LE,
-		CMP_GT,
-		CMP_GE
+		Cmp_Eq,
+		Cmp_Lt,
+		Cmp_Le,
+		Cmp_Gt,
+		Cmp_Ge
 	};
 
 	// Shared comparison helper to reduce code duplication
@@ -146,15 +146,15 @@ private:
 		UINT64 ullB = other.bits;
 		double a = __builtin_bit_cast(double, ullA);
 		double b = __builtin_bit_cast(double, ullB);
-		if (op == CMP_EQ)
+		if (op == Cmp_Eq)
 			return a == b;
-		if (op == CMP_LT)
+		if (op == Cmp_Lt)
 			return a < b;
-		if (op == CMP_LE)
+		if (op == Cmp_Le)
 			return a <= b;
-		if (op == CMP_GT)
+		if (op == Cmp_Gt)
 			return a > b;
-		if (op == CMP_GE)
+		if (op == Cmp_Ge)
 			return a >= b;
 		return false;
 	}
@@ -162,10 +162,10 @@ private:
 	// Arithmetic operation enum for shared helper
 	enum ArithOp
 	{
-		OP_ADD,
-		OP_SUB,
-		OP_MUL,
-		OP_DIV
+		Op_Add,
+		Op_Sub,
+		Op_Mul,
+		Op_Div
 	};
 
 	// Shared arithmetic helper to reduce code duplication
@@ -179,11 +179,11 @@ private:
 		double a = __builtin_bit_cast(double, ullA);
 		double b = __builtin_bit_cast(double, ullB);
 		double result;
-		if (op == OP_ADD)
+		if (op == Op_Add)
 			result = a + b;
-		else if (op == OP_SUB)
+		else if (op == Op_Sub)
 			result = a - b;
-		else if (op == OP_MUL)
+		else if (op == Op_Mul)
 			result = a * b;
 		else
 			result = a / b;
@@ -398,7 +398,7 @@ public:
 		UINT64 expBits = bits & GetExpMask();
 		UINT64 mantissaBits = bits & GetMantissaMask();
 
-		INT32 exponent = (INT32)(UINT32)(expBits >> EXP_SHIFT) - 1023;
+		INT32 exponent = (INT32)(UINT32)(expBits >> ExpShift) - 1023;
 
 		if (exponent < 0)
 			return 0LL;
@@ -436,7 +436,7 @@ public:
 		UINT64 expBits = bits & GetExpMask();
 		UINT64 mantissaBits = bits & GetMantissaMask();
 
-		INT32 exponent = (INT32)(UINT32)(expBits >> EXP_SHIFT) - 1023;
+		INT32 exponent = (INT32)(UINT32)(expBits >> ExpShift) - 1023;
 
 		if ((signBit >> 32) != 0)
 			return 0ULL;
@@ -491,21 +491,21 @@ public:
 	/// @name Comparison Operators
 	/// @{
 
-	BOOL operator==(const DOUBLE &other) const noexcept { return Compare(other, CMP_EQ); }
-	BOOL operator!=(const DOUBLE &other) const noexcept { return !Compare(other, CMP_EQ); }
-	BOOL operator<(const DOUBLE &other) const noexcept { return Compare(other, CMP_LT); }
-	BOOL operator<=(const DOUBLE &other) const noexcept { return Compare(other, CMP_LE); }
-	BOOL operator>(const DOUBLE &other) const noexcept { return Compare(other, CMP_GT); }
-	BOOL operator>=(const DOUBLE &other) const noexcept { return Compare(other, CMP_GE); }
+	BOOL operator==(const DOUBLE &other) const noexcept { return Compare(other, Cmp_Eq); }
+	BOOL operator!=(const DOUBLE &other) const noexcept { return !Compare(other, Cmp_Eq); }
+	BOOL operator<(const DOUBLE &other) const noexcept { return Compare(other, Cmp_Lt); }
+	BOOL operator<=(const DOUBLE &other) const noexcept { return Compare(other, Cmp_Le); }
+	BOOL operator>(const DOUBLE &other) const noexcept { return Compare(other, Cmp_Gt); }
+	BOOL operator>=(const DOUBLE &other) const noexcept { return Compare(other, Cmp_Ge); }
 
 	/// @}
 	/// @name Arithmetic Operators
 	/// @{
 
-	DOUBLE operator+(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_ADD); }
-	DOUBLE operator-(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_SUB); }
-	DOUBLE operator*(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_MUL); }
-	DOUBLE operator/(const DOUBLE &other) const noexcept { return Arithmetic(other, OP_DIV); }
+	DOUBLE operator+(const DOUBLE &other) const noexcept { return Arithmetic(other, Op_Add); }
+	DOUBLE operator-(const DOUBLE &other) const noexcept { return Arithmetic(other, Op_Sub); }
+	DOUBLE operator*(const DOUBLE &other) const noexcept { return Arithmetic(other, Op_Mul); }
+	DOUBLE operator/(const DOUBLE &other) const noexcept { return Arithmetic(other, Op_Div); }
 
 	/** @brief Unary negation — flips the sign bit (IEEE 754 Section 5.5.1) */
 	NOINLINE DISABLE_OPTIMIZATION DOUBLE operator-() const noexcept

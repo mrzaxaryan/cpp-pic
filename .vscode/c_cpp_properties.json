@@ -35,7 +35,7 @@
             "intelliSenseMode": "windows-clang-x86",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_I386",
                 "PLATFORM_WINDOWS",
@@ -53,7 +53,7 @@
             "intelliSenseMode": "windows-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_WINDOWS",
@@ -71,7 +71,7 @@
             "intelliSenseMode": "windows-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_WINDOWS",
@@ -89,7 +89,7 @@
             "intelliSenseMode": "linux-clang-x86",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_I386",
                 "PLATFORM_LINUX",
@@ -108,7 +108,7 @@
             "intelliSenseMode": "linux-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_LINUX",
@@ -127,7 +127,7 @@
             "intelliSenseMode": "linux-clang-arm",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_ARMV7A",
                 "PLATFORM_LINUX",
@@ -146,7 +146,7 @@
             "intelliSenseMode": "linux-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_LINUX",
@@ -165,7 +165,7 @@
             "intelliSenseMode": "macos-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_MACOS",
@@ -184,7 +184,7 @@
             "intelliSenseMode": "macos-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_MACOS",
@@ -203,7 +203,7 @@
             "intelliSenseMode": "windows-clang-x64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_X86_64",
                 "PLATFORM_UEFI",
@@ -221,7 +221,7 @@
             "intelliSenseMode": "windows-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_UEFI",

@@ -75,9 +75,9 @@ private:
 		for (INT32 i = 0; i < 1000; i++)
 		{
 			INT32 val = prng.Get();
-			if (val < 0 || val >= Prng::MAX)
+			if (val < 0 || val >= Prng::Max)
 			{
-				LOG_ERROR("Value out of range: %d (max: %d)", val, Prng::MAX);
+				LOG_ERROR("Value out of range: %d (max: %d)", val, Prng::Max);
 				return false;
 			}
 		}

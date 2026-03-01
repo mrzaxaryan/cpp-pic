@@ -2,54 +2,6 @@
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 
-// Default constructor - creates an invalid IP address
-IPAddress::IPAddress() : version(IPVersion::Invalid)
-{
-	Memory::Zero(&address, sizeof(address));
-}
-
-// Constructor from IPv4 address
-IPAddress::IPAddress(UINT32 ipv4Address) : version(IPVersion::IPv4)
-{
-	address.ipv4 = ipv4Address;
-}
-
-// Constructor from IPv6 address
-IPAddress::IPAddress(const UINT8 (&ipv6Address)[16]) : version(IPVersion::IPv6)
-{
-	Memory::Copy(address.ipv6, ipv6Address, 16);
-}
-
-// Copy constructor
-IPAddress::IPAddress(const IPAddress &other) : version(other.version)
-{
-	if (version == IPVersion::IPv4)
-	{
-		address.ipv4 = other.address.ipv4;
-	}
-	else if (version == IPVersion::IPv6)
-	{
-		Memory::Copy(address.ipv6, other.address.ipv6, 16);
-	}
-}
-
-IPAddress IPAddress::LocalHost(BOOL ipv6)
-{
-	if (ipv6)
-	{
-		// IPv6 loopback is ::1 (15 bytes of 0, 1 byte of 1)
-		UINT8 loopbackV6[16]{};
-		loopbackV6[15] = 1;
-		return IPAddress::FromIPv6(loopbackV6);
-	}
-	else
-	{
-		// IPv4 loopback is 127.0.0.1
-		// Using your specific hex format: 0x0100007F
-		return IPAddress::FromIPv4(0x0100007F);
-	}
-}
-
 // Convert string to IPAddress (supports both IPv4 and IPv6)
 Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 {
@@ -329,48 +281,4 @@ Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 	}
 
 	return Result<void, Error>::Err(Error::IpAddress_ToStringFailed);
-}
-
-// Equality operator
-BOOL IPAddress::operator==(const IPAddress &other) const
-{
-	if (version != other.version)
-	{
-		return false;
-	}
-
-	if (version == IPVersion::IPv4)
-	{
-		return address.ipv4 == other.address.ipv4;
-	}
-	else if (version == IPVersion::IPv6)
-	{
-		return Memory::Compare(address.ipv6, other.address.ipv6, 16) == 0;
-	}
-
-	return version == IPVersion::Invalid;
-}
-
-// Inequality operator
-BOOL IPAddress::operator!=(const IPAddress &other) const
-{
-	return !(*this == other);
-}
-
-// Assignment operator
-IPAddress &IPAddress::operator=(const IPAddress &other)
-{
-	if (this != &other)
-	{
-		version = other.version;
-		if (version == IPVersion::IPv4)
-		{
-			address.ipv4 = other.address.ipv4;
-		}
-		else if (version == IPVersion::IPv6)
-		{
-			Memory::Copy(address.ipv6, other.address.ipv6, 16);
-		}
-	}
-	return *this;
 }

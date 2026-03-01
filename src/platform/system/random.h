@@ -24,7 +24,7 @@ public:
 	VOID operator delete(VOID *) = delete;
 
 	/// The exclusive upper bound for values returned by Get()
-	static constexpr INT32 MAX = Prng::MAX;
+	static constexpr INT32 Max = Prng::Max;
 
 	/// Constructor — unseeded; Get() auto-seeds on first call
 	Random() = default;

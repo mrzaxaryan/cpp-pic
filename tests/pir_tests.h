@@ -20,6 +20,7 @@
  *   DnsTests               - DNS resolution tests (DoT, DoH JSON, DoH binary)
  *   WebSocketTests         - WebSocket client implementation tests (ws:// and wss://)
  *   ResultTests            - Result<T,E> type tests
+ *   IPAddressTests         - IPAddress constexpr and runtime tests
  *
  * USAGE:
  *   #include "tests.h"
@@ -61,6 +62,7 @@
 #include "result_tests.h"
 #include "binary_io_tests.h"
 #include "span_tests.h"
+#include "ip_address_tests.h"
 
 static BOOL RunPIRTests()
 {
@@ -74,6 +76,7 @@ static BOOL RunPIRTests()
 	RunTestSuite<ResultTests>(allPassed);
 	RunTestSuite<DoubleTests>(allPassed);
 	RunTestSuite<StringTests>(allPassed);
+	RunTestSuite<IPAddressTests>(allPassed);
 
 	// CORE - Data Structures, String Utilities, and Algorithms
 	RunTestSuite<ArrayStorageTests>(allPassed);

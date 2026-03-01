@@ -49,7 +49,7 @@ struct VOID_TO_TAG<void>
 template <typename T, typename E>
 class [[nodiscard]] Result
 {
-	static constexpr bool IS_VOID = __is_same_as(T, void);
+	static constexpr BOOL IsVoid = __is_same_as(T, void);
 	using STORED_TYPE = typename VOID_TO_TAG<T>::Type;
 
 	union
@@ -85,7 +85,7 @@ public:
 	// =====================================================================
 
 	[[nodiscard]] static FORCE_INLINE Result Ok(STORED_TYPE value) noexcept
-		requires(!IS_VOID)
+		requires(!IsVoid)
 	{
 		Result r;
 		r.m_isOk = true;
@@ -94,7 +94,7 @@ public:
 	}
 
 	[[nodiscard]] static FORCE_INLINE Result Ok() noexcept
-		requires(IS_VOID)
+		requires(IsVoid)
 	{
 		Result r;
 		r.m_isOk = true;
@@ -171,12 +171,12 @@ public:
 	[[nodiscard]] FORCE_INLINE operator BOOL() const noexcept { return m_isOk; }
 
 	[[nodiscard]] FORCE_INLINE STORED_TYPE &Value() noexcept
-		requires(!IS_VOID)
+		requires(!IsVoid)
 	{
 		return m_value;
 	}
 	[[nodiscard]] FORCE_INLINE const STORED_TYPE &Value() const noexcept
-		requires(!IS_VOID)
+		requires(!IsVoid)
 	{
 		return m_value;
 	}

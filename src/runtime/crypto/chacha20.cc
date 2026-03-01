@@ -28,7 +28,7 @@
         (p)[3] = U8V((v) >> 24);         \
     } while (0)
 
-#define ROTATE(v, c) (BitOps::ROTL32(v, c))
+#define ROTATE(v, c) (BitOps::Rotl32(v, c))
 #define XOR(v, w) ((v) ^ (w))
 #define PLUS(v, w) (U32V((v) + (w)))
 #define PLUSONE(v) (PLUS((v), 1))

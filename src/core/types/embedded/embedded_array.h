@@ -204,7 +204,7 @@ public:
 	 */
 	const USIZE *Words() const { return words; }
 
-	static constexpr USIZE WordsCount = WordCount;  ///< Number of words in storage
+	static constexpr USIZE PublicWordCount = WordCount;  ///< Number of words in storage
 };
 
 // =============================================================================

@@ -8,6 +8,7 @@
  *
  * Features:
  * - Unified IPv4/IPv6 representation
+ * - Fully constexpr construction and comparison (no .rdata generation)
  * - String parsing and formatting (dotted-decimal for IPv4, colon-hex for IPv6)
  * - Factory methods for construction
  * - Comparison operators
@@ -52,10 +53,17 @@ enum class IPVersion : UINT8
  *
  * @details Uses a union to efficiently store either an IPv4 (4 bytes) or IPv6
  * (16 bytes) address. Factory methods provide type-safe construction.
+ * All constructors, factory methods, and operators are constexpr, enabling
+ * compile-time evaluation that avoids .rdata generation.
  *
  * @par Example Usage:
  * @code
- * // Create IPv4 address from string
+ * // Compile-time IPv4 address (no .rdata)
+ * constexpr IPAddress loopback = IPAddress::FromIPv4(0x0100007F);
+ * static_assert(loopback.IsIPv4());
+ * static_assert(loopback.ToIPv4() == 0x0100007F);
+ *
+ * // Create IPv4 address from string (runtime only)
  * auto addrResult = IPAddress::FromString("192.168.1.1");
  * if (!addrResult)
  *     return;
@@ -63,9 +71,6 @@ enum class IPVersion : UINT8
  * if (addr.IsIPv4()) {
  *     UINT32 ip = addr.ToIPv4();  // Network byte order
  * }
- *
- * // Create IPv4 from raw value
- * IPAddress local = IPAddress::FromIPv4(0x7F000001);  // 127.0.0.1
  *
  * // Convert to string
  * CHAR buffer[64];
@@ -87,13 +92,20 @@ private:
 	 * @brief Private constructor for IPv4 address
 	 * @param ipv4Address IPv4 address in network byte order
 	 */
-	IPAddress(UINT32 ipv4Address);
+	constexpr IPAddress(UINT32 ipv4Address) : version(IPVersion::IPv4), address{}
+	{
+		address.ipv4 = ipv4Address;
+	}
 
 	/**
 	 * @brief Private constructor for IPv6 address
 	 * @param ipv6Address 16-byte IPv6 address array
 	 */
-	IPAddress(const UINT8 (&ipv6Address)[16]);
+	constexpr IPAddress(const UINT8 (&ipv6Address)[16]) : version(IPVersion::IPv6), address{}
+	{
+		for (USIZE i = 0; i < 16; ++i)
+			address.ipv6[i] = ipv6Address[i];
+	}
 
 public:
 	/// @name Constructors
@@ -102,13 +114,24 @@ public:
 	/**
 	 * @brief Default constructor - creates an invalid IP address
 	 */
-	IPAddress();
+	constexpr IPAddress() : version(IPVersion::Invalid), address{} {}
 
 	/**
 	 * @brief Copy constructor
 	 * @param other IPAddress to copy
 	 */
-	IPAddress(const IPAddress &other);
+	constexpr IPAddress(const IPAddress &other) : version(other.version), address{}
+	{
+		if (version == IPVersion::IPv4)
+		{
+			address.ipv4 = other.address.ipv4;
+		}
+		else if (version == IPVersion::IPv6)
+		{
+			for (USIZE i = 0; i < 16; ++i)
+				address.ipv6[i] = other.address.ipv6[i];
+		}
+	}
 
 	/// @}
 	/// @name Factory Methods
@@ -119,14 +142,14 @@ public:
 	 * @param ipv4Address IPv4 address in network byte order
 	 * @return IPAddress instance
 	 */
-	FORCE_INLINE static IPAddress FromIPv4(UINT32 ipv4Address) { return IPAddress(ipv4Address); }
+	static constexpr IPAddress FromIPv4(UINT32 ipv4Address) { return IPAddress(ipv4Address); }
 
 	/**
 	 * @brief Create IPv6 address from 16-byte array
 	 * @param ipv6Address 16-byte IPv6 address
 	 * @return IPAddress instance
 	 */
-	FORCE_INLINE static IPAddress FromIPv6(const UINT8 (&ipv6Address)[16]) { return IPAddress(ipv6Address); }
+	static constexpr IPAddress FromIPv6(const UINT8 (&ipv6Address)[16]) { return IPAddress(ipv6Address); }
 
 	/**
 	 * @brief Parse IP address from string
@@ -139,14 +162,28 @@ public:
 	 * @brief Get loopback address (127.0.0.1 for IPv4, ::1 for IPv6)
 	 * @param ipv6 true for IPv6 loopback, false for IPv4 loopback
 	 * @return IPAddress instance representing the loopback address
+	 *
+	 * @see RFC 791 — 127.0.0.1 loopback address
+	 *      https://datatracker.ietf.org/doc/html/rfc791
+	 * @see RFC 4291 Section 2.5.3 — The Loopback Address (::1)
+	 *      https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.3
 	 */
-	static IPAddress LocalHost(BOOL ipv6 = false);
+	static constexpr IPAddress LocalHost(BOOL ipv6 = false)
+	{
+		if (ipv6)
+		{
+			UINT8 loopbackV6[16]{};
+			loopbackV6[15] = 1;
+			return IPAddress(loopbackV6);
+		}
+		return IPAddress(static_cast<UINT32>(0x0100007F));
+	}
 
 	/**
 	 * @brief Create an invalid IP address
 	 * @return IPAddress with Invalid version
 	 */
-	FORCE_INLINE static IPAddress Invalid() { return IPAddress(); }
+	static constexpr IPAddress Invalid() { return IPAddress(); }
 
 	/// @}
 	/// @name Validation
@@ -208,21 +245,53 @@ public:
 	 * @param other IPAddress to compare
 	 * @return true if addresses are equal
 	 */
-	BOOL operator==(const IPAddress &other) const;
+	constexpr BOOL operator==(const IPAddress &other) const
+	{
+		if (version != other.version)
+			return false;
+		if (version == IPVersion::IPv4)
+			return address.ipv4 == other.address.ipv4;
+		if (version == IPVersion::IPv6)
+		{
+			for (USIZE i = 0; i < 16; ++i)
+			{
+				if (address.ipv6[i] != other.address.ipv6[i])
+					return false;
+			}
+			return true;
+		}
+		return true; // Both Invalid
+	}
 
 	/**
 	 * @brief Inequality comparison
 	 * @param other IPAddress to compare
 	 * @return true if addresses are not equal
 	 */
-	BOOL operator!=(const IPAddress &other) const;
+	constexpr BOOL operator!=(const IPAddress &other) const { return !(*this == other); }
 
 	/**
 	 * @brief Assignment operator
 	 * @param other IPAddress to assign
 	 * @return Reference to this
 	 */
-	IPAddress &operator=(const IPAddress &other);
+	constexpr IPAddress &operator=(const IPAddress &other)
+	{
+		if (this != &other)
+		{
+			version = other.version;
+			if (version == IPVersion::IPv4)
+			{
+				address.ipv4 = other.address.ipv4;
+			}
+			else if (version == IPVersion::IPv6)
+			{
+				for (USIZE i = 0; i < 16; ++i)
+					address.ipv6[i] = other.address.ipv6[i];
+			}
+		}
+		return *this;
+	}
 
 	/// @}
 };

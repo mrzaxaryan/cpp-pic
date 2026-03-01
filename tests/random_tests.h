@@ -55,13 +55,13 @@ private:
 	{
 		Random rng;
 
-		// Test 100 random values to ensure they're all within range [0, Random::MAX]
+		// Test 100 random values to ensure they're all within range [0, Random::Max]
 		for (INT32 i = 0; i < 100; i++)
 		{
 			INT32 val = rng.Get();
-			if (val < 0 || val >= Random::MAX)
+			if (val < 0 || val >= Random::Max)
 			{
-				LOG_ERROR("Random value out of range: %d (max: %d)", val, Random::MAX);
+				LOG_ERROR("Random value out of range: %d (max: %d)", val, Random::Max);
 				return false;
 			}
 		}

@@ -99,17 +99,17 @@ struct SHA256Traits
 
 	/**
 	 * @brief Packs 4 bytes into a 32-bit word (big-endian)
-	 * @param str Input byte array
+	 * @param str Input byte span (must be at least sizeof(Word) bytes)
 	 * @param x Output word reference
 	 */
-	static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
+	static constexpr FORCE_INLINE VOID Pack(Span<const UINT8> str, Word &x);
 
 	/**
 	 * @brief Unpacks a 32-bit word into 4 bytes (big-endian)
 	 * @param x Input word
-	 * @param str Output byte array
+	 * @param str Output byte span (must be at least sizeof(Word) bytes)
 	 */
-	static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
+	static constexpr FORCE_INLINE VOID Unpack(Word x, Span<UINT8> str);
 
 	/** @brief SHA-256 Sigma0 function: ROTR(x,2) XOR ROTR(x,13) XOR ROTR(x,22) */
 	static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr32(x, 2) ^ BitOps::Rotr32(x, 13) ^ BitOps::Rotr32(x, 22); }
@@ -159,17 +159,17 @@ struct SHA384Traits
 
 	/**
 	 * @brief Packs 8 bytes into a 64-bit word (big-endian)
-	 * @param str Input byte array
+	 * @param str Input byte span (must be at least sizeof(Word) bytes)
 	 * @param x Output word reference
 	 */
-	static constexpr FORCE_INLINE VOID Pack(const UINT8* str, Word &x);
+	static constexpr FORCE_INLINE VOID Pack(Span<const UINT8> str, Word &x);
 
 	/**
 	 * @brief Unpacks a 64-bit word into 8 bytes (big-endian)
 	 * @param x Input word
-	 * @param str Output byte array
+	 * @param str Output byte span (must be at least sizeof(Word) bytes)
 	 */
-	static constexpr FORCE_INLINE VOID Unpack(Word x, UINT8* str);
+	static constexpr FORCE_INLINE VOID Unpack(Word x, Span<UINT8> str);
 
 	/** @brief SHA-384 Sigma0 function: ROTR(x,28) XOR ROTR(x,34) XOR ROTR(x,39) */
 	static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr64(x, 28) ^ BitOps::Rotr64(x, 34) ^ BitOps::Rotr64(x, 39); }
@@ -247,6 +247,9 @@ public:
 	 * @param message Span of message data bytes
 	 *
 	 * @details Can be called multiple times to hash large messages incrementally.
+	 *
+	 * @see RFC 6234 Section 6.2 — SHA-256 (message block processing)
+	 *      https://datatracker.ietf.org/doc/html/rfc6234#section-6.2
 	 */
 	VOID Update(Span<const UINT8> message);
 
@@ -256,6 +259,9 @@ public:
 	 *
 	 * @details Applies padding, processes final block, and outputs the digest.
 	 * @note After calling Final(), the context should not be reused without re-initialization.
+	 *
+	 * @see RFC 6234 Section 4.1 — SHA-256 Padding
+	 *      https://datatracker.ietf.org/doc/html/rfc6234#section-4.1
 	 */
 	VOID Final(Span<UINT8, Traits::DigestSize> digest);
 
@@ -265,6 +271,9 @@ public:
 	 * @param digest Output span for hash digest (must be Traits::DigestSize bytes)
 	 *
 	 * @details Convenience method for hashing complete messages.
+	 *
+	 * @see RFC 6234 Section 6.2 — SHA-256 (complete hash computation)
+	 *      https://datatracker.ietf.org/doc/html/rfc6234#section-6.2
 	 */
 	static VOID Hash(Span<const UINT8> message, Span<UINT8, Traits::DigestSize> digest);
 
@@ -356,6 +365,9 @@ public:
 	 *
 	 * @details If key is longer than block size, it is hashed first.
 	 * Key is padded with zeros to block size, then XORed with ipad/opad.
+	 *
+	 * @see RFC 2104 Section 2 — Definition of HMAC
+	 *      https://datatracker.ietf.org/doc/html/rfc2104#section-2
 	 */
 	VOID Init(Span<const UCHAR> key);
 
@@ -386,6 +398,9 @@ public:
 	 * @param mac Output span for MAC
 	 *
 	 * @details Convenience method for computing HMAC of complete messages.
+	 *
+	 * @see RFC 2104 Section 2 — Definition of HMAC
+	 *      https://datatracker.ietf.org/doc/html/rfc2104#section-2
 	 */
 	static VOID Compute(Span<const UCHAR> key, Span<const UCHAR> message, Span<UCHAR> mac);
 };

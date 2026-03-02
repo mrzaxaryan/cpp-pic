@@ -1,5 +1,5 @@
 #include "platform/os/posix/fs/posix_path.h"
-#include "platform/io/fs/path.h"
+#include "platform/fs/path.h"
 #include "core/encoding/utf16.h"
 
 NOINLINE USIZE NormalizePathToUtf8(PCWCHAR path, Span<CHAR> utf8Out)

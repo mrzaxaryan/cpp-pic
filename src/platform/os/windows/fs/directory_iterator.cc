@@ -1,4 +1,4 @@
-#include "platform/io/fs/directory_iterator.h"
+#include "platform/fs/directory_iterator.h"
 #include "core/types/primitives.h"
 #include "core/memory/memory.h"
 #include "platform/os/windows/common/windows_types.h"

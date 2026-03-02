@@ -34,8 +34,11 @@
 #include "core/types/primitives.h"
 #include "platform/platform.h"
 
-#define CH(x, y, z)  ((x & y) ^ (~x & z))
-#define MAJ(x, y, z) ((x & y) ^ (x & z) ^ (y & z))
+template <typename T>
+static constexpr FORCE_INLINE T Ch(T x, T y, T z) { return (x & y) ^ (~x & z); }
+
+template <typename T>
+static constexpr FORCE_INLINE T Maj(T x, T y, T z) { return (x & y) ^ (x & z) ^ (y & z); }
 
 VOID SHA256Traits::FillH0(Word (&out)[8])
 {
@@ -69,12 +72,12 @@ VOID SHA256Traits::FillK(Word (&out)[RoundCount])
 	Memory::Copy(out, (PCVOID)embedded, sizeof(out));
 }
 
-constexpr FORCE_INLINE VOID SHA256Traits::Pack(const UINT8* str, Word &x)
+constexpr FORCE_INLINE VOID SHA256Traits::Pack(Span<const UINT8> str, Word &x)
 {
 	x = ((Word)str[3]) | ((Word)str[2] << 8) | ((Word)str[1] << 16) | ((Word)str[0] << 24);
 }
 
-constexpr FORCE_INLINE VOID SHA256Traits::Unpack(Word x, UINT8* str)
+constexpr FORCE_INLINE VOID SHA256Traits::Unpack(Word x, Span<UINT8> str)
 {
 	str[3] = (UINT8)(x);
 	str[2] = (UINT8)(x >> 8);
@@ -140,13 +143,13 @@ VOID SHA384Traits::FillK(Word (&out)[RoundCount])
 	Memory::Copy(out, (PCVOID)embedded, sizeof(out));
 }
 
-constexpr FORCE_INLINE VOID SHA384Traits::Pack(const UINT8* str, Word &x)
+constexpr FORCE_INLINE VOID SHA384Traits::Pack(Span<const UINT8> str, Word &x)
 {
 	x = ((Word)str[7]) | ((Word)str[6] << 8) | ((Word)str[5] << 16) | ((Word)str[4] << 24) |
 		((Word)str[3] << 32) | ((Word)str[2] << 40) | ((Word)str[1] << 48) | ((Word)str[0] << 56);
 }
 
-constexpr FORCE_INLINE VOID SHA384Traits::Unpack(Word x, UINT8* str)
+constexpr FORCE_INLINE VOID SHA384Traits::Unpack(Word x, Span<UINT8> str)
 {
 	str[7] = (UINT8)(x);
 	str[6] = (UINT8)(x >> 8);
@@ -181,17 +184,16 @@ NOINLINE VOID SHABase<Traits>::Transform(SHABase &ctx, Span<const UINT8> message
 	Word w[Traits::RoundCount];
 	Word wv[8];
 	Word t1, t2;
-	const UINT8 *subBlock;
 	UINT64 i;
 	INT32 j;
 
 	for (i = 0; i < (message.Size() >> Traits::BlockShift); i++)
 	{
-		subBlock = message.Data() + (i << Traits::BlockShift);
+		auto subBlock = message.Subspan(i << Traits::BlockShift, Traits::BlockSize);
 
 		for (j = 0; j < 16; j++)
 		{
-			Traits::Pack(&subBlock[j << Traits::WordShift], w[j]);
+			Traits::Pack(subBlock.Subspan(j << Traits::WordShift, sizeof(Word)), w[j]);
 		}
 
 		for (j = 16; j < (INT32)Traits::RoundCount; j++)
@@ -206,8 +208,8 @@ NOINLINE VOID SHABase<Traits>::Transform(SHABase &ctx, Span<const UINT8> message
 
 		for (j = 0; j < (INT32)Traits::RoundCount; j++)
 		{
-			t1 = wv[7] + Traits::F2(wv[4]) + CH(wv[4], wv[5], wv[6]) + k[j] + w[j];
-			t2 = Traits::F1(wv[0]) + MAJ(wv[0], wv[1], wv[2]);
+			t1 = wv[7] + Traits::F2(wv[4]) + Ch(wv[4], wv[5], wv[6]) + k[j] + w[j];
+			t2 = Traits::F1(wv[0]) + Maj(wv[0], wv[1], wv[2]);
 			wv[7] = wv[6];
 			wv[6] = wv[5];
 			wv[5] = wv[4];
@@ -301,7 +303,7 @@ VOID SHABase<Traits>::Final(Span<UINT8, Traits::DigestSize> digest)
 
 	for (i = 0; i < (INT32)Traits::OutputWords; i++)
 	{
-		Traits::Unpack(this->h[i], digest.Data() + (i << Traits::WordShift));
+		Traits::Unpack(this->h[i], digest.Subspan(i << Traits::WordShift, sizeof(Word)));
 	}
 }
 

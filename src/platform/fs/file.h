@@ -14,7 +14,7 @@
 #include "core/types/span.h"
 #include "core/types/error.h"
 #include "core/types/result.h"
-#include "platform/io/fs/offset_origin.h"
+#include "platform/fs/offset_origin.h"
 class File
 {
 private:

@@ -4,9 +4,9 @@
  * Implements Directory static methods using EFI_FILE_PROTOCOL.
  */
 
-#include "platform/io/fs/directory.h"
+#include "platform/fs/directory.h"
 #include "platform/os/uefi/fs/uefi_fs_helpers.h"
-#include "platform/io/fs/path.h"
+#include "platform/fs/path.h"
 #include "core/memory/memory.h"
 
 // =============================================================================

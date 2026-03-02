@@ -260,18 +260,17 @@ public:
 	ECC &operator=(ECC &&) = delete;
 
 	/**
-	 * @brief Checks if the ECC instance is initialized with a valid curve
-	 * @return true if initialized, false otherwise
-	 */
-	constexpr BOOL IsValid() const { return eccBytes != 0; }
-
-	/**
 	 * @brief Initializes ECC with specified curve
 	 * @param bytes Key size in bytes: 32 for P-256, 48 for P-384
 	 * @return Ok on success, Err(ECC_InitFailed) on error
 	 *
 	 * @details Loads curve parameters and generates ephemeral key pair.
 	 * The private key is generated randomly; public key is computed as Q = d * G.
+	 *
+	 * @see SEC 1 v2 Section 3.2 — Elliptic Curve Key Pair Generation
+	 *      https://www.secg.org/sec1-v2.pdf
+	 * @see FIPS 186-4 Appendix D — Recommended Elliptic Curves
+	 *      https://csrc.nist.gov/publications/detail/fips/186/4/final
 	 */
 	[[nodiscard]] Result<void, Error> Initialize(INT32 bytes);
 
@@ -283,12 +282,15 @@ public:
 	 * @details Exports public key as: 0x04 || x || y (uncompressed point format)
 	 * For P-256: 65 bytes (1 + 32 + 32)
 	 * For P-384: 97 bytes (1 + 48 + 48)
+	 *
+	 * @see SEC 1 v2 Section 2.3.3 — Elliptic-Curve-Point-to-Octet-String Conversion
+	 *      https://www.secg.org/sec1-v2.pdf
 	 */
 	[[nodiscard]] Result<UINT32, Error> ExportPublicKey(Span<UINT8> publicKey);
 
 	/**
 	 * @brief Computes ECDH shared secret
-	 * @param publicKey Span of peer's public key (uncompressed or compressed)
+	 * @param publicKey Span of peer's public key (uncompressed format: 0x04 || x || y)
 	 * @param secret Output buffer for shared secret (x-coordinate)
 	 * @return Ok(bytesWritten) on success, Err(ECC_SharedSecretFailed) on error
 	 *
@@ -296,7 +298,13 @@ public:
 	 * - d is this instance's private key
 	 * - Q is the peer's public key
 	 *
+	 * The public key must be in uncompressed format (first byte 0x04, followed by
+	 * x and y coordinates). Compressed point formats are not supported.
+	 *
 	 * @warning The raw shared secret should be passed through a KDF before use.
+	 *
+	 * @see RFC 8446 Section 4.2.8.2 — ECDHE Parameters (key_share encoding)
+	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-4.2.8.2
 	 */
 	[[nodiscard]] Result<UINT32, Error> ComputeSharedSecret(Span<const UINT8> publicKey, Span<UINT8> secret);
 };

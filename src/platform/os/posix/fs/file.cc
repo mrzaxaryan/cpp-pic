@@ -1,4 +1,4 @@
-#include "platform/io/fs/file.h"
+#include "platform/fs/file.h"
 #include "platform/os/posix/fs/posix_path.h"
 #include "core/memory/memory.h"
 #include "core/string/string.h"

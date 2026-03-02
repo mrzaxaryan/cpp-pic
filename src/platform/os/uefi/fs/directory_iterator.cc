@@ -4,7 +4,7 @@
  * Implements directory iteration using EFI_FILE_PROTOCOL.
  */
 
-#include "platform/io/fs/directory_iterator.h"
+#include "platform/fs/directory_iterator.h"
 #include "platform/os/uefi/fs/uefi_fs_helpers.h"
 #include "core/memory/memory.h"
 

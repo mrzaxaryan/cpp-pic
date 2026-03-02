@@ -4,7 +4,7 @@
  * Implements File class operations using EFI_FILE_PROTOCOL.
  */
 
-#include "platform/io/fs/file.h"
+#include "platform/fs/file.h"
 #include "platform/os/uefi/fs/uefi_fs_helpers.h"
 #include "core/memory/memory.h"
 

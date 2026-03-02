@@ -122,7 +122,8 @@ src/                        # Source layers
   platform/                 # PLATFORM layer
     platform.h              # Aggregate header for PLATFORM layer
     memory/                 # Allocator (heap management)
-    io/                     # Console, Logger, FileSystem, Path
+    io/                     # Console, Logger
+    fs/                     # FileSystem, Path, Directory, DirectoryIterator
     system/                 # DateTime, Environment, Process, Random
     network/                # Socket
     os/                     # Per-OS implementations

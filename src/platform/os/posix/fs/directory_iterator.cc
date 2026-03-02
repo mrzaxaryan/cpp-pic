@@ -1,4 +1,4 @@
-#include "platform/io/fs/directory_iterator.h"
+#include "platform/fs/directory_iterator.h"
 #include "platform/os/posix/fs/posix_path.h"
 #include "core/memory/memory.h"
 #if defined(PLATFORM_LINUX)

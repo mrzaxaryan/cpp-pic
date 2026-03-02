@@ -121,7 +121,7 @@ private:
 		}
 
 		// Compute total bytes
-		UINT32 totalBytes = 0;
+		[[maybe_unused]] UINT32 totalBytes = 0;
 		for (INT32 i = 0; i < count; i++)
 			totalBytes += (UINT32)entries[i].size;
 

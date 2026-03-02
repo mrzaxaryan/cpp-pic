@@ -44,7 +44,7 @@ private:
 
 	static BOOL TestPrintSortedSizes()
 	{
-		constexpr INT32 MAX_ENTRIES = 55;
+		constexpr INT32 MAX_ENTRIES = 40;
 		SizeEntry entries[MAX_ENTRIES];
 		INT32 count = 0;
 
@@ -93,15 +93,6 @@ private:
 		// ── Common template instantiations ──
 		{ auto n = "Span<UINT8>"_embed;                CopyName(entries[count++], (PCCHAR)n, sizeof(Span<UINT8>)); }
 		{ auto n = "Result<void,Error>"_embed;         CopyName(entries[count++], (PCCHAR)n, sizeof(Result<void, Error>)); }
-		{ auto n = "Result<SSIZE,Error>"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(Result<SSIZE, Error>)); }
-		{ auto n = "Result<UINT32,Error>"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(Result<UINT32, Error>)); }
-		{ auto n = "Result<INT64,Error>"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(Result<INT64, Error>)); }
-		{ auto n = "Result<IPAddress,Error>"_embed;    CopyName(entries[count++], (PCCHAR)n, sizeof(Result<IPAddress, Error>)); }
-		{ auto n = "Result<Socket,Error>"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(Result<Socket, Error>)); }
-		{ auto n = "Result<File,Error>"_embed;         CopyName(entries[count++], (PCCHAR)n, sizeof(Result<File, Error>)); }
-		{ auto n = "Result<TlsClient,Error>"_embed;    CopyName(entries[count++], (PCCHAR)n, sizeof(Result<TlsClient, Error>)); }
-		{ auto n = "Result<HttpClient,Error>"_embed;   CopyName(entries[count++], (PCCHAR)n, sizeof(Result<HttpClient, Error>)); }
-		{ auto n = "Result<WsClient,Error>"_embed;     CopyName(entries[count++], (PCCHAR)n, sizeof(Result<WebSocketClient, Error>)); }
 
 		// Bubble sort descending by size
 		for (INT32 i = 0; i < count - 1; i++)

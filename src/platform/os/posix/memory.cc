@@ -39,7 +39,7 @@ PVOID Allocator::AllocateMemory(USIZE size)
 #endif
 
 	// mmap returns -1 on error (well, actually MAP_FAILED which is (void*)-1)
-	if (result == -1 || result < 0)
+	if (result < 0 && result >= -4095)
 		return nullptr;
 
 	return (PVOID)result;

@@ -1,1 +1,24 @@
-{}
+{
+  "linux_armv7a_exe": "99.8 KB",
+  "linux_armv7a_bin": "98.7 KB",
+  "windows_aarch64_exe": "87.0 KB",
+  "windows_aarch64_bin": "86.3 KB",
+  "linux_i386_exe": "96.8 KB",
+  "linux_i386_bin": "95.8 KB",
+  "uefi_x86_64_exe": "90.5 KB",
+  "uefi_x86_64_bin": "88.5 KB",
+  "windows_x86_64_exe": "91.0 KB",
+  "windows_x86_64_bin": "90.4 KB",
+  "macos_x86_64_exe": "100.3 KB",
+  "macos_x86_64_bin": "85.9 KB",
+  "uefi_aarch64_exe": "87.0 KB",
+  "uefi_aarch64_bin": "85.2 KB",
+  "linux_x86_64_exe": "86.7 KB",
+  "linux_x86_64_bin": "85.3 KB",
+  "macos_aarch64_exe": "107.9 KB",
+  "macos_aarch64_bin": "74.2 KB",
+  "linux_aarch64_exe": "76.1 KB",
+  "linux_aarch64_bin": "74.7 KB",
+  "windows_i386_exe": "97.0 KB",
+  "windows_i386_bin": "96.1 KB"
+}

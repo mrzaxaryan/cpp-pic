@@ -280,6 +280,9 @@ public:
 	/** @brief Returns the number of supported cipher suites */
 	constexpr INT32 GetCipherCount() const { return cipherCount; }
 
+	/** @brief Returns the current decoded application data as a read-only span */
+	Span<const CHAR> GetDecodedData() const { return decodeBuffer.AsSpan(); }
+
 	/** @brief Returns a reference to the serialized public key buffer */
 	TlsBuffer &GetPubKey() { return publicKey; }
 

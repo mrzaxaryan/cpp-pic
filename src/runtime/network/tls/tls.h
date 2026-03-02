@@ -42,9 +42,9 @@ private:
 	INT32 stateIndex;        ///< Current handshake state index
 	TlsBuffer sendBuffer;    ///< Outgoing data buffer
 	TlsBuffer recvBuffer;    ///< Incoming data buffer
-	TlsBuffer channelBuffer; ///< Decrypted application data channel
-	INT32 channelBytesRead;  ///< Bytes consumed from channel buffer
-	[[nodiscard]] Result<INT32, Error> ReadChannel(Span<CHAR> output);
+	INT32 decryptedPos;      ///< Consumption cursor into current decrypted record
+	INT32 decryptedSize;     ///< Size of current decrypted record (0 = none available)
+	[[nodiscard]] Result<void, Error> ReadNextRecord();
 	[[nodiscard]] Result<void, Error> ProcessReceive();
 	[[nodiscard]] Result<void, Error> OnPacket(INT32 packetType, INT32 version, TlsBuffer &tlsReader);
 	[[nodiscard]] NOINLINE Result<void, Error> HandleHandshakeMessage(INT32 handshakeType, TlsBuffer &reader);
@@ -62,14 +62,14 @@ private:
 
 	// Private trivial constructor — only used by Create()
 	TlsClient(PCCHAR host, const IPAddress &ipAddress, Socket &&socket, BOOL secure)
-		: host(host), ip(ipAddress), context(static_cast<Socket &&>(socket)), secure(secure), stateIndex(0), channelBytesRead(0) {}
+		: host(host), ip(ipAddress), context(static_cast<Socket &&>(socket)), secure(secure), stateIndex(0), decryptedPos(0), decryptedSize(0) {}
 
 public:
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	// Placement new required by Result<TlsClient, Error>
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
-	TlsClient() : host(nullptr), ip(), secure(true), stateIndex(0), channelBytesRead(0) {}
+	TlsClient() : host(nullptr), ip(), secure(true), stateIndex(0), decryptedPos(0), decryptedSize(0) {}
 
 	// Factory — caller MUST check the result (enforced by [[nodiscard]])
 	[[nodiscard]] static Result<TlsClient, Error> Create(PCCHAR host, const IPAddress &ipAddress, UINT16 port, BOOL secure = true);
@@ -84,12 +84,13 @@ public:
 	TlsClient &operator=(const TlsClient &) = delete;
 
 	TlsClient(TlsClient &&other) noexcept
-		: host(other.host), ip(other.ip), context(static_cast<Socket &&>(other.context)), crypto(static_cast<TlsCipher &&>(other.crypto)), secure(other.secure), stateIndex(other.stateIndex), sendBuffer(static_cast<TlsBuffer &&>(other.sendBuffer)), recvBuffer(static_cast<TlsBuffer &&>(other.recvBuffer)), channelBuffer(static_cast<TlsBuffer &&>(other.channelBuffer)), channelBytesRead(other.channelBytesRead)
+		: host(other.host), ip(other.ip), context(static_cast<Socket &&>(other.context)), crypto(static_cast<TlsCipher &&>(other.crypto)), secure(other.secure), stateIndex(other.stateIndex), sendBuffer(static_cast<TlsBuffer &&>(other.sendBuffer)), recvBuffer(static_cast<TlsBuffer &&>(other.recvBuffer)), decryptedPos(other.decryptedPos), decryptedSize(other.decryptedSize)
 	{
 		other.host = nullptr;
 		other.secure = true;
 		other.stateIndex = 0;
-		other.channelBytesRead = 0;
+		other.decryptedPos = 0;
+		other.decryptedSize = 0;
 	}
 
 	TlsClient &operator=(TlsClient &&other) noexcept
@@ -105,12 +106,13 @@ public:
 			stateIndex = other.stateIndex;
 			sendBuffer = static_cast<TlsBuffer &&>(other.sendBuffer);
 			recvBuffer = static_cast<TlsBuffer &&>(other.recvBuffer);
-			channelBuffer = static_cast<TlsBuffer &&>(other.channelBuffer);
-			channelBytesRead = other.channelBytesRead;
+			decryptedPos = other.decryptedPos;
+			decryptedSize = other.decryptedSize;
 			other.host = nullptr;
 			other.secure = true;
 			other.stateIndex = 0;
-			other.channelBytesRead = 0;
+			other.decryptedPos = 0;
+			other.decryptedSize = 0;
 		}
 		return *this;
 	}

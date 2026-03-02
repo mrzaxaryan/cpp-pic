@@ -15,9 +15,6 @@ constexpr INT32 HANDSHAKE_STATE_COUNT = 6;
 constexpr INT32 RECV_BUFFER_SIZE = 4096 * 4;
 /// Maximum TLS record payload size for outgoing data (16 KiB, RFC 8446 Section 5.1)
 constexpr INT32 MAX_TLS_SEND_CHUNK = 1024 * 16;
-/// Channel compaction threshold — compact when >75% consumed and buffer exceeds this size
-constexpr INT32 CHANNEL_COMPACT_THRESHOLD = 1024 * 1024;
-
 /// TLS 1.2 protocol version (RFC 5246 Section 1.2)
 constexpr UINT16 TLS_VERSION_1_2 = 0x0303;
 /// TLS 1.3 protocol version (RFC 8446 Section 4.2.1)
@@ -598,7 +595,8 @@ Result<void, Error> TlsClient::HandleAlertMessage(TlsBuffer &reader)
 Result<void, Error> TlsClient::HandleApplicationData(TlsBuffer &reader)
 {
 	LOG_DEBUG("Processing Application Data for client: %p, size: %d bytes", this, reader.GetSize());
-	channelBuffer.Append(reader.AsSpan());
+	decryptedSize = reader.GetSize();
+	decryptedPos = 0;
 	return Result<void, Error>::Ok();
 }
 
@@ -771,34 +769,74 @@ Result<void, Error> TlsClient::ProcessReceive()
 	return Result<void, Error>::Ok();
 }
 
-/// @brief Read data from channel buffer
-/// @param output Span wrapping the output buffer
-/// @return Ok(bytes read) on success, or Err when channel is empty
+/// @brief Read and decrypt exactly one TLS record from the socket
+/// @return Result indicating success (decryptedSize/decryptedPos updated) or error
+/// @details Checks recvBuffer for a complete record before reading from the socket.
+///          Processes non-application-data records (alerts, post-handshake) transparently
+///          and loops until an application data record is available.
+/// @see RFC 8446 Section 5.1 — Record Layer
+///      https://datatracker.ietf.org/doc/html/rfc8446#section-5.1
 
-Result<INT32, Error> TlsClient::ReadChannel(Span<CHAR> output)
+Result<void, Error> TlsClient::ReadNextRecord()
 {
-	INT32 movesize = Math::Min((INT32)output.Size(), channelBuffer.GetSize() - channelBytesRead);
-	LOG_DEBUG("Reading from channel for client: %p, requested size: %d, available size: %d, read size: %d",
-			  this, (INT32)output.Size(), channelBuffer.GetSize() - channelBytesRead, channelBytesRead);
-	Memory::Copy(output.Data(), channelBuffer.GetBuffer() + channelBytesRead, movesize);
-	channelBytesRead += movesize;
-	if (((channelBytesRead > (channelBuffer.GetSize() >> 2) * 3) && (channelBuffer.GetSize() > CHANNEL_COMPACT_THRESHOLD)) || (channelBytesRead >= channelBuffer.GetSize()))
+	LOG_DEBUG("ReadNextRecord for client: %p", this);
+	decryptedSize = 0;
+	decryptedPos = 0;
+
+	while (decryptedSize == 0)
 	{
-		LOG_DEBUG("Clearing recv channel for client: %p, read size: %d, total size: %d",
-				  this, channelBytesRead, channelBuffer.GetSize());
-		Memory::Copy(channelBuffer.GetBuffer(), channelBuffer.GetBuffer() + channelBytesRead, channelBuffer.GetSize() - channelBytesRead);
-		channelBuffer.AppendSize(-channelBytesRead);
-		channelBytesRead = 0;
+		// Try to parse a complete record from recvBuffer
+		while (recvBuffer.GetSize() >= 5)
+		{
+			PUCHAR hdr = (PUCHAR)recvBuffer.GetBuffer();
+			UINT8 contentType = hdr[0];
+			UINT16 version;
+			Memory::Copy(&version, hdr + 1, sizeof(UINT16));
+			UINT16 recordLen = ((UINT16)hdr[3] << 8) | (UINT16)hdr[4];
+
+			if (recvBuffer.GetSize() < 5 + (INT32)recordLen)
+				break;
+
+			LOG_DEBUG("ReadNextRecord: record type=%d, len=%d", contentType, recordLen);
+			TlsBuffer packetReader(Span<CHAR>(recvBuffer.GetBuffer() + 5, (USIZE)recordLen));
+
+			auto ret = OnPacket(contentType, version, packetReader);
+			if (!ret)
+			{
+				(void)Close();
+				return Result<void, Error>::Err(ret, Error::Tls_ReadFailed_Receive);
+			}
+
+			// Compact recvBuffer — remove the consumed record
+			INT32 consumed = 5 + (INT32)recordLen;
+			Memory::Copy(recvBuffer.GetBuffer(), recvBuffer.GetBuffer() + consumed, recvBuffer.GetSize() - consumed);
+			recvBuffer.AppendSize(-consumed);
+
+			// If we got application data, stop
+			if (decryptedSize > 0)
+				return Result<void, Error>::Ok();
+		}
+
+		// Need more data from socket
+		auto checkResult = recvBuffer.CheckSize(RECV_BUFFER_SIZE);
+		if (!checkResult)
+			return Result<void, Error>::Err(checkResult, Error::Tls_ReadFailed_Receive);
+
+		auto readResult = context.Read(Span<CHAR>(recvBuffer.GetBuffer() + recvBuffer.GetSize(), RECV_BUFFER_SIZE));
+		if (!readResult || readResult.Value() <= 0)
+		{
+			LOG_DEBUG("Failed to read data from socket for client: %p", this);
+			(void)Close();
+			return Result<void, Error>::Err(readResult, Error::Tls_ReadFailed_Receive);
+		}
+		INT64 len = readResult.Value();
+		if (len > 0x7FFFFFFF)
+			return Result<void, Error>::Err(Error::Tls_ReadFailed_Receive);
+		LOG_DEBUG("ReadNextRecord: received %lld bytes from socket", len);
+		recvBuffer.AppendSize((INT32)len);
 	}
-	LOG_DEBUG("Read %d bytes from channel for client: %p, new read size: %d, total size: %d",
-			  movesize, this, channelBytesRead, channelBuffer.GetSize());
-	if (movesize == 0)
-	{
-		LOG_ERROR("recv channel size is 0, maybe error");
-		return Result<INT32, Error>::Err(Error::Tls_ReadFailed_Channel);
-	}
-	LOG_DEBUG("Returning movesize: %d for client: %p", movesize, this);
-	return Result<INT32, Error>::Ok(movesize);
+
+	return Result<void, Error>::Ok();
 }
 
 /// @brief Open a TLS connection to the server, perform the TLS handshake
@@ -855,12 +893,12 @@ Result<void, Error> TlsClient::Open()
 Result<void, Error> TlsClient::Close()
 {
 	stateIndex = 0;
-	channelBytesRead = 0;
+	decryptedPos = 0;
+	decryptedSize = 0;
 
 	if (secure)
 	{
 		recvBuffer.Clear();
-		channelBuffer.Clear();
 		sendBuffer.Clear();
 		crypto.Destroy();
 	}
@@ -898,7 +936,6 @@ Result<UINT32, Error> TlsClient::Write(Span<const CHAR> buffer)
 		return Result<UINT32, Error>::Err(Error::Tls_WriteFailed_NotReady);
 	}
 
-	sendBuffer.Clear();
 	for (UINT32 i = 0; i < (UINT32)buffer.Size();)
 	{
 		INT32 sendSize = Math::Min((UINT32)buffer.Size() - i, (UINT32)MAX_TLS_SEND_CHUNK);
@@ -942,20 +979,33 @@ Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)
 		return Result<SSIZE, Error>::Err(Error::Tls_ReadFailed_NotReady);
 	}
 	LOG_DEBUG("Reading data for client: %p, requested size: %d", this, (INT32)buffer.Size());
-	while (channelBuffer.GetSize() <= channelBytesRead)
+
+	INT32 totalRead = 0;
+	while (totalRead < (INT32)buffer.Size())
 	{
-		auto recvResult = ProcessReceive();
-		if (!recvResult)
+		// Serve from current decrypted record
+		if (decryptedPos < decryptedSize)
 		{
-			LOG_DEBUG("recv error, maybe close socket");
-			return Result<SSIZE, Error>::Err(recvResult, Error::Tls_ReadFailed_Receive);
+			auto decoded = crypto.GetDecodedData();
+			INT32 available = Math::Min((INT32)buffer.Size() - totalRead, decryptedSize - decryptedPos);
+			Memory::Copy(buffer.Data() + totalRead, decoded.Data() + decryptedPos, available);
+			decryptedPos += available;
+			totalRead += available;
+			LOG_DEBUG("Served %d bytes from decoded record, pos=%d/%d", available, decryptedPos, decryptedSize);
+			continue;
+		}
+
+		// Need next record — read and decrypt one TLS record
+		auto r = ReadNextRecord();
+		if (!r)
+		{
+			if (totalRead > 0)
+				return Result<SSIZE, Error>::Ok((SSIZE)totalRead);
+			return Result<SSIZE, Error>::Err(r, Error::Tls_ReadFailed_Receive);
 		}
 	}
 
-	auto channelResult = ReadChannel(buffer);
-	if (!channelResult)
-		return Result<SSIZE, Error>::Err(channelResult, Error::Tls_ReadFailed_Channel);
-	return Result<SSIZE, Error>::Ok((SSIZE)channelResult.Value());
+	return Result<SSIZE, Error>::Ok((SSIZE)totalRead);
 }
 
 /// @brief Factory method for TlsClient — creates and validates the underlying socket

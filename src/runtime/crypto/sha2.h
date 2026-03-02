@@ -240,6 +240,7 @@ private:
 	VOID CopyStateFrom(const SHABase &src);
 
 	template<typename, typename> friend class HMACBase;
+	friend class TlsHash;
 
 public:
 	/**

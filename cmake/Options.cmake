@@ -19,6 +19,7 @@ set(ARCHITECTURE "x86_64" CACHE STRING "Target: i386, x86_64, armv7a, aarch64")
 set(PLATFORM "windows" CACHE STRING "Target: windows, linux, uefi")
 set(BUILD_TYPE "release" CACHE STRING "Build type: debug, release")
 set(OPTIMIZATION_LEVEL "" CACHE STRING "Override optimization level (e.g., O2, Os)")
+set(APP_DIR "" CACHE STRING "Directory containing start() entry point (e.g., tests, my_app)")
 option(ENABLE_LOGGING "Enable logging macros" ON)
 
 # Normalize inputs
@@ -38,6 +39,19 @@ if(NOT PIR_PLATFORM IN_LIST _valid_platforms)
 endif()
 if(NOT PIR_BUILD_TYPE MATCHES "^(debug|release)$")
     message(FATAL_ERROR "Invalid BUILD_TYPE '${BUILD_TYPE}'. Valid: debug, release")
+endif()
+
+# Resolve APP_DIR to absolute path
+if(APP_DIR)
+    set(PIR_APP_DIR "${APP_DIR}")
+    if(NOT IS_ABSOLUTE "${PIR_APP_DIR}")
+        set(PIR_APP_DIR "${CMAKE_SOURCE_DIR}/${PIR_APP_DIR}")
+    endif()
+    if(NOT EXISTS "${PIR_APP_DIR}")
+        message(FATAL_ERROR "APP_DIR '${APP_DIR}' does not exist (resolved: ${PIR_APP_DIR})")
+    endif()
+else()
+    set(PIR_APP_DIR "")
 endif()
 
 # Derived settings

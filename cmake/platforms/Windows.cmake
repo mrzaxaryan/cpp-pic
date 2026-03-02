@@ -8,8 +8,7 @@ pir_get_target_info()
 pir_filter_sources(linux macos uefi posix solaris)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${CMAKE_SOURCE_DIR}/src/platform/os/windows"
-    "${CMAKE_SOURCE_DIR}/src/platform/os/windows/common")
+    "${CMAKE_SOURCE_DIR}/src/platform/common/windows")
 
 # Debug-specific
 if(PIR_BUILD_TYPE STREQUAL "debug")

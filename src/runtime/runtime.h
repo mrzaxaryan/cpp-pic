@@ -22,9 +22,9 @@
 // =============================================================================
 // Networking
 // =============================================================================
-#include "runtime/network/dns.h"
-#include "runtime/network/http.h"
-#include "runtime/network/websocket.h"
+#include "runtime/network/dns/dns.h"
+#include "runtime/network/http/http.h"
+#include "runtime/network/websocket/websocket.h"
 
 // TLS
 #include "runtime/network/tls/tls.h"

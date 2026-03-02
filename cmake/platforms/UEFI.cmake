@@ -13,8 +13,7 @@ pir_get_target_info()
 pir_filter_sources(windows linux macos posix solaris)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${CMAKE_SOURCE_DIR}/src/platform/os/uefi"
-    "${CMAKE_SOURCE_DIR}/src/platform/os/uefi/common")
+    "${CMAKE_SOURCE_DIR}/src/platform/common/uefi")
 
 # Architecture-specific compiler flags
 if(PIR_ARCH STREQUAL "x86_64")

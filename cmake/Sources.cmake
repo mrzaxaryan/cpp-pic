@@ -41,6 +41,6 @@ file(GLOB_RECURSE PIR_HEADERS CONFIGURE_DEPENDS
 macro(pir_filter_sources)
     foreach(_exclude ${ARGN})
         list(FILTER PIR_SOURCES EXCLUDE REGEX ".*/${_exclude}/.*")
-        list(FILTER PIR_INCLUDE_PATHS EXCLUDE REGEX ".*/platform/os/${_exclude}(/.*)?$")
+        list(FILTER PIR_INCLUDE_PATHS EXCLUDE REGEX ".*/platform/(common|memory|io|fs|network|system)/${_exclude}(/.*)?$")
     endforeach()
 endmacro()

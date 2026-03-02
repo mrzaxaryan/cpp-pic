@@ -240,11 +240,14 @@ public:
 	 * @param sendbuf Buffer where the encoded TLS record will be appended
 	 * @param packet TLS record data to encode
 	 * @param keepOriginal If true, appends data without encryption
+	 * @param innerContentType When >= 0 and encryption is active, appended to
+	 *        the plaintext before encryption (RFC 8446 Section 5.2 inner content type).
+	 *        Pass -1 to omit.
 	 *
 	 * @see RFC 8446 Section 5.2 — Record Payload Protection
 	 *      https://datatracker.ietf.org/doc/html/rfc8446#section-5.2
 	 */
-	VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);
+	VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal, INT32 innerContentType = -1);
 
 	/**
 	 * @brief Decodes a TLS record using ChaCha20-Poly1305 AEAD decryption
@@ -279,6 +282,9 @@ public:
 
 	/** @brief Returns the number of supported cipher suites */
 	constexpr INT32 GetCipherCount() const { return cipherCount; }
+
+	/** @brief Returns the current decoded application data as a read-only span */
+	Span<const CHAR> GetDecodedData() const { return decodeBuffer.AsSpan(); }
 
 	/** @brief Returns a reference to the serialized public key buffer */
 	TlsBuffer &GetPubKey() { return publicKey; }

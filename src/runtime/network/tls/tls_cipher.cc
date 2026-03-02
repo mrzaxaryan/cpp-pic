@@ -331,7 +331,7 @@ Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, I
 /// @see RFC 8446 Section 5.2 — Record Payload Protection
 ///      https://datatracker.ietf.org/doc/html/rfc8446#section-5.2
 
-VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal)
+VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal, INT32 innerContentType)
 {
 	if (!isEncoding || keepOriginal)
 	{
@@ -339,20 +339,31 @@ VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOri
 		sendbuf.Append(packet);
 		return;
 	}
-	LOG_DEBUG("Encoding packet with size: %d bytes", (INT32)packet.Size());
+
+	Span<const CHAR> plaintext = packet;
+	TlsBuffer concatenated;
+
+	if (innerContentType >= 0)
+	{
+		concatenated.Append(packet);
+		concatenated.Append<CHAR>((CHAR)innerContentType);
+		plaintext = concatenated.AsSpan();
+	}
+
+	LOG_DEBUG("Encoding packet with size: %d bytes", (INT32)plaintext.Size());
 
 	UCHAR aad[13];
 
 	aad[0] = CONTENT_APPLICATION_DATA;
 	aad[1] = sendbuf.GetBuffer()[1];
 	aad[2] = sendbuf.GetBuffer()[2];
-	UINT16 encSize = (UINT16)ChaCha20Encoder::ComputeSize((INT32)packet.Size(), CipherDirection::Encode);
+	UINT16 encSize = (UINT16)ChaCha20Encoder::ComputeSize((INT32)plaintext.Size(), CipherDirection::Encode);
 	aad[3] = (UINT8)(encSize >> 8);
 	aad[4] = (UINT8)(encSize & 0xFF);
 	UINT64 clientSeq = UINT64SwapByteOrder(clientSeqNum++);
 	Memory::Copy(aad + 5, &clientSeq, sizeof(UINT64));
 
-	chacha20Context.Encode(sendbuf, packet, Span<const UCHAR>(aad));
+	chacha20Context.Encode(sendbuf, plaintext, Span<const UCHAR>(aad));
 }
 
 /// @brief Decode a TLS record using the ChaCha20 encoder

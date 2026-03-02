@@ -8,8 +8,7 @@ pir_get_target_info()
 pir_filter_sources(windows macos uefi solaris)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${CMAKE_SOURCE_DIR}/src/platform/os/linux"
-    "${CMAKE_SOURCE_DIR}/src/platform/os/linux/common")
+    "${CMAKE_SOURCE_DIR}/src/platform/common/linux")
 
 # Linker configuration (ELF)
 pir_add_link_flags(

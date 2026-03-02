@@ -121,23 +121,37 @@ src/                        # Source layers
     encoding/               # UTF-16
   platform/                 # PLATFORM layer
     platform.h              # Aggregate header for PLATFORM layer
+    common/                 # Per-OS shared infrastructure
+      windows/              # PEB, PE, NTDLL, System, Kernel32, types
+      linux/                # Syscall numbers, System::Call, result conversion
+      macos/                # Syscall numbers, System::Call, result conversion
+      solaris/              # Syscall numbers, System::Call, result conversion
+      uefi/                 # EFI types, protocols, boot/runtime services
     memory/                 # Allocator (heap management)
+      windows/              # NtAllocateVirtualMemory/NtFreeVirtualMemory
+      posix/                # mmap/munmap
+      uefi/                 # AllocatePool/FreePool
     io/                     # Console, Logger
+      windows/              # ZwWriteFile console output
+      posix/                # write() syscall to STDOUT
+      uefi/                 # SimpleTextOut protocol
     fs/                     # FileSystem, Path, Directory, DirectoryIterator
-    system/                 # DateTime, Environment, Process, Random
+      windows/              # NtCreateFile, NtReadFile, NtWriteFile
+      posix/                # open/read/write/close syscalls, posix_path
+      uefi/                 # EFI_FILE_PROTOCOL, uefi_fs_helpers
     network/                # Socket
-    os/                     # Per-OS implementations
-      windows/              # Windows platform (feature .cc files)
-        common/             # PEB, PE, NTDLL, System, Kernel32, types
-      linux/                # Linux platform (feature .cc files)
-        common/             # Syscall numbers, System::Call, result conversion
-      macos/                # macOS platform (feature .cc files)
-        common/             # Syscall numbers, System::Call, result conversion
-      uefi/                 # UEFI platform (feature .cc files)
-        common/             # EFI types, protocols, boot/runtime services
-      solaris/              # Solaris platform (feature .cc files)
-        common/             # Syscall numbers, System::Call, result conversion
-      posix/                # Shared POSIX code (Linux/macOS)
+      windows/              # AFD (Auxiliary Function Driver)
+      linux/                # Direct socket syscalls
+      macos/                # Direct socket syscalls
+      solaris/              # Direct socket syscalls
+      uefi/                 # EFI_TCP4/TCP6_PROTOCOL
+    system/                 # DateTime, Environment, Process, Random
+      windows/              # Windows-specific system operations
+      posix/                # Shared POSIX date_time, process
+      linux/                # Linux-specific environment, platform, process
+      macos/                # macOS-specific environment, platform, process
+      solaris/              # Solaris-specific environment, platform, process
+      uefi/                 # UEFI-specific system operations
   runtime/                  # RUNTIME layer (.h + .cc co-located)
     runtime.h               # Aggregate header (CORE + PLATFORM + RUNTIME)
     entry_point.cc          # Program entry point (no CRT)

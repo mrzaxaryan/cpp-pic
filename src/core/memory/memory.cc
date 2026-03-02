@@ -14,6 +14,7 @@ extern "C" COMPILER_RUNTIME PVOID memset(PVOID dest, INT32 ch, USIZE count)
 	return dest;
 }
 
+
 extern "C" COMPILER_RUNTIME PVOID memcpy(PVOID dest, const VOID *src, USIZE count)
 {
 	if (!dest || !src || count == 0)

@@ -9,6 +9,7 @@
 #include "runtime/crypto/ecc.h"
 #include "platform/system/random.h"
 #include "platform/platform.h"
+#include "core/compiler/compiler_builtins.h"
 #include "core/memory/memory.h"
 
 /// Curve selection options

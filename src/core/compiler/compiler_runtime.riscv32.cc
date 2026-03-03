@@ -18,6 +18,7 @@
  */
 
 #include "core/compiler/compiler.h"
+#include "core/compiler/compiler_builtins.h"
 #include "core/types/primitives.h"
 
 #if defined(ARCHITECTURE_RISCV32)

@@ -1,29 +1,48 @@
-#include "runtime/network/tls/tls_hash.h"
-#include "platform/io/logger.h"
+#include "tls_hash.h"
+#include "logger.h"
+#include "sha2.h"
 
-/// @brief Reset the transcript hash by destroying and reconstructing the SHA-256 context
+/// @brief Reset the hash cache by clearing the underlying buffer
+/// @return void
 
 VOID TlsHash::Reset()
 {
-	ctx.~SHA256();
-	new (&ctx) SHA256();
+    this->cache.Clear();
 }
 
-/// @brief Update the running transcript hash with new handshake data
+/// @brief Append data to the hash cache by adding it to the underlying buffer
 /// @param buffer The data to append
+/// @param size The size of the data to append
+/// @return void
 
 VOID TlsHash::Append(Span<const CHAR> buffer)
 {
-	ctx.Update(Span<const UINT8>((const UINT8 *)buffer.Data(), buffer.Size()));
+    this->cache.Append(buffer);
 }
 
-/// @brief Snapshot the running SHA-256 context and finalize the copy to produce the transcript hash
-/// @param out Output span for the hash digest (must be SHA256_DIGEST_SIZE bytes)
+/// @brief Get the hash value from the cache by computing SHA-256 (out.Size()==32) or SHA-384 (out.Size()==48)
+/// @param out Output span; size determines which hash algorithm is used
+/// @return void
 
 VOID TlsHash::GetHash(Span<CHAR> out)
 {
-	LOG_DEBUG("Computing incremental SHA256 transcript hash");
-	SHA256 snapshot;
-	snapshot.CopyStateFrom(ctx);
-	snapshot.Final(Span<UINT8, SHA256_DIGEST_SIZE>((UINT8 *)out.Data()));
+    if (out.Size() == SHA256_DIGEST_SIZE)
+    {
+        LOG_DEBUG("Computing SHA256 hash with size: %d bytes", (INT32)out.Size());
+        SHA256 ctx;
+        if (this->cache.GetSize() > 0)
+        {
+            LOG_DEBUG("SHA256 hash cache size: %d bytes", this->cache.GetSize());
+            ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
+        }
+        ctx.Final(Span<UINT8, SHA256_DIGEST_SIZE>((UINT8 *)out.Data()));
+    }
+    else
+    {
+        LOG_DEBUG("Computing SHA384 hash with size: %d bytes", (INT32)out.Size());
+        SHA384 ctx;
+        if (this->cache.GetSize() > 0)
+            ctx.Update(Span<const UINT8>((UINT8 *)this->cache.GetBuffer(), this->cache.GetSize()));
+        ctx.Final(Span<UINT8, SHA384_DIGEST_SIZE>((UINT8 *)out.Data()));
+    }
 }

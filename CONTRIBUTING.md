@@ -377,15 +377,7 @@ Every resource-owning class follows: destructor calls `Close()`, copy deleted, m
 
 ### Stack-Only Types
 
-Delete heap allocation operators (`operator new`/`operator delete = delete`); keep placement new for `Result` compatibility. Examples: `Socket`, `File`, `Random`, `HttpClient`, `WebSocketClient`.
-
-### Secure Cleanup
-
-Crypto classes zero all key material on destruction using `Memory::Zero`.
-
-### Conditional Ownership
-
-Use a `BOOL ownsMemory` flag when a class may or may not own its buffer. Only free on destruction when ownership is held.
+Delete heap allocation operators (`operator new`/`operator delete = delete`);
 
 ---
 
@@ -425,7 +417,7 @@ C++20 concepts and `requires` clauses enforce type safety. Use Clang builtins, n
 
 ### Guard and Validation
 
-- **Factory-created types** (`Socket`, `TlsClient`): do **not** add `IsValid()` guards — the factory + RAII pattern ensures validity.
+- **Factory-created types**: the factory + RAII pattern ensures validity.
 - **Non-factory types** parsing external input: validate at entry, return `Result::Err` on failure.
 - Only validate at system boundaries — trust internal code.
 

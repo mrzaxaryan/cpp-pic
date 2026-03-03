@@ -22,18 +22,27 @@ if(NOT EXISTS "${ELF_FILE}")
 endif()
 
 # EI_OSABI is byte 7 of the ELF header (offset 7, zero-indexed).
-# Use dd to overwrite a single byte without truncating the file.
-# printf '\<octal>' produces one byte with the given value.
-math(EXPR _d2  "${OSABI_VALUE} / 64")
-math(EXPR _rem "${OSABI_VALUE} % 64")
-math(EXPR _d1  "${_rem} / 8")
-math(EXPR _d0  "${_rem} % 8")
-set(_octal "\\${_d2}${_d1}${_d0}")
+# Patch a single byte in-place without truncating the file.
+if(CMAKE_HOST_WIN32)
+    # Windows: use PowerShell to seek and write one byte.
+    execute_process(
+        COMMAND powershell -NoProfile -Command
+            "$f=[System.IO.File]::OpenWrite('${ELF_FILE}'); $f.Seek(7,0)|Out-Null; $f.WriteByte(${OSABI_VALUE}); $f.Close()"
+        RESULT_VARIABLE _result
+    )
+else()
+    # Unix: use printf + dd to overwrite one byte.
+    math(EXPR _d2  "${OSABI_VALUE} / 64")
+    math(EXPR _rem "${OSABI_VALUE} % 64")
+    math(EXPR _d1  "${_rem} / 8")
+    math(EXPR _d0  "${_rem} % 8")
+    set(_octal "\\${_d2}${_d1}${_d0}")
 
-execute_process(
-    COMMAND sh -c "printf '${_octal}' | dd of='${ELF_FILE}' bs=1 seek=7 count=1 conv=notrunc 2>/dev/null"
-    RESULT_VARIABLE _result
-)
+    execute_process(
+        COMMAND sh -c "printf '${_octal}' | dd of='${ELF_FILE}' bs=1 seek=7 count=1 conv=notrunc 2>/dev/null"
+        RESULT_VARIABLE _result
+    )
+endif()
 
 if(NOT _result EQUAL 0)
     message(FATAL_ERROR "Failed to patch ELF OSABI in: ${ELF_FILE}")

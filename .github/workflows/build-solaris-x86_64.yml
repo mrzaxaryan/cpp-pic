@@ -77,7 +77,14 @@ jobs:
         uses: vmactions/solaris-vm@v1
         with:
           run: |
+            uname -a
+            isainfo -v 2>/dev/null || true
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
+            echo "Found: $TEST_ELF"
+            ls -la "$TEST_ELF"
+            file "$TEST_ELF"
+            elfdump -e "$TEST_ELF" 2>/dev/null || true
+            od -N 32 -t x1 "$TEST_ELF"
             chmod +x "$TEST_ELF"
             "$TEST_ELF"
 

@@ -97,7 +97,7 @@ private:
 	/**
 	 * @brief Tries multiple IP addresses for a single DoH provider until one succeeds
 	 * @param host Hostname to resolve
-	 * @param ips Array of DoH server IP addresses to try in order
+	 * @param ips Span of DoH server IP addresses to try in order
 	 * @param serverName TLS SNI hostname for the DoH server
 	 * @param dnstype Record type to query — A (IPv4) or AAAA (IPv6)
 	 * @return Ok(IPAddress) from the first successful server, or Err(Dns_ResolveFailed) if all fail
@@ -106,10 +106,10 @@ private:
 	 * Returns immediately on the first successful resolution. This provides resilience
 	 * against individual server failures (e.g., Cloudflare 1.1.1.1 down, fallback to 1.0.0.1).
 	 */
-	template <UINT32 N>
-	[[nodiscard]] static Result<IPAddress, Error> ResolveWithFallback(Span<const CHAR> host, const IPAddress (&ips)[N], Span<const CHAR> serverName, DnsRecordType dnstype)
+	template <USIZE N>
+	[[nodiscard]] static Result<IPAddress, Error> ResolveWithFallback(Span<const CHAR> host, Span<const IPAddress, N> ips, Span<const CHAR> serverName, DnsRecordType dnstype)
 	{
-		for (UINT32 i = 0; i < N; i++)
+		for (USIZE i = 0; i < N; i++)
 		{
 			auto result = ResolveOverHttp(host, ips[i], serverName, dnstype);
 			if (result)

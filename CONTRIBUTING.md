@@ -373,6 +373,22 @@ Use `Span<T>` for writable buffers and `Span<const T>` for read-only views. `Spa
 - Core primitives that Span itself is built on (e.g., `Memory::Copy`, `Memory::Set`, `Memory::Compare`) — they take raw `(PVOID, PCVOID, USIZE)` by design.
 - Null-terminated string functions (e.g., `StringUtils::Length`, `StringUtils::Compare`, `StringUtils::Equals`) — they compute length from the null terminator, so they are string parameters with implicit length, not buffer parameters. These typically have `Span` overloads as well for callers that already know the length.
 
+**Prefer `Span<T, N>` (static extent) when the size is a compile-time constant** — If a function always receives a fixed-size buffer, use `Span<T, N>` instead of `Span<T>`. Static extent encodes the size in the type, enables compile-time bounds checks via `static_assert`, and lets the compiler use the constant directly (loop bounds, `memcpy` sizes) instead of loading it from a member. Use a template parameter when the exact size varies per call site but is still known at compile time:
+
+```cpp
+// Bad — size is known at compile time but erased to a runtime value:
+void ProcessBlock(Span<const UINT8> block);
+
+// Good — size is part of the type:
+void ProcessBlock(Span<const UINT8, 64> block);
+
+// Good — size varies per call site but is still compile-time:
+template <USIZE N>
+void ProcessBlocks(Span<const UINT8, N> data);
+```
+
+`Span<T, N>` implicitly converts to `Span<T>` (static-to-dynamic), so callers with static-extent spans can pass them to functions that accept dynamic-extent spans without explicit conversion. Reserve `Span<T>` (dynamic extent) for cases where the size is genuinely only known at runtime (e.g., heap allocations, parsed lengths, user-supplied buffers).
+
 **Do not cache `Span::Size()` into a read-only local variable** — `Size()` is `constexpr FORCE_INLINE` and compiles to a direct member access, so there is no cost to calling it repeatedly. Caching it into a local just for loop bounds or repeated comparisons adds a redundant variable with no benefit. Mutable counters initialized from `Size()` and derived computations from multiple `Size()` calls are fine:
 
 ```cpp

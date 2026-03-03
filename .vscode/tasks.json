@@ -98,6 +98,24 @@
       "group": "build"
     },
     {
+      "label": "windows-armv7a-debug",
+      "type": "shell",
+      "command": "cmake --preset windows-armv7a-debug && cmake --build --preset windows-armv7a-debug",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "windows-armv7a-release",
+      "type": "shell",
+      "command": "cmake --preset windows-armv7a-release && cmake --build --preset windows-armv7a-release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
       "label": "linux-i386-debug",
       "type": "shell",
       "command": "cmake --preset linux-i386-debug && cmake --build --preset linux-i386-debug",
@@ -301,7 +319,8 @@
       "dependsOn": [
         "windows-i386-release",
         "windows-x86_64-release",
-        "windows-aarch64-release"
+        "windows-aarch64-release",
+        "windows-armv7a-release"
       ],
       "group": "build",
       "problemMatcher": []

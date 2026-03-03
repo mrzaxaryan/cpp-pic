@@ -19,6 +19,7 @@
  * - x86_64: rcx->r10 swap, args in r10/rdx/r8/r9 + stack shadow space
  * - i386: all args pushed onto the stack, EAX holds SSN
  * - ARM64: args in x0-x7 + stack, BLR to ntdll stub address in x16
+ * - ARM32: args in r0-r3 + stack, BLX to ntdll stub address in r12
  *
  * @see Using Nt and Zw Versions of the Native System Services Routines
  *      https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/using-nt-and-zw-versions-of-the-native-system-services-routines
@@ -94,6 +95,8 @@ public:
 #include "platform/common/windows/system.i386.h"
 #elif defined(ARCHITECTURE_AARCH64)
 #include "platform/common/windows/system.aarch64.h"
+#elif defined(ARCHITECTURE_ARMV7A)
+#include "platform/common/windows/system.armv7a.h"
 #else
 #error "Unsupported architecture"
 #endif

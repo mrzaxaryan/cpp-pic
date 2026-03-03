@@ -150,11 +150,6 @@ public:
 	constexpr FORCE_INLINE T *end() const { return m_data + m_size; }
 
 	/// @}
-
-	// Stack-only
-	VOID *operator new(USIZE) = delete;
-	VOID operator delete(VOID *) = delete;
-	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 };
 
 // =============================================================================
@@ -287,11 +282,6 @@ public:
 	constexpr FORCE_INLINE T *end() const { return m_data + Extent; }
 
 	/// @}
-
-	// Stack-only
-	VOID *operator new(USIZE) = delete;
-	VOID operator delete(VOID *) = delete;
-	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 };
 
 /** @} */ // end of span group

@@ -140,6 +140,64 @@ jobs:
             build/**/output.exe
             build/**/output.bin
 
+  build-windows-armv7a:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-windows-11-arm
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
+
+      - name: Build with -Oz (no logging, no tests)
+        shell: pwsh
+        run: |
+          cmake --preset windows-armv7a-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset windows-armv7a-release
+
+      - name: Get sizes
+        id: sizes
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1
+          $bin = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+          $exeSize = if ($exe) { $exe.Length } else { 0 }
+          $binSize = if ($bin) { $bin.Length } else { 0 }
+          $result = "windows-armv7a,$exeSize,$binSize"
+          echo "result=$result" >> $env:GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-windows-armv7a
+          retention-days: 1
+          path: |
+            build/**/output.exe
+            build/**/output.bin
+
   build-linux:
     runs-on: ubuntu-22.04
     strategy:
@@ -367,7 +425,7 @@ jobs:
 
   update-readme:
     if: always()
-    needs: [build-windows, build-windows-aarch64, build-linux, build-macos, build-uefi, build-solaris]
+    needs: [build-windows, build-windows-aarch64, build-windows-armv7a, build-linux, build-macos, build-uefi, build-solaris]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -544,6 +602,7 @@ jobs:
               ("Windows", [
                   ("i386", "windows_i386"),
                   ("x86_64", "windows_x86_64"),
+                  ("armv7a", "windows_armv7a"),
                   ("aarch64", "windows_aarch64"),
               ]),
               ("Linux", [

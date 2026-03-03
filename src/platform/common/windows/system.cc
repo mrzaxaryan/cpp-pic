@@ -19,7 +19,7 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64)
 	UINT32 exportDirRva  = *(UINT32*)(ntHeaders + 0x88);
 	UINT32 exportDirSize = *(UINT32*)(ntHeaders + 0x8C);
-#elif defined(ARCHITECTURE_I386)
+#elif defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
 	UINT32 exportDirRva  = *(UINT32*)(ntHeaders + 0x78);
 	UINT32 exportDirSize = *(UINT32*)(ntHeaders + 0x7C);
 #else
@@ -80,6 +80,30 @@ SYSCALL_ENTRY System::ResolveSyscallEntry(UINT64 functionNameHash)
 				if ((instrs[k] & 0xFFE0001F) == 0xD4000001 && instrs[k + 1] == 0xD65F03C0)
 				{
 					result.SyscallAddress = (PVOID)&instrs[k];
+					break;
+				}
+			}
+			if (!result.SyscallAddress)
+				return result;
+		}
+#elif defined(ARCHITECTURE_ARMV7A)
+		{
+			// ARM32 ntdll stubs (Thumb-2 mode):
+			// MOV.W r12, #SSN    (variable length Thumb-2 encoding)
+			// SVC   #1           (Thumb-2: 0xDF01)
+			// BX    LR           (Thumb-2: 0x4770)
+			//
+			// We scan for the SVC #1 halfword to locate the stub, then set
+			// the syscall address to the function entry with bit 0 set
+			// for correct Thumb interworking via BLX.
+			UINT8* funcAddr = base + funcRva;
+			UINT16* hw = (UINT16*)funcAddr;
+			for (UINT32 k = 0; k < 16; k++)
+			{
+				if (hw[k] == 0xDF01) // SVC #1 in Thumb encoding
+				{
+					// Set bit 0 for Thumb interworking
+					result.SyscallAddress = (PVOID)((USIZE)funcAddr | 1);
 					break;
 				}
 			}

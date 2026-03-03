@@ -43,12 +43,14 @@ PROC_THREAD_ATTRIBUTE_MACHINE_TYPE = 0x00020019
 MACHINE_TYPE = {
     'i386':    0x014c,  # IMAGE_FILE_MACHINE_I386
     'x86_64':  0x8664,  # IMAGE_FILE_MACHINE_AMD64
+    'armv7a':  0x01C4,  # IMAGE_FILE_MACHINE_ARMNT (Thumb-2 Little-Endian)
     'aarch64': 0xAA64,  # IMAGE_FILE_MACHINE_ARM64
 }
 
 HOST_PROCESS = {
     'i386':    r'C:\Windows\SysWOW64\cmd.exe',
     'x86_64':  r'C:\Windows\System32\cmd.exe',
+    'armv7a':  r'C:\Windows\SysArm32\cmd.exe',
     'aarch64': r'C:\Windows\System32\cmd.exe',
 }
 

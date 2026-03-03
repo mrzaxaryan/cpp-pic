@@ -71,6 +71,29 @@
             "preLaunchTask": "windows-aarch64-debug"
         },
         {
+            "name": "windows-armv7a-pic",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/loader.py",
+            "args": [
+                "--arch",
+                "armv7a",
+                "${workspaceFolder}/build/release/windows/armv7a/output.bin"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "windows-armv7a-release"
+        },
+        {
+            "name": "windows-armv7a-debug",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/windows/armv7a/output.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "preLaunchTask": "windows-armv7a-debug"
+        },
+        {
             "name": "macos-x86_64-release (PIC)",
             "type": "debugpy",
             "request": "launch",

@@ -87,6 +87,24 @@
             ]
         },
         {
+            "name": "windows-armv7a",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-arm",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_ARMV7A",
+                "PLATFORM_WINDOWS",
+                "PLATFORM_WINDOWS_ARMV7A",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/windows"
+            ]
+        },
+        {
             "name": "linux-i386",
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
             "intelliSenseMode": "linux-clang-x86",

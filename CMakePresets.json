@@ -97,6 +97,32 @@
       }
     },
     {
+      "name": "windows-armv7a-debug",
+      "displayName": "Windows ARMv7-A (Debug)",
+      "description": "Windows 32-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-armv7a-release",
+      "displayName": "Windows ARMv7-A (Release)",
+      "description": "Windows 32-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
       "name": "linux-i386-debug",
       "displayName": "Linux i386 (Debug)",
       "description": "Linux 32-bit x86 debug build",
@@ -407,6 +433,14 @@
     {
       "name": "windows-aarch64-release",
       "configurePreset": "windows-aarch64-release"
+    },
+    {
+      "name": "windows-armv7a-debug",
+      "configurePreset": "windows-armv7a-debug"
+    },
+    {
+      "name": "windows-armv7a-release",
+      "configurePreset": "windows-armv7a-release"
     },
     {
       "name": "linux-i386-debug",

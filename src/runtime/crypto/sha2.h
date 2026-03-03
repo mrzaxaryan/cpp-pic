@@ -99,17 +99,17 @@ struct SHA256Traits
 
 	/**
 	 * @brief Packs 4 bytes into a 32-bit word (big-endian)
-	 * @param str Input byte span (must be at least sizeof(Word) bytes)
+	 * @param str Input byte span (exactly sizeof(Word) bytes)
 	 * @param x Output word reference
 	 */
-	static constexpr FORCE_INLINE VOID Pack(Span<const UINT8> str, Word &x);
+	static constexpr FORCE_INLINE VOID Pack(Span<const UINT8, sizeof(Word)> str, Word &x);
 
 	/**
 	 * @brief Unpacks a 32-bit word into 4 bytes (big-endian)
 	 * @param x Input word
-	 * @param str Output byte span (must be at least sizeof(Word) bytes)
+	 * @param str Output byte span (exactly sizeof(Word) bytes)
 	 */
-	static constexpr FORCE_INLINE VOID Unpack(Word x, Span<UINT8> str);
+	static constexpr FORCE_INLINE VOID Unpack(Word x, Span<UINT8, sizeof(Word)> str);
 
 	/** @brief SHA-256 Sigma0 function: ROTR(x,2) XOR ROTR(x,13) XOR ROTR(x,22) */
 	static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr32(x, 2) ^ BitOps::Rotr32(x, 13) ^ BitOps::Rotr32(x, 22); }
@@ -159,17 +159,17 @@ struct SHA384Traits
 
 	/**
 	 * @brief Packs 8 bytes into a 64-bit word (big-endian)
-	 * @param str Input byte span (must be at least sizeof(Word) bytes)
+	 * @param str Input byte span (exactly sizeof(Word) bytes)
 	 * @param x Output word reference
 	 */
-	static constexpr FORCE_INLINE VOID Pack(Span<const UINT8> str, Word &x);
+	static constexpr FORCE_INLINE VOID Pack(Span<const UINT8, sizeof(Word)> str, Word &x);
 
 	/**
 	 * @brief Unpacks a 64-bit word into 8 bytes (big-endian)
 	 * @param x Input word
-	 * @param str Output byte span (must be at least sizeof(Word) bytes)
+	 * @param str Output byte span (exactly sizeof(Word) bytes)
 	 */
-	static constexpr FORCE_INLINE VOID Unpack(Word x, Span<UINT8> str);
+	static constexpr FORCE_INLINE VOID Unpack(Word x, Span<UINT8, sizeof(Word)> str);
 
 	/** @brief SHA-384 Sigma0 function: ROTR(x,28) XOR ROTR(x,34) XOR ROTR(x,39) */
 	static constexpr FORCE_INLINE Word F1(Word x) { return BitOps::Rotr64(x, 28) ^ BitOps::Rotr64(x, 34) ^ BitOps::Rotr64(x, 39); }

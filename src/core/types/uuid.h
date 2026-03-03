@@ -14,10 +14,10 @@ class UUID {
 
         static UUID RandomUUID(){
             UUID uuid;
-            Random rng; // your random generator
+            Random rng; // Random class for random number generation
 
             for (INT32 i = 0; i < 16; i++){
-                uuid.data[i] = (UINT8)rng.Get();
+                uuid.data[i] = (UINT8)(rng.Get() & 0xFF); // Get random byte
             }
 
             return uuid;
@@ -68,7 +68,7 @@ class UUID {
                 if(i == 3 || i == 5 || i == 7 || i == 9) buffer[index++] = '-';
             }
             buffer[index] = '\0';
-    }
+        }
 
         UINT64 GetMostSignificantBits(){
             UINT64 msb = 0;
@@ -78,7 +78,7 @@ class UUID {
             return msb;
         }
 
-        UINT64 GetLeastSignficantBits(){
+        UINT64 GetLeastSignificantBits(){
             UINT64 lsb = 0;
             for(INT32 i = 8; i < 16; i++){
                 lsb = (lsb << 8) | data[i];

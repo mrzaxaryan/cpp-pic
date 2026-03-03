@@ -34,6 +34,12 @@ if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(--strip-all --gc-sections)
 endif()
 
+# RISC-V 64: merge .rodata (LTO constant pools) into .text so the
+# PIC binary contains the constant-pool data that auipc+ld references.
+if(PIR_ARCH STREQUAL "riscv64")
+    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.riscv64.ld)
+endif()
+
 list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
 
 # ELFOSABI patch — LLD produces ELFOSABI_NONE; FreeBSD requires

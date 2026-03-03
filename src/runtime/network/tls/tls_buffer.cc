@@ -54,14 +54,14 @@ Result<void, Error> TlsBuffer::SetSize(INT32 newSize)
 
 VOID TlsBuffer::Clear()
 {
-    if (this->buffer && this->ownsMemory)
+    if (buffer && ownsMemory)
     {
-        delete[] this->buffer;
-        this->buffer = nullptr;
+        delete[] buffer;
+        buffer = nullptr;
     }
-    this->size = 0;
-    this->capacity = 0;
-    this->readPos = 0;
+    size = 0;
+    capacity = 0;
+    readPos = 0;
 }
 
 /// @brief Ensure there is enough capacity in the TLS buffer to append additional data
@@ -129,8 +129,13 @@ VOID TlsBuffer::Consume(INT32 bytes)
 
 VOID TlsBuffer::Read(Span<CHAR> buf)
 {
-    Memory::Copy(buf.Data(), this->buffer + this->readPos, buf.Size());
-    this->readPos += (INT32)buf.Size();
+    INT32 available = size - readPos;
+    INT32 count = (INT32)buf.Size();
+    if (count > available)
+        count = available;
+    if (count > 0)
+        Memory::Copy(buf.Data(), buffer + readPos, count);
+    readPos += count;
 }
 
 /// @brief Read a 24-bit big-endian unsigned integer from the TLS buffer
@@ -138,9 +143,14 @@ VOID TlsBuffer::Read(Span<CHAR> buf)
 
 UINT32 TlsBuffer::ReadU24BE()
 {
-    UINT8 b0 = (UINT8)this->buffer[this->readPos];
-    UINT8 b1 = (UINT8)this->buffer[this->readPos + 1];
-    UINT8 b2 = (UINT8)this->buffer[this->readPos + 2];
-    this->readPos += 3;
+    if (readPos + 3 > size)
+    {
+        readPos = size;
+        return 0;
+    }
+    UINT8 b0 = (UINT8)buffer[readPos];
+    UINT8 b1 = (UINT8)buffer[readPos + 1];
+    UINT8 b2 = (UINT8)buffer[readPos + 2];
+    readPos += 3;
     return ((UINT32)b0 << 16) | ((UINT32)b1 << 8) | (UINT32)b2;
 }

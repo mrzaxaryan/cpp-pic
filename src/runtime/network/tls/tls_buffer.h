@@ -89,6 +89,11 @@ public:
     template <typename T>
     T Read()
     {
+        if (readPos + (INT32)sizeof(T) > size)
+        {
+            readPos = size;
+            return T{};
+        }
         T value;
         Memory::Copy(&value, buffer + readPos, sizeof(T));
         readPos += sizeof(T);
@@ -103,12 +108,6 @@ public:
     // Accessors
     INT32 GetSize() const { return size; }
     PCHAR GetBuffer() const { return buffer; }
-    VOID SetBuffer(PCHAR buf)
-    {
-        buffer = buf;
-        if (!ownsMemory)
-            size = 0;
-    }
     INT32 GetReadPosition() const { return readPos; }
     VOID AdvanceReadPosition(INT32 sz) { readPos += sz; }
     VOID ResetReadPos() { readPos = 0; }

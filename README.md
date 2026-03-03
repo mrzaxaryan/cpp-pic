@@ -68,96 +68,67 @@
 
 <table>
 <tr>
-<th rowspan="2" width="120">Platform</th>
-<th colspan="2" width="220">i386</th>
-<th colspan="2" width="220">x86_64</th>
-<th colspan="2" width="220">armv7a</th>
-<th colspan="2" width="220">aarch64</th>
-<th colspan="2" width="220">riscv32</th>
-<th colspan="2" width="220">riscv64</th>
-</tr>
-<tr>
-<th>Exe</th><th>Bin</th>
-<th>Exe</th><th>Bin</th>
-<th>Exe</th><th>Bin</th>
-<th>Exe</th><th>Bin</th>
-<th>Exe</th><th>Bin</th>
-<th>Exe</th><th>Bin</th>
+<th width="120">Platform</th>
+<th width="220">i386</th>
+<th width="220">x86_64</th>
+<th width="220">armv7a</th>
+<th width="220">aarch64</th>
+<th width="220">riscv32</th>
+<th width="220">riscv64</th>
 </tr>
 <tr>
 <td>Windows</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_i386_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_armv7a_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_armv7a_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center">-</td><td align="center">-</td>
+<td align="center">-</td>
+<td align="center">-</td>
 </tr>
 <tr>
 <td>macOS</td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center">-</td><td align="center">-</td>
+<td align="center">-</td>
+<td align="center">-</td>
 </tr>
 <tr>
 <td>Linux</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_i386_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_armv7a_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_armv7a_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_riscv32_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_riscv32_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_riscv64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_riscv64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 </tr>
 <tr>
 <td>Solaris</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_i386_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center">-</td><td align="center">-</td>
+<td align="center">-</td>
+<td align="center">-</td>
 </tr>
 <tr>
 <td>FreeBSD</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_i386_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_riscv64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_riscv64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 </tr>
 <tr>
 <td>UEFI</td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.uefi_x86_64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.uefi_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.uefi_aarch64_exe&label=&style=for-the-badge&color=blue" alt="Exe"></td>
+<td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.uefi_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td><td align="center">-</td>
-<td align="center">-</td><td align="center">-</td>
+<td align="center">-</td>
+<td align="center">-</td>
 </tr>
 </table>
 

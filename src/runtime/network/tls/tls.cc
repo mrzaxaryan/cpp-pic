@@ -219,7 +219,9 @@ Result<void, Error> TlsClient::SendClientFinished()
     TlsBuffer verify;
     sendBuffer.Clear();
     LOG_DEBUG("Sending Client Finished for client: %p", this);
-    crypto.ComputeVerify(verify, CIPHER_HASH_SIZE, 0);
+    auto verifyResult = crypto.ComputeVerify(verify, CIPHER_HASH_SIZE, 0);
+    if (!verifyResult)
+        return Result<void, Error>::Err(verifyResult, Error::Tls_ClientFinishedFailed);
     LOG_DEBUG("Computed verify data for Client Finished, size: %d bytes", verify.GetSize());
     sendBuffer.Append<CHAR>(MSG_FINISHED);
     sendBuffer.Append<CHAR>(0);
@@ -396,7 +398,9 @@ Result<void, Error> TlsClient::VerifyFinished(TlsBuffer &reader)
         return Result<void, Error>::Err(Error::Tls_VerifyFinishedFailed);
     LOG_DEBUG("Verifying Finished for client: %p, size: %d bytes", this, server_finished_size);
     TlsBuffer verify;
-    crypto.ComputeVerify(verify, server_finished_size, 1);
+    auto verifyResult = crypto.ComputeVerify(verify, server_finished_size, 1);
+    if (!verifyResult)
+        return Result<void, Error>::Err(verifyResult, Error::Tls_VerifyFinishedFailed);
     LOG_DEBUG("Computed verify data for Finished, size: %d bytes", verify.GetSize());
 
     if (Memory::Compare(verify.GetBuffer(), reader.GetBuffer() + reader.GetReadPosition(), server_finished_size) != 0)

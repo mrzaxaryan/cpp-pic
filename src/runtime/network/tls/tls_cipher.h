@@ -92,6 +92,11 @@ public:
         Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
         // Zero sensitive key material in the moved-from object immediately after copying
         Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
+        other.cipherCount = 0;
+        other.clientSeqNum = 0;
+        other.serverSeqNum = 0;
+        other.cipherIndex = -1;
+        other.isEncoding = false;
     }
 
     TlsCipher &operator=(TlsCipher &&other) noexcept
@@ -116,6 +121,11 @@ public:
             Memory::Copy(&data13, &other.data13, Math::Max(sizeof(data13), sizeof(data12)));
             // Zero sensitive key material in the moved-from object immediately after copying
             Memory::Zero(&other.data13, Math::Max(sizeof(other.data13), sizeof(other.data12)));
+            other.cipherCount = 0;
+            other.clientSeqNum = 0;
+            other.serverSeqNum = 0;
+            other.cipherIndex = -1;
+            other.isEncoding = false;
         }
         return *this;
     }
@@ -134,7 +144,7 @@ public:
     [[nodiscard]] Result<void, Error> ComputePublicKey(INT32 eccIndex, TlsBuffer &out);
     [[nodiscard]] Result<void, Error> ComputePreKey(ECC_GROUP ecc, Span<const CHAR> serverKey, TlsBuffer &premasterKey);
     [[nodiscard]] Result<void, Error> ComputeKey(ECC_GROUP ecc, Span<const CHAR> serverKey, Span<CHAR> finishedHash);
-    VOID ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
+    [[nodiscard]] Result<void, Error> ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote);
     // Functions for encoding and decoding TLS records
     VOID Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal);
     [[nodiscard]] Result<void, Error> Decode(TlsBuffer &inout, INT32 version);

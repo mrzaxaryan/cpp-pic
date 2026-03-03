@@ -36,8 +36,8 @@ USIZE Environment::GetVariable(const CHAR *name, Span<CHAR> buffer) noexcept
 
 	// Open /proc/self/environ
 	const CHAR *procEnvPath = "/proc/self/environ"_embed;
-#if defined(ARCHITECTURE_AARCH64)
-	// aarch64 only has openat syscall
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+	// aarch64/riscv only has openat syscall
 	SSIZE fd = System::Call(SYS_OPENAT, (USIZE)-100, (USIZE)procEnvPath, 0, 0);
 	if (fd < 0)
 	{

@@ -20,6 +20,10 @@
 #include "platform/common/linux/syscall.aarch64.h"
 #elif defined(ARCHITECTURE_ARMV7A)
 #include "platform/common/linux/syscall.armv7a.h"
+#elif defined(ARCHITECTURE_RISCV64)
+#include "platform/common/linux/syscall.riscv64.h"
+#elif defined(ARCHITECTURE_RISCV32)
+#include "platform/common/linux/syscall.riscv32.h"
 #else
 #error "Unsupported architecture"
 #endif
@@ -44,7 +48,7 @@ constexpr INT32 O_NONBLOCK = 0x0800;
 
 #if defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_I386)
 constexpr INT32 O_DIRECTORY = 0x10000;
-#elif defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_ARMV7A)
+#elif defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_ARMV7A) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
 constexpr INT32 O_DIRECTORY = 0x4000;
 #endif
 

@@ -11,8 +11,8 @@
 // Fork syscall wrapper
 Result<SSIZE, Error> Process::Fork() noexcept
 {
-#if defined(ARCHITECTURE_AARCH64)
-	// aarch64 uses clone with SIGCHLD flag for fork-like behavior
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+	// aarch64/riscv uses clone with SIGCHLD flag for fork-like behavior
 	constexpr USIZE SIGCHLD = 17;
 	SSIZE result = System::Call(SYS_CLONE, SIGCHLD, 0, 0, 0, 0);
 #else
@@ -28,8 +28,8 @@ Result<SSIZE, Error> Process::Fork() noexcept
 // Dup2 syscall wrapper
 Result<SSIZE, Error> Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
 {
-#if defined(ARCHITECTURE_AARCH64)
-	// aarch64 uses dup3 with flags=0 instead of dup2
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+	// aarch64/riscv uses dup3 with flags=0 instead of dup2
 	SSIZE result = System::Call(SYS_DUP3, (USIZE)oldfd, (USIZE)newfd, 0);
 #else
 	SSIZE result = System::Call(SYS_DUP2, (USIZE)oldfd, (USIZE)newfd);

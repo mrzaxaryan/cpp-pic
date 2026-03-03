@@ -188,6 +188,42 @@
       "group": "build"
     },
     {
+      "label": "linux-riscv32-debug",
+      "type": "shell",
+      "command": "cmake --preset linux-riscv32-debug && cmake --build --preset linux-riscv32-debug",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "linux-riscv32-release",
+      "type": "shell",
+      "command": "cmake --preset linux-riscv32-release && cmake --build --preset linux-riscv32-release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "linux-riscv64-debug",
+      "type": "shell",
+      "command": "cmake --preset linux-riscv64-debug && cmake --build --preset linux-riscv64-debug",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "linux-riscv64-release",
+      "type": "shell",
+      "command": "cmake --preset linux-riscv64-release && cmake --build --preset linux-riscv64-release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
       "label": "macos-x86_64-debug",
       "type": "shell",
       "command": "cmake --preset macos-x86_64-debug && cmake --build --preset macos-x86_64-debug",
@@ -368,6 +404,24 @@
       "group": "build"
     },
     {
+      "label": "freebsd-riscv64-debug",
+      "type": "shell",
+      "command": "cmake --preset freebsd-riscv64-debug && cmake --build --preset freebsd-riscv64-debug",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
+      "label": "freebsd-riscv64-release",
+      "type": "shell",
+      "command": "cmake --preset freebsd-riscv64-release && cmake --build --preset freebsd-riscv64-release",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": "build"
+    },
+    {
       "label": "Build All Windows",
       "dependsOrder": "parallel",
       "dependsOn": [
@@ -386,7 +440,9 @@
         "linux-i386-release",
         "linux-x86_64-release",
         "linux-armv7a-release",
-        "linux-aarch64-release"
+        "linux-aarch64-release",
+        "linux-riscv32-release",
+        "linux-riscv64-release"
       ],
       "group": "build",
       "problemMatcher": []
@@ -428,7 +484,8 @@
       "dependsOn": [
         "freebsd-i386-release",
         "freebsd-x86_64-release",
-        "freebsd-aarch64-release"
+        "freebsd-aarch64-release",
+        "freebsd-riscv64-release"
       ],
       "group": "build",
       "problemMatcher": []

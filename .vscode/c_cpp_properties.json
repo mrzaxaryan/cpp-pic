@@ -167,11 +167,49 @@
             "intelliSenseMode": "linux-clang-arm64",
             "cStandard": "c17",
             "cppStandard": "c++23",
-            
+
             "defines": [
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_LINUX",
                 "PLATFORM_LINUX_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-riscv32",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV32",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_RISCV32",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-riscv64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_RISCV64",
                 "ENABLE_LOGGING"
             ],
             "includePath": [
@@ -358,6 +396,24 @@
                 "ARCHITECTURE_AARCH64",
                 "PLATFORM_FREEBSD",
                 "PLATFORM_FREEBSD_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/freebsd"
+            ]
+        },
+        {
+            "name": "freebsd-riscv64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV64",
+                "PLATFORM_FREEBSD",
+                "PLATFORM_FREEBSD_RISCV64",
                 "ENABLE_LOGGING"
             ],
             "includePath": [

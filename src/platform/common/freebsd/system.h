@@ -4,7 +4,7 @@
  *
  * @details Architecture-selection header that includes the correct arch-specific
  * System::Call implementation for the current build target. Supported FreeBSD
- * architectures are i386, x86_64, and AArch64.
+ * architectures are i386, x86_64, AArch64, and RISC-V 64.
  */
 #pragma once
 
@@ -14,6 +14,8 @@
 #include "platform/common/freebsd/system.i386.h"
 #elif defined(ARCHITECTURE_AARCH64)
 #include "platform/common/freebsd/system.aarch64.h"
+#elif defined(ARCHITECTURE_RISCV64)
+#include "platform/common/freebsd/system.riscv64.h"
 #else
 #error "Unsupported architecture"
 #endif

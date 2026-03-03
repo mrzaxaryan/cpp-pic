@@ -16,8 +16,14 @@ static FORCE_INLINE UINT64 GetHardwareTimestamp()
 	__asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(virtualTimerValue));
 	return virtualTimerValue;
 
-#elif defined(ARCHITECTURE_ARMV7A)
-	// ARMv7-A (32-bit): Use syscall-based monotonic timestamp
+#elif defined(ARCHITECTURE_RISCV64)
+	// RISC-V 64-bit: Read the time CSR
+	UINT64 val;
+	__asm__ __volatile__("rdtime %0" : "=r"(val));
+	return val;
+
+#elif defined(ARCHITECTURE_ARMV7A) || defined(ARCHITECTURE_RISCV32)
+	// 32-bit ARM/RISC-V: Use syscall-based monotonic timestamp
 	// This uses clock_gettime(CLOCK_MONOTONIC) via PLATFORM
 	return DateTime::GetMonotonicNanoseconds();
 

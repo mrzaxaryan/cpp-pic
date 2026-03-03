@@ -150,6 +150,12 @@ public:
 	constexpr FORCE_INLINE T *end() const { return m_data + m_size; }
 
 	/// @}
+
+	// Stack-only: prevent heap allocation
+	void *operator new(USIZE) = delete;
+	void *operator new[](USIZE) = delete;
+	void operator delete(void *) = delete;
+	void operator delete[](void *) = delete;
 };
 
 // =============================================================================
@@ -282,6 +288,12 @@ public:
 	constexpr FORCE_INLINE T *end() const { return m_data + Extent; }
 
 	/// @}
+
+	// Stack-only: prevent heap allocation
+	void *operator new(USIZE) = delete;
+	void *operator new[](USIZE) = delete;
+	void operator delete(void *) = delete;
+	void operator delete[](void *) = delete;
 };
 
 /** @} */ // end of span group

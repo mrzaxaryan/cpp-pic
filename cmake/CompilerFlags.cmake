@@ -23,11 +23,7 @@ set(PIR_BASE_FLAGS
 )
 
 # Architecture-specific
-if(PIR_ARCH MATCHES "^(i386|x86_64)$")
-    list(APPEND PIR_BASE_FLAGS -mno-stack-arg-probe -mno-implicit-float)
-else()
-    list(APPEND PIR_BASE_FLAGS -mno-implicit-float)
-endif()
+list(APPEND PIR_BASE_FLAGS -mno-stack-arg-probe -mno-implicit-float)
 
 # Build-type-specific
 if(PIR_BUILD_TYPE STREQUAL "debug")

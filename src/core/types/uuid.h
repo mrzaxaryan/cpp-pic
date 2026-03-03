@@ -19,7 +19,6 @@
 #include "core/types/result.h"
 #include "core/types/embedded/embedded_string.h"
 #include "core/memory/memory.h"
-#include "platform/system/random.h"
 
 /**
  * @class UUID
@@ -49,26 +48,6 @@ public:
 	UUID(Span<const UINT8, 16> bytes)
 	{
 		Memory::Copy(data, bytes.Data(), 16);
-	}
-
-	/**
-	 * @brief Generate a random (version 4) UUID
-	 * @return Randomly generated UUID
-	 *
-	 * @see RFC 9562 Section 5.4 — UUID Version 4
-	 *      https://datatracker.ietf.org/doc/html/rfc9562#section-5.4
-	 */
-	static UUID RandomUUID()
-	{
-		UUID uuid;
-		Random rng;
-
-		for (INT32 i = 0; i < 16; i++)
-		{
-			uuid.data[i] = (UINT8)rng.Get();
-		}
-
-		return uuid;
 	}
 
 	/**
@@ -122,7 +101,7 @@ public:
 	 * @param buffer Output buffer (must be at least 37 bytes: 32 hex + 4 dashes + null)
 	 * @return Ok on success, Err if the buffer is too small
 	 */
-	[[nodiscard]] Result<void, Error> ToString(Span<CHAR> buffer)
+	[[nodiscard]] Result<void, Error> ToString(Span<CHAR> buffer) const
 	{
 		if (buffer.Size() < 37)
 			return Result<void, Error>::Err(Error::Uuid_ToStringFailed);
@@ -146,7 +125,7 @@ public:
 	 * @brief Get the most significant 64 bits of the UUID
 	 * @return Upper 64 bits (bytes 0-7)
 	 */
-	UINT64 GetMostSignificantBits()
+	UINT64 GetMostSignificantBits() const
 	{
 		UINT64 msb = 0;
 		for (INT32 i = 0; i < 8; i++)
@@ -160,7 +139,7 @@ public:
 	 * @brief Get the least significant 64 bits of the UUID
 	 * @return Lower 64 bits (bytes 8-15)
 	 */
-	UINT64 GetLeastSignificantBits()
+	UINT64 GetLeastSignificantBits() const
 	{
 		UINT64 lsb = 0;
 		for (INT32 i = 8; i < 16; i++)

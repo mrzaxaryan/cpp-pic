@@ -56,6 +56,8 @@ public:
 	{
 		constexpr UINT32 bits = sizeof(T) * 8;
 		n &= (bits - 1);
+		if (n == 0)
+			return x;
 		return (x >> n) | (x << (bits - n));
 	}
 
@@ -81,6 +83,8 @@ public:
 	{
 		constexpr UINT32 bits = sizeof(T) * 8;
 		n &= (bits - 1);
+		if (n == 0)
+			return x;
 		return (x << n) | (x >> (bits - n));
 	}
 

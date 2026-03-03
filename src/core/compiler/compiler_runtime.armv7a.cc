@@ -639,26 +639,6 @@ extern "C"
 #if defined(PLATFORM_WINDOWS)
 
 	/**
-	 * __chkstk - Windows stack probing function
-	 *
-	 * Windows calling convention:
-	 *   Input:  requested stack size in r4
-	 *   Output: none (touches stack pages to trigger guard page allocation)
-	 *
-	 * Called by compiler when a function's local variables exceed a page size.
-	 * In PIC/shellcode context, we implement this as a no-op since we don't
-	 * rely on the Windows guard page mechanism for stack growth.
-	 *
-	 * @note Uses naked attribute to avoid prologue/epilogue generation,
-	 * since __chkstk must not use the stack itself.
-	 */
-	COMPILER_RUNTIME
-	__attribute__((naked)) void __chkstk(void)
-	{
-		__asm__ volatile("bx lr\n");
-	}
-
-	/**
 	 * __rt_udiv - Windows ARM unsigned 32-bit division with remainder
 	 *
 	 * Windows ARM calling convention (DIFFERENT from EABI __aeabi_uidiv):

@@ -47,8 +47,6 @@
 /// @{
 #include "core/types/primitives.h"
 #include "core/types/span.h"
-/// @}
-/// @{
 #include "core/types/error.h"
 /// @}
 

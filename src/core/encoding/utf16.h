@@ -113,19 +113,28 @@ public:
 		if (codepoint < 0x80)
 		{
 			// 1-byte sequence (ASCII)
+			if (output.Size() < 1)
+				return 0;
 			output[0] = (CHAR)codepoint;
 			return 1;
 		}
 		else if (codepoint < 0x800)
 		{
 			// 2-byte sequence
+			if (output.Size() < 2)
+				return 0;
 			output[0] = (CHAR)(0xC0 | (codepoint >> 6));
 			output[1] = (CHAR)(0x80 | (codepoint & 0x3F));
 			return 2;
 		}
 		else if (codepoint < 0x10000)
 		{
+			// Reject surrogates (U+D800 to U+DFFF) per RFC 3629 Section 3
+			if (codepoint >= 0xD800 && codepoint <= 0xDFFF)
+				return 0;
 			// 3-byte sequence
+			if (output.Size() < 3)
+				return 0;
 			output[0] = (CHAR)(0xE0 | (codepoint >> 12));
 			output[1] = (CHAR)(0x80 | ((codepoint >> 6) & 0x3F));
 			output[2] = (CHAR)(0x80 | (codepoint & 0x3F));
@@ -134,6 +143,8 @@ public:
 		else if (codepoint < 0x110000)
 		{
 			// 4-byte sequence
+			if (output.Size() < 4)
+				return 0;
 			output[0] = (CHAR)(0xF0 | (codepoint >> 18));
 			output[1] = (CHAR)(0x80 | ((codepoint >> 12) & 0x3F));
 			output[2] = (CHAR)(0x80 | ((codepoint >> 6) & 0x3F));

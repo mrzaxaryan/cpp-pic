@@ -104,17 +104,20 @@ Result<IPAddress, Error> IPAddress::FromString(Span<const CHAR> ipString)
 		{
 			UINT32 tailGroups = groupIndex - doubleColonPos;
 
-			// Move tail groups to the end
+			// Move tail groups to the end (iterate backward to handle overlapping ranges)
 			if (tailGroups > 0)
 			{
-				for (UINT32 i = 0; i < tailGroups; i++)
+				for (UINT32 i = tailGroups; i > 0; i--)
 				{
-					UINT32 srcIdx = (groupIndex - tailGroups + i) * 2;
-					UINT32 dstIdx = (8 - tailGroups + i) * 2;
+					UINT32 srcIdx = (groupIndex - tailGroups + (i - 1)) * 2;
+					UINT32 dstIdx = (8 - tailGroups + (i - 1)) * 2;
 					ipv6[dstIdx] = ipv6[srcIdx];
 					ipv6[dstIdx + 1] = ipv6[srcIdx + 1];
-					ipv6[srcIdx] = 0;
-					ipv6[srcIdx + 1] = 0;
+					if (srcIdx != dstIdx)
+					{
+						ipv6[srcIdx] = 0;
+						ipv6[srcIdx + 1] = 0;
+					}
 				}
 			}
 		}

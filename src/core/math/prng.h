@@ -92,13 +92,11 @@ public:
 	/**
 	 * @brief Fill a buffer with pseudorandom bytes
 	 * @param buffer Output buffer to fill
-	 * @return 1 on success
 	 */
-	constexpr FORCE_INLINE INT32 GetArray(Span<UINT8> buffer)
+	constexpr FORCE_INLINE VOID GetArray(Span<UINT8> buffer)
 	{
 		for (USIZE i = 0; i < buffer.Size(); ++i)
 			buffer[i] = (UINT8)(Get() & 0xFF);
-		return 1;
 	}
 
 	/**

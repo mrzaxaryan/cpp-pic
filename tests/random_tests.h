@@ -210,14 +210,7 @@ private:
 		Memory::Zero(buffer, sizeof(buffer));
 
 		// Fill buffer with random bytes
-		INT32 result = rng.GetArray(Span<UINT8>(buffer, 64));
-
-		// Verify success
-		if (result != 1)
-		{
-			LOG_ERROR("GetArray returned %d, expected 1", result);
-			return false;
-		}
+		rng.GetArray(Span<UINT8>(buffer, 64));
 
 		// Verify at least some bytes are non-zero (very unlikely all would be zero)
 		BOOL foundNonZero = false;

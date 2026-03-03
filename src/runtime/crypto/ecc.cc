@@ -786,8 +786,7 @@ Result<UINT32, Error> ECC::ComputeSharedSecret(Span<const UINT8> publicKey, Span
 	ECCPoint peerPoint;
 	UINT64 randomData[MAX_NUM_ECC_DIGITS];
 
-	if (!random.GetArray(Span<UINT8>((UINT8 *)randomData, (USIZE)(this->numEccDigits * sizeof(UINT64)))))
-		return Result<UINT32, Error>::Err(Error::Ecc_SharedSecretFailed);
+	random.GetArray(Span<UINT8>((UINT8 *)randomData, (USIZE)(this->numEccDigits * sizeof(UINT64))));
 
 	this->Bytes2Native(peerPoint.X, publicKey.Subspan(1, this->eccBytes));
 	this->Bytes2Native(peerPoint.Y, publicKey.Subspan(1 + this->eccBytes, this->eccBytes));
@@ -839,7 +838,8 @@ Result<void, Error> ECC::Initialize(INT32 bytes)
 	do
 	{
 		Random random;
-		if (!random.GetArray(Span<UINT8>((UINT8 *)this->privateKey, (USIZE)(this->numEccDigits * sizeof(UINT64)))) || (tries++ >= MAX_TRIES))
+		random.GetArray(Span<UINT8>((UINT8 *)this->privateKey, (USIZE)(this->numEccDigits * sizeof(UINT64))));
+		if (tries++ >= MAX_TRIES)
 			return Result<void, Error>::Err(Error::Ecc_InitFailed);
 		if (this->VliIsZero(this->privateKey))
 			continue;

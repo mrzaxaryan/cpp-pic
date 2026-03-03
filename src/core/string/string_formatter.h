@@ -421,24 +421,39 @@ INT32 StringFormatter::FormatError(BOOL (*writer)(PVOID, TChar), PVOID context, 
 	// Windows/UEFI: hex with 0x prefix (uppercase digits). Runtime/Posix: decimal.
 	if (platform == Error::PlatformKind::Windows || platform == Error::PlatformKind::Uefi)
 	{
-		if (!writer(context, (TChar)'0')) return j; j++;
-		if (!writer(context, (TChar)'x')) return j; j++;
+		if (!writer(context, (TChar)'0'))
+			return j;
+		j++;
+		if (!writer(context, (TChar)'x'))
+			return j;
+		j++;
 		j += FormatUInt64AsHex<TChar>(writer, context, (UINT64)code, 0, 1, 0, false);
 	}
 	else
+	{
 		j += FormatUInt64<TChar>(writer, context, (UINT64)code, 0, 0, 0);
+	}
 
 	// Platform tag for non-Runtime: [W], [P], or [U]
 	TChar tag = 0;
-	if (platform == Error::PlatformKind::Windows)      tag = (TChar)'W';
-	else if (platform == Error::PlatformKind::Posix)   tag = (TChar)'P';
-	else if (platform == Error::PlatformKind::Uefi)    tag = (TChar)'U';
+	if (platform == Error::PlatformKind::Windows)
+		tag = (TChar)'W';
+	else if (platform == Error::PlatformKind::Posix)
+		tag = (TChar)'P';
+	else if (platform == Error::PlatformKind::Uefi)
+		tag = (TChar)'U';
 
 	if (tag)
 	{
-		if (!writer(context, (TChar)'[')) return j; j++;
-		if (!writer(context, tag))        return j; j++;
-		if (!writer(context, (TChar)']')) return j; j++;
+		if (!writer(context, (TChar)'['))
+			return j;
+		j++;
+		if (!writer(context, tag))
+			return j;
+		j++;
+		if (!writer(context, (TChar)']'))
+			return j;
+		j++;
 	}
 
 	return j;
@@ -463,15 +478,25 @@ INT32 StringFormatter::FormatDouble(
 	// Handle NaN (portable check)
 	if (num != num)
 	{
+		INT32 written = 0;
 		INT32 pad = (width > 3) ? (width - 3) : 0;
 		// Right-align: pad before "nan"
 		for (INT32 i = 0; i < pad; ++i)
+		{
 			if (!writer(context, (TChar)' '))
-				return i;
-		writer(context, (TChar)'n');
-		writer(context, (TChar)'a');
-		writer(context, (TChar)'n');
-		return 3 + pad;
+				return written;
+			written++;
+		}
+		if (!writer(context, (TChar)'n'))
+			return written;
+		written++;
+		if (!writer(context, (TChar)'a'))
+			return written;
+		written++;
+		if (!writer(context, (TChar)'n'))
+			return written;
+		written++;
+		return written;
 	}
 
 	BOOL isNegative = false;
@@ -504,24 +529,24 @@ INT32 StringFormatter::FormatDouble(
 		tmp[len++] = (TChar)'-';
 
 	// Integer part
-	UINT64 int_part = (UINT64)num;
-	DOUBLE frac_part = num - int_part;
+	UINT64 intPart = (UINT64)num;
+	DOUBLE fracPart = num - intPart;
 
 	// Convert integer to reversed digits
 	TChar intRev[32];
 	INT32 intN = 0;
 
-	if (int_part == 0)
+	if (intPart == 0)
 	{
 		intRev[intN++] = (TChar)'0';
 	}
 	else
 	{
-		while (int_part != 0 && intN < (INT32)(sizeof(intRev) / sizeof(intRev[0])))
+		while (intPart != 0 && intN < (INT32)(sizeof(intRev) / sizeof(intRev[0])))
 		{
-			UINT32 digit = (UINT32)(int_part % 10);
+			UINT32 digit = (UINT32)(intPart % 10);
 			intRev[intN++] = (TChar)((TChar)'0' + (TChar)digit);
-			int_part /= 10;
+			intPart /= 10;
 		}
 	}
 
@@ -535,14 +560,14 @@ INT32 StringFormatter::FormatDouble(
 		tmp[len++] = (TChar)'.';
 		for (INT32 i = 0; i < precision; ++i)
 		{
-			frac_part *= (DOUBLE)10.0_embed;
-			INT32 d = (INT32)frac_part;
+			fracPart *= (DOUBLE)10.0_embed;
+			INT32 d = (INT32)fracPart;
 			if (d < 0)
 				d = 0;
 			if (d > 9)
 				d = 9;
 			tmp[len++] = (TChar)((TChar)'0' + (TChar)d);
-			frac_part -= d;
+			fracPart -= d;
 		}
 	}
 

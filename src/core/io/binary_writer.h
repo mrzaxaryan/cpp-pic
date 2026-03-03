@@ -59,11 +59,20 @@
 class BinaryWriter
 {
 private:
-	PVOID address;  ///< Base address of the output buffer
-	USIZE offset;   ///< Current write position (bytes from base)
-	USIZE maxSize;  ///< Maximum writable size in bytes
+	UINT8 *address;  ///< Base address of the output buffer
+	USIZE offset;    ///< Current write position (bytes from base)
+	USIZE maxSize;   ///< Maximum writable size in bytes
 
 public:
+	/// @name Heap Operators
+	/// @{
+
+	VOID *operator new(USIZE) = delete;
+	VOID operator delete(VOID *) = delete;
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; } ///< Placement new for Result<BinaryWriter, Error>
+	VOID operator delete(VOID *, PVOID) noexcept {}               ///< Matching placement delete
+
+	/// @}
 	/// @name Constructors
 	/// @{
 
@@ -73,7 +82,7 @@ public:
 	 * @param offset Initial write offset in bytes
 	 */
 	constexpr BinaryWriter(Span<UINT8> data, USIZE offset)
-		: address((PVOID)data.Data()), offset(offset), maxSize(data.Size())
+		: address(data.Data()), offset(offset), maxSize(data.Size())
 	{
 	}
 
@@ -82,7 +91,7 @@ public:
 	 * @param data Span of bytes to write into
 	 */
 	constexpr BinaryWriter(Span<UINT8> data)
-		: address((PVOID)data.Data()), offset(0), maxSize(data.Size())
+		: address(data.Data()), offset(0), maxSize(data.Size())
 	{
 	}
 
@@ -106,7 +115,7 @@ public:
 		if (sizeof(T) > maxSize - offset)
 			return nullptr;
 
-		Memory::Copy((PCHAR)address + offset, &value, sizeof(T));
+		Memory::Copy(address + offset, &value, sizeof(T));
 		offset += sizeof(T);
 		return address;
 	}
@@ -121,7 +130,7 @@ public:
 		if (data.Size() > maxSize - offset)
 			return nullptr;
 
-		Memory::Copy((PCHAR)address + offset, data.Data(), data.Size());
+		Memory::Copy(address + offset, data.Data(), data.Size());
 		offset += data.Size();
 		return address;
 	}
@@ -136,7 +145,7 @@ public:
 		if (maxSize - offset < 1)
 			return nullptr;
 
-		*((PUCHAR)address + offset) = value;
+		*(address + offset) = value;
 		offset += 1;
 		return address;
 	}
@@ -157,7 +166,7 @@ public:
 		if (maxSize - offset < 2)
 			return nullptr;
 
-		PUCHAR p = (PUCHAR)address + offset;
+		UINT8 *p = address + offset;
 		p[0] = (UINT8)(value >> 8);
 		p[1] = (UINT8)(value & 0xFF);
 		offset += 2;
@@ -180,7 +189,7 @@ public:
 		if (maxSize - offset < 3)
 			return nullptr;
 
-		PUCHAR p = (PUCHAR)address + offset;
+		UINT8 *p = address + offset;
 		p[0] = (UINT8)((value >> 16) & 0xFF);
 		p[1] = (UINT8)((value >> 8) & 0xFF);
 		p[2] = (UINT8)(value & 0xFF);
@@ -204,7 +213,7 @@ public:
 		if (maxSize - offset < 4)
 			return nullptr;
 
-		PUCHAR p = (PUCHAR)address + offset;
+		UINT8 *p = address + offset;
 		p[0] = (UINT8)((value >> 24) & 0xFF);
 		p[1] = (UINT8)((value >> 16) & 0xFF);
 		p[2] = (UINT8)((value >> 8) & 0xFF);
@@ -245,7 +254,7 @@ public:
 	/// @{
 
 	/** @brief Get the base address of the output buffer */
-	constexpr PVOID GetAddress() const { return address; }
+	constexpr UINT8 *GetAddress() const { return address; }
 
 	/** @brief Get the current write offset in bytes */
 	constexpr USIZE GetOffset() const { return offset; }

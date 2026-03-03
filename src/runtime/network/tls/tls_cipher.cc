@@ -359,7 +359,7 @@ VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOri
 	UINT16 encSize = (UINT16)ChaCha20Encoder::ComputeSize((INT32)plaintext.Size(), CipherDirection::Encode);
 	aad[3] = (UINT8)(encSize >> 8);
 	aad[4] = (UINT8)(encSize & 0xFF);
-	UINT64 clientSeq = UINT64SwapByteOrder(clientSeqNum++);
+	UINT64 clientSeq = ByteOrder::Swap64(clientSeqNum++);
 	Memory::Copy(aad + 5, &clientSeq, sizeof(UINT64));
 
 	chacha20Context.Encode(sendbuf, plaintext, Span<const UCHAR>(aad));
@@ -382,12 +382,12 @@ Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 	UCHAR aad[13];
 
 	aad[0] = CONTENT_APPLICATION_DATA;
-	aad[1] = UINT16SwapByteOrder(version) >> 8;
-	aad[2] = UINT16SwapByteOrder(version) & 0xff;
+	aad[1] = ByteOrder::Swap16(version) >> 8;
+	aad[2] = ByteOrder::Swap16(version) & 0xff;
 	UINT16 recSize = (UINT16)inout.GetSize();
 	aad[3] = (UINT8)(recSize >> 8);
 	aad[4] = (UINT8)(recSize & 0xFF);
-	UINT64 serverSeq = UINT64SwapByteOrder(serverSeqNum++);
+	UINT64 serverSeq = ByteOrder::Swap64(serverSeqNum++);
 	Memory::Copy(aad + 5, &serverSeq, sizeof(UINT64));
 
 	auto decodeResult = chacha20Context.Decode(inout, decodeBuffer, Span<const UCHAR>(aad));

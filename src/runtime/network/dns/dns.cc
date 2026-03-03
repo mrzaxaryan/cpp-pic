@@ -462,7 +462,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	header->Ad = 0;
 	header->Cd = 0;
 	header->Rcode = 0;
-	header->QdCount = UINT16SwapByteOrder(1);
+	header->QdCount = ByteOrder::Swap16(1);
 	header->AnsCount = 0;
 	header->AuthCount = 0;
 	header->AddCount = 0;
@@ -478,8 +478,8 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 	INT32 nameLen = nameResult.Value();
 
 	PDNS_REQUEST_QUESTION question = (PDNS_REQUEST_QUESTION)(qname + nameLen);
-	question->QClass = UINT16SwapByteOrder(1);
-	question->QType = UINT16SwapByteOrder(static_cast<UINT16>(dnstype));
+	question->QClass = ByteOrder::Swap16(1);
+	question->QType = ByteOrder::Swap16(static_cast<UINT16>(dnstype));
 
 	return Result<UINT32, Error>::Ok((UINT32)(sizeof(DNS_REQUEST_HEADER) + nameLen + sizeof(DNS_REQUEST_QUESTION)));
 }

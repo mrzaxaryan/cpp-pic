@@ -91,12 +91,7 @@ private:
 		UINT8 buffer[32];
 		Memory::Zero(buffer, sizeof(buffer));
 
-		INT32 result = prng.GetArray(Span<UINT8>(buffer, 32));
-		if (result != 1)
-		{
-			LOG_ERROR("GetArray returned %d, expected 1", result);
-			return false;
-		}
+		prng.GetArray(Span<UINT8>(buffer, 32));
 
 		// At least some bytes should be non-zero
 		BOOL foundNonZero = false;

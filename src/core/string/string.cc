@@ -37,8 +37,8 @@ USIZE StringUtils::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) 
 	}
 
 	// Integer part
-	UINT64 intPart = (UINT64)(INT64)value;
-	DOUBLE fracPart = value - DOUBLE((INT64)intPart);
+	UINT64 intPart = (UINT64)value;
+	DOUBLE fracPart = value - intPart;
 
 	CHAR intBuf[24];
 	USIZE intLen = UIntToStr(intPart, Span<CHAR>(intBuf));

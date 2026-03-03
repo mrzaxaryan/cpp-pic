@@ -27,8 +27,9 @@
 #include "core/types/primitives.h"
 #include "core/types/error.h"
 
-/// Placement new for constructing objects in pre-allocated storage
+/// Placement new/delete for constructing objects in pre-allocated storage
 FORCE_INLINE PVOID operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+FORCE_INLINE VOID operator delete(PVOID, PVOID) noexcept {}
 
 /// Trivial sentinel replacing T when T is void
 struct VOID_TAG

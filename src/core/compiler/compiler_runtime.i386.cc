@@ -163,10 +163,11 @@ extern "C"
 		}
 
 		// Determine result signs and convert to absolute values
+		// Cast to UINT64 before negating to avoid signed overflow UB on INT64_MIN
 		const BOOL negNum = numerator < 0;
 		const BOOL negQuot = negNum != (denominator < 0);
-		const UINT64 absNum = (UINT64)(negNum ? -numerator : numerator);
-		const UINT64 absDen = (UINT64)(denominator < 0 ? -denominator : denominator);
+		const UINT64 absNum = negNum ? -(UINT64)numerator : (UINT64)numerator;
+		const UINT64 absDen = (denominator < 0) ? -(UINT64)denominator : (UINT64)denominator;
 
 		// Perform unsigned division on absolute values
 		UINT64 q, r;

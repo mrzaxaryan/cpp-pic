@@ -208,7 +208,7 @@ public:
 	 * @see DJB2 Hash Function — Daniel J. Bernstein, comp.lang.c (1991)
 	 *      https://cr.yp.to/cdb.html
 	 */
-	template <typename TChar, UINT64 N>
+	template <typename TChar, USIZE N>
 	static consteval UINT64 HashCompileTime(const TChar (&value)[N])
 	{
 		UINT64 h = Seed;

@@ -12,7 +12,9 @@
  * These functions conform to the semantics defined by the ISO C standard:
  * - memset: ISO/IEC 9899:2018 (C17) Section 7.24.6.1
  * - memcpy: ISO/IEC 9899:2018 (C17) Section 7.24.2.1
+ * - memmove: ISO/IEC 9899:2018 (C17) Section 7.24.2.2
  * - memcmp: ISO/IEC 9899:2018 (C17) Section 7.24.4.1
+ * - bzero: IEEE Std 1003.1 (POSIX.1) — legacy, equivalent to memset(s, 0, n)
  *
  * @see ISO/IEC 9899:2018 — Programming languages — C (C17 standard)
  *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
@@ -64,7 +66,7 @@ extern "C" PVOID memset(PVOID dest, INT32 ch, USIZE count);
  * @see ISO/IEC 9899:2018 Section 7.24.2.1 — The memcpy function
  *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
  */
-extern "C" PVOID memcpy(PVOID dest, const VOID *src, USIZE count);
+extern "C" PVOID memcpy(PVOID dest, PCVOID src, USIZE count);
 
 /**
  * @brief Compares two blocks of memory byte by byte
@@ -79,7 +81,39 @@ extern "C" PVOID memcpy(PVOID dest, const VOID *src, USIZE count);
  * @see ISO/IEC 9899:2018 Section 7.24.4.1 — The memcmp function
  *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
  */
-extern "C" INT32 memcmp(const VOID *ptr1, const VOID *ptr2, USIZE num);
+extern "C" INT32 memcmp(PCVOID ptr1, PCVOID ptr2, USIZE num);
+
+/**
+ * @brief Copies a block of memory, handling overlapping regions correctly
+ * @param dest Pointer to the destination memory block
+ * @param src Pointer to the source memory block
+ * @param count Number of bytes to copy
+ * @return Pointer to the destination memory block
+ *
+ * @details Custom CRT-free implementation of the C standard library memmove.
+ * Unlike memcpy, this function correctly handles the case where the source
+ * and destination memory regions overlap by choosing the appropriate copy
+ * direction. Conforms to the semantics defined in ISO/IEC 9899:2018
+ * Section 7.24.2.2.
+ *
+ * @see ISO/IEC 9899:2018 Section 7.24.2.2 — The memmove function
+ *      https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf
+ */
+extern "C" PVOID memmove(PVOID dest, PCVOID src, USIZE count);
+
+/**
+ * @brief Zeros a block of memory
+ * @param dest Pointer to the destination memory block
+ * @param count Number of bytes to zero
+ *
+ * @details Custom CRT-free implementation of the POSIX bzero function.
+ * The LLVM aarch64 backend may emit bzero calls for zero-initialization
+ * during LTO optimization, so a definition must be provided to avoid
+ * unresolved external references that would generate data sections.
+ *
+ * @see IEEE Std 1003.1 (POSIX.1) — bzero (legacy)
+ */
+extern "C" VOID bzero(PVOID dest, USIZE count);
 
 // =============================================================================
 // MEMORY CLASS
@@ -137,6 +171,18 @@ public:
 	FORCE_INLINE static PVOID Set(PVOID dest, INT32 ch, USIZE count)
 	{
 		return memset(dest, ch, count);
+	}
+
+	/**
+	 * @brief Copies memory, handling overlapping regions correctly
+	 * @param dest Destination buffer
+	 * @param src Source buffer
+	 * @param count Number of bytes to copy
+	 * @return Pointer to destination buffer
+	 */
+	FORCE_INLINE static PVOID Move(PVOID dest, PCVOID src, USIZE count)
+	{
+		return memmove(dest, src, count);
 	}
 
 	/**

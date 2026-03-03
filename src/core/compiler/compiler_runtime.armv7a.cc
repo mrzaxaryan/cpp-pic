@@ -101,8 +101,8 @@ static FORCE_INLINE UINT32 udiv32_internal(UINT32 numerator, UINT32 denominator,
  *
  * Performance: O(1) for power-of-2, O(n) for general case where n = significant bits
  */
-static void udiv64_internal(UINT64 numerator, UINT64 denominator,
-							UINT64 *quotient, UINT64 *remainder)
+static FORCE_INLINE void udiv64_internal(UINT64 numerator, UINT64 denominator,
+										 UINT64 *quotient, UINT64 *remainder)
 {
 	// Division by zero: return 0 quotient, numerator as remainder
 	if (__builtin_expect(denominator == 0, 0))
@@ -215,10 +215,11 @@ extern "C"
 			return wantRemainder ? (((INT64)numerator << 32) | 0) : 0;
 
 		// Determine result signs and convert to absolute values
+		// Cast to UINT32 before negating to avoid signed overflow UB on INT32_MIN
 		const BOOL negNum = numerator < 0;
 		const BOOL negQuot = negNum != (denominator < 0);
-		const UINT32 absNum = (UINT32)(negNum ? -numerator : numerator);
-		const UINT32 absDen = (UINT32)(denominator < 0 ? -denominator : denominator);
+		const UINT32 absNum = negNum ? -(UINT32)numerator : (UINT32)numerator;
+		const UINT32 absDen = (denominator < 0) ? -(UINT32)denominator : (UINT32)denominator;
 
 		// Perform unsigned division on absolute values
 		UINT32 remainder = 0;
@@ -306,10 +307,11 @@ extern "C"
 		if (isSigned)
 		{
 			// Determine result signs and convert to absolute values
+			// Cast to UINT64 before negating to avoid signed overflow UB on INT64_MIN
 			negNum = numerator < 0;
 			negQuot = negNum != (denominator < 0);
-			absNum = (UINT64)(negNum ? -numerator : numerator);
-			absDen = (UINT64)(denominator < 0 ? -denominator : denominator);
+			absNum = negNum ? -(UINT64)numerator : (UINT64)numerator;
+			absDen = (denominator < 0) ? -(UINT64)denominator : (UINT64)denominator;
 		}
 		else
 		{
@@ -479,13 +481,11 @@ extern "C"
 			absVal = negative ? (UINT64)(-val) : (UINT64)val;
 		}
 
-		// Find MSB position (highest set bit)
-		INT32 msb = 63;
-		while (msb >= 0 && !((absVal >> msb) & 1))
-			msb--;
+		// Find MSB position using CLZ for O(1) performance
+		const INT32 msb = 63 - __builtin_clzll(absVal);
 
 		// IEEE-754 double: exponent = msb + 1023 (bias)
-		INT32 exponent = 1023 + msb;
+		const INT32 exponent = 1023 + msb;
 
 		// Shift mantissa to fit in 52 bits (may lose precision for large values)
 		UINT64 mantissa = absVal;
@@ -518,13 +518,11 @@ extern "C"
 		if (val == 0)
 			return 0ULL;
 
-		// Find MSB position (highest set bit)
-		INT32 msb = 63;
-		while (msb >= 0 && !((val >> msb) & 1))
-			msb--;
+		// Find MSB position using CLZ for O(1) performance
+		const INT32 msb = 63 - __builtin_clzll(val);
 
 		// IEEE-754 double: exponent = msb + 1023 (bias)
-		INT32 exponent = 1023 + msb;
+		const INT32 exponent = 1023 + msb;
 
 		// Shift mantissa to fit in 52 bits
 		UINT64 mantissa = val;

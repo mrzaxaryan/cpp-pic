@@ -105,7 +105,7 @@ Result<void, Error> WebSocketClient::Close()
 	if (isConnected)
 	{
 		// RFC 6455 Section 5.5.1: Send Close frame with status code 1000 (Normal Closure, big-endian)
-		UINT16 statusCode = UINT16SwapByteOrder(1000);
+		UINT16 statusCode = ByteOrder::Swap16(1000);
 		(void)Write(Span<const CHAR>((const CHAR *)&statusCode, sizeof(statusCode)), WebSocketOpcode::Close);
 	}
 
@@ -153,7 +153,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	else if (buffer.Size() <= 0xFFFF)
 	{
 		header[1] = (126 | 0x80);
-		UINT16 len16 = UINT16SwapByteOrder((UINT16)buffer.Size());
+		UINT16 len16 = ByteOrder::Swap16((UINT16)buffer.Size());
 		Memory::Copy(header + 2, &len16, 2);
 		Memory::Copy(header + 4, maskKey, 4);
 		headerLength = 8;
@@ -161,7 +161,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	else
 	{
 		header[1] = (127 | 0x80);
-		UINT64 len64 = UINT64SwapByteOrder((UINT64)buffer.Size());
+		UINT64 len64 = ByteOrder::Swap64((UINT64)buffer.Size());
 		Memory::Copy(header + 2, &len64, 8);
 		Memory::Copy(header + 10, maskKey, 4);
 		headerLength = 14;
@@ -308,7 +308,7 @@ Result<void, Error> WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 		auto lenResult = ReceiveRestrict(Span<CHAR>((PCHAR)&len16, sizeof(len16)));
 		if (!lenResult)
 			return Result<void, Error>::Err(lenResult, Error::Ws_ReceiveFailed);
-		frame.Length = UINT16SwapByteOrder(len16);
+		frame.Length = ByteOrder::Swap16(len16);
 	}
 	else if (lengthBits == 127)
 	{
@@ -316,7 +316,7 @@ Result<void, Error> WebSocketClient::ReceiveFrame(WebSocketFrame &frame)
 		auto lenResult = ReceiveRestrict(Span<CHAR>((PCHAR)&len64, sizeof(len64)));
 		if (!lenResult)
 			return Result<void, Error>::Err(lenResult, Error::Ws_ReceiveFailed);
-		frame.Length = UINT64SwapByteOrder(len64);
+		frame.Length = ByteOrder::Swap64(len64);
 	}
 	else
 	{

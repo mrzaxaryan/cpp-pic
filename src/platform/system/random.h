@@ -51,12 +51,11 @@ public:
 	/**
 	 * @brief Fill a buffer with pseudorandom bytes
 	 * @param buffer Output buffer to fill
-	 * @return 1 on success
 	 */
-	INT32 GetArray(Span<UINT8> buffer)
+	VOID GetArray(Span<UINT8> buffer)
 	{
 		EnsureSeeded();
-		return prng.GetArray(buffer);
+		prng.GetArray(buffer);
 	}
 
 	/**

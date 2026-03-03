@@ -91,7 +91,7 @@ enum class TlsExtension : UINT16
 
 static FORCE_INLINE VOID AppendU16BE(TlsBuffer &buf, UINT16 val)
 {
-	buf.Append<INT16>(UINT16SwapByteOrder(val));
+	buf.Append<INT16>(ByteOrder::Swap16(val));
 }
 
 /// @brief Send packet data over TLS connection
@@ -273,7 +273,7 @@ Result<void, Error> TlsClient::SendClientFinished()
 	LOG_DEBUG("Computed verify data for Client Finished, size: %d bytes", verify.GetSize());
 	msg.Append<CHAR>(MSG_FINISHED);
 	msg.Append<CHAR>(0);
-	msg.Append<INT16>(UINT16SwapByteOrder(verify.GetSize()));
+	msg.Append<INT16>(ByteOrder::Swap16(verify.GetSize()));
 	msg.Append(verify.AsSpan());
 
 	auto r = SendPacket(CONTENT_HANDSHAKE, TLS_VERSION_1_2, msg.AsSpan());
@@ -294,7 +294,7 @@ Result<void, Error> TlsClient::SendClientExchange()
 	LOG_DEBUG("Sending Client Key Exchange for client: %p, public key size: %d bytes", this, pubkey.GetSize());
 	msg.Append<CHAR>(MSG_CLIENT_KEY_EXCHANGE);
 	msg.Append<CHAR>(0);
-	msg.Append<INT16>(UINT16SwapByteOrder(pubkey.GetSize() + 1));
+	msg.Append<INT16>(ByteOrder::Swap16(pubkey.GetSize() + 1));
 	msg.Append<CHAR>((pubkey.GetSize())); // tls body size
 	msg.Append(pubkey.AsSpan());
 	auto r = SendPacket(CONTENT_HANDSHAKE, TLS_VERSION_1_2, msg.AsSpan());
@@ -348,7 +348,7 @@ Result<void, Error> TlsClient::OnServerHello(TlsBuffer &reader)
 	}
 	LOG_DEBUG("ServerHello has extensions, processing them");
 
-	INT32 extSize = UINT16SwapByteOrder(reader.Read<INT16>());
+	INT32 extSize = ByteOrder::Swap16(reader.Read<INT16>());
 	INT32 extStart = reader.GetReadPosition();
 	INT32 tlsVer = 0;
 	LOG_DEBUG("ServerHello extensions size: %d bytes, start index: %d", extSize, extStart);
@@ -356,22 +356,22 @@ Result<void, Error> TlsClient::OnServerHello(TlsBuffer &reader)
 	EccGroup eccgroup = EccGroup::None;
 	while (reader.GetReadPosition() < extStart + extSize)
 	{
-		TlsExtension type = (TlsExtension)UINT16SwapByteOrder(reader.Read<INT16>());
+		TlsExtension type = (TlsExtension)ByteOrder::Swap16(reader.Read<INT16>());
 		if (type == TlsExtension::SupportedVersion)
 		{
 			LOG_DEBUG("Processing TlsExtension::SupportedVersion extension");
 			reader.Read<INT16>();
-			tlsVer = UINT16SwapByteOrder(reader.Read<INT16>());
+			tlsVer = ByteOrder::Swap16(reader.Read<INT16>());
 		}
 		else if (type == TlsExtension::KeyShare)
 		{
 			LOG_DEBUG("Processing TlsExtension::KeyShare extension");
-			INT32 keyShareLen = UINT16SwapByteOrder(reader.Read<INT16>());
-			eccgroup = (EccGroup)UINT16SwapByteOrder(reader.Read<INT16>());
+			INT32 keyShareLen = ByteOrder::Swap16(reader.Read<INT16>());
+			eccgroup = (EccGroup)ByteOrder::Swap16(reader.Read<INT16>());
 			if (keyShareLen > 4)
 			{
 				LOG_DEBUG("Reading public key from TlsExtension::KeyShare, size: %d bytes", keyShareLen);
-				auto setSizeResult = pubkey.SetSize(UINT16SwapByteOrder(reader.Read<INT16>()));
+				auto setSizeResult = pubkey.SetSize(ByteOrder::Swap16(reader.Read<INT16>()));
 				if (!setSizeResult)
 					return Result<void, Error>::Err(setSizeResult, Error::Tls_ServerHelloFailed);
 				reader.Read(Span<CHAR>(pubkey.GetBuffer(), pubkey.GetSize()));
@@ -381,7 +381,7 @@ Result<void, Error> TlsClient::OnServerHello(TlsBuffer &reader)
 		else
 		{
 			// Skip unknown extensions
-			INT32 extLen = UINT16SwapByteOrder(reader.Read<INT16>());
+			INT32 extLen = ByteOrder::Swap16(reader.Read<INT16>());
 			reader.AdvanceReadPosition(extLen);
 		}
 	}

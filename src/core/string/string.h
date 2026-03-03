@@ -495,6 +495,8 @@ constexpr USIZE StringUtils::Length(const TChar *p) noexcept
 template <TCHAR TChar>
 constexpr BOOL StringUtils::Compare(const TChar *s1, const TChar *s2, BOOL ignoreCase) noexcept
 {
+	if (!s1 || !s2)
+		return s1 == s2;
 	const TChar *str1 = s1;
 	const TChar *str2 = s2;
 	while (*str1 && *str2)
@@ -558,7 +560,7 @@ template <TCHAR TChar>
 constexpr BOOL StringUtils::StartsWith(const TChar *pChar, const TChar *pSubString) noexcept
 {
 	USIZE i = 0;
-	while (pChar[i] != '\0' && pSubString[i] != '\0')
+	while (pChar[i] != (TChar)'\0' && pSubString[i] != (TChar)'\0')
 	{
 		if (pChar[i] != pSubString[i])
 		{
@@ -566,7 +568,7 @@ constexpr BOOL StringUtils::StartsWith(const TChar *pChar, const TChar *pSubStri
 		}
 		i++;
 	}
-	if (pSubString[i] != '\0')
+	if (pSubString[i] != (TChar)'\0')
 	{
 		return false;
 	}

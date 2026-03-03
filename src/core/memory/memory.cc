@@ -122,3 +122,8 @@ extern "C" COMPILER_RUNTIME VOID bzero(PVOID dest, USIZE count)
 {
 	memset(dest, 0, count);
 }
+
+extern "C" COMPILER_RUNTIME VOID __bzero(PVOID dest, USIZE count)
+{
+	memset(dest, 0, count);
+}

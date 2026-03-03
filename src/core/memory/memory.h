@@ -115,6 +115,19 @@ extern "C" PVOID memmove(PVOID dest, PCVOID src, USIZE count);
  */
 extern "C" VOID bzero(PVOID dest, USIZE count);
 
+/**
+ * @brief Apple/macOS-specific zero-fill function
+ * @param dest Pointer to the destination memory block
+ * @param count Number of bytes to zero
+ *
+ * @details The LLVM x86_64 backend on macOS may emit __bzero calls
+ * (linker symbol ___bzero) for zero-initialization during LTO
+ * optimization, distinct from the POSIX bzero symbol. A definition
+ * must be provided to avoid unresolved external references when
+ * linking with -nostdlib.
+ */
+extern "C" VOID __bzero(PVOID dest, USIZE count);
+
 // =============================================================================
 // MEMORY CLASS
 // =============================================================================

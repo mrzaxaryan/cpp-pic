@@ -623,7 +623,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
 Result<IPAddress, Error> DNS::CloudflareResolve(Span<const CHAR> host, DnsRecordType dnstype)
 {
 	auto serverName = "one.one.one.one"_embed;
-	IPAddress ips[] = {IPAddress::FromIPv4(0x01010101), IPAddress::FromIPv4(0x01000001)};
+	const IPAddress ips[] = {IPAddress::FromIPv4(0x01010101), IPAddress::FromIPv4(0x01000001)};
 	return ResolveWithFallback(host, Span(ips), serverName, dnstype);
 }
 
@@ -644,7 +644,7 @@ Result<IPAddress, Error> DNS::CloudflareResolve(Span<const CHAR> host, DnsRecord
 Result<IPAddress, Error> DNS::GoogleResolve(Span<const CHAR> host, DnsRecordType dnstype)
 {
 	auto serverName = "dns.google"_embed;
-	IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x08080404)};
+	const IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x08080404)};
 	return ResolveWithFallback(host, Span(ips), serverName, dnstype);
 }
 

@@ -46,6 +46,15 @@ public:
 		// Type aliases
 		RunTest(allPassed, EMBED_FUNC(TestTypeAliases), "Type aliases"_embed);
 
+		// Compact specialization (Result<void, Error>)
+		RunTest(allPassed, EMBED_FUNC(TestCompactSize), "Compact specialization size"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompactOk), "Compact void Ok"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompactErr), "Compact void Err"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompactPropagation), "Compact void propagation Err"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompactTwoArgErr), "Compact void two-arg Err"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompactErrorOnOk), "Compact Error() on Ok is well-defined"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestCompactMoveConstruction), "Compact void move construction"_embed);
+
 		if (allPassed)
 			LOG_INFO("All Result tests passed!");
 		else
@@ -507,6 +516,174 @@ private:
 		static_assert(__is_same(Result<UINT32, UINT64>::ErrorType, UINT64));
 		static_assert(__is_same(Result<void, UINT32>::ValueType, void));
 		static_assert(__is_same(Result<void, UINT32>::ErrorType, UINT32));
+		return true;
+	}
+
+	// =====================================================================
+	// Compact specialization (Result<void, Error>)
+	// =====================================================================
+
+	static BOOL TestCompactSize()
+	{
+		static_assert(sizeof(Result<void, Error>) == sizeof(Error),
+			"Compact specialization must equal sizeof(Error)");
+		static_assert(sizeof(Result<void, Error>) == 8,
+			"Compact specialization must be 8 bytes");
+		// Primary template is NOT affected
+		static_assert(sizeof(Result<void, UINT32>) > sizeof(UINT32),
+			"Primary template Result<void, UINT32> should have m_isOk overhead");
+		return true;
+	}
+
+	static BOOL TestCompactOk()
+	{
+		auto r = Result<void, Error>::Ok();
+		if (!r.IsOk())
+		{
+			LOG_ERROR("Compact Ok: IsOk() returned false");
+			return false;
+		}
+		if (r.IsErr())
+		{
+			LOG_ERROR("Compact Ok: IsErr() returned true");
+			return false;
+		}
+		if (!r)
+		{
+			LOG_ERROR("Compact Ok: operator BOOL returned false");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestCompactErr()
+	{
+		auto r = Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
+		if (!r.IsErr())
+		{
+			LOG_ERROR("Compact Err: IsErr() returned false");
+			return false;
+		}
+		if (r.IsOk())
+		{
+			LOG_ERROR("Compact Err: IsOk() returned true");
+			return false;
+		}
+		if (r)
+		{
+			LOG_ERROR("Compact Err: operator BOOL returned true");
+			return false;
+		}
+
+		const Error &err = r.Error();
+		if (err.Code != Error::Socket_CreateFailed_Open)
+		{
+			LOG_ERROR("Compact Err: Code mismatch");
+			return false;
+		}
+		if (err.Platform != Error::PlatformKind::Runtime)
+		{
+			LOG_ERROR("Compact Err: Platform mismatch");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestCompactPropagation()
+	{
+		auto inner = Result<UINT32, Error>::Err(
+			Error::Posix(111),
+			Error::Socket_WriteFailed_Send);
+
+		auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
+		if (!outer.IsErr())
+		{
+			LOG_ERROR("Compact propagation: IsErr() false");
+			return false;
+		}
+
+		const Error &err = outer.Error();
+		if (err.Code != Error::Tls_WriteFailed_Send)
+		{
+			LOG_ERROR("Compact propagation: Code mismatch");
+			return false;
+		}
+		if (err.Platform != Error::PlatformKind::Runtime)
+		{
+			LOG_ERROR("Compact propagation: Platform mismatch");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestCompactTwoArgErr()
+	{
+		auto r = Result<void, Error>::Err(
+			Error::Windows(0xC0000034),
+			Error::Socket_OpenFailed_Connect);
+		if (!r.IsErr())
+		{
+			LOG_ERROR("Compact two-arg Err: IsErr() false");
+			return false;
+		}
+
+		const Error &err = r.Error();
+		if (err.Code != Error::Socket_OpenFailed_Connect)
+		{
+			LOG_ERROR("Compact two-arg Err: Code mismatch");
+			return false;
+		}
+		if (err.Platform != Error::PlatformKind::Runtime)
+		{
+			LOG_ERROR("Compact two-arg Err: Platform mismatch");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestCompactErrorOnOk()
+	{
+		auto r = Result<void, Error>::Ok();
+		// Unlike the primary template (UB), the compact specialization
+		// returns a well-defined Error{None, Runtime} on Ok results
+		const Error &err = r.Error();
+		if (err.Code != Error::None)
+		{
+			LOG_ERROR("Compact Error() on Ok: Code != None");
+			return false;
+		}
+		if (err.Platform != Error::PlatformKind::Runtime)
+		{
+			LOG_ERROR("Compact Error() on Ok: Platform != Runtime");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestCompactMoveConstruction()
+	{
+		// Move Ok
+		auto ok1 = Result<void, Error>::Ok();
+		auto ok2 = static_cast<Result<void, Error> &&>(ok1);
+		if (!ok2.IsOk())
+		{
+			LOG_ERROR("Compact move Ok: IsOk() false");
+			return false;
+		}
+
+		// Move Err
+		auto err1 = Result<void, Error>::Err(Error::Dns_ConnectFailed);
+		auto err2 = static_cast<Result<void, Error> &&>(err1);
+		if (!err2.IsErr())
+		{
+			LOG_ERROR("Compact move Err: IsErr() false");
+			return false;
+		}
+		if (err2.Error().Code != Error::Dns_ConnectFailed)
+		{
+			LOG_ERROR("Compact move Err: Code mismatch after move");
+			return false;
+		}
 		return true;
 	}
 };

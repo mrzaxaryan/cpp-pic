@@ -103,7 +103,7 @@ USIZE Environment::GetVariable(const CHAR *name, Span<CHAR> buffer) noexcept
 					// Simple wide to narrow conversion (ASCII only)
 					buffer[len++] = (CHAR)*value++;
 				}
-				buffer.Data()[len] = '\0';
+				buffer[len] = '\0';
 				return len;
 			}
 		}
@@ -117,6 +117,6 @@ USIZE Environment::GetVariable(const CHAR *name, Span<CHAR> buffer) noexcept
 	}
 
 	// Variable not found
-	buffer.Data()[0] = '\0';
+	buffer[0] = '\0';
 	return 0;
 }

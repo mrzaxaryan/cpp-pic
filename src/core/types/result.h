@@ -25,6 +25,7 @@
 #pragma once
 
 #include "core/types/primitives.h"
+#include "core/types/error.h"
 
 /// Placement new for constructing objects in pre-allocated storage
 FORCE_INLINE PVOID operator new(USIZE, PVOID ptr) noexcept { return ptr; }
@@ -186,6 +187,93 @@ public:
 
 private:
 	Result() noexcept {}
+};
+
+/// Compact specialization for Result<void, Error>.
+///
+/// Encodes success as Error.Code == Error::None, eliminating the discriminant
+/// flag and union.  This halves the size from 12 bytes to 8 bytes, enabling
+/// register-return on x86_64 and ARM64.
+///
+/// The API surface is identical to the primary template instantiated with
+/// T = void, E = Error.  No call-site changes are needed.
+///
+/// @note Error() on an Ok result returns Error{None, Runtime} — well-defined,
+///       unlike the primary template where reading the inactive union member is UB.
+template <>
+class [[nodiscard]] Result<void, Error>
+{
+	struct Error m_error;
+
+public:
+	using ValueType = void;
+	using ErrorType = struct Error;
+
+	// =====================================================================
+	// Ok factory
+	// =====================================================================
+
+	[[nodiscard]] static FORCE_INLINE Result Ok() noexcept
+	{
+		Result r;
+		r.m_error = {};
+		return r;
+	}
+
+	// =====================================================================
+	// Err factories
+	// =====================================================================
+
+	/// Single error — stores Error directly (zero-cost)
+	[[nodiscard]] static FORCE_INLINE Result Err(struct Error error) noexcept
+	{
+		Result r;
+		r.m_error = error;
+		return r;
+	}
+
+	/// Backward-compatible 2-arg Err — stores only the last (outermost) code.
+	/// Keeps source compatibility with Err(osError, runtimeCode) pattern.
+	template <typename First>
+		requires(__is_constructible(struct Error, First))
+	[[nodiscard]] static FORCE_INLINE Result Err(First, struct Error last) noexcept
+	{
+		return Err(last);
+	}
+
+	/// Backward-compatible propagation Err — stores only the appended code.
+	/// Keeps source compatibility with Err(failedResult, runtimeCode) pattern.
+	template <typename OtherT>
+	[[nodiscard]] static FORCE_INLINE Result Err(const Result<OtherT, struct Error> &, struct Error code) noexcept
+	{
+		return Err(code);
+	}
+
+	// =====================================================================
+	// Destructor + move semantics
+	// =====================================================================
+
+	~Result() noexcept = default;
+
+	Result(Result &&other) noexcept = default;
+	Result &operator=(Result &&other) noexcept = default;
+
+	Result(const Result &) = delete;
+	Result &operator=(const Result &) = delete;
+
+	// =====================================================================
+	// Value / error queries
+	// =====================================================================
+
+	[[nodiscard]] FORCE_INLINE BOOL IsOk() const noexcept { return m_error.Code == Error::None; }
+	[[nodiscard]] FORCE_INLINE BOOL IsErr() const noexcept { return m_error.Code != Error::None; }
+	[[nodiscard]] FORCE_INLINE operator BOOL() const noexcept { return m_error.Code == Error::None; }
+
+	/// Returns the stored error for inspection and %e formatting.
+	[[nodiscard]] FORCE_INLINE const struct Error &Error() const noexcept { return m_error; }
+
+private:
+	Result() noexcept = default;
 };
 
 /** @} */ // end of result group

@@ -10,7 +10,7 @@ if(NOT PIR_ARCH MATCHES "^(i386|x86_64|aarch64)$")
 endif()
 
 pir_get_target_info()
-pir_filter_sources(windows linux macos uefi)
+pir_filter_sources(windows linux macos uefi freebsd)
 
 list(APPEND PIR_INCLUDE_PATHS
     "${PIR_ROOT_DIR}/src/platform/common/solaris")

@@ -5,7 +5,7 @@
 include_guard(GLOBAL)
 
 pir_get_target_info()
-pir_filter_sources(windows macos uefi solaris)
+pir_filter_sources(windows macos uefi solaris freebsd)
 
 list(APPEND PIR_INCLUDE_PATHS
     "${PIR_ROOT_DIR}/src/platform/common/linux")

@@ -34,7 +34,7 @@ private:
         });
         
 
-        return Memory::Compare(expected, &uuid, 16) == 0;
+        return Memory::Compare(expected, &uuid, sizeof(UUID)) == 0;
     }
 
     public:

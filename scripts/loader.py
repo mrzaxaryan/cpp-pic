@@ -10,6 +10,8 @@ Usage:
     python loader.py --arch i386 output.bin
     python loader.py --arch aarch64 output.bin
     python loader.py --arch armv7a output.bin
+    python loader.py --arch riscv32 output.bin
+    python loader.py --arch riscv64 output.bin
 """
 
 import argparse
@@ -25,10 +27,12 @@ import sys
 # --- Architecture definitions ---
 
 ARCH = {
-    'i386':    {'bits': 32, 'family': 'x86', 'qemu': ['qemu-i386-static', 'qemu-i386']},
-    'x86_64':  {'bits': 64, 'family': 'x86', 'qemu': ['qemu-x86_64-static', 'qemu-x86_64']},
-    'armv7a':  {'bits': 32, 'family': 'arm', 'qemu': ['qemu-arm-static', 'qemu-arm']},
-    'aarch64': {'bits': 64, 'family': 'arm', 'qemu': ['qemu-aarch64-static', 'qemu-aarch64']},
+    'i386':    {'bits': 32, 'family': 'x86',   'qemu': ['qemu-i386-static', 'qemu-i386']},
+    'x86_64':  {'bits': 64, 'family': 'x86',   'qemu': ['qemu-x86_64-static', 'qemu-x86_64']},
+    'armv7a':  {'bits': 32, 'family': 'arm',   'qemu': ['qemu-arm-static', 'qemu-arm']},
+    'aarch64': {'bits': 64, 'family': 'arm',   'qemu': ['qemu-aarch64-static', 'qemu-aarch64']},
+    'riscv32': {'bits': 32, 'family': 'riscv', 'qemu': ['qemu-riscv32-static', 'qemu-riscv32']},
+    'riscv64': {'bits': 64, 'family': 'riscv', 'qemu': ['qemu-riscv64-static', 'qemu-riscv64']},
 }
 
 # --- Win32 constants ---

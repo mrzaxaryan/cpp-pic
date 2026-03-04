@@ -252,7 +252,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 		if (!skipResult)
 		{
 			LOG_WARNING("ParseQuery: invalid name length");
-			return Result<INT32, Error>::Err(Error::Dns_ParseFailed);
+			return Result<INT32, Error>::Err(skipResult, Error::Dns_ParseFailed);
 		}
 
 		INT32 entrySize = skipResult.Value() + (INT32)sizeof(DNS_REQUEST_QUESTION);
@@ -337,7 +337,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
 		if (!queryResult)
 		{
 			LOG_WARNING("ParseDnsResponse: invalid query section");
-			return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
+			return Result<IPAddress, Error>::Err(queryResult, Error::Dns_ParseFailed);
 		}
 		reader.Skip((USIZE)queryResult.Value());
 	}
@@ -521,14 +521,15 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
 	if (!tlsResult)
 	{
 		LOG_WARNING("Failed to create TLS client for DNS server");
-		return Result<IPAddress, Error>::Err(Error::Dns_ConnectFailed);
+		return Result<IPAddress, Error>::Err(tlsResult, Error::Dns_ConnectFailed);
 	}
 	auto& tlsClient = tlsResult.Value();
 
-	if (!tlsClient.Open())
+	auto openResult = tlsClient.Open();
+	if (!openResult)
 	{
 		LOG_WARNING("Failed to connect to DNS server");
-		return Result<IPAddress, Error>::Err(Error::Dns_ConnectFailed);
+		return Result<IPAddress, Error>::Err(openResult, Error::Dns_ConnectFailed);
 	}
 
 	UINT8 queryBuffer[256];
@@ -544,7 +545,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
 	{
 		auto r = tlsClient.Write(s);
 		if (!r || r.Value() != s.Size())
-			return Result<void, Error>::Err(Error::Dns_SendFailed);
+			return Result<void, Error>::Err(r, Error::Dns_SendFailed);
 		return Result<void, Error>::Ok();
 	};
 
@@ -566,7 +567,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
 	if (!writeBody || writeBody.Value() != querySize)
 	{
 		LOG_WARNING("Failed to send DNS query");
-		return Result<IPAddress, Error>::Err(Error::Dns_SendFailed);
+		return Result<IPAddress, Error>::Err(writeBody, Error::Dns_SendFailed);
 	}
 
 	auto headerResult = HttpClient::ReadResponseHeaders(tlsClient, 200);
@@ -591,7 +592,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
 		if (!readResult || readResult.Value() <= 0)
 		{
 			LOG_WARNING("Failed to read DNS binary response");
-			return Result<IPAddress, Error>::Err(Error::Dns_ResponseFailed);
+			return Result<IPAddress, Error>::Err(readResult, Error::Dns_ResponseFailed);
 		}
 		totalRead += (UINT32)readResult.Value();
 	}
@@ -600,7 +601,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
 	if (!parseResult)
 	{
 		LOG_WARNING("Failed to parse DNS response");
-		return Result<IPAddress, Error>::Err(Error::Dns_ParseFailed);
+		return Result<IPAddress, Error>::Err(parseResult, Error::Dns_ParseFailed);
 	}
 
 	return parseResult;

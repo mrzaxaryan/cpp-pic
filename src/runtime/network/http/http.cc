@@ -24,13 +24,13 @@ Result<HttpClient, Error> HttpClient::Create(Span<const CHAR> url)
 	BOOL isSecure = false;
 	auto parseResult = ParseUrl(url, host, parsedPath, port, isSecure);
 	if (!parseResult)
-		return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
+		return Result<HttpClient, Error>::Err(parseResult, Error::Http_CreateFailed);
 
 	auto dnsResult = DNS::Resolve(Span<const CHAR>(host, StringUtils::Length(host)));
 	if (!dnsResult)
 	{
 		LOG_ERROR("Failed to resolve hostname %s", host);
-		return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
+		return Result<HttpClient, Error>::Err(dnsResult, Error::Http_CreateFailed);
 	}
 	auto& ip = dnsResult.Value();
 
@@ -48,7 +48,7 @@ Result<HttpClient, Error> HttpClient::Create(Span<const CHAR> url)
 	}
 
 	if (!tlsResult)
-		return Result<HttpClient, Error>::Err(Error::Http_CreateFailed);
+		return Result<HttpClient, Error>::Err(tlsResult, Error::Http_CreateFailed);
 
 	HttpClient client(ip, port, static_cast<TlsClient &&>(tlsResult.Value()));
 	return Result<HttpClient, Error>::Ok(static_cast<HttpClient &&>(client));
@@ -255,7 +255,7 @@ Result<void, Error> HttpClient::ParseUrl(Span<const CHAR> url, CHAR (&host)[254]
 
 		auto pnumResult = StringUtils::ParseInt64(portBuffer);
 		if (!pnumResult)
-			return Result<void, Error>::Err(Error::Http_ParseUrlFailed);
+			return Result<void, Error>::Err(pnumResult, Error::Http_ParseUrlFailed);
 		auto& pnum = pnumResult.Value();
 		if (pnum == 0 || pnum > 65535)
 			return Result<void, Error>::Err(Error::Http_ParseUrlFailed);

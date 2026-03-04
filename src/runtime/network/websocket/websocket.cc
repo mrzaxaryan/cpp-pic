@@ -29,7 +29,7 @@ Result<void, Error> WebSocketClient::Open(PCCHAR path)
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve IPv4 address for %s, cannot connect to WebSocket server", hostName);
-			return Result<void, Error>::Err(Error::Ws_DnsFailed);
+			return Result<void, Error>::Err(dnsResult, Error::Ws_DnsFailed);
 		}
 
 		ipAddress = dnsResult.Value();
@@ -39,7 +39,7 @@ Result<void, Error> WebSocketClient::Open(PCCHAR path)
 		if (!tlsResult)
 		{
 			LOG_ERROR("Failed to create TLS client for IPv4 fallback (error: %e)", tlsResult.Error());
-			return Result<void, Error>::Err(Error::Ws_TransportFailed);
+			return Result<void, Error>::Err(tlsResult, Error::Ws_TransportFailed);
 		}
 		tlsContext = static_cast<TlsClient &&>(tlsResult.Value());
 		openResult = tlsContext.Open();
@@ -183,7 +183,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 		auto smallWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, frameLength));
 		if (!smallWrite || smallWrite.Value() != frameLength)
 		{
-			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
+			return Result<UINT32, Error>::Err(smallWrite, Error::Ws_WriteFailed);
 		}
 
 		return Result<UINT32, Error>::Ok((UINT32)buffer.Size());
@@ -193,7 +193,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 	auto headerWrite = tlsContext.Write(Span<const CHAR>((PCHAR)header, headerLength));
 	if (!headerWrite || headerWrite.Value() != headerLength)
 	{
-		return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
+		return Result<UINT32, Error>::Err(headerWrite, Error::Ws_WriteFailed);
 	}
 
 	PUINT8 src = (PUINT8)buffer.Data();
@@ -209,7 +209,7 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 		auto chunkWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, chunkSize));
 		if (!chunkWrite || chunkWrite.Value() != chunkSize)
 		{
-			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
+			return Result<UINT32, Error>::Err(chunkWrite, Error::Ws_WriteFailed);
 		}
 
 		offset += chunkSize;
@@ -509,14 +509,14 @@ Result<WebSocketClient, Error> WebSocketClient::Create(Span<const CHAR> url)
 	BOOL isSecure = false;
 	auto parseResult = HttpClient::ParseUrl(url, host, parsedPath, port, isSecure);
 	if (!parseResult)
-		return Result<WebSocketClient, Error>::Err(Error::Ws_CreateFailed);
+		return Result<WebSocketClient, Error>::Err(parseResult, Error::Ws_CreateFailed);
 
 	Span<const CHAR> hostSpan(host, StringUtils::Length(host));
 	auto dnsResult = DNS::Resolve(hostSpan);
 	if (!dnsResult)
 	{
 		LOG_ERROR("Failed to resolve hostname %s", host);
-		return Result<WebSocketClient, Error>::Err(Error::Ws_CreateFailed);
+		return Result<WebSocketClient, Error>::Err(dnsResult, Error::Ws_CreateFailed);
 	}
 	auto& ip = dnsResult.Value();
 
@@ -534,7 +534,7 @@ Result<WebSocketClient, Error> WebSocketClient::Create(Span<const CHAR> url)
 	}
 
 	if (!tlsResult)
-		return Result<WebSocketClient, Error>::Err(Error::Ws_CreateFailed);
+		return Result<WebSocketClient, Error>::Err(tlsResult, Error::Ws_CreateFailed);
 
 	WebSocketClient client(host, ip, port, static_cast<TlsClient &&>(tlsResult.Value()));
 

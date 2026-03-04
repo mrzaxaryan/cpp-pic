@@ -331,11 +331,25 @@ PIR has no exceptions. Every fallible function returns `Result<T, Error>` or `Re
 
 `Error` stores a single `(Code, Platform)` slot — there is no call chain. Each layer picks the most useful code to surface:
 
-- **Single runtime error:** pass a bare `ErrorCodes` enumerator to `Result::Err`
+- **Single runtime error (no prior result):** pass a bare `ErrorCodes` enumerator to `Result::Err` — only when there is no underlying `Result` to forward (e.g., pure validation failures, null checks)
 - **Single OS error:** use `Error::Windows()`, `Error::Posix()`, or `Error::Uefi()` factory methods
 - **Propagate unchanged:** forward `r.Error()` from the lower-level result
-- **Replace with own layer's error:** use a new `ErrorCodes` value when the caller's context is more useful
-- **Two-arg shorthand:** `Result::Err(r, Error::Tls_WriteFailed_Send)` discards the original and stores only the new code
+- **Replace with own layer's error:** use the two-arg shorthand (see below) when the caller's context is more useful
+- **Two-arg shorthand (preferred):** `Result::Err(r, Error::Tls_WriteFailed_Send)` — always use this form when an underlying `Result` failed. This documents the error chain even though only the new code is stored
+
+**Important:** When a lower-level call returns a failed `Result` and you return `Err` with your own layer's error code, **always** pass the failed result as the first argument. Never discard a failed result by using the single-arg `Err(Error::MyCode)` form when a result variable is available:
+
+```cpp
+// WRONG — discards the underlying error
+auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
+if (!tlsResult)
+    return Result<void, Error>::Err(Error::Ws_CreateFailed);
+
+// CORRECT — forwards the underlying result
+auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
+if (!tlsResult)
+    return Result<void, Error>::Err(tlsResult, Error::Ws_CreateFailed);
+```
 
 ### Platform Conversion Factories
 

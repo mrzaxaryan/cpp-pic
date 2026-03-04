@@ -89,7 +89,7 @@ Result<void, Error> ChaCha20Encoder::Decode(TlsBuffer &in, TlsBuffer &out, Span<
 	if (!decodeResult)
 	{
 		LOG_ERROR("ChaCha20 Decode failed");
-		return Result<void, Error>::Err(Error::ChaCha20_DecodeFailed);
+		return Result<void, Error>::Err(decodeResult, Error::ChaCha20_DecodeFailed);
 	}
 	auto& size = decodeResult.Value();
 	auto setSizeResult = out.SetSize(size);

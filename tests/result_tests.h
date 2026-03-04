@@ -449,7 +449,7 @@ private:
 			Error::Posix(111),
 			Error::Socket_WriteFailed_Send);
 
-		// Propagate — stores only the appended code
+		// Propagate — stores the underlying result's (inner) error
 		auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
 		if (!outer.IsErr())
 		{
@@ -458,9 +458,9 @@ private:
 		}
 
 		const Error &err = outer.Error();
-		if (err.Code != Error::Tls_WriteFailed_Send)
+		if (err.Code != Error::Socket_WriteFailed_Send)
 		{
-			LOG_ERROR("PropagationErr: Code mismatch, expected Tls_WriteFailed_Send");
+			LOG_ERROR("PropagationErr: Code mismatch, expected Socket_WriteFailed_Send");
 			return false;
 		}
 		if (err.Platform != Error::PlatformKind::Runtime)
@@ -603,7 +603,7 @@ private:
 		}
 
 		const Error &err = outer.Error();
-		if (err.Code != Error::Tls_WriteFailed_Send)
+		if (err.Code != Error::Socket_WriteFailed_Send)
 		{
 			LOG_ERROR("Compact propagation: Code mismatch");
 			return false;
@@ -628,12 +628,12 @@ private:
 		}
 
 		const Error &err = r.Error();
-		if (err.Code != Error::Socket_OpenFailed_Connect)
+		if (err.Code != (Error::ErrorCodes)0xC0000034)
 		{
 			LOG_ERROR("Compact two-arg Err: Code mismatch");
 			return false;
 		}
-		if (err.Platform != Error::PlatformKind::Runtime)
+		if (err.Platform != Error::PlatformKind::Windows)
 		{
 			LOG_ERROR("Compact two-arg Err: Platform mismatch");
 			return false;

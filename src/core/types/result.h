@@ -125,12 +125,12 @@ public:
 		return Err(static_cast<E &&>(last));
 	}
 
-	/// Backward-compatible propagation Err — stores only the appended code.
-	/// Keeps source compatibility with Err(failedResult, runtimeCode) pattern.
+	/// Propagation Err — stores the underlying result's error for diagnostics.
+	/// The second argument documents the PIR failure site but is not stored.
 	template <typename OtherT>
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, E> &, E code) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, E> &r, E) noexcept
 	{
-		return Err(static_cast<E &&>(code));
+		return Err(r.Error());
 	}
 
 	// =====================================================================

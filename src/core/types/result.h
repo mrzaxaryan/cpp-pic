@@ -28,8 +28,8 @@
 #include "core/types/error.h"
 
 /// Placement new/delete for constructing objects in pre-allocated storage
-FORCE_INLINE PVOID operator new(USIZE, PVOID ptr) noexcept { return ptr; }
-FORCE_INLINE VOID operator delete(PVOID, PVOID) noexcept {}
+constexpr FORCE_INLINE PVOID operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+constexpr FORCE_INLINE VOID operator delete(PVOID, PVOID) noexcept {}
 
 /// Trivial sentinel replacing T when T is void
 struct VOID_TAG
@@ -61,7 +61,7 @@ class [[nodiscard]] Result
 	};
 	BOOL m_isOk;
 
-	void DestroyActive() noexcept
+	constexpr void DestroyActive() noexcept
 	{
 		if constexpr (!__is_trivially_destructible(STORED_TYPE) || !__is_trivially_destructible(E))
 		{
@@ -86,7 +86,7 @@ public:
 	// Ok factories
 	// =====================================================================
 
-	[[nodiscard]] static FORCE_INLINE Result Ok(STORED_TYPE value) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Ok(STORED_TYPE value) noexcept
 		requires(!IsVoid)
 	{
 		Result r;
@@ -95,7 +95,7 @@ public:
 		return r;
 	}
 
-	[[nodiscard]] static FORCE_INLINE Result Ok() noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Ok() noexcept
 		requires(IsVoid)
 	{
 		Result r;
@@ -108,7 +108,7 @@ public:
 	// =====================================================================
 
 	/// Single error — stores E directly (zero-cost)
-	[[nodiscard]] static FORCE_INLINE Result Err(E error) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(E error) noexcept
 	{
 		Result r;
 		r.m_isOk = false;
@@ -120,7 +120,7 @@ public:
 	/// Keeps source compatibility with Err(osError, runtimeCode) pattern.
 	template <typename First>
 		requires(requires(First f) { E(f); })
-	[[nodiscard]] static FORCE_INLINE Result Err(First, E last) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(First, E last) noexcept
 	{
 		return Err(static_cast<E &&>(last));
 	}
@@ -128,7 +128,7 @@ public:
 	/// Backward-compatible propagation Err — stores only the appended code.
 	/// Keeps source compatibility with Err(failedResult, runtimeCode) pattern.
 	template <typename OtherT>
-	[[nodiscard]] static FORCE_INLINE Result Err(const Result<OtherT, E> &, E code) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, E> &, E code) noexcept
 	{
 		return Err(static_cast<E &&>(code));
 	}
@@ -137,9 +137,9 @@ public:
 	// Destructor + move semantics
 	// =====================================================================
 
-	~Result() noexcept { DestroyActive(); }
+	constexpr ~Result() noexcept { DestroyActive(); }
 
-	Result(Result &&other) noexcept : m_isOk(other.m_isOk)
+	constexpr Result(Result &&other) noexcept : m_isOk(other.m_isOk)
 	{
 		if (m_isOk)
 			new (&m_value) STORED_TYPE(static_cast<STORED_TYPE &&>(other.m_value));
@@ -147,7 +147,7 @@ public:
 			new (&m_error) E(static_cast<E &&>(other.m_error));
 	}
 
-	Result &operator=(Result &&other) noexcept
+	constexpr Result &operator=(Result &&other) noexcept
 	{
 		if (this != &other)
 		{
@@ -168,26 +168,26 @@ public:
 	// Value / error queries
 	// =====================================================================
 
-	[[nodiscard]] FORCE_INLINE BOOL IsOk() const noexcept { return m_isOk; }
-	[[nodiscard]] FORCE_INLINE BOOL IsErr() const noexcept { return !m_isOk; }
-	[[nodiscard]] FORCE_INLINE operator BOOL() const noexcept { return m_isOk; }
+	[[nodiscard]] constexpr FORCE_INLINE BOOL IsOk() const noexcept { return m_isOk; }
+	[[nodiscard]] constexpr FORCE_INLINE BOOL IsErr() const noexcept { return !m_isOk; }
+	[[nodiscard]] constexpr FORCE_INLINE operator BOOL() const noexcept { return m_isOk; }
 
-	[[nodiscard]] FORCE_INLINE STORED_TYPE &Value() noexcept
+	[[nodiscard]] constexpr FORCE_INLINE STORED_TYPE &Value() noexcept
 		requires(!IsVoid)
 	{
 		return m_value;
 	}
-	[[nodiscard]] FORCE_INLINE const STORED_TYPE &Value() const noexcept
+	[[nodiscard]] constexpr FORCE_INLINE const STORED_TYPE &Value() const noexcept
 		requires(!IsVoid)
 	{
 		return m_value;
 	}
 
 	/// Returns the stored error for inspection and %e formatting.
-	[[nodiscard]] FORCE_INLINE const E &Error() const noexcept { return m_error; }
+	[[nodiscard]] constexpr FORCE_INLINE const E &Error() const noexcept { return m_error; }
 
 private:
-	Result() noexcept {}
+	constexpr Result() noexcept {}
 };
 
 /// Compact specialization for Result<void, Error>.
@@ -214,7 +214,7 @@ public:
 	// Ok factory
 	// =====================================================================
 
-	[[nodiscard]] static FORCE_INLINE Result Ok() noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Ok() noexcept
 	{
 		Result r;
 		r.m_error = {};
@@ -226,7 +226,7 @@ public:
 	// =====================================================================
 
 	/// Single error — stores Error directly (zero-cost)
-	[[nodiscard]] static FORCE_INLINE Result Err(struct Error error) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(struct Error error) noexcept
 	{
 		Result r;
 		r.m_error = error;
@@ -237,7 +237,7 @@ public:
 	/// Keeps source compatibility with Err(osError, runtimeCode) pattern.
 	template <typename First>
 		requires(__is_constructible(struct Error, First))
-	[[nodiscard]] static FORCE_INLINE Result Err(First, struct Error last) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(First, struct Error last) noexcept
 	{
 		return Err(last);
 	}
@@ -245,7 +245,7 @@ public:
 	/// Backward-compatible propagation Err — stores only the appended code.
 	/// Keeps source compatibility with Err(failedResult, runtimeCode) pattern.
 	template <typename OtherT>
-	[[nodiscard]] static FORCE_INLINE Result Err(const Result<OtherT, struct Error> &, struct Error code) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, struct Error> &, struct Error code) noexcept
 	{
 		return Err(code);
 	}
@@ -254,10 +254,10 @@ public:
 	// Destructor + move semantics
 	// =====================================================================
 
-	~Result() noexcept = default;
+	constexpr ~Result() noexcept = default;
 
-	Result(Result &&other) noexcept = default;
-	Result &operator=(Result &&other) noexcept = default;
+	constexpr Result(Result &&other) noexcept = default;
+	constexpr Result &operator=(Result &&other) noexcept = default;
 
 	Result(const Result &) = delete;
 	Result &operator=(const Result &) = delete;
@@ -266,15 +266,15 @@ public:
 	// Value / error queries
 	// =====================================================================
 
-	[[nodiscard]] FORCE_INLINE BOOL IsOk() const noexcept { return m_error.Code == Error::None; }
-	[[nodiscard]] FORCE_INLINE BOOL IsErr() const noexcept { return m_error.Code != Error::None; }
-	[[nodiscard]] FORCE_INLINE operator BOOL() const noexcept { return m_error.Code == Error::None; }
+	[[nodiscard]] constexpr FORCE_INLINE BOOL IsOk() const noexcept { return m_error.Code == Error::None; }
+	[[nodiscard]] constexpr FORCE_INLINE BOOL IsErr() const noexcept { return m_error.Code != Error::None; }
+	[[nodiscard]] constexpr FORCE_INLINE operator BOOL() const noexcept { return m_error.Code == Error::None; }
 
 	/// Returns the stored error for inspection and %e formatting.
-	[[nodiscard]] FORCE_INLINE const struct Error &Error() const noexcept { return m_error; }
+	[[nodiscard]] constexpr FORCE_INLINE const struct Error &Error() const noexcept { return m_error; }
 
 private:
-	Result() noexcept = default;
+	constexpr Result() noexcept = default;
 };
 
 /** @} */ // end of result group

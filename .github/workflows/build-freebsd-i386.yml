@@ -50,26 +50,15 @@ jobs:
 
       - name: Setup host NAT for VM
         run: |
-          echo "=== nftables ruleset BEFORE ==="
-          sudo nft list ruleset 2>/dev/null || true
-          echo "=== iptables FORWARD BEFORE ==="
-          sudo iptables -L FORWARD -v -n
-          echo "=== flushing all firewall rules ==="
+          sudo systemctl stop docker docker.socket containerd || true
           sudo nft flush ruleset 2>/dev/null || true
           sudo iptables -F
           sudo iptables -t nat -F
-          sudo iptables -t mangle -F
           sudo iptables -P INPUT ACCEPT
           sudo iptables -P FORWARD ACCEPT
           sudo iptables -P OUTPUT ACCEPT
-          echo "=== enabling forwarding and NAT ==="
           sudo sysctl -w net.ipv4.ip_forward=1
           sudo iptables -t nat -A POSTROUTING -s 192.168.122.0/24 ! -d 192.168.122.0/24 -j MASQUERADE
-          echo "=== iptables AFTER ==="
-          sudo iptables -L -v -n
-          sudo iptables -t nat -L -v -n
-          echo "=== nftables AFTER ==="
-          sudo nft list ruleset 2>/dev/null || true
 
       - name: Build -O0
         run: |
@@ -106,21 +95,6 @@ jobs:
             GW=$(netstat -rn | awk '/default/{print $2; exit}')
             printf "nameserver %s\nnameserver 8.8.8.8\nnameserver 1.1.1.1\n" "$GW" > /etc/resolv.conf
           run: |
-            echo "=== VM ifconfig ==="
-            ifconfig
-            echo "=== VM routes ==="
-            netstat -rn
-            echo "=== VM resolv.conf ==="
-            cat /etc/resolv.conf
-            echo "=== ping gateway ==="
-            ping -c 2 -t 5 192.168.122.2 || true
-            echo "=== ping 8.8.8.8 ==="
-            ping -c 2 -t 5 8.8.8.8 || true
-            echo "=== ping 1.1.1.1 ==="
-            ping -c 2 -t 5 1.1.1.1 || true
-            echo "=== traceroute 8.8.8.8 ==="
-            traceroute -n -m 5 8.8.8.8 || true
-            echo "=== running test ==="
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
             "$TEST_ELF"

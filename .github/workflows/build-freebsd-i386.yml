@@ -48,6 +48,13 @@ jobs:
       - name: Add LLVM to PATH
         run: echo "/opt/llvm/bin" >> $GITHUB_PATH
 
+      - name: Setup host NAT for VM
+        run: |
+          sudo sysctl -w net.ipv4.ip_forward=1
+          sudo iptables -t nat -A POSTROUTING -s 192.168.122.0/24 ! -d 192.168.122.0/24 -j MASQUERADE
+          sudo iptables -A FORWARD -s 192.168.122.0/24 -j ACCEPT
+          sudo iptables -A FORWARD -d 192.168.122.0/24 -j ACCEPT
+
       - name: Build -O0
         run: |
           rm -rf build
@@ -83,19 +90,6 @@ jobs:
             GW=$(netstat -rn | awk '/default/{print $2; exit}')
             printf "nameserver %s\nnameserver 8.8.8.8\nnameserver 1.1.1.1\n" "$GW" > /etc/resolv.conf
           run: |
-            echo "=== ifconfig ==="
-            ifconfig
-            echo "=== routing table ==="
-            netstat -rn
-            echo "=== resolv.conf ==="
-            cat /etc/resolv.conf
-            echo "=== ping gateway ==="
-            ping -c 2 192.168.122.2 || true
-            echo "=== ping 8.8.8.8 ==="
-            ping -c 2 8.8.8.8 || true
-            echo "=== ping google.com ==="
-            ping -c 2 google.com || true
-            echo "=== running test ==="
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
             "$TEST_ELF"

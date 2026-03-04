@@ -77,9 +77,9 @@ private:
 	static constexpr INT32 SignShift = 63;
 	static constexpr INT32 ExpShift = 52;
 
-	static constexpr UINT64 GetSignMask() noexcept { return 0x8000000000000000ULL; }
-	static constexpr UINT64 GetExpMask() noexcept { return 0x7FF0000000000000ULL; }
-	static constexpr UINT64 GetMantissaMask() noexcept { return 0x000FFFFFFFFFFFFFULL; }
+	static constexpr FORCE_INLINE UINT64 GetSignMask() noexcept { return 0x8000000000000000ULL; }
+	static constexpr FORCE_INLINE UINT64 GetExpMask() noexcept { return 0x7FF0000000000000ULL; }
+	static constexpr FORCE_INLINE UINT64 GetMantissaMask() noexcept { return 0x000FFFFFFFFFFFFFULL; }
 
 public:
 	VOID *operator new(USIZE) = delete;

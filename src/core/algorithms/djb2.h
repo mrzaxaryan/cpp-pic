@@ -145,7 +145,7 @@ public:
 	 *      https://cr.yp.to/cdb.html
 	 */
 	template <typename TChar>
-	static constexpr UINT64 Hash(const TChar *value)
+	static constexpr FORCE_INLINE UINT64 Hash(const TChar *value)
 	{
 		UINT64 h = Seed;
 		for (UINT64 i = 0; value[i] != (TChar)0; ++i)
@@ -171,7 +171,7 @@ public:
 	 *      https://cr.yp.to/cdb.html
 	 */
 	template <typename TChar>
-	static constexpr UINT64 Hash(Span<const TChar> value)
+	static constexpr FORCE_INLINE UINT64 Hash(Span<const TChar> value)
 	{
 		UINT64 h = Seed;
 		for (USIZE i = 0; i < value.Size(); ++i)

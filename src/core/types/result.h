@@ -233,21 +233,21 @@ public:
 		return r;
 	}
 
-	/// Backward-compatible 2-arg Err — stores only the last (outermost) code.
-	/// Keeps source compatibility with Err(osError, runtimeCode) pattern.
-	template <typename First>
-		requires(__is_constructible(struct Error, First))
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(First, struct Error last) noexcept
+	/// 2-arg Err — stores the first (inner/OS) error for diagnostics.
+	/// The second argument documents the PIR failure site but is not stored.
+	template <typename Second>
+		requires(__is_constructible(struct Error, Second))
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(struct Error first, Second) noexcept
 	{
-		return Err(last);
+		return Err(first);
 	}
 
-	/// Backward-compatible propagation Err — stores only the appended code.
-	/// Keeps source compatibility with Err(failedResult, runtimeCode) pattern.
+	/// Propagation Err — stores the underlying result's error for diagnostics.
+	/// The second argument documents the PIR failure site but is not stored.
 	template <typename OtherT>
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, struct Error> &, struct Error code) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, struct Error> &r, struct Error) noexcept
 	{
-		return Err(code);
+		return Err(r.Error());
 	}
 
 	// =====================================================================

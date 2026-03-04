@@ -148,7 +148,7 @@ Result<void, Error> Socket::Bind(const SockAddr &socketAddress, INT32 shareType)
 	(VOID)shareType; // not used on POSIX platforms
 
 	SSIZE  sockfd  = (SSIZE)handle;
-	UINT32 addrLen = (socketAddress.SinFamily == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
+	UINT32 addrLen = (ip.IsIPv6()) ? sizeof(SockAddr6) : sizeof(SockAddr);
 	SSIZE  result  = PosixBind(sockfd, &socketAddress, addrLen);
 	if (result != 0)
 	{

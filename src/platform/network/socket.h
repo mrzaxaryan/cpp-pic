@@ -102,7 +102,12 @@
  */
 struct SockAddr
 {
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_FREEBSD)
+	UINT8 SinLen;      ///< Structure length (BSD-specific, must be sizeof(SockAddr))
+	UINT8 SinFamily;   ///< Address family (AF_INET) — 1 byte on BSD
+#else
 	UINT16 SinFamily;  ///< Address family (AF_INET)
+#endif
 	UINT16 SinPort;    ///< Port number in network byte order
 	UINT32 SinAddr;    ///< IPv4 address in network byte order
 	CHAR SinZero[8];   ///< Padding to match sockaddr size (must be zeroed)
@@ -122,7 +127,12 @@ struct SockAddr
  */
 struct SockAddr6
 {
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_FREEBSD)
+	UINT8 Sin6Len;        ///< Structure length (BSD-specific, must be sizeof(SockAddr6))
+	UINT8 Sin6Family;     ///< Address family (AF_INET6) — 1 byte on BSD
+#else
 	UINT16 Sin6Family;    ///< Address family (AF_INET6)
+#endif
 	UINT16 Sin6Port;      ///< Port number in network byte order
 	UINT32 Sin6Flowinfo;  ///< IPv6 flow information (RFC 8200 Section 7)
 	UINT8 Sin6Addr[16];   ///< 128-bit IPv6 address
@@ -168,7 +178,12 @@ public:
 
 			SockAddr6 *addr6 = (SockAddr6 *)addrBuffer.Data();
 			Memory::Zero(addr6, sizeof(SockAddr6));
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_FREEBSD)
+			addr6->Sin6Len = sizeof(SockAddr6);
+			addr6->Sin6Family = (UINT8)AF_INET6;
+#else
 			addr6->Sin6Family = AF_INET6;
+#endif
 			addr6->Sin6Port = ByteOrder::Swap16(port);
 			addr6->Sin6Flowinfo = 0;
 			addr6->Sin6ScopeId = 0;
@@ -188,7 +203,12 @@ public:
 
 			SockAddr *addr = (SockAddr *)addrBuffer.Data();
 			Memory::Zero(addr, sizeof(SockAddr));
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_FREEBSD)
+			addr->SinLen = sizeof(SockAddr);
+			addr->SinFamily = (UINT8)AF_INET;
+#else
 			addr->SinFamily = AF_INET;
+#endif
 			addr->SinPort = ByteOrder::Swap16(port);
 			addr->SinAddr = ip.ToIPv4();
 
@@ -221,7 +241,12 @@ public:
 
 			SockAddr6 *addr6 = (SockAddr6 *)addrBuffer.Data();
 			Memory::Zero(addr6, sizeof(SockAddr6));
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_FREEBSD)
+			addr6->Sin6Len = sizeof(SockAddr6);
+			addr6->Sin6Family = (UINT8)AF_INET6;
+#else
 			addr6->Sin6Family = AF_INET6;
+#endif
 			addr6->Sin6Port = ByteOrder::Swap16(port);
 
 			return sizeof(SockAddr6);
@@ -233,7 +258,12 @@ public:
 
 			SockAddr *addr = (SockAddr *)addrBuffer.Data();
 			Memory::Zero(addr, sizeof(SockAddr));
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_FREEBSD)
+			addr->SinLen = sizeof(SockAddr);
+			addr->SinFamily = (UINT8)AF_INET;
+#else
 			addr->SinFamily = AF_INET;
+#endif
 			addr->SinPort = ByteOrder::Swap16(port);
 
 			return sizeof(SockAddr);

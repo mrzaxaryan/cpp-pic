@@ -71,6 +71,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |
@@ -102,6 +103,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |
@@ -133,6 +135,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |
@@ -164,6 +167,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |
@@ -195,6 +199,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |
@@ -226,6 +231,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |
@@ -257,6 +263,7 @@ jobs:
           arch: aarch64
           prepare: |
             IFACE=$(ifconfig -l | tr ' ' '\n' | grep -v lo0 | head -n1)
+            pkill dhclient 2>/dev/null; sleep 1
             dhclient "$IFACE"
             printf "nameserver 8.8.8.8\nnameserver 1.1.1.1\n" > /etc/resolv.conf
           run: |

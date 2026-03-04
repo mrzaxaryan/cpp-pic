@@ -1,3 +1,15 @@
+/**
+ * @file process.cc
+ * @brief Shared POSIX process management implementation
+ *
+ * @details Unified fork/exec/dup2/setsid implementation for Linux, macOS,
+ * FreeBSD, and Solaris. Platform differences:
+ * - Linux aarch64/riscv: clone(SIGCHLD) for fork, dup3 for dup2
+ * - Solaris: SYS_forksys for fork, fcntl(F_DUP2FD) for dup2,
+ *   SYS_pgrpsys for setsid
+ * - macOS/FreeBSD: standard POSIX syscalls
+ */
+
 #include "platform/system/process.h"
 #if defined(PLATFORM_LINUX)
 #include "platform/common/linux/syscall.h"
@@ -12,6 +24,80 @@
 #include "platform/common/freebsd/syscall.h"
 #include "platform/common/freebsd/system.h"
 #endif
+
+// ============================================================================
+// Process syscall wrappers
+// ============================================================================
+
+// Fork syscall wrapper
+Result<SSIZE, Error> Process::Fork() noexcept
+{
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
+	// aarch64/riscv uses clone with SIGCHLD flag for fork-like behavior
+	constexpr USIZE SIGCHLD = 17;
+	SSIZE result = System::Call(SYS_CLONE, SIGCHLD, 0, 0, 0, 0);
+#elif defined(PLATFORM_SOLARIS)
+	// Solaris uses SYS_forksys (142) with subcode 0 for fork
+	SSIZE result = System::Call(SYS_FORKSYS, FORKSYS_FORK, 0);
+#else
+	SSIZE result = System::Call(SYS_FORK);
+#endif
+	if (result < 0)
+	{
+		return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_ForkFailed);
+	}
+	return Result<SSIZE, Error>::Ok(result);
+}
+
+// Dup2 syscall wrapper
+Result<SSIZE, Error> Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
+{
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
+	// aarch64/riscv uses dup3 with flags=0 instead of dup2
+	SSIZE result = System::Call(SYS_DUP3, (USIZE)oldfd, (USIZE)newfd, 0);
+#elif defined(PLATFORM_SOLARIS)
+	// Solaris has no SYS_dup2 — use fcntl(oldfd, F_DUP2FD, newfd) instead
+	SSIZE result = System::Call(SYS_FCNTL, (USIZE)oldfd, (USIZE)F_DUP2FD, (USIZE)newfd);
+#else
+	SSIZE result = System::Call(SYS_DUP2, (USIZE)oldfd, (USIZE)newfd);
+#endif
+	if (result < 0)
+	{
+		return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_Dup2Failed);
+	}
+	return Result<SSIZE, Error>::Ok(result);
+}
+
+// Execve syscall wrapper
+Result<SSIZE, Error> Process::Execve(const CHAR *pathname, CHAR *const argv[], CHAR *const envp[]) noexcept
+{
+	SSIZE result = System::Call(SYS_EXECVE, (USIZE)pathname, (USIZE)argv, (USIZE)envp);
+	if (result < 0)
+	{
+		return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_ExecveFailed);
+	}
+	return Result<SSIZE, Error>::Ok(result);
+}
+
+// Setsid syscall wrapper
+Result<SSIZE, Error> Process::Setsid() noexcept
+{
+#if defined(PLATFORM_SOLARIS)
+	// Solaris uses SYS_pgrpsys (39) with subcode 3 for setsid
+	SSIZE result = System::Call(SYS_PGRPSYS, PGRPSYS_SETSID);
+#else
+	SSIZE result = System::Call(SYS_SETSID);
+#endif
+	if (result < 0)
+	{
+		return Result<SSIZE, Error>::Err(Error::Posix((UINT32)(-result)), Error::Process_SetsidFailed);
+	}
+	return Result<SSIZE, Error>::Ok(result);
+}
+
+// ============================================================================
+// BindSocketToShell
+// ============================================================================
 
 // BindSocketToShell - Main function to bind a socket to a shell process
 Result<SSIZE, Error> Process::BindSocketToShell(SSIZE socketFd, const CHAR *cmd) noexcept

@@ -135,7 +135,8 @@ File &File::operator=(File &&other) noexcept
 {
 	if (this != &other)
 	{
-		Close();
+		if (IsValid())
+			(void)Close();
 		fileHandle = other.fileHandle;
 		fileSize = other.fileSize;
 		other.fileHandle = (PVOID)INVALID_FD;

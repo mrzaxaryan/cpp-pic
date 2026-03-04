@@ -68,7 +68,9 @@ public:
 	/// @{
 
 	VOID *operator new(USIZE) = delete;
+	VOID *operator new[](USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
+	VOID operator delete[](VOID *) = delete;
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; } ///< Placement new for Result<BinaryWriter, Error>
 	VOID operator delete(VOID *, PVOID) noexcept {}               ///< Matching placement delete
 

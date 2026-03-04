@@ -1,24 +1,54 @@
+/**
+ * @file socket.cc
+ * @brief Shared POSIX TCP socket implementation
+ *
+ * @details Unified BSD socket implementation for Linux, macOS, FreeBSD, and
+ * Solaris. Platform differences are abstracted via static helper functions:
+ * - Linux i386 uses multiplexed socketcall(2) instead of direct syscalls
+ * - Linux i386/armv7a uses fcntl64 instead of fcntl
+ * - Linux uses ppoll(2) for connection timeout
+ * - Solaris uses SYS_so_socket and pollsys(2)
+ * - macOS/FreeBSD use direct BSD syscalls and poll(2) with milliseconds
+ */
+
 #include "platform/network/socket.h"
+#if defined(PLATFORM_LINUX)
 #include "platform/common/linux/syscall.h"
 #include "platform/common/linux/system.h"
+#elif defined(PLATFORM_MACOS)
+#include "platform/common/macos/syscall.h"
+#include "platform/common/macos/system.h"
+#elif defined(PLATFORM_SOLARIS)
+#include "platform/common/solaris/syscall.h"
+#include "platform/common/solaris/system.h"
+#elif defined(PLATFORM_FREEBSD)
+#include "platform/common/freebsd/syscall.h"
+#include "platform/common/freebsd/system.h"
+#endif
 #include "core/memory/memory.h"
 #include "core/types/ip_address.h"
-#include "platform/io/logger.h"
 
-// Socket syscall helpers - i386 uses multiplexed socketcall(), others use direct syscalls
-static SSIZE LinuxSocket(INT32 domain, INT32 type, INT32 protocol)
+// ============================================================================
+// Platform-specific syscall helpers
+// ============================================================================
+
+// --- Socket creation ---
+static SSIZE PosixSocket(INT32 domain, INT32 type, INT32 protocol)
 {
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
 	USIZE args[3] = {(USIZE)domain, (USIZE)type, (USIZE)protocol};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_SOCKET, (USIZE)args);
+#elif defined(PLATFORM_SOLARIS)
+	return System::Call(SYS_SO_SOCKET, domain, type, protocol);
 #else
 	return System::Call(SYS_SOCKET, domain, type, protocol);
 #endif
 }
 
-static SSIZE LinuxBind(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
+// --- Bind ---
+static SSIZE PosixBind(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
 {
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
 	USIZE args[3] = {(USIZE)sockfd, (USIZE)&addr, addrlen};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_BIND, (USIZE)args);
 #else
@@ -26,9 +56,10 @@ static SSIZE LinuxBind(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
 #endif
 }
 
-static SSIZE LinuxConnect(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
+// --- Connect ---
+static SSIZE PosixConnect(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
 {
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
 	USIZE args[3] = {(USIZE)sockfd, (USIZE)&addr, addrlen};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_CONNECT, (USIZE)args);
 #else
@@ -36,9 +67,10 @@ static SSIZE LinuxConnect(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
 #endif
 }
 
-static SSIZE LinuxSend(SSIZE sockfd, const VOID *buf, USIZE len, INT32 flags)
+// --- Send ---
+static SSIZE PosixSend(SSIZE sockfd, const VOID *buf, USIZE len, INT32 flags)
 {
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
 	USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_SEND, (USIZE)args);
 #else
@@ -46,9 +78,10 @@ static SSIZE LinuxSend(SSIZE sockfd, const VOID *buf, USIZE len, INT32 flags)
 #endif
 }
 
-static SSIZE LinuxRecv(SSIZE sockfd, VOID *buf, USIZE len, INT32 flags)
+// --- Recv ---
+static SSIZE PosixRecv(SSIZE sockfd, VOID *buf, USIZE len, INT32 flags)
 {
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
 	USIZE args[4] = {(USIZE)sockfd, (USIZE)buf, len, (USIZE)flags};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_RECV, (USIZE)args);
 #else
@@ -56,9 +89,10 @@ static SSIZE LinuxRecv(SSIZE sockfd, VOID *buf, USIZE len, INT32 flags)
 #endif
 }
 
-static SSIZE LinuxGetsockopt(SSIZE sockfd, INT32 level, INT32 optname, PVOID optval, UINT32 *optlen)
+// --- Getsockopt ---
+static SSIZE PosixGetsockopt(SSIZE sockfd, INT32 level, INT32 optname, PVOID optval, UINT32 *optlen)
 {
-#if defined(ARCHITECTURE_I386)
+#if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
 	USIZE args[5] = {(USIZE)sockfd, (USIZE)level, (USIZE)optname, (USIZE)optval, (USIZE)optlen};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_GETSOCKOPT, (USIZE)args);
 #else
@@ -66,24 +100,43 @@ static SSIZE LinuxGetsockopt(SSIZE sockfd, INT32 level, INT32 optname, PVOID opt
 #endif
 }
 
-static SSIZE LinuxFcntl(SSIZE fd, INT32 cmd, SSIZE arg = 0)
+// --- Fcntl ---
+static SSIZE PosixFcntl(SSIZE fd, INT32 cmd, SSIZE arg = 0)
 {
-#if defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
+#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A))
 	return System::Call(SYS_FCNTL64, fd, (USIZE)cmd, (USIZE)arg);
 #else
 	return System::Call(SYS_FCNTL, fd, (USIZE)cmd, (USIZE)arg);
 #endif
 }
 
-static SSIZE LinuxPpoll(Pollfd &fds, USIZE nfds, const Timespec &timeout)
+// --- Poll for connection readiness ---
+static SSIZE PosixPoll(Pollfd *pfd, USIZE nfds, SSIZE timeoutSec)
 {
-	return System::Call(SYS_PPOLL, (USIZE)&fds, nfds, (USIZE)&timeout, 0, 0);
+#if defined(PLATFORM_LINUX)
+	Timespec timeout;
+	timeout.Sec = timeoutSec;
+	timeout.Nsec = 0;
+	return System::Call(SYS_PPOLL, (USIZE)pfd, nfds, (USIZE)&timeout, 0, 0);
+#elif defined(PLATFORM_SOLARIS)
+	Timespec timeout;
+	timeout.Sec = timeoutSec;
+	timeout.Nsec = 0;
+	return System::Call(SYS_POLLSYS, (USIZE)pfd, nfds, (USIZE)&timeout, 0);
+#else
+	// macOS / FreeBSD — poll() with millisecond timeout
+	return System::Call(SYS_POLL, (USIZE)pfd, nfds, (USIZE)(timeoutSec * 1000));
+#endif
 }
+
+// ============================================================================
+// Socket implementation
+// ============================================================================
 
 Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 {
 	Socket sock(ipAddress, port);
-	SSIZE fd = LinuxSocket(SocketAddressHelper::GetAddressFamily(sock.ip), SOCK_STREAM, IPPROTO_TCP);
+	SSIZE fd = PosixSocket(SocketAddressHelper::GetAddressFamily(sock.ip), SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0)
 		return Result<Socket, Error>::Err(Error::Posix((UINT32)(-fd)), Error::Socket_CreateFailed_Open);
 	sock.handle = (PVOID)fd;
@@ -92,11 +145,11 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 
 Result<void, Error> Socket::Bind(const SockAddr &socketAddress, INT32 shareType)
 {
-	(VOID)shareType; // not used on Linux
+	(VOID)shareType; // not used on POSIX platforms
 
-	SSIZE sockfd  = (SSIZE)handle;
+	SSIZE  sockfd  = (SSIZE)handle;
 	UINT32 addrLen = (socketAddress.SinFamily == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
-	SSIZE  result  = LinuxBind(sockfd, socketAddress, addrLen);
+	SSIZE  result  = PosixBind(sockfd, socketAddress, addrLen);
 	if (result != 0)
 	{
 		return Result<void, Error>::Err(
@@ -122,19 +175,18 @@ Result<void, Error> Socket::Open()
 		return Result<void, Error>::Err(Error::Socket_OpenFailed_Connect);
 
 	// Set socket to non-blocking for connect with timeout
-	SSIZE flags = LinuxFcntl(sockfd, F_GETFL);
+	SSIZE flags = PosixFcntl(sockfd, F_GETFL);
 	if (flags < 0)
 		return Result<void, Error>::Err(Error::Posix((UINT32)(-flags)), Error::Socket_OpenFailed_Connect);
 
-	SSIZE setResult = LinuxFcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+	SSIZE setResult = PosixFcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 	if (setResult < 0)
 		return Result<void, Error>::Err(Error::Posix((UINT32)(-setResult)), Error::Socket_OpenFailed_Connect);
 
-	SSIZE result = LinuxConnect(sockfd, *(const SockAddr *)&addrBuffer, addrLen);
-	if (result != 0 && (-result) != EINPROGRESS)
+	SSIZE result = PosixConnect(sockfd, *(const SockAddr *)&addrBuffer, addrLen);
+	if (result != 0 && (-(INT32)result) != EINPROGRESS)
 	{
-		// Restore blocking mode before returning error
-		(void)LinuxFcntl(sockfd, F_SETFL, flags);
+		(void)PosixFcntl(sockfd, F_SETFL, flags);
 		return Result<void, Error>::Err(
 			Error::Posix((UINT32)(-result)),
 			Error::Socket_OpenFailed_Connect);
@@ -148,24 +200,20 @@ Result<void, Error> Socket::Open()
 		pfd.Events = POLLOUT;
 		pfd.Revents = 0;
 
-		Timespec timeout;
-		timeout.Sec = 5;
-		timeout.Nsec = 0;
-
-		SSIZE pollResult = LinuxPpoll(pfd, 1, timeout);
+		SSIZE pollResult = PosixPoll(&pfd, 1, 5);
 		if (pollResult <= 0)
 		{
-			(void)LinuxFcntl(sockfd, F_SETFL, flags);
+			(void)PosixFcntl(sockfd, F_SETFL, flags);
 			return Result<void, Error>::Err(Error::Socket_OpenFailed_Connect);
 		}
 
 		// Check for connection error
 		INT32 sockError = 0;
 		UINT32 optLen = sizeof(sockError);
-		(void)LinuxGetsockopt(sockfd, SOL_SOCKET, SO_ERROR, &sockError, &optLen);
+		(void)PosixGetsockopt(sockfd, SOL_SOCKET, SO_ERROR, &sockError, &optLen);
 		if (sockError != 0)
 		{
-			(void)LinuxFcntl(sockfd, F_SETFL, flags);
+			(void)PosixFcntl(sockfd, F_SETFL, flags);
 			return Result<void, Error>::Err(
 				Error::Posix((UINT32)sockError),
 				Error::Socket_OpenFailed_Connect);
@@ -173,7 +221,7 @@ Result<void, Error> Socket::Open()
 	}
 
 	// Restore blocking mode
-	(void)LinuxFcntl(sockfd, F_SETFL, flags);
+	(void)PosixFcntl(sockfd, F_SETFL, flags);
 	return Result<void, Error>::Ok();
 }
 
@@ -190,7 +238,7 @@ Result<void, Error> Socket::Close()
 Result<SSIZE, Error> Socket::Read(Span<CHAR> buffer)
 {
 	SSIZE sockfd = (SSIZE)handle;
-	SSIZE result = LinuxRecv(sockfd, (PVOID)buffer.Data(), buffer.Size(), 0);
+	SSIZE result = PosixRecv(sockfd, (PVOID)buffer.Data(), buffer.Size(), 0);
 	if (result < 0)
 	{
 		return Result<SSIZE, Error>::Err(
@@ -208,7 +256,7 @@ Result<UINT32, Error> Socket::Write(Span<const CHAR> buffer)
 
 	while (totalSent < buffer.Size())
 	{
-		SSIZE sent = LinuxSend(sockfd, (const CHAR *)buffer.Data() + totalSent,
+		SSIZE sent = PosixSend(sockfd, (const CHAR *)buffer.Data() + totalSent,
 		                        buffer.Size() - totalSent, 0);
 		if (sent <= 0)
 		{

@@ -1,11 +1,21 @@
 /**
- * environment.cc - Linux Environment Variable Implementation
+ * @file environment.cc
+ * @brief Shared POSIX environment variable implementation
  *
- * Reads environment variables from /proc/self/environ.
- * Position-independent, no .rdata dependencies.
+ * @details Linux reads environment variables from /proc/self/environ.
+ * macOS, FreeBSD, and Solaris return 0 (not found) as they lack a simple
+ * procfs-based mechanism in freestanding mode.
+ *
+ * Future enhancements:
+ * - macOS: use sysctl(kern.procargs2) to read process environment
+ * - FreeBSD: use sysctl(kern.proc.env) to read process environment
+ * - Solaris: use /proc/self/psinfo + /proc/self/as or walk the initial stack
  */
 
 #include "platform/system/environment.h"
+
+#if defined(PLATFORM_LINUX)
+
 #include "platform/common/linux/syscall.h"
 #include "platform/common/linux/system.h"
 #include "core/memory/memory.h"
@@ -112,3 +122,20 @@ USIZE Environment::GetVariable(const CHAR *name, Span<CHAR> buffer) noexcept
 	buffer[0] = '\0';
 	return 0;
 }
+
+#else // macOS, FreeBSD, Solaris — stub implementation
+
+USIZE Environment::GetVariable(const CHAR *name, Span<CHAR> buffer) noexcept
+{
+	if (name == nullptr || buffer.Size() == 0)
+	{
+		return 0;
+	}
+
+	// No /proc filesystem or equivalent available in freestanding mode.
+	// Return empty result.
+	buffer[0] = '\0';
+	return 0;
+}
+
+#endif

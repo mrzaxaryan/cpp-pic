@@ -150,7 +150,8 @@ File &File::operator=(File &&other) noexcept
 {
 	if (this != &other)
 	{
-		Close(); // Close existing handle before taking new one
+		if (IsValid())
+			(void)Close();
 		fileHandle = other.fileHandle;
 		fileSize = other.fileSize;
 		other.fileHandle = nullptr;

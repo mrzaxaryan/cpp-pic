@@ -34,7 +34,7 @@
  * @par Example Usage:
  * @code
  * Prng prng(12345);
- * INT32 val = prng.Get();              // Random INT32 in [0, Prng::Max)
+ * INT32 val = prng.Get();              // Random INT32 in [0, Prng::Max]
  * UINT8 buf[16];
  * prng.GetArray(Span<UINT8>(buf, 16)); // Fill buffer with random bytes
  * CHAR c = prng.GetChar<CHAR>();       // Random lowercase letter
@@ -46,7 +46,19 @@ private:
 	UINT64 state;
 
 public:
-	/// The exclusive upper bound for values returned by Get()
+	/// @name Heap Operators
+	/// @{
+
+	VOID *operator new(USIZE) = delete;
+	VOID *operator new[](USIZE) = delete;
+	VOID operator delete(VOID *) = delete;
+	VOID operator delete[](VOID *) = delete;
+	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
+	VOID operator delete(VOID *, PVOID) noexcept {}
+
+	/// @}
+
+	/// The inclusive upper bound for values returned by Get()
 	static constexpr INT32 Max = 0x7FFFFFFF;
 
 	/**
@@ -77,9 +89,9 @@ public:
 	 * @brief Generate the next pseudorandom number
 	 *
 	 * @details Advances the xorshift64 state and returns the lower 31 bits
-	 * as a non-negative INT32 in the range [0, Max).
+	 * as a non-negative INT32 in the range [0, Max].
 	 *
-	 * @return Pseudorandom INT32 in [0, 0x7FFFFFFF)
+	 * @return Pseudorandom INT32 in [0, 0x7FFFFFFF]
 	 */
 	constexpr FORCE_INLINE INT32 Get()
 	{

@@ -69,6 +69,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -96,6 +97,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -123,6 +125,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -150,6 +153,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -177,6 +181,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -204,6 +209,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -231,6 +237,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          prepare: dhclient vtnet0 2>/dev/null; true
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"

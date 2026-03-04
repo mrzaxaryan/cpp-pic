@@ -9,11 +9,13 @@ PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = docs
 
 # --- Input ---
-INPUT                  = src/core \
+INPUT                  = README.md \
+                         src/core \
                          src/platform \
                          src/runtime
 RECURSIVE              = YES
-FILE_PATTERNS          = *.h *.cc *.cpp
+FILE_PATTERNS          = *.h *.cc *.cpp *.md
+USE_MDFILE_AS_MAINPAGE = README.md
 
 # --- Preprocessing ---
 ENABLE_PREPROCESSING   = YES

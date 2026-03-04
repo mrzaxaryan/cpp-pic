@@ -19,6 +19,8 @@
   "linux_riscv32_bin": "84.3 KB",
   "windows_armv7a_exe": "79.5 KB",
   "windows_armv7a_bin": "77.8 KB",
+  "macos_x86_64_exe": "104.4 KB",
+  "macos_x86_64_bin": "88.2 KB",
   "freebsd_x86_64_exe": "88.5 KB",
   "freebsd_x86_64_bin": "87.9 KB",
   "linux_riscv64_exe": "76.6 KB",

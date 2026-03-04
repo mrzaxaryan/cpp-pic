@@ -70,27 +70,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -119,27 +106,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -168,27 +142,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -217,27 +178,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -266,27 +214,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -315,27 +250,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -364,27 +286,14 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            echo "=== Network Diagnostics ==="
+            sleep 2
             ifconfig vtnet0 2>/dev/null || ifconfig -a
             netstat -rn
             cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
-            echo "=== Restarting DHCP ==="
-            pkill dhclient 2>/dev/null; sleep 1
-            dhclient vtnet0 2>/dev/null; sleep 3
-            echo "=== Post-DHCP State ==="
-            ifconfig vtnet0 2>/dev/null
-            netstat -rn
-            if ! netstat -rn | grep -q default; then
-              echo "=== No default route, configuring manually ==="
-              ifconfig vtnet0 inet 192.168.122.50 netmask 255.255.255.0 up
-              route add default 192.168.122.2
+            if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
+              printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            echo "nameserver 192.168.122.3" > /etc/resolv.conf
-            echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-            echo "=== Final State ==="
-            ifconfig vtnet0
-            netstat -rn
-            cat /etc/resolv.conf
+            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"

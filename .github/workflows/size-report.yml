@@ -1,0 +1,791 @@
+name: Size Report
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: size-report-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  LLVM_VERSION: "21.1.0"
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, aarch64]
+        exclude:
+          - arch: aarch64
+    outputs:
+      sizes: ${{ steps.sizes.outputs.result }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-windows-2022
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
+
+      - name: Build with -Oz (no logging, no tests)
+        shell: pwsh
+        run: |
+          cmake --preset windows-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset windows-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1
+          $bin = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+          $exeSize = if ($exe) { $exe.Length } else { 0 }
+          $binSize = if ($bin) { $bin.Length } else { 0 }
+          $result = "windows-${{ matrix.arch }},$exeSize,$binSize"
+          echo "result=$result" >> $env:GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-windows-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.exe
+            build/**/output.bin
+
+  build-windows-aarch64:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-windows-11-arm
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
+
+      - name: Build with -Oz (no logging, no tests)
+        shell: pwsh
+        run: |
+          cmake --preset windows-aarch64-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset windows-aarch64-release
+
+      - name: Get sizes
+        id: sizes
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1
+          $bin = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+          $exeSize = if ($exe) { $exe.Length } else { 0 }
+          $binSize = if ($bin) { $bin.Length } else { 0 }
+          $result = "windows-aarch64,$exeSize,$binSize"
+          echo "result=$result" >> $env:GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-windows-aarch64
+          retention-days: 1
+          path: |
+            build/**/output.exe
+            build/**/output.bin
+
+  build-windows-armv7a:
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files\LLVM
+          key: llvm-${{ env.LLVM_VERSION }}-windows-11-arm
+
+      - name: Install Ninja
+        shell: pwsh
+        run: choco install ninja -y
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ver = "${{ env.LLVM_VERSION }}"
+          $exe = "LLVM-$ver-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver/$exe"
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          Start-Process -FilePath ".\$exe" -ArgumentList "/S" -Wait
+
+      - name: Add LLVM to PATH
+        shell: pwsh
+        run: '"C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Append'
+
+      - name: Build with -Oz (no logging, no tests)
+        shell: pwsh
+        run: |
+          cmake --preset windows-armv7a-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset windows-armv7a-release
+
+      - name: Get sizes
+        id: sizes
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "output.exe" | Select-Object -First 1
+          $bin = Get-ChildItem -Path build -Recurse -Filter "output.bin" | Select-Object -First 1
+          $exeSize = if ($exe) { $exe.Length } else { 0 }
+          $binSize = if ($bin) { $bin.Length } else { 0 }
+          $result = "windows-armv7a,$exeSize,$binSize"
+          echo "result=$result" >> $env:GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-windows-armv7a
+          retention-days: 1
+          path: |
+            build/**/output.exe
+            build/**/output.bin
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, armv7a, aarch64, riscv32, riscv64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-Linux-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz (no logging, no tests)
+        run: |
+          cmake --preset linux-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset linux-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          ELF=$(find build -type f -name "output.elf" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          ELF_SIZE=$(stat -c%s "$ELF" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=linux-${{ matrix.arch }},$ELF_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-linux-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.elf
+            build/**/output.bin
+
+  build-macos:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: macos-15-intel
+          - arch: aarch64
+            runner: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install LLVM and build tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+        run: |
+          for i in 1 2 3; do
+            brew install llvm ninja cmake && break
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz (no logging, no tests)
+        run: |
+          cmake --preset macos-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset macos-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          MACHO=$(find build -type f -name "output" ! -name "*.bin" ! -name "*.txt" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          MACHO_SIZE=$(stat -f%z "$MACHO" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -f%z "$BIN" 2>/dev/null || echo 0)
+          echo "result=macos-${{ matrix.arch }},$MACHO_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-macos-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output
+            build/**/output.bin
+
+  build-uefi:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-Linux-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz (no logging, no tests)
+        run: |
+          cmake --preset uefi-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset uefi-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          EFI=$(find build -type f -name "output.efi" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          EFI_SIZE=$(stat -c%s "$EFI" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=uefi-${{ matrix.arch }},$EFI_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-uefi-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.efi
+            build/**/output.bin
+
+  build-solaris:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, aarch64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-Linux-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz (no logging, no tests)
+        run: |
+          cmake --preset solaris-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset solaris-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          ELF=$(find build -type f -name "output.elf" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          ELF_SIZE=$(stat -c%s "$ELF" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=solaris-${{ matrix.arch }},$ELF_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-solaris-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.elf
+            build/**/output.bin
+
+  build-freebsd:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i386, x86_64, aarch64, riscv64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: /opt/llvm
+          key: llvm-${{ env.LLVM_VERSION }}-linux-x64
+
+      - name: Install LLVM
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          TARBALL="LLVM-${{ env.LLVM_VERSION }}-Linux-X64.tar.xz"
+          URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ env.LLVM_VERSION }}/${TARBALL}"
+          wget -q "$URL"
+          sudo mkdir -p /opt/llvm
+          sudo tar xf "$TARBALL" -C /opt/llvm --strip-components=1
+          rm "$TARBALL"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+
+      - name: Add LLVM to PATH
+        run: echo "/opt/llvm/bin" >> $GITHUB_PATH
+
+      - name: Build with -Oz (no logging, no tests)
+        run: |
+          cmake --preset freebsd-${{ matrix.arch }}-release -DOPTIMIZATION_LEVEL=Oz -DENABLE_LOGGING=OFF
+          cmake --build --preset freebsd-${{ matrix.arch }}-release
+
+      - name: Get sizes
+        id: sizes
+        run: |
+          ELF=$(find build -type f -name "output.elf" | head -n 1)
+          BIN=$(find build -type f -name "output.bin" | head -n 1)
+          ELF_SIZE=$(stat -c%s "$ELF" 2>/dev/null || echo 0)
+          BIN_SIZE=$(stat -c%s "$BIN" 2>/dev/null || echo 0)
+          echo "result=freebsd-${{ matrix.arch }},$ELF_SIZE,$BIN_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload size data
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-freebsd-${{ matrix.arch }}
+          retention-days: 1
+          path: |
+            build/**/output.elf
+            build/**/output.bin
+
+  update-readme:
+    if: always()
+    needs: [build-windows, build-windows-aarch64, build-windows-armv7a, build-linux, build-macos, build-uefi, build-solaris, build-freebsd]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all size artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect sizes
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+          from datetime import datetime
+
+          def format_size(size):
+              if size is None or size == 0:
+                  return "-"
+              elif size < 1024:
+                  return f"{size} B"
+              else:
+                  return f"{size / 1024:.1f} KB"
+
+          # Collect current sizes
+          sizes_formatted = {}
+          sizes_raw = {}
+          artifacts_dir = Path("artifacts")
+
+          for size_dir in artifacts_dir.glob("size-*"):
+              platform_arch = size_dir.name.replace("size-", "")
+              exe_file = None
+              for ext in ["output.exe", "output.elf", "output.efi"]:
+                  files = list(size_dir.rglob(ext))
+                  if files:
+                      exe_file = files[0]
+                      break
+              # macOS Mach-O has no extension - look for "output" without extension
+              if exe_file is None and "macos" in platform_arch:
+                  for f in size_dir.rglob("output"):
+                      if f.is_file() and f.suffix == "" and f.stat().st_size > 0:
+                          exe_file = f
+                          break
+              bin_files = list(size_dir.rglob("output.bin"))
+              bin_file = bin_files[0] if bin_files else None
+
+              exe_size = exe_file.stat().st_size if exe_file else None
+              bin_size = bin_file.stat().st_size if bin_file else None
+
+              key = platform_arch.replace("-", "_")
+              sizes_formatted[f"{key}_exe"] = format_size(exe_size)
+              sizes_formatted[f"{key}_bin"] = format_size(bin_size)
+              if bin_size:
+                  sizes_raw[f"{key}_bin"] = bin_size
+
+          # Save formatted sizes for badges
+          Path("sizes.json").write_text(json.dumps(sizes_formatted, indent=2))
+
+          # Save raw sizes for PR comparison
+          Path("sizes_raw.json").write_text(json.dumps(sizes_raw, indent=2))
+
+          # Save this commit's data as individual file
+          date_str = datetime.utcnow().strftime("%Y-%m-%d")
+          commit_short = os.environ["COMMIT_SHA"][:7]
+          commit_data = {
+              "date": date_str,
+              "commit": commit_short,
+              "sizes": sizes_raw
+          }
+
+          Path("sizes").mkdir(exist_ok=True)
+          filename = f"sizes/{date_str}_{commit_short}.json"
+          Path(filename).write_text(json.dumps(commit_data, indent=2))
+
+          print(f"Saved: {filename}")
+          print(json.dumps(sizes_formatted, indent=2))
+          EOF
+
+      - name: Fetch baseline from build-sizes branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin build-sizes 2>/dev/null || true
+
+          # Extract baseline history to a separate directory to avoid mixing with PR data
+          mkdir -p /tmp/baseline
+          if git rev-parse --verify origin/build-sizes >/dev/null 2>&1; then
+            git archive origin/build-sizes -- sizes/ 2>/dev/null | tar -x -C /tmp/baseline 2>/dev/null || true
+          fi
+
+      - name: Merge history and prune (push to main only)
+        if: github.event_name == 'push'
+        run: |
+          # Merge baseline history with the new commit's data
+          cp /tmp/baseline/sizes/*.json sizes/ 2>/dev/null || true
+
+          python3 << 'EOF'
+          from pathlib import Path
+
+          sizes_dir = Path("sizes")
+          all_files = sorted(sizes_dir.glob("*.json"))
+          if len(all_files) > 50:
+              for f in all_files[:-50]:
+                  f.unlink()
+              print(f"Pruned to 50 entries (removed {len(all_files) - 50})")
+          else:
+              print(f"History has {len(all_files)} entries")
+          EOF
+
+      - name: Post size comparison on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os
+          from pathlib import Path
+
+          def fmt(size):
+              if size is None or size == 0:
+                  return "-"
+              elif size < 1024:
+                  return f"{size} B"
+              else:
+                  return f"{size / 1024:.1f} KB"
+
+          def fmt_delta(old, new):
+              if old is None or new is None or old == 0 or new == 0:
+                  return ""
+              d = new - old
+              pct = (d / old) * 100
+              if d == 0:
+                  return "no change"
+              sign = "+" if d > 0 else ""
+              if abs(d) < 1024:
+                  return f"{sign}{d} B ({sign}{pct:.1f}%)"
+              else:
+                  return f"{sign}{d/1024:.1f} KB ({sign}{pct:.1f}%)"
+
+          # Load PR formatted sizes (for exe column)
+          pr_sizes = {}
+          if Path("sizes.json").exists():
+              pr_sizes = json.loads(Path("sizes.json").read_text())
+
+          # Load PR raw sizes (byte counts, saved by Collect step)
+          pr_raw = {}
+          if Path("sizes_raw.json").exists():
+              pr_raw = json.loads(Path("sizes_raw.json").read_text())
+
+          # Load baseline from build-sizes branch (latest historical entry)
+          baseline_raw = {}
+          baseline_commit = "main"
+          baseline_dir = Path("/tmp/baseline/sizes")
+          if baseline_dir.exists():
+              base_files = sorted(baseline_dir.glob("*.json"))
+              if base_files:
+                  try:
+                      bd = json.loads(base_files[-1].read_text())
+                      baseline_raw = bd.get("sizes", {})
+                      baseline_commit = bd.get("commit", "main")
+                  except:
+                      pass
+
+          # Platform layout for the table
+          platforms = [
+              ("Windows", [
+                  ("i386", "windows_i386"),
+                  ("x86_64", "windows_x86_64"),
+                  ("armv7a", "windows_armv7a"),
+                  ("aarch64", "windows_aarch64"),
+              ]),
+              ("Linux", [
+                  ("i386", "linux_i386"),
+                  ("x86_64", "linux_x86_64"),
+                  ("armv7a", "linux_armv7a"),
+                  ("aarch64", "linux_aarch64"),
+                  ("riscv32", "linux_riscv32"),
+                  ("riscv64", "linux_riscv64"),
+              ]),
+              ("macOS", [
+                  ("x86_64", "macos_x86_64"),
+                  ("aarch64", "macos_aarch64"),
+              ]),
+              ("UEFI", [
+                  ("x86_64", "uefi_x86_64"),
+                  ("aarch64", "uefi_aarch64"),
+              ]),
+              ("Solaris", [
+                  ("i386", "solaris_i386"),
+                  ("x86_64", "solaris_x86_64"),
+                  ("aarch64", "solaris_aarch64"),
+              ]),
+              ("FreeBSD", [
+                  ("i386", "freebsd_i386"),
+                  ("x86_64", "freebsd_x86_64"),
+                  ("aarch64", "freebsd_aarch64"),
+                  ("riscv64", "freebsd_riscv64"),
+              ]),
+          ]
+
+          # Build markdown table
+          marker = "<!-- pir-size-report -->"
+          lines = [marker, "## Binary Size Report", ""]
+          lines.append(f"Comparison against `main` (`{baseline_commit}`).")
+          lines.append("")
+          lines.append("| Platform | Arch | Exe | .bin (main) | .bin (PR) | Delta |")
+          lines.append("|----------|------|-----|-------------|-----------|-------|")
+
+          total_delta = 0
+          has_baseline = bool(baseline_raw)
+
+          for plat_name, archs in platforms:
+              for arch_name, key in archs:
+                  exe_key = f"{key}_exe"
+                  bin_key = f"{key}_bin"
+
+                  exe_val = pr_sizes.get(exe_key, "-")
+                  pr_bin = pr_raw.get(bin_key)
+                  base_bin = baseline_raw.get(bin_key)
+
+                  pr_bin_str = fmt(pr_bin) if pr_bin else "-"
+                  base_bin_str = fmt(base_bin) if base_bin else "-"
+
+                  if pr_bin and base_bin:
+                      delta = fmt_delta(base_bin, pr_bin)
+                      d = pr_bin - base_bin
+                      total_delta += d
+                  elif pr_bin and not base_bin:
+                      delta = "new"
+                  else:
+                      delta = ""
+
+                  lines.append(f"| **{plat_name}** | {arch_name} | {exe_val} | {base_bin_str} | {pr_bin_str} | {delta} |")
+
+          lines.append("")
+          if has_baseline and total_delta != 0:
+              sign = "+" if total_delta > 0 else ""
+              if abs(total_delta) < 1024:
+                  lines.append(f"**Total .bin change: {sign}{total_delta} B**")
+              else:
+                  lines.append(f"**Total .bin change: {sign}{total_delta/1024:.1f} KB**")
+          elif has_baseline:
+              lines.append("**Total .bin change: no change**")
+          else:
+              lines.append("*No baseline available yet — sizes will be compared after the first merge to main.*")
+
+          comment_body = "\n".join(lines)
+          Path("/tmp/size_comment.md").write_text(comment_body)
+          print(comment_body)
+          PYEOF
+
+          # Post or update the PR comment
+          MARKER="<!-- pir-size-report -->"
+          PR="${{ github.event.pull_request.number }}"
+
+          # Find existing comment with our marker
+          COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/${PR}/comments" \
+            --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" 2>/dev/null | head -n 1)
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api "repos/${{ github.repository }}/issues/comments/${COMMENT_ID}" \
+              -X PATCH -F "body=@/tmp/size_comment.md"
+            echo "Updated existing comment ${COMMENT_ID}"
+          else
+            gh pr comment "${PR}" --body-file /tmp/size_comment.md
+            echo "Created new comment on PR #${PR}"
+          fi
+
+      - name: Deploy to build-sizes branch (push to main only)
+        if: github.event_name == 'push'
+        run: |
+          # Save files before branch switch
+          cp sizes.json /tmp/deploy_sizes.json
+          cp -r sizes /tmp/deploy_sizes
+
+          # Remove files to avoid checkout conflict
+          rm -rf sizes sizes.json sizes_raw.json
+
+          # Checkout build-sizes branch, or create orphan if it doesn't exist
+          git branch -D build-sizes 2>/dev/null || true
+          if git rev-parse --verify origin/build-sizes >/dev/null 2>&1; then
+            git checkout -b build-sizes origin/build-sizes
+          else
+            git checkout --orphan build-sizes
+            git rm -rf . 2>/dev/null || true
+          fi
+
+          # Restore files
+          mv /tmp/deploy_sizes.json sizes.json
+          rm -rf sizes
+          mv /tmp/deploy_sizes sizes
+
+          # Commit and push
+          git add sizes.json sizes/
+          git diff --staged --quiet || git commit -m "Update binary sizes [$(date -u +%Y-%m-%d)]"
+          git push origin build-sizes --force

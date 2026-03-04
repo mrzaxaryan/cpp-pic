@@ -1,0 +1,772 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}/cmake",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "APP_DIR": "tests"
+      }
+    },
+    {
+      "name": "docs",
+      "displayName": "Documentation",
+      "description": "Build Doxygen documentation (no compiler required)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/docs/cmake",
+      "cacheVariables": {
+        "BUILD_DOCS": "ON"
+      }
+    },
+    {
+      "name": "windows-i386-debug",
+      "displayName": "Windows i386 (Debug)",
+      "description": "Windows 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-i386-release",
+      "displayName": "Windows i386 (Release)",
+      "description": "Windows 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "windows-x86_64-debug",
+      "displayName": "Windows x86_64 (Debug)",
+      "description": "Windows 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-x86_64-release",
+      "displayName": "Windows x86_64 (Release)",
+      "description": "Windows 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "windows-aarch64-debug",
+      "displayName": "Windows AArch64 (Debug)",
+      "description": "Windows 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-aarch64-release",
+      "displayName": "Windows AArch64 (Release)",
+      "description": "Windows 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "windows-armv7a-debug",
+      "displayName": "Windows ARMv7-A (Debug)",
+      "description": "Windows 32-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/windows/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "windows-armv7a-release",
+      "displayName": "Windows ARMv7-A (Release)",
+      "description": "Windows 32-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/windows/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "windows",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "linux-i386-debug",
+      "displayName": "Linux i386 (Debug)",
+      "description": "Linux 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-i386-release",
+      "displayName": "Linux i386 (Release)",
+      "description": "Linux 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "linux-x86_64-debug",
+      "displayName": "Linux x86_64 (Debug)",
+      "description": "Linux 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-x86_64-release",
+      "displayName": "Linux x86_64 (Release)",
+      "description": "Linux 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "linux-armv7a-debug",
+      "displayName": "Linux ARMv7-A (Debug)",
+      "description": "Linux 32-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-armv7a-release",
+      "displayName": "Linux ARMv7-A (Release)",
+      "description": "Linux 32-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/armv7a/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "armv7a",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "linux-aarch64-debug",
+      "displayName": "Linux AArch64 (Debug)",
+      "description": "Linux 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-aarch64-release",
+      "displayName": "Linux AArch64 (Release)",
+      "description": "Linux 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "linux-riscv32-debug",
+      "displayName": "Linux RISC-V 32 (Debug)",
+      "description": "Linux 32-bit RISC-V debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/riscv32/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv32",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-riscv32-release",
+      "displayName": "Linux RISC-V 32 (Release)",
+      "description": "Linux 32-bit RISC-V release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/riscv32/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv32",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "linux-riscv64-debug",
+      "displayName": "Linux RISC-V 64 (Debug)",
+      "description": "Linux 64-bit RISC-V debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/riscv64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "linux-riscv64-release",
+      "displayName": "Linux RISC-V 64 (Release)",
+      "description": "Linux 64-bit RISC-V release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/riscv64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "macos-x86_64-debug",
+      "displayName": "macOS x86_64 (Debug)",
+      "description": "macOS 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/macos/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "macos-x86_64-release",
+      "displayName": "macOS x86_64 (Release)",
+      "description": "macOS 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/macos/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "macos-aarch64-debug",
+      "displayName": "macOS AArch64 (Debug)",
+      "description": "macOS Apple Silicon debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/macos/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "macos-aarch64-release",
+      "displayName": "macOS AArch64 (Release)",
+      "description": "macOS Apple Silicon release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/macos/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "macos",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "uefi-x86_64-debug",
+      "displayName": "UEFI x86_64 (Debug)",
+      "description": "UEFI 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/uefi/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "uefi-x86_64-release",
+      "displayName": "UEFI x86_64 (Release)",
+      "description": "UEFI 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/uefi/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "uefi-aarch64-debug",
+      "displayName": "UEFI AArch64 (Debug)",
+      "description": "UEFI 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/uefi/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "uefi-aarch64-release",
+      "displayName": "UEFI AArch64 (Release)",
+      "description": "UEFI 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/uefi/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "uefi",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "solaris-x86_64-debug",
+      "displayName": "Solaris x86_64 (Debug)",
+      "description": "Solaris/illumos 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/solaris/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "solaris-x86_64-release",
+      "displayName": "Solaris x86_64 (Release)",
+      "description": "Solaris/illumos 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/solaris/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "solaris-i386-debug",
+      "displayName": "Solaris i386 (Debug)",
+      "description": "Solaris/illumos 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/solaris/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "solaris-i386-release",
+      "displayName": "Solaris i386 (Release)",
+      "description": "Solaris/illumos 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/solaris/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "solaris-aarch64-debug",
+      "displayName": "Solaris AArch64 (Debug)",
+      "description": "Solaris/illumos 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/solaris/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "solaris-aarch64-release",
+      "displayName": "Solaris AArch64 (Release)",
+      "description": "Solaris/illumos 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/solaris/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "solaris",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "freebsd-i386-debug",
+      "displayName": "FreeBSD i386 (Debug)",
+      "description": "FreeBSD 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/freebsd/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "freebsd-i386-release",
+      "displayName": "FreeBSD i386 (Release)",
+      "description": "FreeBSD 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/freebsd/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "freebsd-x86_64-debug",
+      "displayName": "FreeBSD x86_64 (Debug)",
+      "description": "FreeBSD 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/freebsd/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "freebsd-x86_64-release",
+      "displayName": "FreeBSD x86_64 (Release)",
+      "description": "FreeBSD 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/freebsd/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "freebsd-aarch64-debug",
+      "displayName": "FreeBSD AArch64 (Debug)",
+      "description": "FreeBSD 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/freebsd/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "freebsd-aarch64-release",
+      "displayName": "FreeBSD AArch64 (Release)",
+      "description": "FreeBSD 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/freebsd/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "freebsd-riscv64-debug",
+      "displayName": "FreeBSD RISC-V 64 (Debug)",
+      "description": "FreeBSD 64-bit RISC-V debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/freebsd/riscv64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv64",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "Og"
+      }
+    },
+    {
+      "name": "freebsd-riscv64-release",
+      "displayName": "FreeBSD RISC-V 64 (Release)",
+      "description": "FreeBSD 64-bit RISC-V release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/freebsd/riscv64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv64",
+        "PLATFORM": "freebsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "docs",
+      "configurePreset": "docs"
+    },
+    {
+      "name": "windows-i386-debug",
+      "configurePreset": "windows-i386-debug"
+    },
+    {
+      "name": "windows-i386-release",
+      "configurePreset": "windows-i386-release"
+    },
+    {
+      "name": "windows-x86_64-debug",
+      "configurePreset": "windows-x86_64-debug"
+    },
+    {
+      "name": "windows-x86_64-release",
+      "configurePreset": "windows-x86_64-release"
+    },
+    {
+      "name": "windows-aarch64-debug",
+      "configurePreset": "windows-aarch64-debug"
+    },
+    {
+      "name": "windows-aarch64-release",
+      "configurePreset": "windows-aarch64-release"
+    },
+    {
+      "name": "windows-armv7a-debug",
+      "configurePreset": "windows-armv7a-debug"
+    },
+    {
+      "name": "windows-armv7a-release",
+      "configurePreset": "windows-armv7a-release"
+    },
+    {
+      "name": "linux-i386-debug",
+      "configurePreset": "linux-i386-debug"
+    },
+    {
+      "name": "linux-i386-release",
+      "configurePreset": "linux-i386-release"
+    },
+    {
+      "name": "linux-x86_64-debug",
+      "configurePreset": "linux-x86_64-debug"
+    },
+    {
+      "name": "linux-x86_64-release",
+      "configurePreset": "linux-x86_64-release"
+    },
+    {
+      "name": "linux-armv7a-debug",
+      "configurePreset": "linux-armv7a-debug"
+    },
+    {
+      "name": "linux-armv7a-release",
+      "configurePreset": "linux-armv7a-release"
+    },
+    {
+      "name": "linux-aarch64-debug",
+      "configurePreset": "linux-aarch64-debug"
+    },
+    {
+      "name": "linux-aarch64-release",
+      "configurePreset": "linux-aarch64-release"
+    },
+    {
+      "name": "linux-riscv32-debug",
+      "configurePreset": "linux-riscv32-debug"
+    },
+    {
+      "name": "linux-riscv32-release",
+      "configurePreset": "linux-riscv32-release"
+    },
+    {
+      "name": "linux-riscv64-debug",
+      "configurePreset": "linux-riscv64-debug"
+    },
+    {
+      "name": "linux-riscv64-release",
+      "configurePreset": "linux-riscv64-release"
+    },
+    {
+      "name": "macos-x86_64-debug",
+      "configurePreset": "macos-x86_64-debug"
+    },
+    {
+      "name": "macos-x86_64-release",
+      "configurePreset": "macos-x86_64-release"
+    },
+    {
+      "name": "macos-aarch64-debug",
+      "configurePreset": "macos-aarch64-debug"
+    },
+    {
+      "name": "macos-aarch64-release",
+      "configurePreset": "macos-aarch64-release"
+    },
+    {
+      "name": "uefi-x86_64-debug",
+      "configurePreset": "uefi-x86_64-debug"
+    },
+    {
+      "name": "uefi-x86_64-release",
+      "configurePreset": "uefi-x86_64-release"
+    },
+    {
+      "name": "uefi-aarch64-debug",
+      "configurePreset": "uefi-aarch64-debug"
+    },
+    {
+      "name": "uefi-aarch64-release",
+      "configurePreset": "uefi-aarch64-release"
+    },
+    {
+      "name": "solaris-x86_64-debug",
+      "configurePreset": "solaris-x86_64-debug"
+    },
+    {
+      "name": "solaris-x86_64-release",
+      "configurePreset": "solaris-x86_64-release"
+    },
+    {
+      "name": "solaris-i386-debug",
+      "configurePreset": "solaris-i386-debug"
+    },
+    {
+      "name": "solaris-i386-release",
+      "configurePreset": "solaris-i386-release"
+    },
+    {
+      "name": "solaris-aarch64-debug",
+      "configurePreset": "solaris-aarch64-debug"
+    },
+    {
+      "name": "solaris-aarch64-release",
+      "configurePreset": "solaris-aarch64-release"
+    },
+    {
+      "name": "freebsd-i386-debug",
+      "configurePreset": "freebsd-i386-debug"
+    },
+    {
+      "name": "freebsd-i386-release",
+      "configurePreset": "freebsd-i386-release"
+    },
+    {
+      "name": "freebsd-x86_64-debug",
+      "configurePreset": "freebsd-x86_64-debug"
+    },
+    {
+      "name": "freebsd-x86_64-release",
+      "configurePreset": "freebsd-x86_64-release"
+    },
+    {
+      "name": "freebsd-aarch64-debug",
+      "configurePreset": "freebsd-aarch64-debug"
+    },
+    {
+      "name": "freebsd-aarch64-release",
+      "configurePreset": "freebsd-aarch64-release"
+    },
+    {
+      "name": "freebsd-riscv64-debug",
+      "configurePreset": "freebsd-riscv64-debug"
+    },
+    {
+      "name": "freebsd-riscv64-release",
+      "configurePreset": "freebsd-riscv64-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "uefi-x86_64-qemu",
+      "displayName": "UEFI x86_64 QEMU Test",
+      "description": "Run UEFI x86_64 build in QEMU",
+      "configurePreset": "uefi-x86_64-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "uefi-aarch64-qemu",
+      "displayName": "UEFI AArch64 QEMU Test",
+      "description": "Run UEFI AArch64 build in QEMU",
+      "configurePreset": "uefi-aarch64-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

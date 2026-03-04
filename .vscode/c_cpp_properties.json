@@ -1,0 +1,425 @@
+{
+    "version": 4,
+    "enableConfigurationSquiggles": true,
+    "env": {
+        "commonInclude": [
+            "${workspaceFolder}/src",
+            "${workspaceFolder}/src/core",
+            "${workspaceFolder}/src/core/algorithms",
+            "${workspaceFolder}/src/core/compiler",
+            "${workspaceFolder}/src/core/encoding",
+            "${workspaceFolder}/src/core/io",
+            "${workspaceFolder}/src/core/math",
+            "${workspaceFolder}/src/core/memory",
+            "${workspaceFolder}/src/core/string",
+            "${workspaceFolder}/src/core/types",
+            "${workspaceFolder}/src/core/types/embedded",
+            "${workspaceFolder}/src/platform",
+            "${workspaceFolder}/src/platform/io",
+            "${workspaceFolder}/src/platform/fs",
+            "${workspaceFolder}/src/platform/memory",
+            "${workspaceFolder}/src/platform/network",
+            "${workspaceFolder}/src/platform/os",
+            "${workspaceFolder}/src/platform/system",
+            "${workspaceFolder}/src/runtime",
+            "${workspaceFolder}/src/runtime/crypto",
+            "${workspaceFolder}/src/runtime/network",
+            "${workspaceFolder}/src/runtime/network/dns",
+            "${workspaceFolder}/src/runtime/network/http",
+            "${workspaceFolder}/src/runtime/network/tls",
+            "${workspaceFolder}/src/runtime/network/websocket",
+            "${workspaceFolder}/tests"
+        ]
+    },
+    "configurations": [
+        {
+            "name": "windows-i386",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_I386",
+                "PLATFORM_WINDOWS",
+                "PLATFORM_WINDOWS_I386",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/windows"
+            ]
+        },
+        {
+            "name": "windows-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_WINDOWS",
+                "PLATFORM_WINDOWS_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/windows"
+            ]
+        },
+        {
+            "name": "windows-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_WINDOWS",
+                "PLATFORM_WINDOWS_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/windows"
+            ]
+        },
+        {
+            "name": "windows-armv7a",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-arm",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_ARMV7A",
+                "PLATFORM_WINDOWS",
+                "PLATFORM_WINDOWS_ARMV7A",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/windows"
+            ]
+        },
+        {
+            "name": "linux-i386",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_I386",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_I386",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-armv7a",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_ARMV7A",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_ARMV7A",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-riscv32",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV32",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_RISCV32",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "linux-riscv64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_RISCV64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "macos-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "macos-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_MACOS",
+                "PLATFORM_MACOS_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/macos",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "macos-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "macos-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_MACOS",
+                "PLATFORM_MACOS_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/macos",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
+            "name": "uefi-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_UEFI",
+                "PLATFORM_UEFI_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/uefi"
+            ]
+        },
+        {
+            "name": "uefi-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "windows-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_UEFI",
+                "PLATFORM_UEFI_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/uefi"
+            ]
+        },
+        {
+            "name": "solaris-i386",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_I386",
+                "PLATFORM_SOLARIS",
+                "PLATFORM_SOLARIS_I386",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/solaris",
+                "${workspaceFolder}/src/platform/os/solaris/common"
+            ]
+        },
+        {
+            "name": "solaris-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_SOLARIS",
+                "PLATFORM_SOLARIS_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/solaris",
+                "${workspaceFolder}/src/platform/os/solaris/common"
+            ]
+        },
+        {
+            "name": "solaris-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_SOLARIS",
+                "PLATFORM_SOLARIS_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/solaris",
+                "${workspaceFolder}/src/platform/os/solaris/common"
+            ]
+        },
+        {
+            "name": "freebsd-i386",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_I386",
+                "PLATFORM_FREEBSD",
+                "PLATFORM_FREEBSD_I386",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/freebsd"
+            ]
+        },
+        {
+            "name": "freebsd-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_FREEBSD",
+                "PLATFORM_FREEBSD_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/freebsd"
+            ]
+        },
+        {
+            "name": "freebsd-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_FREEBSD",
+                "PLATFORM_FREEBSD_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/freebsd"
+            ]
+        },
+        {
+            "name": "freebsd-riscv64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV64",
+                "PLATFORM_FREEBSD",
+                "PLATFORM_FREEBSD_RISCV64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/freebsd"
+            ]
+        }
+    ]
+}

@@ -70,14 +70,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -106,14 +107,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -142,14 +144,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -178,14 +181,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -214,14 +218,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -250,14 +255,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"
@@ -286,14 +292,15 @@ jobs:
         with:
           arch: aarch64
           prepare: |
-            sleep 2
-            ifconfig vtnet0 2>/dev/null || ifconfig -a
-            netstat -rn
-            cat /etc/resolv.conf 2>/dev/null || echo "No resolv.conf"
+            pkill dhclient 2>/dev/null; sleep 1
+            dhclient vtnet0 2>/dev/null; sleep 3
+            if ! netstat -rn | grep -q default; then
+              ifconfig vtnet0 inet 10.0.2.15 netmask 255.255.255.0 up
+              route add default 10.0.2.2
+            fi
             if ! grep -q "nameserver" /etc/resolv.conf 2>/dev/null; then
               printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" > /etc/resolv.conf
             fi
-            ping -c 1 -t 5 1.1.1.1 2>/dev/null && echo "Internet OK" || echo "No internet"
           run: |
             TEST_ELF=$(find build -type f -name "output.elf" | head -n 1)
             chmod +x "$TEST_ELF"

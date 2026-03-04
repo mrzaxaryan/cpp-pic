@@ -36,10 +36,8 @@ endif()
 
 # RISC-V 64: merge .rodata (LTO constant pools) into .text so the
 # PIC binary contains the constant-pool data that auipc+ld references.
-# --no-relax: match the compiler -mno-relax flag so LLD does not
-# introduce GP-relative relocations that require a CRT-initialised gp.
 if(PIR_ARCH STREQUAL "riscv64")
-    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.riscv64.ld --no-relax)
+    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.riscv64.ld)
 endif()
 
 list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)

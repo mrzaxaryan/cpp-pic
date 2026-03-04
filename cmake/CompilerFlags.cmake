@@ -25,13 +25,6 @@ set(PIR_BASE_FLAGS
 # Architecture-specific
 list(APPEND PIR_BASE_FLAGS -mno-stack-arg-probe -mno-implicit-float)
 
-# RISC-V: disable linker relaxation to avoid GP-relative addressing.
-# PIR has no CRT to initialise the gp register, so GP-relative accesses
-# emitted by the relaxation pass would fault at runtime.
-if(PIR_ARCH MATCHES "^riscv(32|64)$")
-    list(APPEND PIR_BASE_FLAGS -mno-relax)
-endif()
-
 # Build-type-specific
 if(PIR_BUILD_TYPE STREQUAL "debug")
     list(APPEND PIR_BASE_FLAGS

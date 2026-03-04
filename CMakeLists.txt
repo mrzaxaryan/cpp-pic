@@ -10,22 +10,14 @@ include(${CMAKE_SOURCE_DIR}/cmake/Common.cmake)
 # =============================================================================
 # Documentation (Doxygen)
 # =============================================================================
-find_package(Doxygen OPTIONAL_COMPONENTS dot)
+find_program(DOXYGEN_EXECUTABLE doxygen)
 
-if(DOXYGEN_FOUND)
-    set(DOXYGEN_PROJECT_NAME "Position-Independent Runtime")
-    set(DOXYGEN_PROJECT_BRIEF "Position-Independent Runtime for Windows, Linux, and UEFI")
-    set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/docs)
-    set(DOXYGEN_GENERATE_HTML YES)
-    set(DOXYGEN_EXTRACT_ALL YES)
-    set(DOXYGEN_EXTRACT_STATIC YES)
-    set(DOXYGEN_SOURCE_BROWSER YES)
-
-    doxygen_add_docs(docs
-        ${PIR_ROOT_DIR}/src/core
-        ${PIR_ROOT_DIR}/src/platform
-        ${PIR_ROOT_DIR}/src/runtime
+if(DOXYGEN_EXECUTABLE)
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Generating documentation with Doxygen"
+        VERBATIM
     )
     set(_doxygen_status "Available")
 else()

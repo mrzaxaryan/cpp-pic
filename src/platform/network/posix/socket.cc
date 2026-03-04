@@ -46,24 +46,24 @@ static SSIZE PosixSocket(INT32 domain, INT32 type, INT32 protocol)
 }
 
 // --- Bind ---
-static SSIZE PosixBind(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
+static SSIZE PosixBind(SSIZE sockfd, const VOID *addr, UINT32 addrlen)
 {
 #if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
-	USIZE args[3] = {(USIZE)sockfd, (USIZE)&addr, addrlen};
+	USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_BIND, (USIZE)args);
 #else
-	return System::Call(SYS_BIND, (USIZE)sockfd, (USIZE)&addr, addrlen);
+	return System::Call(SYS_BIND, (USIZE)sockfd, (USIZE)addr, addrlen);
 #endif
 }
 
 // --- Connect ---
-static SSIZE PosixConnect(SSIZE sockfd, const SockAddr &addr, UINT32 addrlen)
+static SSIZE PosixConnect(SSIZE sockfd, const VOID *addr, UINT32 addrlen)
 {
 #if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_I386)
-	USIZE args[3] = {(USIZE)sockfd, (USIZE)&addr, addrlen};
+	USIZE args[3] = {(USIZE)sockfd, (USIZE)addr, addrlen};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_CONNECT, (USIZE)args);
 #else
-	return System::Call(SYS_CONNECT, (USIZE)sockfd, (USIZE)&addr, addrlen);
+	return System::Call(SYS_CONNECT, (USIZE)sockfd, (USIZE)addr, addrlen);
 #endif
 }
 
@@ -149,7 +149,7 @@ Result<void, Error> Socket::Bind(const SockAddr &socketAddress, INT32 shareType)
 
 	SSIZE  sockfd  = (SSIZE)handle;
 	UINT32 addrLen = (socketAddress.SinFamily == AF_INET6) ? sizeof(SockAddr6) : sizeof(SockAddr);
-	SSIZE  result  = PosixBind(sockfd, socketAddress, addrLen);
+	SSIZE  result  = PosixBind(sockfd, &socketAddress, addrLen);
 	if (result != 0)
 	{
 		return Result<void, Error>::Err(
@@ -183,7 +183,7 @@ Result<void, Error> Socket::Open()
 	if (setResult < 0)
 		return Result<void, Error>::Err(Error::Posix((UINT32)(-setResult)), Error::Socket_OpenFailed_Connect);
 
-	SSIZE result = PosixConnect(sockfd, *(const SockAddr *)&addrBuffer, addrLen);
+	SSIZE result = PosixConnect(sockfd, &addrBuffer, addrLen);
 	if (result != 0 && (-(INT32)result) != EINPROGRESS)
 	{
 		(void)PosixFcntl(sockfd, F_SETFL, flags);

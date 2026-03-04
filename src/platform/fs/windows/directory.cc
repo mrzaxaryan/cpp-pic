@@ -12,8 +12,9 @@ Result<void, Error> Directory::Create(PCWCHAR path)
 	OBJECT_ATTRIBUTES objAttr;
 	IO_STATUS_BLOCK ioStatusBlock;
 
-	if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
-		return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_CreateDirFailed);
+	auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr);
+	if (!pathResult)
+		return Result<void, Error>::Err(pathResult, Error::Fs_CreateDirFailed);
 
 	InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 
@@ -51,8 +52,9 @@ Result<void, Error> Directory::Delete(PCWCHAR path)
 	Memory::Zero(&disp, sizeof(FILE_DISPOSITION_INFORMATION));
 	disp.DeleteFile = true;
 
-	if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
-		return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_DeleteDirFailed);
+	auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr);
+	if (!pathResult)
+		return Result<void, Error>::Err(pathResult, Error::Fs_DeleteDirFailed);
 
 	InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 

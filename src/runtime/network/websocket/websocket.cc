@@ -181,20 +181,20 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 
 		UINT32 frameLength = headerLength + (UINT32)buffer.Size();
 		auto smallWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, frameLength));
-		if (!smallWrite || smallWrite.Value() != frameLength)
-		{
+		if (!smallWrite)
 			return Result<UINT32, Error>::Err(smallWrite, Error::Ws_WriteFailed);
-		}
+		if (smallWrite.Value() != frameLength)
+			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 
 		return Result<UINT32, Error>::Ok((UINT32)buffer.Size());
 	}
 
 	// Large frames: write header, then mask and write payload in chunks
 	auto headerWrite = tlsContext.Write(Span<const CHAR>((PCHAR)header, headerLength));
-	if (!headerWrite || headerWrite.Value() != headerLength)
-	{
+	if (!headerWrite)
 		return Result<UINT32, Error>::Err(headerWrite, Error::Ws_WriteFailed);
-	}
+	if (headerWrite.Value() != headerLength)
+		return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 
 	PUINT8 src = (PUINT8)buffer.Data();
 	USIZE offset = 0;
@@ -207,10 +207,10 @@ Result<UINT32, Error> WebSocketClient::Write(Span<const CHAR> buffer, WebSocketO
 			chunk[i] = src[offset + i] ^ maskKey[(offset + i) & 3];
 
 		auto chunkWrite = tlsContext.Write(Span<const CHAR>((PCHAR)chunk, chunkSize));
-		if (!chunkWrite || chunkWrite.Value() != chunkSize)
-		{
+		if (!chunkWrite)
 			return Result<UINT32, Error>::Err(chunkWrite, Error::Ws_WriteFailed);
-		}
+		if (chunkWrite.Value() != chunkSize)
+			return Result<UINT32, Error>::Err(Error::Ws_WriteFailed);
 
 		offset += chunkSize;
 		remaining -= chunkSize;
@@ -231,8 +231,10 @@ Result<void, Error> WebSocketClient::ReceiveRestrict(Span<CHAR> buffer)
 	while (totalBytesRead < buffer.Size())
 	{
 		auto readResult = tlsContext.Read(Span<CHAR>(buffer.Data() + totalBytesRead, buffer.Size() - totalBytesRead));
-		if (!readResult || readResult.Value() <= 0)
+		if (!readResult)
 			return Result<void, Error>::Err(readResult, Error::Ws_ReceiveFailed);
+		if (readResult.Value() <= 0)
+			return Result<void, Error>::Err(Error::Ws_ReceiveFailed);
 		totalBytesRead += readResult.Value();
 	}
 	return Result<void, Error>::Ok();

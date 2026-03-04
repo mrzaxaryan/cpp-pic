@@ -618,11 +618,17 @@ Result<void, Error> TlsClient::ProcessReceive()
 	if (!checkResult)
 		return Result<void, Error>::Err(checkResult, Error::Tls_ProcessReceiveFailed);
 	auto readResult = context.Read(Span<CHAR>(recvBuffer.GetBuffer() + recvBuffer.GetSize(), 4096 * 4));
-	if (!readResult || readResult.Value() <= 0)
+	if (!readResult)
 	{
 		LOG_DEBUG("Failed to read data from socket for client: %p", this);
 		(void)Close();
 		return Result<void, Error>::Err(readResult, Error::Tls_ProcessReceiveFailed);
+	}
+	if (readResult.Value() <= 0)
+	{
+		LOG_DEBUG("Read returned 0 bytes from socket for client: %p", this);
+		(void)Close();
+		return Result<void, Error>::Err(Error::Tls_ProcessReceiveFailed);
 	}
 	INT64 len = readResult.Value();
 	if (len > 0x7FFFFFFF)

@@ -46,8 +46,9 @@ Result<File, Error> File::Open(PCWCHAR path, INT32 flags)
 
 	// Convert DOS path to NT path
 	UNICODE_STRING ntPathU;
-	if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &ntPathU, nullptr, nullptr))
-		return Result<File, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_OpenFailed);
+	auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &ntPathU, nullptr, nullptr);
+	if (!pathResult)
+		return Result<File, Error>::Err(pathResult, Error::Fs_OpenFailed);
 
 	OBJECT_ATTRIBUTES objAttr;
 	InitializeObjectAttributes(&objAttr, &ntPathU, 0, nullptr, nullptr);
@@ -93,8 +94,9 @@ Result<void, Error> File::Delete(PCWCHAR path)
 	PVOID hFile = nullptr;
 	IO_STATUS_BLOCK io;
 
-	if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &ntName, nullptr, nullptr))
-		return Result<void, Error>::Err(Error::Fs_PathResolveFailed, Error::Fs_DeleteFailed);
+	auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &ntName, nullptr, nullptr);
+	if (!pathResult)
+		return Result<void, Error>::Err(pathResult, Error::Fs_DeleteFailed);
 
 	InitializeObjectAttributes(&attr, &ntName, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
@@ -119,8 +121,9 @@ Result<void, Error> File::Exists(PCWCHAR path)
 	UNICODE_STRING uniName;
 	FILE_BASIC_INFORMATION fileBasicInfo;
 
-	if (!NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr))
-		return Result<void, Error>::Err(Error::Fs_PathResolveFailed);
+	auto pathResult = NTDLL::RtlDosPathNameToNtPathName_U(path, &uniName, nullptr, nullptr);
+	if (!pathResult)
+		return Result<void, Error>::Err(pathResult, Error::Fs_OpenFailed);
 
 	InitializeObjectAttributes(&objAttr, &uniName, 0, nullptr, nullptr);
 	auto queryResult = NTDLL::ZwQueryAttributesFile(&objAttr, &fileBasicInfo);

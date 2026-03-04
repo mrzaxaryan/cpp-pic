@@ -54,7 +54,8 @@ DirectoryIterator &DirectoryIterator::operator=(DirectoryIterator &&other) noexc
 {
 	if (this != &other)
 	{
-		Close();
+		if (IsValid())
+			Close();
 		handle = other.handle;
 		currentEntry = other.currentEntry;
 		isFirst = other.isFirst;

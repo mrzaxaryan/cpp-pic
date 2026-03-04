@@ -119,8 +119,10 @@ Result<void, Error> HttpClient::SendGetRequest(PCCHAR host, PCCHAR path)
 	request[pos] = '\0';
 
 	auto r = Write(Span<const CHAR>(request, (UINT32)pos));
-	if (!r || r.Value() != (UINT32)pos)
+	if (!r)
 		return Result<void, Error>::Err(r, Error::Http_SendGetFailed);
+	if (r.Value() != (UINT32)pos)
+		return Result<void, Error>::Err(Error::Http_SendGetFailed);
 	return Result<void, Error>::Ok();
 }
 
@@ -154,17 +156,19 @@ Result<void, Error> HttpClient::SendPostRequest(PCCHAR host, PCCHAR path, Span<c
 
 	// Send headers
 	auto r = Write(Span<const CHAR>(request, (UINT32)pos));
-	if (!r || r.Value() != (UINT32)pos)
-	{
+	if (!r)
 		return Result<void, Error>::Err(r, Error::Http_SendPostFailed);
-	}
+	if (r.Value() != (UINT32)pos)
+		return Result<void, Error>::Err(Error::Http_SendPostFailed);
 
 	// Send body
 	if (data.Size() > 0)
 	{
 		auto bodyResult = Write(data);
-		if (!bodyResult || bodyResult.Value() != (UINT32)data.Size())
+		if (!bodyResult)
 			return Result<void, Error>::Err(bodyResult, Error::Http_SendPostFailed);
+		if (bodyResult.Value() != (UINT32)data.Size())
+			return Result<void, Error>::Err(Error::Http_SendPostFailed);
 	}
 
 	return Result<void, Error>::Ok();
@@ -309,8 +313,10 @@ Result<INT64, Error> HttpClient::ReadResponseHeaders(TlsClient &client, UINT16 e
 	{
 		CHAR c;
 		auto readResult = client.Read(Span<CHAR>(&c, 1));
-		if (!readResult || readResult.Value() <= 0)
+		if (!readResult)
 			return Result<INT64, Error>::Err(readResult, Error::Http_ReadHeadersFailed_Read);
+		if (readResult.Value() <= 0)
+			return Result<INT64, Error>::Err(Error::Http_ReadHeadersFailed_Read);
 
 		tail = (tail << 8) | (UINT8)c;
 		bytesConsumed++;

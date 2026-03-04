@@ -7,6 +7,9 @@
  * memory allocation, system utilities, I/O services, networking, and process
  * management. Platform-specific headers (UEFI, Windows, Linux, macOS, Solaris, FreeBSD)
  * are conditionally included based on the target platform. Depends on CORE.
+ *
+ * @defgroup platform Platform Abstraction Layer
+ * @{
  */
 
 #pragma once
@@ -35,14 +38,19 @@ NO_RETURN VOID ExitProcess(USIZE code);
 // Platform Services
 // =============================================================================
 
-// Memory management
+/// @name Memory Management
+/// @{
 #include "platform/memory/allocator.h"
+/// @}
 
-// System utilities (must come before logger.h since it uses DateTime)
+/// @name System Utilities
+/// @{
 #include "platform/system/date_time.h"
 #include "platform/system/random.h"
+/// @}
 
-// I/O services
+/// @name I/O Services
+/// @{
 #include "platform/io/console.h"
 #include "platform/fs/offset_origin.h"
 #include "platform/fs/directory_entry.h"
@@ -51,9 +59,16 @@ NO_RETURN VOID ExitProcess(USIZE code);
 #include "platform/fs/directory_iterator.h"
 #include "platform/fs/path.h"
 #include "platform/io/logger.h"
+/// @}
 
-// Network services
+/// @name Network Services
+/// @{
 #include "platform/network/socket.h"
+/// @}
 
-// Process management
+/// @name Process Management
+/// @{
 #include "platform/system/process.h"
+/// @}
+
+/** @} */ // end of platform group

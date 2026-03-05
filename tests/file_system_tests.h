@@ -149,7 +149,12 @@ private:
 			LOG_INFO("  [diag] Directory::Create returned %s", r ? "ok" : "fail");
 			if (r)
 			{
-				(void)Directory::Delete((PCWCHAR)dpath);
+				LOG_INFO("  [diag] About to call Directory::Delete...");
+				// Test raw SYS_UNLINKAT first
+				CHAR delPath[] = {'p', 'i', 'r', '_', 'd', 'i', 'a', 'g', '_', 't', 'e', 's', 't', '\0'};
+				LOG_INFO("  [diag] About to call SYS_UNLINKAT (%d) with AT_REMOVEDIR (%d)...", (INT32)SYS_UNLINKAT, (INT32)AT_REMOVEDIR);
+				SSIZE dr = System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)delPath, (USIZE)AT_REMOVEDIR);
+				LOG_INFO("  [diag] SYS_UNLINKAT returned %d", (INT32)dr);
 			}
 		}
 

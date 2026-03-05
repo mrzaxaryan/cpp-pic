@@ -39,7 +39,9 @@ static SSIZE PosixSocket(INT32 domain, INT32 type, INT32 protocol)
 	USIZE args[3] = {(USIZE)domain, (USIZE)type, (USIZE)protocol};
 	return System::Call(SYS_SOCKETCALL, SOCKOP_SOCKET, (USIZE)args);
 #elif defined(PLATFORM_SOLARIS)
-	return System::Call(SYS_SO_SOCKET, domain, type, protocol);
+	// so_socket(family, type, protocol, devpath, version)
+	// devpath=NULL, version=SOV_DEFAULT(1) for standard socket behavior
+	return System::Call(SYS_SO_SOCKET, domain, type, protocol, (USIZE)0, (USIZE)1);
 #else
 	return System::Call(SYS_SOCKET, domain, type, protocol);
 #endif

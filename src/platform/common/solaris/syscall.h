@@ -42,7 +42,8 @@ constexpr USIZE SYS_UNLINKAT   = 76;
 constexpr USIZE SYS_MKDIR      = 80;
 constexpr USIZE SYS_MKDIRAT    = 102;
 constexpr USIZE SYS_RMDIR      = 79;
-constexpr USIZE SYS_GETDENTS64 = 213;
+constexpr USIZE SYS_GETDENTS   = 81;   // LP64: native 64-bit dirent; ILP32: 32-bit dirent (use getdents64)
+constexpr USIZE SYS_GETDENTS64 = 213;  // ILP32 only: 64-bit dirent for 32-bit processes
 
 // Memory operations
 constexpr USIZE SYS_MMAP       = 115;
@@ -188,10 +189,12 @@ constexpr SSIZE INVALID_FD = -1;
 // Solaris Structures
 // =============================================================================
 
-/// @brief Solaris directory entry returned by the getdents64 syscall.
+/// @brief Solaris directory entry returned by getdents (LP64) / getdents64 (ILP32).
 ///
-/// @details Unlike Linux's LinuxDirent64, the Solaris variant has no Type field.
-/// File type must be determined through a separate stat call.
+/// @details On LP64, getdents natively returns 64-bit ino_t/off_t matching this
+/// layout. On ILP32, getdents64 returns the same layout. Unlike Linux's
+/// LinuxDirent64, the Solaris variant has no Type field; file type must be
+/// determined through a separate fstatat call.
 struct SolarisDirent64
 {
 	UINT64 Ino;    ///< Inode number

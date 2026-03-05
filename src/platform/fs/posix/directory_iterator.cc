@@ -109,7 +109,11 @@ Result<void, Error> DirectoryIterator::Next()
 	if (isFirst || bufferPosition >= bytesRead)
 	{
 		isFirst = false;
-#if defined(PLATFORM_LINUX) || defined(PLATFORM_SOLARIS)
+#if defined(PLATFORM_SOLARIS) && (defined(ARCHITECTURE_X86_64) || defined(ARCHITECTURE_AARCH64))
+		// LP64 Solaris: getdents64 triggers SIGSYS for 64-bit processes.
+		// Use getdents (81) which natively returns 64-bit dirent on LP64.
+		bytesRead = (INT32)System::Call(SYS_GETDENTS, (USIZE)handle, (USIZE)buffer, sizeof(buffer));
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_SOLARIS)
 		bytesRead = (INT32)System::Call(SYS_GETDENTS64, (USIZE)handle, (USIZE)buffer, sizeof(buffer));
 #elif defined(PLATFORM_MACOS)
 		USIZE basep = 0;
@@ -139,8 +143,27 @@ Result<void, Error> DirectoryIterator::Next()
 	StringUtils::Utf8ToWide(Span<const CHAR>(d->Name, StringUtils::Length(d->Name)), Span<WCHAR>(currentEntry.Name, 256));
 
 #if defined(PLATFORM_SOLARIS)
-	currentEntry.IsDirectory = false;       // Solaris dirent64 has no Type; cannot determine without stat
-	currentEntry.Type = 0;                  // DT_UNKNOWN
+	// Solaris dirent has no Type field; determine IsDirectory via fstatat.
+	{
+		UINT8 statbuf[144];
+		SSIZE statResult = System::Call(SYS_FSTATAT, (USIZE)handle, (USIZE)d->Name, (USIZE)statbuf, 0);
+		if (statResult == 0)
+		{
+			// st_mode offset: ILP32 = 20 (dev4+pad12+ino4), LP64 = 16 (dev8+ino8)
+#if defined(ARCHITECTURE_I386)
+			constexpr USIZE MODE_OFFSET = 20;
+#else
+			constexpr USIZE MODE_OFFSET = 16;
+#endif
+			UINT32 mode = *(UINT32 *)(statbuf + MODE_OFFSET);
+			currentEntry.IsDirectory = ((mode & 0xF000) == 0x4000); // S_IFDIR
+		}
+		else
+		{
+			currentEntry.IsDirectory = false;
+		}
+	}
+	currentEntry.Type = currentEntry.IsDirectory ? 4 : 0; // DT_DIR=4 or DT_UNKNOWN=0
 #else // Linux, macOS, FreeBSD — dirent has Type field
 	currentEntry.IsDirectory = (d->Type == DT_DIR);
 	currentEntry.Type = (UINT32)d->Type;

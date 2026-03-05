@@ -60,8 +60,12 @@ endif()
 # Uses a FreeBSD-specific linker script with a non-zero base address
 # (0x200000) because FreeBSD disallows mapping at VA 0 by default
 # (security.bsd.map_at_zero=0).
+# Disable linker relaxation: the relaxation pass can convert auipc+ld
+# sequences into GP-relative loads (e.g. c.ld via gp). PIR has no CRT
+# to initialise the gp register, so GP-relative accesses fault at runtime.
 if(PIR_ARCH STREQUAL "riscv64")
-    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.freebsd.riscv64.ld)
+    list(APPEND PIR_BASE_FLAGS -mno-relax)
+    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.freebsd.riscv64.ld --no-relax)
 endif()
 
 list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)

@@ -19,10 +19,14 @@ list(APPEND PIR_INCLUDE_PATHS
 if(PIR_ARCH STREQUAL "x86_64")
     # Disable the red zone for x86_64 (same rationale as Linux/macOS/UEFI)
     list(APPEND PIR_BASE_FLAGS -mno-red-zone)
-    # Clang's Solaris target defaults to -fPIC and medium code model, producing
-    # R_X86_64_32 relocations that fail at link time. Force small code model
-    # (matching Linux behavior) for our freestanding binary.
-    list(APPEND PIR_BASE_FLAGS -fno-pic -mcmodel=small)
+    # Clang's Solaris target defaults to -fPIC and medium code model. Instead of
+    # disabling PIC entirely (which causes LTO code generation issues at -O1+),
+    # use -fdirect-access-external-data to force direct PC-relative access for
+    # all data symbols while keeping PIC enabled. Force small code model so
+    # 32-bit displacements are used (matching Linux behavior).
+    list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data -mcmodel=small)
+    # Force hidden visibility to prevent GOT/PLT entries for interposable symbols.
+    list(APPEND PIR_BASE_FLAGS -fvisibility=hidden)
 elseif(PIR_ARCH STREQUAL "i386")
     # No red zone on i386. Force non-PIC for freestanding binary.
     list(APPEND PIR_BASE_FLAGS -fno-pic)

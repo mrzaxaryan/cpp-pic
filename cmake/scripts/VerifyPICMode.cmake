@@ -92,7 +92,7 @@ endif()
 # =============================================================================
 # Verify no forbidden data sections
 # =============================================================================
-set(_sections rdata rodata data bss)
+set(_sections rdata rodata data bss got plt)
 set(_found)
 
 foreach(_sec ${_sections})

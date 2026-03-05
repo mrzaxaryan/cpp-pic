@@ -165,16 +165,33 @@ public:
 	/**
 	 * @brief Implicit conversion to const character pointer
 	 * @return Pointer to the string data
+	 *
+	 * @details The "m" input constraint tells the compiler that the asm
+	 * statement reads the entire data array, creating an explicit dependency
+	 * between the packed-word stores and the returned pointer. Without this,
+	 * some targets (FreeBSD x86_64 with LTO at -O1+) may determine the
+	 * stack data is dead after pointer extraction and reuse the slot for
+	 * other temporaries—truncating the string.
+	 * The "+r" output on the pointer prevents the compiler from propagating
+	 * the known data address past the barrier, so alias analysis cannot
+	 * prove the pointer is unused and eliminate the stores.
 	 */
-	constexpr operator const TChar *() const noexcept { return data; }
+	FORCE_INLINE operator const TChar *() const noexcept
+	{
+		const TChar *result = data;
+		__asm__ volatile("" : "+r"(result) : "m"(*(const TChar (*)[AllocN])data));
+		return result;
+	}
 
 	/**
 	 * @brief Implicit conversion to a read-only Span over the string data
 	 * @return Span<const TChar> covering the string content (excluding null terminator)
 	 */
-	constexpr FORCE_INLINE operator Span<const TChar>() const noexcept
+	FORCE_INLINE operator Span<const TChar>() const noexcept
 	{
-		return Span<const TChar>(data, Length());
+		const TChar *result = data;
+		__asm__ volatile("" : "+r"(result) : "m"(*(const TChar (*)[AllocN])data));
+		return Span<const TChar>(result, Length());
 	}
 
 	/**

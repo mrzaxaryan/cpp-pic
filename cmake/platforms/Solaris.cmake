@@ -89,11 +89,25 @@ set(PIR_BASE_LINK_FLAGS "")
 list(APPEND PIR_BASE_LINK_FLAGS
     --entry=entry_point
     --no-dynamic-linker
-    --no-pie
     --symbol-ordering-file=${PIR_ROOT_DIR}/cmake/data/function.order.solaris
     --build-id=none
     -Map=${PIR_MAP_FILE}
 )
+
+# x86 requires --pie: with -flto=full the LTO code generator runs at link time
+# and selects its relocation model based on the output type. A non-PIE
+# executable causes the x86 backend to emit absolute addressing (movl
+# $0xNNNNNN, %reg) instead of RIP-relative (leaq offset(%rip), %reg) for
+# references to data embedded in .text. These absolute addresses are resolved at
+# the link-time VMA and break when the PIC binary is loaded at a different
+# address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
+# backend to generate position-independent code. AArch64 is unaffected because
+# that ISA always uses PC-relative addressing.
+if(PIR_ARCH STREQUAL "x86_64")
+    list(APPEND PIR_BASE_LINK_FLAGS --pie)
+else()
+    list(APPEND PIR_BASE_LINK_FLAGS --no-pie)
+endif()
 
 if(PIR_BUILD_TYPE STREQUAL "release")
     list(APPEND PIR_BASE_LINK_FLAGS --strip-all --gc-sections)

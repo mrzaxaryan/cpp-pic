@@ -65,6 +65,14 @@ private:
 	 */
 	static NOINLINE VOID TimestampedLogOutput(const CHAR *colorPrefix, const CHAR *format, Span<const StringFormatter::Argument> args)
 	{
+		// --- DIAGNOSTIC: dump colorPrefix at function entry ---
+		Console::WriteFormatted<CHAR>("  [DIAG] colorPrefix=%p len=%u bytes: "_embed,
+			(PVOID)colorPrefix, (UINT32)StringUtils::Length(colorPrefix));
+		for (USIZE i = 0; i < 14; i++)
+			Console::WriteFormatted<CHAR>("%02X "_embed, (UINT32)(UINT8)colorPrefix[i]);
+		Console::Write<CHAR>("\n"_embed);
+		// --- END DIAGNOSTIC ---
+
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();
 

@@ -18,7 +18,7 @@
 #define LOG_INFO(format, ...) Logger::Info<CHAR>(format##_embed, ##__VA_ARGS__)
 #define LOG_ERROR(format, ...) Logger::Error<CHAR>(format##_embed, ##__VA_ARGS__)
 #define LOG_WARNING(format, ...) Logger::Warning<CHAR>(format##_embed, ##__VA_ARGS__)
-#if defined(ENABLE_DEBUG_LOGGING)
+#if !defined(ENABLE_DEBUG_LOGGING)
 #define LOG_DEBUG(format, ...) Logger::Debug<CHAR>(format##_embed, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)

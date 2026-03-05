@@ -65,13 +65,14 @@ private:
 	 */
 	static NOINLINE VOID TimestampedLogOutput(const CHAR *colorPrefix, const CHAR *format, Span<const StringFormatter::Argument> args)
 	{
-		// --- DIAGNOSTIC: dump colorPrefix at function entry ---
-		Console::WriteFormatted<CHAR>("  [DIAG] colorPrefix=%p len=%u bytes: "_embed,
-			(PVOID)colorPrefix, (UINT32)StringUtils::Length(colorPrefix));
-		for (USIZE i = 0; i < 14; i++)
-			Console::WriteFormatted<CHAR>("%02X "_embed, (UINT32)(UINT8)colorPrefix[i]);
-		Console::Write<CHAR>("\n"_embed);
-		// --- END DIAGNOSTIC ---
+		// Force the compiler to materialise colorPrefix and format in registers
+		// before any stack-heavy operations (DateTime, EMBEDDED_STRING temporaries).
+		// Without this barrier, the LTO backend on FreeBSD x86_64 at -O1+ may
+		// schedule the EMBEDDED_STRING temporary destruction (in the caller) before
+		// this function reads through the pointer — a sequence the "memory" clobber
+		// prevents by making the asm a potential reader of all memory, including
+		// the caller's stack slot holding the embedded colour prefix.
+		__asm__ volatile("" : : "r"(colorPrefix), "r"(format) : "memory");
 
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();

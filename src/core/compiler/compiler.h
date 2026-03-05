@@ -91,7 +91,15 @@
  * @brief Marks the shellcode entry point function
  * @details Uses extern "C" linkage and __attribute__((noreturn)). The entry point
  * must be placed at the beginning of the .text section for proper shellcode execution.
+ * On x86_64 POSIX platforms, the OS kernel jumps to the entry point with 16-byte
+ * aligned RSP (no CALL, so no return address pushed). The compiler normally assumes
+ * 16+8 alignment at function entry. force_align_arg_pointer forces the function to
+ * re-align its stack pointer on entry, preventing misaligned access crashes at -O1+.
  */
+#if defined(ARCHITECTURE_X86_64) && !defined(PLATFORM_WINDOWS) && !defined(PLATFORM_UEFI)
+#define ENTRYPOINT extern "C" __attribute__((noreturn, force_align_arg_pointer))
+#else
 #define ENTRYPOINT extern "C" __attribute__((noreturn))
+#endif
 
 /** @} */ // end of compiler group

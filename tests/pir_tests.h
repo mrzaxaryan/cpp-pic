@@ -68,46 +68,9 @@
 #include "uuid_tests.h"
 #include "size_report_tests.h"
 
-static NOINLINE VOID DiagnosticDump()
-{
-	// --- Diagnostic: dump EMBEDDED_STRING internals ---
-	// Use raw Console::Write to bypass Logger (which itself uses EMBEDDED_STRING)
-	Console::Write<CHAR>("=== EMBEDDED_STRING Diagnostic ===\n"_embed);
-
-	// Test 1: simple ASCII string
-	auto simple = "HELLO"_embed;
-	const CHAR *sp = (const CHAR *)simple;
-	Console::WriteFormatted<CHAR>("simple[0..4]: %02X %02X %02X %02X %02X  len=%u\n"_embed,
-		(UINT32)(UINT8)sp[0], (UINT32)(UINT8)sp[1], (UINT32)(UINT8)sp[2],
-		(UINT32)(UINT8)sp[3], (UINT32)(UINT8)sp[4], (UINT32)StringUtils::Length(sp));
-
-	// Test 2: color prefix (the string that shows as '?')
-	auto color = "\033[0;32m[INF] "_embed;
-	const CHAR *cp = (const CHAR *)color;
-	USIZE cpLen = StringUtils::Length(cp);
-	Console::WriteFormatted<CHAR>("color len=%u  bytes: "_embed, (UINT32)cpLen);
-	for (USIZE i = 0; i < 14 && i <= cpLen; i++)
-		Console::WriteFormatted<CHAR>("%02X "_embed, (UINT32)(UINT8)cp[i]);
-	Console::Write<CHAR>("\n"_embed);
-
-	// Test 3: dump packed words directly
-	Console::WriteFormatted<CHAR>("sizeof(USIZE)=%u  CharsPerWord=%u\n"_embed,
-		(UINT32)sizeof(USIZE), (UINT32)(sizeof(USIZE) / sizeof(CHAR)));
-
-	// Test 4: write the color prefix raw to see what the terminal shows
-	Console::Write<CHAR>("raw color output: ["_embed);
-	Console::Write(Span<const CHAR>(cp, cpLen));
-	Console::Write<CHAR>("]\n"_embed);
-
-	// Test 5: test the Logger directly
-	Console::Write<CHAR>("Logger test follows:\n"_embed);
-}
-
 static BOOL RunPIRTests()
 {
 	BOOL allPassed = true;
-
-	DiagnosticDump();
 
 	LOG_INFO("=== CPP-PIC Test Suite ===");
 	LOG_INFO("");

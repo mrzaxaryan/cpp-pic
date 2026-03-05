@@ -68,11 +68,17 @@ private:
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();
 
+		// Write colour prefix and timestamp bracket directly instead of
+		// going through %s formatting. On FreeBSD x86_64 at -O1+ with LTO,
+		// the Argument type-erasure for colorPrefix via %s produces a null
+		// Cstr (the compiler may zero-initialise the union's first member
+		// I32 instead of the Cstr member when constructing the Argument on
+		// the stack). Writing the prefix directly avoids this entirely.
+		Console::Write<CHAR>(colorPrefix);
 		auto consoleA = EMBED_FUNC(ConsoleCallbackA);
-
-		StringFormatter::Format<CHAR>(consoleA, nullptr, "%s[%s] "_embed, colorPrefix, (const CHAR *)timeStr);
+		StringFormatter::Format<CHAR>(consoleA, nullptr, "[%s] "_embed, (const CHAR *)timeStr);
 		StringFormatter::FormatWithArgs<CHAR>(consoleA, nullptr, format, args);
-		StringFormatter::Format<CHAR>(consoleA, nullptr, "\033[0m\n"_embed);
+		Console::Write<CHAR>("\033[0m\n"_embed);
 	}
 
 public:

@@ -17,5 +17,6 @@ PHDRS
 
 SECTIONS
 {
-    .text : { *(.text .text.*) } :text
+    . = 0x400000;
+    .text : { *(.text .text.*) *(.got.plt) } :text
 }

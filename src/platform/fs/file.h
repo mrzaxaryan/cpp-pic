@@ -73,7 +73,7 @@ public:
 	 */
 	static FORCE_INLINE PVOID InvalidFileHandle()
 	{
-#if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS) || defined(PLATFORM_FREEBSD)
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)
 		return (PVOID)(SSIZE)-1;
 #else
 		return nullptr;

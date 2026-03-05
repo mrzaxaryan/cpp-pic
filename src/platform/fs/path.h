@@ -13,7 +13,7 @@
 
 #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_UEFI)
 constexpr CHAR PATH_SEPARATOR = '\\';
-#elif defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS) || defined(PLATFORM_FREEBSD)
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)
 constexpr CHAR PATH_SEPARATOR = '/';
 #else
 #error "Path separator not defined for this platform"

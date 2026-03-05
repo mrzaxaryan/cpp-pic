@@ -13,6 +13,7 @@ set(_platform_map_macos macOS)
 set(_platform_map_uefi UEFI)
 set(_platform_map_solaris Solaris)
 set(_platform_map_freebsd FreeBSD)
+set(_platform_map_openbsd OpenBSD)
 include(${PIR_ROOT_DIR}/cmake/platforms/${_platform_map_${PIR_PLATFORM}}.cmake)
 
 # Universal target flags (every platform uses -target for both compile and link)

@@ -19,6 +19,9 @@
 #elif defined(PLATFORM_FREEBSD)
 #include "platform/common/freebsd/syscall.h"
 #include "platform/common/freebsd/system.h"
+#elif defined(PLATFORM_OPENBSD)
+#include "platform/common/openbsd/syscall.h"
+#include "platform/common/openbsd/system.h"
 #endif
 
 // Memory allocator using mmap/munmap
@@ -47,8 +50,8 @@ PVOID Allocator::AllocateMemory(USIZE size)
 	// 32-bit Linux architectures use mmap2 with page-shifted offset
 	USIZE offset = 0;
 	SSIZE result = System::Call(SYS_MMAP2, (USIZE)addr, totalSize, prot, flags, -1, offset);
-#elif defined(PLATFORM_FREEBSD) && defined(ARCHITECTURE_I386)
-	// FreeBSD i386: SYS_MMAP(477) takes off_t pos (64-bit), which occupies
+#elif (defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)) && defined(ARCHITECTURE_I386)
+	// FreeBSD/OpenBSD i386: SYS_MMAP takes off_t pos (64-bit), which occupies
 	// two 32-bit stack slots. The 6-arg System::Call only pushes one slot for
 	// the offset, leaving garbage in pos_hi. FreeBSD rejects MAP_ANONYMOUS
 	// with non-zero offset (EINVAL), causing allocation failure and segfault.

@@ -138,6 +138,9 @@ public:
 #if defined(__LP64__) || defined(_LP64)
 		Argument(signed long v) : Kind(Type::INT64), I64(INT64(v)) {}
 		Argument(unsigned long v) : Kind(Type::UINT64), U64(UINT64(v)) {}
+#else
+		Argument(signed long v) : Kind(Type::INT32), I32(INT32(v)) {}
+		Argument(unsigned long v) : Kind(Type::UINT32), U32(UINT32(v)) {}
 #endif
 		/// @}
 	};

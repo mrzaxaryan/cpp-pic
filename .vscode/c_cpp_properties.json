@@ -420,6 +420,78 @@
                 "${commonInclude}",
                 "${workspaceFolder}/src/platform/common/freebsd"
             ]
+        },
+        {
+            "name": "openbsd-i386",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x86",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_I386",
+                "PLATFORM_OPENBSD",
+                "PLATFORM_OPENBSD_I386",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/openbsd"
+            ]
+        },
+        {
+            "name": "openbsd-x86_64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_X86_64",
+                "PLATFORM_OPENBSD",
+                "PLATFORM_OPENBSD_X86_64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/openbsd"
+            ]
+        },
+        {
+            "name": "openbsd-aarch64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-arm64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_AARCH64",
+                "PLATFORM_OPENBSD",
+                "PLATFORM_OPENBSD_AARCH64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/openbsd"
+            ]
+        },
+        {
+            "name": "openbsd-riscv64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_RISCV64",
+                "PLATFORM_OPENBSD",
+                "PLATFORM_OPENBSD_RISCV64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/common/openbsd"
+            ]
         }
     ]
 }

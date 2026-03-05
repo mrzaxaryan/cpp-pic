@@ -89,6 +89,14 @@ private:
 	 * @tparam WordIndex Index of word to pack
 	 * @return Packed USIZE word containing CharsPerWord characters
 	 */
+	static consteval USIZE CharMask() noexcept
+	{
+		if constexpr (sizeof(TChar) >= sizeof(USIZE))
+			return ~(USIZE)0;
+		else
+			return ((USIZE)1 << (sizeof(TChar) * 8)) - 1;
+	}
+
 	template <USIZE WordIndex>
 	static consteval USIZE GetPackedWord() noexcept
 	{
@@ -101,8 +109,7 @@ private:
 		{
 			USIZE idx = base + i;
 			TChar c = (idx < N) ? chars[idx] : TChar(0);
-			constexpr USIZE charMask = (sizeof(TChar) >= sizeof(USIZE)) ? ~(USIZE)0 : (((USIZE)1 << (sizeof(TChar) * 8)) - 1);
-			result |= (static_cast<USIZE>(c) & charMask) << (i * shift);
+			result |= (static_cast<USIZE>(c) & CharMask()) << (i * shift);
 		}
 		return result;
 	}

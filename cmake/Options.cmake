@@ -29,7 +29,7 @@ string(TOLOWER "${BUILD_TYPE}" PIR_BUILD_TYPE)
 
 # Validate inputs
 set(_valid_archs i386 x86_64 armv7a aarch64 riscv32 riscv64)
-set(_valid_platforms windows linux macos uefi solaris freebsd)
+set(_valid_platforms windows linux macos uefi solaris freebsd openbsd)
 
 if(NOT PIR_ARCH IN_LIST _valid_archs)
     message(FATAL_ERROR "Invalid ARCHITECTURE '${ARCHITECTURE}'. Valid: ${_valid_archs}")

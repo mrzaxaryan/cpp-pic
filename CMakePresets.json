@@ -573,6 +573,110 @@
         "BUILD_TYPE": "release",
         "OPTIMIZATION_LEVEL": "Oz"
       }
+    },
+    {
+      "name": "openbsd-i386-debug",
+      "displayName": "OpenBSD i386 (Debug)",
+      "description": "OpenBSD 32-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/openbsd/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "O0"
+      }
+    },
+    {
+      "name": "openbsd-i386-release",
+      "displayName": "OpenBSD i386 (Release)",
+      "description": "OpenBSD 32-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/openbsd/i386/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "i386",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "openbsd-x86_64-debug",
+      "displayName": "OpenBSD x86_64 (Debug)",
+      "description": "OpenBSD 64-bit x86 debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/openbsd/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "O0"
+      }
+    },
+    {
+      "name": "openbsd-x86_64-release",
+      "displayName": "OpenBSD x86_64 (Release)",
+      "description": "OpenBSD 64-bit x86 release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/openbsd/x86_64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "x86_64",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "openbsd-aarch64-debug",
+      "displayName": "OpenBSD AArch64 (Debug)",
+      "description": "OpenBSD 64-bit ARM debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/openbsd/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "O0"
+      }
+    },
+    {
+      "name": "openbsd-aarch64-release",
+      "displayName": "OpenBSD AArch64 (Release)",
+      "description": "OpenBSD 64-bit ARM release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/openbsd/aarch64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "aarch64",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
+      "name": "openbsd-riscv64-debug",
+      "displayName": "OpenBSD RISC-V 64 (Debug)",
+      "description": "OpenBSD 64-bit RISC-V debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/openbsd/riscv64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv64",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "O0"
+      }
+    },
+    {
+      "name": "openbsd-riscv64-release",
+      "displayName": "OpenBSD RISC-V 64 (Release)",
+      "description": "OpenBSD 64-bit RISC-V release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/openbsd/riscv64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "riscv64",
+        "PLATFORM": "openbsd",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
     }
   ],
   "buildPresets": [
@@ -747,6 +851,38 @@
     {
       "name": "freebsd-riscv64-release",
       "configurePreset": "freebsd-riscv64-release"
+    },
+    {
+      "name": "openbsd-i386-debug",
+      "configurePreset": "openbsd-i386-debug"
+    },
+    {
+      "name": "openbsd-i386-release",
+      "configurePreset": "openbsd-i386-release"
+    },
+    {
+      "name": "openbsd-x86_64-debug",
+      "configurePreset": "openbsd-x86_64-debug"
+    },
+    {
+      "name": "openbsd-x86_64-release",
+      "configurePreset": "openbsd-x86_64-release"
+    },
+    {
+      "name": "openbsd-aarch64-debug",
+      "configurePreset": "openbsd-aarch64-debug"
+    },
+    {
+      "name": "openbsd-aarch64-release",
+      "configurePreset": "openbsd-aarch64-release"
+    },
+    {
+      "name": "openbsd-riscv64-debug",
+      "configurePreset": "openbsd-riscv64-debug"
+    },
+    {
+      "name": "openbsd-riscv64-release",
+      "configurePreset": "openbsd-riscv64-release"
     }
   ],
   "testPresets": [

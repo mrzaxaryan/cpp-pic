@@ -10,7 +10,7 @@ if(NOT PIR_ARCH MATCHES "^(x86_64|aarch64)$")
 endif()
 
 pir_get_target_info()
-pir_filter_sources(windows linux macos posix solaris freebsd)
+pir_filter_sources(windows linux macos posix solaris freebsd openbsd)
 
 list(APPEND PIR_INCLUDE_PATHS
     "${PIR_ROOT_DIR}/src/platform/common/uefi")

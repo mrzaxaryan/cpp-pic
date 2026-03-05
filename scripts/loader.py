@@ -19,20 +19,18 @@ import ctypes
 import mmap
 import os
 import platform
-import shutil
 import struct
-import subprocess
 import sys
 
 # --- Architecture definitions ---
 
 ARCH = {
-    'i386':    {'bits': 32, 'family': 'x86',   'qemu': ['qemu-i386-static', 'qemu-i386']},
-    'x86_64':  {'bits': 64, 'family': 'x86',   'qemu': ['qemu-x86_64-static', 'qemu-x86_64']},
-    'armv7a':  {'bits': 32, 'family': 'arm',   'qemu': ['qemu-arm-static', 'qemu-arm']},
-    'aarch64': {'bits': 64, 'family': 'arm',   'qemu': ['qemu-aarch64-static', 'qemu-aarch64']},
-    'riscv32': {'bits': 32, 'family': 'riscv', 'qemu': ['qemu-riscv32-static', 'qemu-riscv32']},
-    'riscv64': {'bits': 64, 'family': 'riscv', 'qemu': ['qemu-riscv64-static', 'qemu-riscv64']},
+    'i386':    {'bits': 32, 'family': 'x86'},
+    'x86_64':  {'bits': 64, 'family': 'x86'},
+    'armv7a':  {'bits': 32, 'family': 'arm'},
+    'aarch64': {'bits': 64, 'family': 'arm'},
+    'riscv32': {'bits': 32, 'family': 'riscv'},
+    'riscv64': {'bits': 64, 'family': 'riscv'},
 }
 
 # --- Win32 constants ---
@@ -81,16 +79,6 @@ def get_host():
 
 # --- Linux runners ---
 
-def run_qemu(elf_path, qemu_cmds):
-    qemu_cmd = next((c for c in qemu_cmds if shutil.which(c)), None)
-    if not qemu_cmd:
-        sys.exit("[-] QEMU not found. Install qemu-user-static.")
-
-    print(f"[+] Using: {qemu_cmd}")
-    print("[*] Executing...")
-    sys.stdout.flush()
-
-    return subprocess.run([qemu_cmd, elf_path]).returncode
 
 
 def _flush_icache(addr, size):
@@ -352,10 +340,7 @@ def main():
         cross_family = host_family != target['family']
         code = run_injected(shellcode, args.arch, cross_family=cross_family)
     elif target['family'] != host_family or target['bits'] != host_bits:
-        elf_path = args.shellcode.rsplit('.', 1)[0] + '.elf'
-        if not os.path.exists(elf_path):
-            sys.exit(f"[-] ELF file not found: {elf_path}")
-        code = run_qemu(elf_path, target['qemu'])
+        sys.exit(f"[-] Cannot load {args.arch} shellcode on {host_family}/{host_bits}bit host")
     else:
         code = run_mmap(shellcode)
 

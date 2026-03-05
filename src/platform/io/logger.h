@@ -18,7 +18,7 @@
 #define LOG_INFO(format, ...) Logger::Info<CHAR>(format##_embed, ##__VA_ARGS__)
 #define LOG_ERROR(format, ...) Logger::Error<CHAR>(format##_embed, ##__VA_ARGS__)
 #define LOG_WARNING(format, ...) Logger::Warning<CHAR>(format##_embed, ##__VA_ARGS__)
-#if !defined(ENABLE_DEBUG_LOGGING)
+#if defined(ENABLE_DEBUG_LOGGING)
 #define LOG_DEBUG(format, ...) Logger::Debug<CHAR>(format##_embed, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)
@@ -65,15 +65,6 @@ private:
 	 */
 	static NOINLINE VOID TimestampedLogOutput(const CHAR *colorPrefix, const CHAR *format, Span<const StringFormatter::Argument> args)
 	{
-		// Force the compiler to materialise colorPrefix and format in registers
-		// before any stack-heavy operations (DateTime, EMBEDDED_STRING temporaries).
-		// Without this barrier, the LTO backend on FreeBSD x86_64 at -O1+ may
-		// schedule the EMBEDDED_STRING temporary destruction (in the caller) before
-		// this function reads through the pointer — a sequence the "memory" clobber
-		// prevents by making the asm a potential reader of all memory, including
-		// the caller's stack slot holding the embedded colour prefix.
-		__asm__ volatile("" : : "r"(colorPrefix), "r"(format) : "memory");
-
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();
 
@@ -93,16 +84,24 @@ public:
 	 *
 	 * @tparam TChar Character type (CHAR or WCHAR)
 	 * @tparam Args Variadic format arguments (deduced automatically)
+	 *
+	 * IMPORTANT: The colour-prefix EMBEDDED_STRING must be a named local
+	 * variable, not a temporary in the argument list. With LTO at -O1+ on
+	 * FreeBSD x86_64, the compiler may reuse the temporary's stack slot
+	 * before the NOINLINE callee finishes reading through the pointer.
+	 * A named variable's lifetime extends to the closing brace, which is
+	 * guaranteed to be after the call returns.
 	 */
 	template <TCHAR TChar, typename... Args>
 	static VOID Info(const TChar *format, Args... args)
 	{
+		auto prefix = "\033[0;32m[INF] "_embed;
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput("\033[0;32m[INF] "_embed, format, Span<const StringFormatter::Argument>());
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput("\033[0;32m[INF] "_embed, format, Span<const StringFormatter::Argument>(argArray));
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>(argArray));
 		}
 	}
 
@@ -118,12 +117,13 @@ public:
 	template <TCHAR TChar, typename... Args>
 	static VOID Error(const TChar *format, Args... args)
 	{
+		auto prefix = "\033[0;31m[ERR] "_embed;
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput("\033[0;31m[ERR] "_embed, format, Span<const StringFormatter::Argument>());
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput("\033[0;31m[ERR] "_embed, format, Span<const StringFormatter::Argument>(argArray));
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>(argArray));
 		}
 	}
 
@@ -139,12 +139,13 @@ public:
 	template <TCHAR TChar, typename... Args>
 	static VOID Warning(const TChar *format, Args... args)
 	{
+		auto prefix = "\033[0;33m[WRN] "_embed;
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput("\033[0;33m[WRN] "_embed, format, Span<const StringFormatter::Argument>());
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput("\033[0;33m[WRN] "_embed, format, Span<const StringFormatter::Argument>(argArray));
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>(argArray));
 		}
 	}
 
@@ -160,12 +161,13 @@ public:
 	template <TCHAR TChar, typename... Args>
 	static VOID Debug(const TChar *format, Args... args)
 	{
+		auto prefix = "\033[0;33m[DBG] "_embed;
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput("\033[0;33m[DBG] "_embed, format, Span<const StringFormatter::Argument>());
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput("\033[0;33m[DBG] "_embed, format, Span<const StringFormatter::Argument>(argArray));
+			TimestampedLogOutput(prefix, format, Span<const StringFormatter::Argument>(argArray));
 		}
 	}
 };

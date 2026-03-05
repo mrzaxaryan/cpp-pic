@@ -75,7 +75,6 @@ jobs:
           sync: scp
           usesh: true
           run: |
-            failed=0
             for dir in release/*/; do
               opt=$(basename "$dir")
               echo "=== Testing -${opt} ==="
@@ -86,9 +85,8 @@ jobs:
                   echo "=== PASSED -${opt} ==="
                 else
                   echo "=== FAILED -${opt} ==="
-                  failed=1
+                  exit 1
                 fi
               done
             done
             echo "=== Skipping PIC loader tests (FreeBSD riscv64 has no package repository) ==="
-            exit $failed

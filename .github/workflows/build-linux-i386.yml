@@ -79,7 +79,6 @@ jobs:
             -v "$PWD:/work" -w /work \
             python:3.11-slim-bullseye \
             bash -c '
-              failed=0
               for dir in release/*/; do
                 opt=$(basename "$dir")
                 echo "=== Testing -${opt} ==="
@@ -90,9 +89,8 @@ jobs:
                     echo "=== PIC PASSED -${opt} ==="
                   else
                     echo "=== PIC FAILED -${opt} ==="
-                    failed=1
+                    exit 1
                   fi
                 done
               done
-              exit $failed
             '

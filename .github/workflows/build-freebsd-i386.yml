@@ -74,7 +74,6 @@ jobs:
           prepare: pkg install -y python3
           usesh: true
           run: |
-            failed=0
             for dir in release/*/; do
               opt=$(basename "$dir")
               echo "=== Testing -${opt} ==="
@@ -85,9 +84,8 @@ jobs:
                   echo "=== PASSED -${opt} ==="
                 else
                   echo "=== FAILED -${opt} ==="
-                  failed=1
+                  exit 1
                 fi
               done
             done
             echo "=== Skipping PIC loader tests (64-bit VM cannot mmap 32-bit shellcode) ==="
-            exit $failed

@@ -13,6 +13,7 @@
 
 <table>
 <tr>
+<th width="30">#</th>
 <th width="120">Platform</th>
 <th width="220">i386</th>
 <th width="220">x86_64</th>
@@ -22,6 +23,7 @@
 <th width="220">riscv64</th>
 </tr>
 <tr>
+<td align="center">1</td>
 <td>Windows</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-windows-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-windows-i386.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-windows-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-windows-x86_64.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -31,6 +33,7 @@
 <td align="center">-</td>
 </tr>
 <tr>
+<td align="center">2</td>
 <td>macOS</td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-macos-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-macos-x86_64.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -40,6 +43,7 @@
 <td align="center">-</td>
 </tr>
 <tr>
+<td align="center">3</td>
 <td>Linux</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-i386.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-x86_64.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -49,6 +53,7 @@
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-riscv64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-riscv64.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
 </tr>
 <tr>
+<td align="center">4</td>
 <td>Solaris</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-i386.yml?branch=main&label=P&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-x86_64.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -58,6 +63,7 @@
 <td align="center">-</td>
 </tr>
 <tr>
+<td align="center">5</td>
 <td>FreeBSD</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-i386.yml?branch=main&label=P&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-x86_64.yml?branch=main&label=F&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -67,6 +73,7 @@
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-riscv64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-riscv64.yml?branch=main&label=P&style=for-the-badge&logo=" alt="Build"></a></td>
 </tr>
 <tr>
+<td align="center">6</td>
 <td>UEFI</td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-uefi-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-uefi-x86_64.yml?branch=main&label=P&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -79,6 +86,7 @@
 
 <table>
 <tr>
+<th width="30">#</th>
 <th width="120">Platform</th>
 <th width="220">i386</th>
 <th width="220">x86_64</th>
@@ -88,6 +96,7 @@
 <th width="220">riscv64</th>
 </tr>
 <tr>
+<td align="center">1</td>
 <td>Windows</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.windows_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
@@ -97,6 +106,7 @@
 <td align="center">-</td>
 </tr>
 <tr>
+<td align="center">2</td>
 <td>macOS</td>
 <td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.macos_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
@@ -106,6 +116,7 @@
 <td align="center">-</td>
 </tr>
 <tr>
+<td align="center">3</td>
 <td>Linux</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
@@ -115,6 +126,7 @@
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.linux_riscv64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 </tr>
 <tr>
+<td align="center">4</td>
 <td>Solaris</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.solaris_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
@@ -124,6 +136,7 @@
 <td align="center">-</td>
 </tr>
 <tr>
+<td align="center">5</td>
 <td>FreeBSD</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
@@ -133,6 +146,7 @@
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.freebsd_riscv64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
 </tr>
 <tr>
+<td align="center">6</td>
 <td>UEFI</td>
 <td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.uefi_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>

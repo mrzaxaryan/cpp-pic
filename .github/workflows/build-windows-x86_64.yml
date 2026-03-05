@@ -78,7 +78,6 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $failed = 0
           foreach ($dir in Get-ChildItem -Path release -Directory) {
             $opt = $dir.Name
             Write-Host "=== Testing -$opt ==="
@@ -87,10 +86,9 @@ jobs:
               python scripts/loader.py --arch x86_64 $bin.FullName
               if ($LASTEXITCODE -ne 0) {
                 Write-Host "=== PIC FAILED -$opt ==="
-                $failed = 1
+                exit 1
               } else {
                 Write-Host "=== PIC PASSED -$opt ==="
               }
             }
           }
-          exit $failed

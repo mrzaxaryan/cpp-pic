@@ -1,5 +1,16 @@
 # Position-Independent Runtime (PIR): A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
 
+<details>
+<summary><b>Badge Legend</b></summary>
+
+| Label | Description |
+|-------|-------------|
+| **build** | Compilation only — no CI runner available to execute tests |
+| **partial** | ELF/EXE built and tests pass, but no PIC injection test — no suitable CI runner available |
+| **full** | ELF/EXE built and tests pass + `.text` section extracted and tested as injected PIC shellcode |
+
+</details>
+
 <table>
 <tr>
 <th width="120">Platform</th>
@@ -39,7 +50,7 @@
 </tr>
 <tr>
 <td>Solaris</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-i386.yml?branch=main&label=full&style=for-the-badge&logo=" alt="Build"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-i386.yml?branch=main&label=partial&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-x86_64.yml?branch=main&label=full&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-aarch64.yml?branch=main&label=build&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -48,7 +59,7 @@
 </tr>
 <tr>
 <td>FreeBSD</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-i386.yml?branch=main&label=full&style=for-the-badge&logo=" alt="Build"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-i386.yml?branch=main&label=partial&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-x86_64.yml?branch=main&label=full&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-aarch64.yml?branch=main&label=full&style=for-the-badge&logo=" alt="Build"></a></td>

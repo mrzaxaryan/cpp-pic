@@ -56,6 +56,12 @@ elseif(PIR_ARCH STREQUAL "aarch64")
     list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 endif()
 
+# On Windows hosts, MinGW's ld.exe appears on PATH before LLVM's lld; Clang
+# picks it up and fails with "unrecognised emulation mode: ap". Force lld.
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
+endif()
+
 # Linker configuration (ld64.lld / Mach-O)
 # Note: -platform_version is derived from the target triple (arm64-apple-macos11
 # or x86_64-apple-macos11). Do NOT pass it explicitly — the triple already

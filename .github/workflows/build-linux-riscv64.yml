@@ -49,23 +49,22 @@ jobs:
 
       - name: Build all optimization levels
         run: |
-          mkdir -p test-elfs
           for opt in O0 O1 O2 O3 Os Oz Og; do
             echo "=== Building -${opt} ==="
             rm -rf build
             cmake --preset linux-riscv64-release -DOPTIMIZATION_LEVEL=${opt}
             cmake --build --preset linux-riscv64-release
-            cp $(find build -type f -name "output.elf" | head -n 1) test-elfs/output-${opt}.elf
-            cp $(find build -type f -name "output.bin" | head -n 1) test-elfs/output-${opt}.bin
+            mkdir -p "release/${opt}"
+            find build/release -type f -not -path "*/cmake/*" -exec cp {} "release/${opt}/" \;
           done
 
-      - name: Upload artifacts
+      - name: Upload all artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-linux-riscv64
           retention-days: 1
-          path: test-elfs/
+          path: release/
 
       - name: Test all optimization levels
         if: always()
@@ -76,14 +75,18 @@ jobs:
           install: apt-get update && apt-get install -y python3
           run: |
             failed=0
-            for bin in test-elfs/output-*.bin; do
-              opt=$(basename "$bin" .bin | sed 's/output-//')
-              echo "=== Testing PIC -${opt} ==="
-              if python3 scripts/loader.py --arch riscv64 "$bin"; then
-                echo "=== PIC PASSED -${opt} ==="
-              else
-                echo "=== PIC FAILED -${opt} ==="
-                failed=1
-              fi
+            for dir in release/*/; do
+              opt=$(basename "$dir")
+              echo "=== Testing -${opt} ==="
+              for bin in "$dir"*.bin; do
+                [ -f "$bin" ] || continue
+                echo "=== Testing PIC -${opt} ==="
+                if python3 scripts/loader.py --arch riscv64 "$bin"; then
+                  echo "=== PIC PASSED -${opt} ==="
+                else
+                  echo "=== PIC FAILED -${opt} ==="
+                  failed=1
+                fi
+              done
             done
             exit $failed

@@ -59,7 +59,7 @@ HOST_PROCESS = {
 # --- Host detection ---
 
 _HOST_FAMILIES = [
-    (('amd64', 'x86_64'),     'x86',   64),
+    (('amd64', 'x86_64', 'i86pc'), 'x86',   64),
     (('arm64', 'aarch64'),    'arm',   64),
     (('i386', 'i686', 'x86'), 'x86',   32),
     (('armv7l', 'armv7a'),    'arm',   32),

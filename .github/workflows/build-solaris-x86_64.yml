@@ -71,7 +71,6 @@ jobs:
         if: always()
         uses: vmactions/solaris-vm@v1
         with:
-          prepare: python3 --version || pkg install runtime/python-37
           usesh: true
           run: |
             failed=0

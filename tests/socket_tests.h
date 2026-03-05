@@ -19,16 +19,21 @@ private:
 	{
 		LOG_INFO("Test: Socket Creation");
 
+		Console::Write<CHAR>("[DIAG] before Socket::Create\n"_embed);
 		auto createResult = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
+		Console::Write<CHAR>("[DIAG] after Socket::Create\n"_embed);
 		if (!createResult)
 		{
-			LOG_ERROR("Socket creation failed (error: %e)", createResult.Error());
+			Console::WriteFormatted<CHAR>("[DIAG] Create failed, error code=%u\n"_embed, (UINT32)createResult.Error().Code);
 			return false;
 		}
+		Console::Write<CHAR>("[DIAG] result is Ok\n"_embed);
 		Socket &sock = createResult.Value();
 
+		Console::Write<CHAR>("[DIAG] got Value ref\n"_embed);
 		LOG_INFO("Socket created successfully");
 		(void)sock.Close();
+		Console::Write<CHAR>("[DIAG] closed\n"_embed);
 		return true;
 	}
 

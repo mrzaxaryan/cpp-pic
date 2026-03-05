@@ -73,31 +73,22 @@ jobs:
         with:
           arch: riscv64
           sync: scp
-          prepare: |
-            set -e
-            # FreeBSD riscv64 has no package repository; build Python from source
-            fetch -o libffi-3.4.6.tar.gz https://github.com/libffi/libffi/releases/download/v3.4.6/libffi-3.4.6.tar.gz
-            tar xf libffi-3.4.6.tar.gz
-            cd libffi-3.4.6 && ./configure --prefix=/usr/local && make -j$(sysctl -n hw.ncpu) install && cd ..
-            fetch -o Python-3.11.11.tgz https://www.python.org/ftp/python/3.11.11/Python-3.11.11.tgz
-            tar xf Python-3.11.11.tgz
-            cd Python-3.11.11 && ./configure --prefix=/usr/local --without-ensurepip --disable-test-modules && make -j$(sysctl -n hw.ncpu) install && cd ..
-            python3 --version
           usesh: true
           run: |
             failed=0
             for dir in release/*/; do
               opt=$(basename "$dir")
               echo "=== Testing -${opt} ==="
-              for bin in "$dir"*.bin; do
-                [ -f "$bin" ] || continue
-                echo "=== Testing PIC -${opt} ==="
-                if python3 scripts/loader.py --arch riscv64 "$bin"; then
-                  echo "=== PIC PASSED -${opt} ==="
+              for elf in "$dir"*.elf; do
+                [ -f "$elf" ] || continue
+                chmod +x "$elf"
+                if "$elf"; then
+                  echo "=== PASSED -${opt} ==="
                 else
-                  echo "=== PIC FAILED -${opt} ==="
+                  echo "=== FAILED -${opt} ==="
                   failed=1
                 fi
               done
             done
+            echo "=== Skipping PIC loader tests (FreeBSD riscv64 has no package repository) ==="
             exit $failed

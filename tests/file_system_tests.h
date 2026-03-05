@@ -3,6 +3,12 @@
 #include "runtime/runtime.h"
 #include "tests.h"
 
+#if defined(PLATFORM_SOLARIS)
+#include "platform/common/solaris/syscall.h"
+#include "platform/common/solaris/system.h"
+#include "platform/fs/posix/posix_path.h"
+#endif
+
 class FileSystemTests
 {
 public:
@@ -12,6 +18,7 @@ public:
 
 		LOG_INFO("Running FileSystem Tests...");
 
+		RunTest(allPassed, EMBED_FUNC(TestSyscallDiagnostics), "Syscall diagnostics"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestCreateNestedDirectories), "Create nested directories"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestCreateFilesInDirectories), "Create files in directories"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestWriteReadContent), "Write and read file content"_embed);
@@ -98,6 +105,79 @@ private:
 	}
 
 	// ── Test methods ───────────────────────────────────────────────────
+
+	static BOOL TestSyscallDiagnostics()
+	{
+#if defined(PLATFORM_SOLARIS)
+		LOG_INFO("  [diag] Testing raw syscalls on Solaris...");
+
+		// Test SYS_WRITE (4) — already works if we see this message
+		LOG_INFO("  [diag] SYS_WRITE ok (you see this)");
+
+		// Test SYS_MKDIR (80) with a simple path
+		{
+			CHAR path[] = {'/', 't', 'm', 'p', '/', 'p', 'i', 'r', '_', 'd', 'i', 'a', 'g', '\0'};
+			LOG_INFO("  [diag] About to call SYS_MKDIR (%d)...", (INT32)SYS_MKDIR);
+			SSIZE r = System::Call(SYS_MKDIR, (USIZE)path, (USIZE)0755);
+			LOG_INFO("  [diag] SYS_MKDIR returned %d", (INT32)r);
+		}
+
+		// Test SYS_OPEN (5)
+		{
+			CHAR path[] = {'/', 'd', 'e', 'v', '/', 'n', 'u', 'l', 'l', '\0'};
+			LOG_INFO("  [diag] About to call SYS_OPEN (%d)...", (INT32)SYS_OPEN);
+			SSIZE r = System::Call(SYS_OPEN, (USIZE)path, (USIZE)O_RDONLY, (USIZE)0);
+			LOG_INFO("  [diag] SYS_OPEN returned %d", (INT32)r);
+			if (r >= 0)
+				System::Call(SYS_CLOSE, (USIZE)r);
+		}
+
+		// Test SYS_STAT (18)
+		{
+			CHAR path[] = {'/', 't', 'm', 'p', '\0'};
+			UINT8 statbuf[256];
+			LOG_INFO("  [diag] About to call SYS_STAT (%d)...", (INT32)SYS_STAT);
+			SSIZE r = System::Call(SYS_STAT, (USIZE)path, (USIZE)statbuf);
+			LOG_INFO("  [diag] SYS_STAT returned %d", (INT32)r);
+		}
+
+		// Test SYS_MMAP (115)
+		{
+			LOG_INFO("  [diag] About to call SYS_MMAP (%d)...", (INT32)SYS_MMAP);
+			SSIZE r = System::Call(SYS_MMAP, (USIZE)0, (USIZE)4096,
+				(USIZE)(PROT_READ | PROT_WRITE),
+				(USIZE)(MAP_PRIVATE | MAP_ANONYMOUS),
+				(USIZE)(SSIZE)-1, (USIZE)0);
+			LOG_INFO("  [diag] SYS_MMAP returned 0x%x", (UINT32)(USIZE)r);
+			if (r > 0)
+				System::Call(SYS_MUNMAP, (USIZE)r, (USIZE)4096);
+		}
+
+		// Test NormalizePathToUtf8
+		{
+			LOG_INFO("  [diag] Testing NormalizePathToUtf8...");
+			WCHAR wpath[] = {'t', 'e', 's', 't', '\0'};
+			CHAR utf8[64];
+			NormalizePathToUtf8(wpath, Span<CHAR>(utf8));
+			LOG_INFO("  [diag] NormalizePathToUtf8 ok, result: %s", utf8);
+		}
+
+		// Test Directory::Create through normal path
+		{
+			LOG_INFO("  [diag] Testing Directory::Create...");
+			auto dpath = L"pir_diag_test"_embed;
+			auto r = Directory::Create((PCWCHAR)dpath);
+			LOG_INFO("  [diag] Directory::Create returned %s", r ? "ok" : "fail");
+			if (r)
+			{
+				(void)Directory::Delete((PCWCHAR)dpath);
+			}
+		}
+
+		LOG_INFO("  [diag] All diagnostics done.");
+#endif
+		return true;
+	}
 
 	static BOOL TestCreateNestedDirectories()
 	{

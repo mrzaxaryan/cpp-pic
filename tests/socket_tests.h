@@ -19,6 +19,13 @@ private:
 	{
 		LOG_INFO("Test: Socket Creation");
 
+		// Raw syscall test — bypass Socket::Create to isolate the issue
+		Console::Write<CHAR>("[DIAG] raw SYS_SOCKET syscall...\n"_embed);
+		SSIZE rawFd = System::Call(SYS_SOCKET, (USIZE)2/*AF_INET*/, (USIZE)1/*SOCK_STREAM*/, (USIZE)6/*IPPROTO_TCP*/);
+		Console::WriteFormatted<CHAR>("[DIAG] raw fd=%d\n"_embed, (INT32)rawFd);
+		if (rawFd >= 0)
+			System::Call(SYS_CLOSE, (USIZE)rawFd);
+
 		Console::Write<CHAR>("[DIAG] before Socket::Create\n"_embed);
 		auto createResult = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
 		Console::Write<CHAR>("[DIAG] after Socket::Create\n"_embed);

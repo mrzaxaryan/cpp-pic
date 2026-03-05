@@ -78,7 +78,7 @@ Result<File, Error> File::Open(PCWCHAR path, INT32 flags)
 		openFlags |= O_APPEND;
 
 	SSIZE fd;
-#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
 	fd = System::Call(SYS_OPENAT, AT_FDCWD, (USIZE)utf8Path, openFlags, mode);
 #else
 	fd = System::Call(SYS_OPEN, (USIZE)utf8Path, openFlags, mode);
@@ -104,7 +104,7 @@ Result<void, Error> File::Delete(PCWCHAR path)
 	CHAR utf8Path[1024];
 	NormalizePathToUtf8(path, Span<CHAR>(utf8Path));
 
-#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
 	SSIZE result = System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)utf8Path, 0);
 #else
 	SSIZE result = System::Call(SYS_UNLINK, (USIZE)utf8Path);
@@ -121,7 +121,7 @@ Result<void, Error> File::Exists(PCWCHAR path)
 
 	UINT8 statbuf[144];
 
-#if defined(PLATFORM_LINUX) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
 	SSIZE result = System::Call(SYS_FSTATAT, AT_FDCWD, (USIZE)utf8Path, (USIZE)statbuf, 0);
 #elif defined(PLATFORM_MACOS)
 	SSIZE result = System::Call(SYS_STAT64, (USIZE)utf8Path, (USIZE)statbuf);

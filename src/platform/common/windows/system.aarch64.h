@@ -30,7 +30,7 @@
 	// since the stub is only SVC+RET.
 
 	// Indirect syscall with 0 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry)
 	{
 		register USIZE x0 __asm__("x0");
 		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
@@ -45,7 +45,7 @@
 	}
 
 	// Indirect syscall with 1 argument
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE stub __asm__("x16") = (USIZE)entry.SyscallAddress;
@@ -60,7 +60,7 @@
 	}
 
 	// Indirect syscall with 2 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -76,7 +76,7 @@
 	}
 
 	// Indirect syscall with 3 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -93,7 +93,7 @@
 	}
 
 	// Indirect syscall with 4 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -111,7 +111,7 @@
 	}
 
 	// Indirect syscall with 5 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -130,7 +130,7 @@
 	}
 
 	// Indirect syscall with 6 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -150,7 +150,7 @@
 	}
 
 	// Indirect syscall with 7 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -171,7 +171,7 @@
 	}
 
 	// Indirect syscall with 8 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -192,7 +192,7 @@
 	}
 
 	// Indirect syscall with 9 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -216,7 +216,7 @@
 	}
 
 	// Indirect syscall with 10 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -241,7 +241,7 @@
 	}
 
 	// Indirect syscall with 11 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -267,7 +267,7 @@
 	}
 
 	// Indirect syscall with 12 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -294,7 +294,7 @@
 	}
 
 	// Indirect syscall with 13 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;
@@ -322,7 +322,7 @@
 	}
 
 	// Indirect syscall with 14 arguments
-	static inline NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13, USIZE a14)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13, USIZE a14)
 	{
 		register USIZE x0 __asm__("x0") = a1;
 		register USIZE x1 __asm__("x1") = a2;

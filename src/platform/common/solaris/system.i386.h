@@ -20,8 +20,11 @@ public:
 	// All arguments are loaded into registers first (via "r" constraints) to
 	// avoid ESP-relative operand issues when the stack pointer is modified.
 
+	// NOINLINE: prevents the syscall asm from being inlined into complex callers
+	// under LTO, which causes miscompilation due to carry-flag + stack manipulation.
+
 	// Syscall with 0 arguments
-	static inline SSIZE Call(USIZE number)
+	static NOINLINE SSIZE Call(USIZE number)
 	{
 		SSIZE ret;
 		__asm__ volatile(
@@ -39,7 +42,7 @@ public:
 	}
 
 	// Syscall with 1 argument
-	static inline SSIZE Call(USIZE number, USIZE arg1)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1)
 	{
 		SSIZE ret;
 		register USIZE r_ebx __asm__("ebx") = arg1;
@@ -59,7 +62,7 @@ public:
 	}
 
 	// Syscall with 2 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
 	{
 		SSIZE ret;
 		register USIZE r_ebx __asm__("ebx") = arg1;
@@ -81,7 +84,7 @@ public:
 	}
 
 	// Syscall with 3 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
 	{
 		SSIZE ret;
 		register USIZE r_ebx __asm__("ebx") = arg1;
@@ -105,7 +108,7 @@ public:
 	}
 
 	// Syscall with 4 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
 	{
 		SSIZE ret;
 		register USIZE r_ebx __asm__("ebx") = arg1;
@@ -131,7 +134,7 @@ public:
 	}
 
 	// Syscall with 5 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
 	{
 		SSIZE ret;
 		register USIZE r_ebx __asm__("ebx") = arg1;
@@ -162,7 +165,7 @@ public:
 	// Cannot use register __asm__("ebp") for arg6 — it conflicts with the
 	// frame pointer at -O1+ under LTO. Push arg6 from "g" constraint first
 	// (ESP is still valid at that point), then push remaining from registers.
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
 	{
 		SSIZE ret;
 		register USIZE r_ebx __asm__("ebx") = arg1;

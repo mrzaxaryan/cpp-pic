@@ -17,9 +17,12 @@ class System
 {
 public:
 
+	// NOINLINE: prevents the syscall asm from being inlined into complex callers
+	// under LTO, which causes miscompilation due to carry-flag + "+r"(x1) constraints.
+
 	// Syscall with 0 arguments
 	// Note: Solaris kernel may write rval[1] to X1 on return, so X1 must be clobbered.
-	static inline SSIZE Call(USIZE number)
+	static NOINLINE SSIZE Call(USIZE number)
 	{
 		register USIZE x0 __asm__("x0");
 		register USIZE x8 __asm__("x8") = number;
@@ -36,7 +39,7 @@ public:
 	}
 
 	// Syscall with 1 argument
-	static inline SSIZE Call(USIZE number, USIZE arg1)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
 		register USIZE x8 __asm__("x8") = number;
@@ -54,7 +57,7 @@ public:
 
 	// Syscall with 2 arguments
 	// X1 is used as input and clobbered by kernel (rval[1]), so mark as "+r".
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
 		register USIZE x1 __asm__("x1") = arg2;
@@ -72,7 +75,7 @@ public:
 	}
 
 	// Syscall with 3 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
 		register USIZE x1 __asm__("x1") = arg2;
@@ -91,7 +94,7 @@ public:
 	}
 
 	// Syscall with 4 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
 		register USIZE x1 __asm__("x1") = arg2;
@@ -111,7 +114,7 @@ public:
 	}
 
 	// Syscall with 5 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
 		register USIZE x1 __asm__("x1") = arg2;
@@ -132,7 +135,7 @@ public:
 	}
 
 	// Syscall with 6 arguments
-	static inline SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
+	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
 	{
 		register USIZE x0 __asm__("x0") = arg1;
 		register USIZE x1 __asm__("x1") = arg2;

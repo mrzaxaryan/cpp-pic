@@ -52,11 +52,18 @@ pir_add_link_flags(
 
 # --pie produces a PIE (ET_DYN) executable. On x86 this is required because
 # -flto=full selects the relocation model based on ELF type: non-PIE causes
-# absolute addressing instead of RIP-relative. AArch64 and RISC-V always use
-# PC-relative addressing so --pie is not strictly required for code generation,
-# but OpenBSD requires PIE for all architectures — the kernel rejects non-PIE
-# ET_EXEC binaries with ENOEXEC.
-pir_add_link_flags(--pie)
+# absolute addressing instead of RIP-relative. AArch64 always uses PC-relative
+# addressing so --pie is not strictly required for code generation, but OpenBSD
+# requires PIE on x86 and aarch64 — the kernel rejects non-PIE ET_EXEC
+# binaries with ENOEXEC.
+#
+# Exception: riscv64 uses a custom linker script to merge .rodata into .text.
+# The minimal linker script is incompatible with PIE (ET_DYN) because LLD
+# cannot produce valid dynamic sections alongside the custom section layout.
+# OpenBSD's riscv64 port accepts ET_EXEC binaries (same approach as FreeBSD).
+if(NOT PIR_ARCH STREQUAL "riscv64")
+    pir_add_link_flags(--pie)
+endif()
 
 if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(--strip-all --gc-sections)

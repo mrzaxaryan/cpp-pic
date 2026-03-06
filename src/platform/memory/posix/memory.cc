@@ -80,6 +80,77 @@ PVOID Allocator::AllocateMemory(USIZE size)
 		: "a"((USIZE)SYS_MMAP), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
 		: "memory", "cc"
 	);
+#elif defined(PLATFORM_OPENBSD) && defined(ARCHITECTURE_X86_64)
+	// OpenBSD sys_mmap(addr, len, prot, flags, fd, pad, pos) has 7 parameters.
+	// x86_64 syscall ABI passes 6 in registers (rdi, rsi, rdx, r10, r8, r9);
+	// the 7th (pos) must be on the user stack before the syscall instruction.
+	SSIZE result;
+	register USIZE r_rdi __asm__("rdi") = (USIZE)addr;
+	register USIZE r_rsi __asm__("rsi") = totalSize;
+	register USIZE r_rdx __asm__("rdx") = (USIZE)prot;
+	register USIZE r_r10 __asm__("r10") = (USIZE)flags;
+	register USIZE r_r8  __asm__("r8")  = (USIZE)(SSIZE)-1; // fd
+	register USIZE r_r9  __asm__("r9")  = 0;                 // pad
+	register USIZE r_rax __asm__("rax") = SYS_MMAP;
+	__asm__ volatile(
+		"pushq $0\n"          // pos = 0 (7th arg on stack)
+		"syscall\n"
+		"addq $8, %%rsp\n"    // clean up stack
+		"jnc 1f\n"
+		"negq %%rax\n"
+		"1:\n"
+		: "+r"(r_rax), "+r"(r_rdx)
+		: "r"(r_rdi), "r"(r_rsi), "r"(r_r10), "r"(r_r8), "r"(r_r9)
+		: "rcx", "r11", "memory", "cc"
+	);
+	result = (SSIZE)r_rax;
+#elif defined(PLATFORM_OPENBSD) && defined(ARCHITECTURE_AARCH64)
+	// OpenBSD sys_mmap has 7 parameters. AArch64 kernel reads x0-x7 from the
+	// trapframe, so all 7 args fit in registers (x0-x6) with x8 as the syscall
+	// number. No stack arguments needed.
+	SSIZE result;
+	register USIZE x0 __asm__("x0") = (USIZE)addr;
+	register USIZE x1 __asm__("x1") = totalSize;
+	register USIZE x2 __asm__("x2") = (USIZE)prot;
+	register USIZE x3 __asm__("x3") = (USIZE)flags;
+	register USIZE x4 __asm__("x4") = (USIZE)(SSIZE)-1; // fd
+	register USIZE x5 __asm__("x5") = 0;                 // pad
+	register USIZE x6 __asm__("x6") = 0;                 // pos
+	register USIZE x8 __asm__("x8") = SYS_MMAP;
+	__asm__ volatile(
+		"svc #0\n"
+		"b.cc 1f\n"
+		"neg x0, x0\n"
+		"1:\n"
+		: "+r"(x0), "+r"(x1)
+		: "r"(x2), "r"(x3), "r"(x4), "r"(x5), "r"(x6), "r"(x8)
+		: "memory", "cc"
+	);
+	result = (SSIZE)x0;
+#elif defined(PLATFORM_OPENBSD) && defined(ARCHITECTURE_RISCV64)
+	// OpenBSD sys_mmap has 7 parameters. RISC-V 64 passes 6 in a0-a5; the 7th
+	// (pos) goes on the user stack. Maintain 16-byte stack alignment.
+	SSIZE result;
+	register USIZE a0 __asm__("a0") = (USIZE)addr;
+	register USIZE a1 __asm__("a1") = totalSize;
+	register USIZE a2 __asm__("a2") = (USIZE)prot;
+	register USIZE a3 __asm__("a3") = (USIZE)flags;
+	register USIZE a4 __asm__("a4") = (USIZE)(SSIZE)-1; // fd
+	register USIZE a5 __asm__("a5") = 0;                 // pad
+	__asm__ volatile(
+		"addi sp, sp, -16\n"  // 16-byte aligned
+		"sd zero, 0(sp)\n"    // pos = 0
+		"mv t0, %6\n"
+		"ecall\n"
+		"addi sp, sp, 16\n"   // clean up stack
+		"beqz t0, 1f\n"
+		"neg a0, a0\n"
+		"1:\n"
+		: "+&r"(a0), "+&r"(a1), "+&r"(a2), "+&r"(a3), "+&r"(a4), "+&r"(a5)
+		: "r"((USIZE)SYS_MMAP)
+		: "t0", "memory"
+	);
+	result = (SSIZE)a0;
 #else
 	USIZE offset = 0;
 	SSIZE result = System::Call(SYS_MMAP, (USIZE)addr, totalSize, prot, flags, -1, offset);

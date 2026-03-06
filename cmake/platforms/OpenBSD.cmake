@@ -50,20 +50,12 @@ pir_add_link_flags(
     -Map,${PIR_MAP_FILE}
 )
 
-# --pie produces a PIE (ET_DYN) executable. On x86 this is required because
-# -flto=full selects the relocation model based on ELF type: non-PIE causes
-# absolute addressing instead of RIP-relative. AArch64 always uses PC-relative
-# addressing so --pie is not strictly required for code generation, but OpenBSD
-# requires PIE on x86 and aarch64 — the kernel rejects non-PIE ET_EXEC
-# binaries with ENOEXEC.
-#
-# Exception: riscv64 uses a custom linker script to merge .rodata into .text.
-# The minimal linker script is incompatible with PIE (ET_DYN) because LLD
-# cannot produce valid dynamic sections alongside the custom section layout.
-# OpenBSD's riscv64 port accepts ET_EXEC binaries (same approach as FreeBSD).
-if(NOT PIR_ARCH STREQUAL "riscv64")
-    pir_add_link_flags(--pie)
-endif()
+# --pie produces a PIE (ET_DYN) executable. OpenBSD requires PIE on all
+# architectures — the kernel rejects non-PIE ET_EXEC binaries with ENOEXEC.
+# On x86 this also ensures -flto=full uses RIP-relative addressing rather
+# than absolute. For riscv64, the custom linker script (which merges .rodata
+# into .text) omits the fixed base address to remain compatible with PIE.
+pir_add_link_flags(--pie)
 
 if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(--strip-all --gc-sections)
@@ -71,8 +63,8 @@ endif()
 
 # RISC-V 64: merge .rodata (LTO constant pools) into .text so the
 # PIC binary contains the constant-pool data that auipc+ld references.
-# Uses an OpenBSD-specific linker script with a non-zero base address
-# (0x200000) because OpenBSD disallows mapping at VA 0 by default.
+# The linker script omits a fixed base address to stay compatible with
+# --pie (ET_DYN); the kernel assigns the load address at runtime.
 # Disable linker relaxation: the relaxation pass can convert auipc+ld
 # sequences into GP-relative loads (e.g. c.ld via gp). PIR has no CRT
 # to initialise the gp register, so GP-relative accesses fault at runtime.

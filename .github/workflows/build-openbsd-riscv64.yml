@@ -81,10 +81,11 @@ jobs:
               for elf in "$dir"*.elf; do
                 [ -f "$elf" ] || continue
                 chmod +x "$elf"
+                echo "=== Testing ELF -${opt} ==="
                 if "$elf"; then
-                  echo "=== PASSED -${opt} ==="
+                  echo "=== ELF PASSED -${opt} ==="
                 else
-                  echo "=== FAILED -${opt} ==="
+                  echo "=== ELF FAILED -${opt} ==="
                   exit 1
                 fi
               done

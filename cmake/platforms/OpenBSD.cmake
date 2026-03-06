@@ -42,9 +42,15 @@ list(APPEND PIR_BASE_FLAGS -fvisibility=hidden)
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
 
 # Linker configuration (ELF via LLD through clang driver)
+# OpenBSD enforces EXEC_ELF_ONLY_PIE on amd64/aarch64/riscv64 — the kernel
+# only accepts ET_DYN (PIE) executables. Unlike Linux, OpenBSD does NOT
+# support static PIE: ET_DYN without PT_INTERP returns ENOEXEC. We must set
+# --dynamic-linker so LLD emits PT_INTERP. At runtime ld.so finds zero
+# relocations and zero dynamic symbols, so it simply jumps to entry_point.
+# The PT_INTERP segment is only in the ELF — the extracted PIC .bin is unaffected.
 pir_add_link_flags(
     -e,entry_point
-    --no-dynamic-linker
+    --dynamic-linker=/usr/libexec/ld.so
     --symbol-ordering-file=${PIR_ROOT_DIR}/cmake/data/function.order.openbsd
     --build-id=none
     -Map,${PIR_MAP_FILE}

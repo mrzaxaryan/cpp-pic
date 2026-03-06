@@ -24,9 +24,6 @@
 #elif defined(PLATFORM_FREEBSD)
 #include "platform/common/freebsd/syscall.h"
 #include "platform/common/freebsd/system.h"
-#elif defined(PLATFORM_OPENBSD)
-#include "platform/common/openbsd/syscall.h"
-#include "platform/common/openbsd/system.h"
 #endif
 #include "core/memory/memory.h"
 #include "core/types/ip_address.h"

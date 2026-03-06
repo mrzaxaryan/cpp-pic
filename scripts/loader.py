@@ -96,7 +96,7 @@ def _flush_icache(addr, size):
 def run_mmap(shellcode):
     # Always use W^X split: map RW, write, mprotect RX.
     # This is universally safe across all platforms and avoids per-OS
-    # fragility (OpenBSD rejects RWX mmap, FreeBSD silently downgrades
+    # fragility (FreeBSD silently downgrades
     # RWX to RW, macOS enforces MAP_JIT for RWX on ARM64, etc.).
     # The mprotect transition also flushes the icache on ARM64.
     mem = mmap.mmap(-1, len(shellcode), prot=mmap.PROT_READ | mmap.PROT_WRITE)

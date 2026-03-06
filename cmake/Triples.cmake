@@ -28,10 +28,7 @@ set(_triple_freebsd_i386    "i386-unknown-freebsd14.0")
 set(_triple_freebsd_x86_64  "x86_64-unknown-freebsd14.0")
 set(_triple_freebsd_aarch64 "aarch64-unknown-freebsd14.0")
 set(_triple_freebsd_riscv64 "riscv64-unknown-freebsd14.0")
-set(_triple_openbsd_i386    "i386-unknown-openbsd7.8")
-set(_triple_openbsd_x86_64  "x86_64-unknown-openbsd7.8")
-set(_triple_openbsd_aarch64 "aarch64-unknown-openbsd7.8")
-set(_triple_openbsd_riscv64 "riscv64-unknown-openbsd7.8")
+
 
 # Platform extensions
 set(_ext_windows ".exe")
@@ -40,7 +37,7 @@ set(_ext_macos "")
 set(_ext_uefi ".efi")
 set(_ext_solaris ".elf")
 set(_ext_freebsd ".elf")
-set(_ext_openbsd ".elf")
+
 
 # =============================================================================
 # Helper: Get Triple and Extension

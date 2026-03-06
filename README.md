@@ -74,16 +74,6 @@
 </tr>
 <tr>
 <td align="center">6</td>
-<td>OpenBSD</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-i386.yml?branch=main&label=COMP&style=for-the-badge&logo=" alt="Build"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-x86_64.yml?branch=main&label=PIC&style=for-the-badge&logo=" alt="Build"></a></td>
-<td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-aarch64.yml?branch=main&label=PIC&style=for-the-badge&logo=" alt="Build"></a></td>
-<td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-riscv64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-riscv64.yml?branch=main&label=TEST&style=for-the-badge&logo=" alt="Build"></a></td>
-</tr>
-<tr>
-<td align="center">7</td>
 <td>UEFI</td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-uefi-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-uefi-x86_64.yml?branch=main&label=TEST&style=for-the-badge&logo=" alt="Build"></a></td>
@@ -157,16 +147,6 @@
 </tr>
 <tr>
 <td align="center">6</td>
-<td>OpenBSD</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.openbsd_i386_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.openbsd_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.openbsd_aarch64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-<td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.openbsd_riscv64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
-</tr>
-<tr>
-<td align="center">7</td>
 <td>UEFI</td>
 <td align="center">-</td>
 <td align="center"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmrzaxaryan%2FPosition-Independent-Runtime%2Fbuild-sizes%2Fsizes.json&query=%24.uefi_x86_64_bin&label=&style=for-the-badge&color=blue" alt="Bin"></td>
@@ -532,7 +512,6 @@ Position-Independent Runtime is built on a clean three-layer abstraction that se
 - Linux: Direct syscall interface without libc
 - macOS: Direct BSD syscall interface without libc
 - FreeBSD: Direct BSD syscall interface without libc
-- OpenBSD: Direct BSD syscall interface without libc
 - Console I/O, file system, networking, memory allocation
 
 **RUNTIME (Runtime Abstraction Layer)** provides high-level application features:
@@ -637,8 +616,8 @@ This project is still a work in progress. Below is a list of remaining tasks and
 
 ## Conclusion
 
-Position-Independent Runtime is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows, an ELF file on Linux, Solaris, FreeBSD, and OpenBSD, a Mach-O file on macOS, or a UEFI application, supporting i386, x86_64, armv7a, aarch64, riscv32, and riscv64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, Position-Independent Runtime enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
+Position-Independent Runtime is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows, an ELF file on Linux, Solaris, and FreeBSD, a Mach-O file on macOS, or a UEFI application, supporting i386, x86_64, armv7a, aarch64, riscv32, and riscv64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, Position-Independent Runtime enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
 
-The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, Linux and Solaris with their direct syscall approaches, macOS, FreeBSD, and OpenBSD with their BSD syscall interfaces, and UEFI with its boot/runtime services—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
+The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, Linux and Solaris with their direct syscall approaches, macOS and FreeBSD with their BSD syscall interfaces, and UEFI with its boot/runtime services—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
 
 This project is intended for researchers, systems programmers, and security engineers who are willing to work beneath high-level abstractions and take full control of the machine. Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project's design goals.

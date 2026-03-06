@@ -13,9 +13,6 @@
 #elif defined(PLATFORM_FREEBSD)
 #include "platform/common/freebsd/syscall.h"
 #include "platform/common/freebsd/system.h"
-#elif defined(PLATFORM_OPENBSD)
-#include "platform/common/openbsd/syscall.h"
-#include "platform/common/openbsd/system.h"
 #endif
 #include "core/string/string.h"
 
@@ -45,7 +42,7 @@ Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 	}
 
 	SSIZE fd;
-#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))
 	// RISC-V: omit O_DIRECTORY — QEMU user-mode does not translate the
 	// asm-generic O_DIRECTORY (0x4000) to the host value, so the flag is
 	// mis-interpreted as O_DIRECT on x86_64 hosts.  Safety is preserved
@@ -124,8 +121,6 @@ Result<void, Error> DirectoryIterator::Next()
 #elif defined(PLATFORM_FREEBSD)
 		USIZE basep = 0;
 		bytesRead = (INT32)System::Call(SYS_GETDIRENTRIES, (USIZE)handle, (USIZE)buffer, sizeof(buffer), (USIZE)&basep);
-#elif defined(PLATFORM_OPENBSD)
-		bytesRead = (INT32)System::Call(SYS_GETDENTS, (USIZE)handle, (USIZE)buffer, sizeof(buffer));
 #endif
 
 		if (bytesRead < 0)
@@ -143,8 +138,6 @@ Result<void, Error> DirectoryIterator::Next()
 	BsdDirent64 *d = (BsdDirent64 *)(buffer + bufferPosition);
 #elif defined(PLATFORM_FREEBSD)
 	FreeBsdDirent *d = (FreeBsdDirent *)(buffer + bufferPosition);
-#elif defined(PLATFORM_OPENBSD)
-	OpenBsdDirent *d = (OpenBsdDirent *)(buffer + bufferPosition);
 #endif
 
 	StringUtils::Utf8ToWide(Span<const CHAR>(d->Name, StringUtils::Length(d->Name)), Span<WCHAR>(currentEntry.Name, 256));

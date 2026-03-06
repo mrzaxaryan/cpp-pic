@@ -25,7 +25,7 @@ private:
 	BOOL isBitMaskMode = false;  ///< TRUE when enumerating logical drives via bitmask on Windows
 #endif
 
-#if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS) || defined(PLATFORM_SOLARIS) || defined(PLATFORM_FREEBSD)
 	CHAR buffer[1024]; ///< Kernel entry buffer for getdents64/getdirentries64
 	INT32 bytesRead;       ///< Number of bytes returned by the last syscall
 	INT32 bufferPosition;  ///< Current byte position within the buffer

@@ -49,11 +49,6 @@ jobs:
           - { platform: solaris, arch: i386,    ext: elf }
           - { platform: solaris, arch: x86_64,  ext: elf }
           - { platform: solaris, arch: aarch64, ext: elf }
-          # OpenBSD
-          - { platform: openbsd, arch: i386,    ext: elf }
-          - { platform: openbsd, arch: x86_64,  ext: elf }
-          - { platform: openbsd, arch: aarch64, ext: elf }
-          - { platform: openbsd, arch: riscv64, ext: elf }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -320,12 +315,6 @@ jobs:
                   ("x86_64", "freebsd_x86_64"),
                   ("aarch64", "freebsd_aarch64"),
                   ("riscv64", "freebsd_riscv64"),
-              ]),
-              ("OpenBSD", [
-                  ("i386", "openbsd_i386"),
-                  ("x86_64", "openbsd_x86_64"),
-                  ("aarch64", "openbsd_aarch64"),
-                  ("riscv64", "openbsd_riscv64"),
               ]),
           ]
 

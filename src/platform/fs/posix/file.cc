@@ -14,9 +14,6 @@
 #elif defined(PLATFORM_FREEBSD)
 #include "platform/common/freebsd/syscall.h"
 #include "platform/common/freebsd/system.h"
-#elif defined(PLATFORM_OPENBSD)
-#include "platform/common/openbsd/syscall.h"
-#include "platform/common/openbsd/system.h"
 #endif
 
 // --- lseek wrapper ---
@@ -37,7 +34,7 @@ static SSIZE PosixLseek(USIZE fd, SSIZE offset, INT32 whence)
 		return ret;
 	return (SSIZE)result;
 }
-#elif (defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)) && defined(ARCHITECTURE_I386)
+#elif defined(PLATFORM_FREEBSD) && defined(ARCHITECTURE_I386)
 static SSIZE PosixLseek(USIZE fd, SSIZE offset, INT32 whence)
 {
 	INT64 offset64 = (INT64)offset;
@@ -81,7 +78,7 @@ Result<File, Error> File::Open(PCWCHAR path, INT32 flags)
 		openFlags |= O_APPEND;
 
 	SSIZE fd;
-#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)) || defined(PLATFORM_SOLARIS)
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)) || defined(PLATFORM_SOLARIS)
 	fd = System::Call(SYS_OPENAT, AT_FDCWD, (USIZE)utf8Path, openFlags, mode);
 #else
 	fd = System::Call(SYS_OPEN, (USIZE)utf8Path, openFlags, mode);
@@ -107,7 +104,7 @@ Result<void, Error> File::Delete(PCWCHAR path)
 	CHAR utf8Path[1024];
 	NormalizePathToUtf8(path, Span<CHAR>(utf8Path));
 
-#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)) || defined(PLATFORM_SOLARIS)
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)) || defined(PLATFORM_SOLARIS)
 	SSIZE result = System::Call(SYS_UNLINKAT, AT_FDCWD, (USIZE)utf8Path, 0);
 #else
 	SSIZE result = System::Call(SYS_UNLINK, (USIZE)utf8Path);
@@ -124,7 +121,7 @@ Result<void, Error> File::Exists(PCWCHAR path)
 
 	UINT8 statbuf[144];
 
-#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD) || defined(PLATFORM_OPENBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)) || defined(PLATFORM_SOLARIS)
+#if (defined(PLATFORM_LINUX) || defined(PLATFORM_FREEBSD)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)) || defined(PLATFORM_SOLARIS)
 	SSIZE result = System::Call(SYS_FSTATAT, AT_FDCWD, (USIZE)utf8Path, (USIZE)statbuf, 0);
 #elif defined(PLATFORM_MACOS)
 	SSIZE result = System::Call(SYS_STAT64, (USIZE)utf8Path, (USIZE)statbuf);

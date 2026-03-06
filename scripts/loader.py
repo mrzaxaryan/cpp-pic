@@ -93,52 +93,23 @@ def _flush_icache(addr, size):
         libc.sys_icache_invalidate(ctypes.c_void_p(addr), ctypes.c_size_t(size))
 
 
-def _needs_wx_split():
-    """W^X split: map RW, write, mprotect RX.
-
-    Required on ARM64 (icache coherence via kernel mprotect) and FreeBSD
-    (anonymous RWX mappings may be silently downgraded to RW by the kernel
-    when kern.elf64.allow_wx=0, the default on FreeBSD 15+).
-    """
-    if platform.machine().lower() in ('arm64', 'aarch64'):
-        return True
-    if platform.system().lower() == 'freebsd':
-        return True
-    return False
-
-
 def run_mmap(shellcode):
-    rwx = not _needs_wx_split()
-
-    if rwx:
-        try:
-            mem = mmap.mmap(-1, len(shellcode), prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
-        except (PermissionError, OSError):
-            rwx = False
-
-    if not rwx:
-        # W^X path: map RW, write, then mprotect to RX (kernel flushes icache on ARM64)
-        mem = mmap.mmap(-1, len(shellcode), prot=mmap.PROT_READ | mmap.PROT_WRITE)
-        mem.write(shellcode)
-        addr = ctypes.addressof(ctypes.c_char.from_buffer(mem))
-        libc = ctypes.CDLL(None)
-        page_size = os.sysconf('SC_PAGE_SIZE')
-        aligned = addr & ~(page_size - 1)
-        size = len(shellcode) + (addr - aligned)
-        if libc.mprotect(ctypes.c_void_p(aligned), ctypes.c_size_t(size), mmap.PROT_READ | mmap.PROT_EXEC) != 0:
-            raise OSError("mprotect failed")
-        _flush_icache(addr, len(shellcode))
-        entry = addr
-        print(f"[+] Entry: 0x{entry:x}")
-        print("[*] Executing...")
-        sys.stdout.flush()
-        return ctypes.CFUNCTYPE(ctypes.c_int)(entry)()
-
+    # Always use W^X split: map RW, write, mprotect RX.
+    # This is universally safe across all platforms and avoids per-OS
+    # fragility (OpenBSD rejects RWX mmap, FreeBSD silently downgrades
+    # RWX to RW, macOS enforces MAP_JIT for RWX on ARM64, etc.).
+    # The mprotect transition also flushes the icache on ARM64.
+    mem = mmap.mmap(-1, len(shellcode), prot=mmap.PROT_READ | mmap.PROT_WRITE)
     mem.write(shellcode)
-
-    entry = ctypes.addressof(ctypes.c_char.from_buffer(mem))
-
-    _flush_icache(entry, len(shellcode))
+    addr = ctypes.addressof(ctypes.c_char.from_buffer(mem))
+    libc = ctypes.CDLL(None)
+    page_size = os.sysconf('SC_PAGE_SIZE')
+    aligned = addr & ~(page_size - 1)
+    size = len(shellcode) + (addr - aligned)
+    if libc.mprotect(ctypes.c_void_p(aligned), ctypes.c_size_t(size), mmap.PROT_READ | mmap.PROT_EXEC) != 0:
+        raise OSError("mprotect failed")
+    _flush_icache(addr, len(shellcode))
+    entry = addr
 
     print(f"[+] Entry: 0x{entry:x}")
     print("[*] Executing...")

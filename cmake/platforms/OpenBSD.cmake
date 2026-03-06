@@ -50,18 +50,13 @@ pir_add_link_flags(
     -Map,${PIR_MAP_FILE}
 )
 
-# x86 requires --pie: with -flto=full the LTO code generator runs at link time
-# and selects its relocation model based on the output type. A non-PIE
-# executable causes the x86 backend to emit absolute addressing (movl
-# $0xNNNNNN, %reg) instead of RIP-relative (leaq offset(%rip), %reg) for
-# references to data embedded in .text. These absolute addresses are resolved at
-# the link-time VMA and break when the PIC binary is loaded at a different
-# address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
-# backend to generate position-independent code. AArch64 and RISC-V are
-# unaffected because those ISAs always use PC-relative addressing.
-if(PIR_ARCH MATCHES "^(i386|x86_64)$")
-    pir_add_link_flags(--pie)
-endif()
+# --pie produces a PIE (ET_DYN) executable. On x86 this is required because
+# -flto=full selects the relocation model based on ELF type: non-PIE causes
+# absolute addressing instead of RIP-relative. AArch64 and RISC-V always use
+# PC-relative addressing so --pie is not strictly required for code generation,
+# but OpenBSD requires PIE for all architectures — the kernel rejects non-PIE
+# ET_EXEC binaries with ENOEXEC.
+pir_add_link_flags(--pie)
 
 if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(--strip-all --gc-sections)

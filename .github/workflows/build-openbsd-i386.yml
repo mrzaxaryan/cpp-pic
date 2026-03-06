@@ -67,23 +67,6 @@ jobs:
           retention-days: 1
           path: release/
 
-      - name: Test all optimization levels
-        uses: vmactions/openbsd-vm@v1
-        with:
-          usesh: true
-          run: |
-            for dir in release/*/; do
-              opt=$(basename "$dir")
-              echo "=== Testing -${opt} ==="
-              for elf in "$dir"*.elf; do
-                [ -f "$elf" ] || continue
-                chmod +x "$elf"
-                if "$elf"; then
-                  echo "=== PASSED -${opt} ==="
-                else
-                  echo "=== FAILED -${opt} ==="
-                  exit 1
-                fi
-              done
-            done
-            echo "=== Skipping PIC loader tests (64-bit VM cannot mmap 32-bit shellcode) ==="
+      # OpenBSD amd64 does not support 32-bit compat mode (unlike FreeBSD),
+      # so i386 ELF binaries cannot be executed on the 64-bit VM.
+      # This workflow is compilation-only (COMP).

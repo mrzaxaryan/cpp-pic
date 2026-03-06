@@ -75,7 +75,7 @@
 <tr>
 <td align="center">6</td>
 <td>OpenBSD</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-i386.yml?branch=main&label=TEST&style=for-the-badge&logo=" alt="Build"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-i386.yml?branch=main&label=COMP&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-x86_64.yml?branch=main&label=PIC&style=for-the-badge&logo=" alt="Build"></a></td>
 <td align="center">-</td>
 <td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-openbsd-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-openbsd-aarch64.yml?branch=main&label=PIC&style=for-the-badge&logo=" alt="Build"></a></td>

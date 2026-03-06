@@ -70,7 +70,8 @@ jobs:
       - name: Test all optimization levels
         uses: vmactions/openbsd-vm@v1
         with:
-          prepare: pkg_add python3
+          release: "7.8"
+          prepare: pkg_add python%3
           usesh: true
           run: |
             for dir in release/*/; do

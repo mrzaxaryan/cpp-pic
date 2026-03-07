@@ -33,6 +33,7 @@ jobs:
           - { platform: linux, arch: aarch64, ext: elf }
           - { platform: linux, arch: riscv32, ext: elf }
           - { platform: linux, arch: riscv64, ext: elf }
+          - { platform: linux, arch: mips64,  ext: elf }
           # macOS
           - { platform: macos, arch: x86_64,  ext: "" }
           - { platform: macos, arch: aarch64, ext: "" }

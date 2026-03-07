@@ -48,7 +48,12 @@ endif()
 # variants. These produce ELFOSABI_NONE, which Solaris kernels reject with
 # "Exec format error". A post-build step patches EI_OSABI to
 # ELFOSABI_SOLARIS (6) — see PIR_ELF_OSABI below.
-find_program(PIR_LLD_PATH ld.lld REQUIRED)
+# Locate ld.lld next to the C++ compiler (same LLVM installation).
+# Resolve symlinks (e.g. /usr/bin/clang++ -> /opt/llvm/bin/clang++) to find
+# the real LLVM bin directory where ld.lld lives.
+get_filename_component(_llvm_bin_dir "${CMAKE_CXX_COMPILER}" REALPATH)
+get_filename_component(_llvm_bin_dir "${_llvm_bin_dir}" DIRECTORY)
+find_program(PIR_LLD_PATH ld.lld HINTS "${_llvm_bin_dir}" REQUIRED)
 set(PIR_DIRECT_LINKER TRUE)
 
 # Select the LLD emulation for Solaris ELFs

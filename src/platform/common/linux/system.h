@@ -4,7 +4,7 @@
  *
  * @details Architecture-selection header that includes the correct arch-specific
  * System::Call implementation for the current build target. Supported architectures
- * are x86_64, i386, AArch64, ARMv7-A, RISC-V 64, and RISC-V 32.
+ * are x86_64, i386, AArch64, ARMv7-A, RISC-V 64, RISC-V 32, and MIPS64.
  */
 #pragma once
 
@@ -20,6 +20,8 @@
 #include "platform/common/linux/system.riscv64.h"
 #elif defined(ARCHITECTURE_RISCV32)
 #include "platform/common/linux/system.riscv32.h"
+#elif defined(ARCHITECTURE_MIPS64)
+#include "platform/common/linux/system.mips64.h"
 #else
 #error "Unsupported architecture"
 #endif

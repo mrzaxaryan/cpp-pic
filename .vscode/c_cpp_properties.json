@@ -219,6 +219,25 @@
             ]
         },
         {
+            "name": "linux-mips64",
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "intelliSenseMode": "linux-clang-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+
+            "defines": [
+                "ARCHITECTURE_MIPS64",
+                "PLATFORM_LINUX",
+                "PLATFORM_LINUX_MIPS64",
+                "ENABLE_LOGGING"
+            ],
+            "includePath": [
+                "${commonInclude}",
+                "${workspaceFolder}/src/platform/os/linux",
+                "${workspaceFolder}/src/platform/os/posix"
+            ]
+        },
+        {
             "name": "macos-x86_64",
             "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
             "intelliSenseMode": "macos-clang-x64",

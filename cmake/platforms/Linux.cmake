@@ -29,4 +29,9 @@ if(PIR_ARCH STREQUAL "riscv64")
     pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.riscv64.ld)
 endif()
 
+# MIPS64: merge .rodata (LTO constant pools) into .text, same rationale.
+if(PIR_ARCH STREQUAL "mips64")
+    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.mips64.ld)
+endif()
+
 list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)

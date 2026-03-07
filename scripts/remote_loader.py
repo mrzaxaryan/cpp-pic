@@ -31,6 +31,7 @@ _HOST_FAMILIES = [
     (('armv7l', 'armv7a'),          'arm',   32),
     (('riscv64',),                  'riscv', 64),
     (('riscv32',),                  'riscv', 32),
+    (('mips64',),                   'mips',  64),
 ]
 
 # Map (os_name, family, bits) -> (platform_name, arch_name)
@@ -54,6 +55,7 @@ _HOST_TO_ARTIFACT = {
     ('sunos',   'x86',   64): ('solaris', 'x86_64'),
     ('sunos',   'x86',   32): ('solaris', 'i386'),
     ('sunos',   'arm',   64): ('solaris', 'aarch64'),
+    ('linux',   'mips',  64): ('linux',   'mips64'),
 }
 
 

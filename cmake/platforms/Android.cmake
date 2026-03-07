@@ -12,6 +12,16 @@ pir_filter_sources(windows linux macos uefi solaris freebsd)
 list(APPEND PIR_INCLUDE_PATHS
     "${PIR_ROOT_DIR}/src/platform/common/linux")
 
+# Architecture-specific compiler flags
+if(PIR_ARCH STREQUAL "armv7a")
+    # The androideabi triple defaults to soft-float, generating __aeabi_d*
+    # calls for all double-precision operations. All Android ARMv7-A devices
+    # have VFPv3-D16 hardware at minimum. Use -mfloat-abi=softfp to compute
+    # float ops in hardware (eliminating __aeabi_d* dependencies) while keeping
+    # the soft-float calling convention required by the androideabi ABI.
+    list(APPEND PIR_BASE_FLAGS -mfpu=vfpv3-d16 -mfloat-abi=softfp)
+endif()
+
 # Linker configuration (ELF)
 pir_add_link_flags(
     -e,entry_point

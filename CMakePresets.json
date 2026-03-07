@@ -289,6 +289,32 @@
       }
     },
     {
+      "name": "linux-mips64-debug",
+      "displayName": "Linux MIPS64 (Debug)",
+      "description": "Linux 64-bit MIPS little-endian debug build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/debug/linux/mips64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "mips64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "debug",
+        "OPTIMIZATION_LEVEL": "O0"
+      }
+    },
+    {
+      "name": "linux-mips64-release",
+      "displayName": "Linux MIPS64 (Release)",
+      "description": "Linux 64-bit MIPS little-endian release build",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/release/linux/mips64/cmake",
+      "cacheVariables": {
+        "ARCHITECTURE": "mips64",
+        "PLATFORM": "linux",
+        "BUILD_TYPE": "release",
+        "OPTIMIZATION_LEVEL": "Oz"
+      }
+    },
+    {
       "name": "macos-x86_64-debug",
       "displayName": "macOS x86_64 (Debug)",
       "description": "macOS 64-bit x86 debug build",
@@ -737,6 +763,14 @@
     {
       "name": "linux-riscv64-release",
       "configurePreset": "linux-riscv64-release"
+    },
+    {
+      "name": "linux-mips64-debug",
+      "configurePreset": "linux-mips64-debug"
+    },
+    {
+      "name": "linux-mips64-release",
+      "configurePreset": "linux-mips64-release"
     },
     {
       "name": "macos-x86_64-debug",

@@ -22,6 +22,12 @@ static FORCE_INLINE UINT64 GetHardwareTimestamp()
 	__asm__ __volatile__("rdtime %0" : "=r"(val));
 	return val;
 
+#elif defined(ARCHITECTURE_MIPS64)
+	// MIPS64: Read CP0 Count register via rdhwr (user-mode accessible)
+	UINT64 val;
+	__asm__ __volatile__("rdhwr %0, $2" : "=r"(val));
+	return val;
+
 #elif defined(ARCHITECTURE_ARMV7A) || defined(ARCHITECTURE_RISCV32)
 	// 32-bit ARM/RISC-V: Use syscall-based monotonic timestamp
 	// This uses clock_gettime(CLOCK_MONOTONIC) via PLATFORM

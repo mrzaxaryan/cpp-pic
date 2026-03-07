@@ -12,6 +12,7 @@ Usage:
     python loader.py --arch armv7a output.bin
     python loader.py --arch riscv32 output.bin
     python loader.py --arch riscv64 output.bin
+    python loader.py --arch mips64 output.bin
 """
 
 import argparse
@@ -31,6 +32,7 @@ ARCH = {
     'aarch64': {'bits': 64, 'family': 'arm'},
     'riscv32': {'bits': 32, 'family': 'riscv'},
     'riscv64': {'bits': 64, 'family': 'riscv'},
+    'mips64':  {'bits': 64, 'family': 'mips'},
 }
 
 # --- Win32 constants ---
@@ -65,6 +67,7 @@ _HOST_FAMILIES = [
     (('armv7l', 'armv7a'),    'arm',   32),
     (('riscv64',),            'riscv', 64),
     (('riscv32',),            'riscv', 32),
+    (('mips64',),             'mips',  64),
 ]
 
 

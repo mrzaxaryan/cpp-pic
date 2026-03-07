@@ -70,7 +70,7 @@ jobs:
         uses: uraimo/run-on-arch-action@v2
         with:
           arch: mips64el
-          distro: debian_latest
+          distro: debian_bookworm
           install: apt-get update && apt-get install -y python3
           run: |
             for dir in release/*/; do

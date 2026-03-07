@@ -56,9 +56,7 @@ elseif(PIR_ARCH STREQUAL "aarch64")
     list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 endif()
 
-list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
-
-# Linker configuration (ld64.lld / Mach-O)
+# Linker configuration (Mach-O / Apple ld)
 # Note: -platform_version is derived from the target triple (arm64-apple-macos11
 # or x86_64-apple-macos11). Do NOT pass it explicitly — the triple already
 # provides the min deployment target, and passing both causes a linker warning
@@ -95,7 +93,7 @@ endif()
 # so VerifyPICMode cannot catch them, yet they land at offset 0 of output.bin.
 # The PIC loader always jumps to offset 0, hitting unnamed data and crashing.
 #
-# ld64.lld places non-LTO input sections BEFORE all LTO-generated sections in
+# Apple's ld places non-LTO input sections BEFORE all LTO-generated sections in
 # the final output.  Compiling entry_point.cc without LTO produces a regular
 # object whose __TEXT,__text (containing only _entry_point) is inserted FIRST,
 # before any LTO-generated constant pools or code, guaranteeing _entry_point

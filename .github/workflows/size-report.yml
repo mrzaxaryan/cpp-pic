@@ -54,6 +54,8 @@ jobs:
           - { platform: android, arch: x86_64,  ext: elf }
           - { platform: android, arch: armv7a,  ext: elf }
           - { platform: android, arch: aarch64, ext: elf }
+          # iOS
+          - { platform: ios, arch: aarch64, ext: "" }
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -157,8 +159,8 @@ jobs:
                   if files:
                       exe_file = files[0]
                       break
-              # macOS Mach-O has no extension - look for "output" without extension
-              if exe_file is None and "macos" in platform_arch:
+              # macOS/iOS Mach-O has no extension - look for "output" without extension
+              if exe_file is None and ("macos" in platform_arch or "ios" in platform_arch):
                   for f in size_dir.rglob("output"):
                       if f.is_file() and f.suffix == "" and f.stat().st_size > 0:
                           exe_file = f
@@ -324,6 +326,9 @@ jobs:
                   ("x86_64", "android_x86_64"),
                   ("armv7a", "android_armv7a"),
                   ("aarch64", "android_aarch64"),
+              ]),
+              ("iOS", [
+                  ("aarch64", "ios_aarch64"),
               ]),
           ]
 

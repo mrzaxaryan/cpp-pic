@@ -117,7 +117,8 @@ def _detect_arch():
 
 def get_host():
     """Returns (os_name, family, bits) for the current host."""
-    return _detect_os(), *_detect_arch()
+    family, bits = _detect_arch()
+    return _detect_os(), family, bits
 
 
 # =============================================================================
@@ -131,7 +132,7 @@ def _http_get(url):
 
 
 def _find_latest_tag():
-    url = f"https://api.github.com/repos/{REPO}/releases?per_page=1"
+    url = "https://api.github.com/repos/%s/releases?per_page=1" % REPO
     req = urllib.request.Request(url, headers={
         "User-Agent": "PIR-Loader/1.0",
         "Accept": "application/vnd.github+json",
@@ -146,18 +147,18 @@ def _find_latest_tag():
 def download(platform_name, arch, tag):
     if not tag:
         tag = _find_latest_tag()
-        print(f"[+] Latest release: {tag}")
+        print("[+] Latest release: %s" % tag)
 
-    asset = f"{platform_name}-{arch}.bin"
-    url = f"https://github.com/{REPO}/releases/download/{tag}/{asset}"
+    asset = "%s-%s.bin" % (platform_name, arch)
+    url = "https://github.com/%s/releases/download/%s/%s" % (REPO, tag, asset)
 
-    print(f"[*] Downloading: {asset}")
-    print(f"[*] URL: {url}")
+    print("[*] Downloading: %s" % asset)
+    print("[*] URL: %s" % url)
     try:
         return _http_get(url)
     except urllib.error.HTTPError as e:
         if e.code == 404:
-            sys.exit(f"[-] Asset '{asset}' not found in release {tag}.\n    URL: {url}")
+            sys.exit("[-] Asset '%s' not found in release %s.\n    URL: %s" % (asset, tag, url))
         raise
 
 
@@ -194,7 +195,7 @@ def run_mmap(shellcode):
 
     _flush_icache(addr, len(shellcode))
 
-    print(f"[+] Entry: 0x{addr:x}")
+    print("[+] Entry: 0x%x" % addr)
     print("[*] Executing...")
     sys.stdout.flush()
     return ctypes.CFUNCTYPE(ctypes.c_int)(addr)()
@@ -284,9 +285,9 @@ def run_injected(shellcode, target_arch, cross_family=False):
 
     host_exe = HOST_PROCESS.get(target_arch)
     if not host_exe or not os.path.exists(host_exe):
-        raise OSError(f"No suitable host process for {target_arch}")
+        raise OSError("No suitable host process for %s" % target_arch)
 
-    print(f"[+] Host process: {host_exe}")
+    print("[+] Host process: %s" % host_exe)
 
     k32 = setup_kernel32()
 
@@ -328,56 +329,56 @@ def run_injected(shellcode, target_arch, cross_family=False):
 
         attr_list_buf = (ctypes.c_byte * size.value)()
         if not k32.InitializeProcThreadAttributeList(attr_list_buf, 1, 0, ctypes.byref(size)):
-            raise OSError(f"InitializeProcThreadAttributeList failed: {k32.GetLastError()}")
+            raise OSError("InitializeProcThreadAttributeList failed: %d" % k32.GetLastError())
 
         if not k32.UpdateProcThreadAttribute(
             attr_list_buf, 0, PROC_THREAD_ATTRIBUTE_MACHINE_TYPE,
             ctypes.byref(machine), ctypes.sizeof(machine), None, None
         ):
             k32.DeleteProcThreadAttributeList(attr_list_buf)
-            raise OSError(f"UpdateProcThreadAttribute failed: {k32.GetLastError()}")
+            raise OSError("UpdateProcThreadAttribute failed: %d" % k32.GetLastError())
 
         siex = STARTUPINFOEXW()
         siex.StartupInfo.cb = ctypes.sizeof(STARTUPINFOEXW)
         siex.lpAttributeList = ctypes.addressof(attr_list_buf)
         creation_flags |= EXTENDED_STARTUPINFO_PRESENT
 
-        print(f"[*] Machine type override: 0x{MACHINE_TYPE[target_arch]:04x}")
+        print("[*] Machine type override: 0x%04x" % MACHINE_TYPE[target_arch])
 
         if not k32.CreateProcessW(
             host_exe, None, None, None, False, creation_flags,
             None, None, ctypes.byref(siex), ctypes.byref(pi)
         ):
             k32.DeleteProcThreadAttributeList(attr_list_buf)
-            raise OSError(f"CreateProcessW failed: {k32.GetLastError()}")
+            raise OSError("CreateProcessW failed: %d" % k32.GetLastError())
     else:
         si = STARTUPINFOW()
         si.cb = ctypes.sizeof(STARTUPINFOW)
 
         if not k32.CreateProcessW(host_exe, None, None, None, False, creation_flags, None, None, ctypes.byref(si), ctypes.byref(pi)):
-            raise OSError(f"CreateProcessW failed: {k32.GetLastError()}")
+            raise OSError("CreateProcessW failed: %d" % k32.GetLastError())
 
-    print(f"[+] Created process PID: {pi.dwProcessId}")
+    print("[+] Created process PID: %d" % pi.dwProcessId)
 
     try:
         remote_mem = k32.VirtualAllocEx(pi.hProcess, None, len(shellcode), MEM_COMMIT_RESERVE, PAGE_EXECUTE_READWRITE)
         if not remote_mem:
-            raise OSError(f"VirtualAllocEx failed: {k32.GetLastError()}")
+            raise OSError("VirtualAllocEx failed: %d" % k32.GetLastError())
 
-        print(f"[+] Remote memory: 0x{remote_mem:x}")
+        print("[+] Remote memory: 0x%x" % remote_mem)
 
         written = ctypes.c_size_t()
         if not k32.WriteProcessMemory(pi.hProcess, remote_mem, shellcode, len(shellcode), ctypes.byref(written)):
-            raise OSError(f"WriteProcessMemory failed: {k32.GetLastError()}")
+            raise OSError("WriteProcessMemory failed: %d" % k32.GetLastError())
 
-        print(f"[+] Written: {written.value} bytes")
-        print(f"[+] Entry: 0x{remote_mem:x}")
+        print("[+] Written: %d bytes" % written.value)
+        print("[+] Entry: 0x%x" % remote_mem)
         print("[*] Executing...")
         sys.stdout.flush()
 
         remote_thread = k32.CreateRemoteThread(pi.hProcess, None, 0, remote_mem, None, 0, None)
         if not remote_thread:
-            raise OSError(f"CreateRemoteThread failed: {k32.GetLastError()}")
+            raise OSError("CreateRemoteThread failed: %d" % k32.GetLastError())
 
         k32.WaitForSingleObject(remote_thread, INFINITE)
 
@@ -411,8 +412,8 @@ def main():
     host_os, host_family, host_bits = get_host()
     python_bits = struct.calcsize("P") * 8
 
-    print(f"[*] Host: {host_os}/{host_family}/{host_bits}bit")
-    print(f"[*] Python: {python_bits}bit")
+    print("[*] Host: %s/%s/%dbit" % (host_os, host_family, host_bits))
+    print("[*] Python: %dbit" % python_bits)
 
     if args.shellcode:
         # --- Local mode: load from file ---
@@ -420,33 +421,33 @@ def main():
             parser.error("--arch is required when loading from a local file")
 
         target = ARCH[args.arch]
-        print(f"[*] Target: {args.arch}")
+        print("[*] Target: %s" % args.arch)
 
         with open(args.shellcode, 'rb') as f:
             shellcode = f.read()
-        print(f"[+] Loaded: {len(shellcode)} bytes")
+        print("[+] Loaded: %d bytes" % len(shellcode))
 
         if host_os == 'windows':
             cross_family = host_family != target['family']
             code = run_injected(shellcode, args.arch, cross_family=cross_family)
         elif target['family'] != host_family or target['bits'] != host_bits:
-            sys.exit(f"[-] Cannot load {args.arch} shellcode on {host_family}/{host_bits}bit host")
+            sys.exit("[-] Cannot load %s shellcode on %s/%dbit host" % (args.arch, host_family, host_bits))
         else:
             code = run_mmap(shellcode)
     else:
         # --- Remote mode: download from GitHub ---
         key = (host_os, host_family, host_bits)
         if key not in _ARTIFACT_MAP:
-            sys.exit(f"[-] Unsupported host: {host_os}/{host_family}/{host_bits}bit")
+            sys.exit("[-] Unsupported host: %s/%s/%dbit" % (host_os, host_family, host_bits))
 
         plat, arch = _ARTIFACT_MAP[key]
         if args.arch:
             arch = args.arch
-        print(f"[*] Platform: {plat}/{arch}")
-        print(f"[*] Release: {args.tag or 'latest'}")
+        print("[*] Platform: %s/%s" % (plat, arch))
+        print("[*] Release: %s" % (args.tag or 'latest'))
 
         shellcode = download(plat, arch, args.tag)
-        print(f"[+] Loaded: {len(shellcode)} bytes")
+        print("[+] Loaded: %d bytes" % len(shellcode))
 
         if host_os == 'windows':
             target = ARCH[arch]
@@ -455,7 +456,7 @@ def main():
         else:
             code = run_mmap(shellcode)
 
-    print(f"[+] Exit: {code}")
+    print("[+] Exit: %d" % code)
     os._exit(code)
 
 

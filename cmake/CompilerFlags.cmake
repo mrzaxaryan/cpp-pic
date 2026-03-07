@@ -74,6 +74,16 @@ if(PIR_ARCH STREQUAL "mips64")
     list(APPEND PIR_BASE_LINK_FLAGS -mno-abicalls -fno-pic -no-pie)
 endif()
 
+# MIPS64: disable LTO for release builds. LLVM 21's MIPS Assembly Printer
+# crashes during LTO codegen with "Not supported instr: <MCInst 43>" on
+# certain arithmetic patterns (e.g. Base64::Encode). Without LTO, clang
+# emits regular MIPS64 object files; lld links them directly without running
+# the broken LTO MIPS backend. PIC correctness is preserved: -fvisibility=hidden
+# and --gc-sections eliminate dead code, and the source contains no .rodata.
+if(PIR_ARCH STREQUAL "mips64" AND PIR_BUILD_TYPE STREQUAL "release")
+    list(REMOVE_ITEM PIR_BASE_FLAGS -flto=full)
+endif()
+
 # =============================================================================
 # Helper: Append Linker Flags
 # =============================================================================

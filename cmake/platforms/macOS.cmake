@@ -56,7 +56,15 @@ elseif(PIR_ARCH STREQUAL "aarch64")
     list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 endif()
 
-# Linker configuration (Mach-O / Apple ld)
+# On non-macOS hosts (e.g. Linux/WSL cross-compilation), use LLD explicitly.
+# LLD's ld.lld supports Mach-O output and is available in the LLVM Linux release
+# tarballs. On macOS, Apple's ld is used by default — Homebrew's LLVM 22 removed
+# ld64.lld so -fuse-ld=lld is invalid there.
+if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
+endif()
+
+# Linker configuration (Mach-O)
 # Note: -platform_version is derived from the target triple (arm64-apple-macos11
 # or x86_64-apple-macos11). Do NOT pass it explicitly — the triple already
 # provides the min deployment target, and passing both causes a linker warning

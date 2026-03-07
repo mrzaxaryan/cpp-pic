@@ -1,8 +1,8 @@
 {
   "linux_armv7a_exe": "105.9 KB",
   "linux_armv7a_bin": "104.8 KB",
-  "linux_mips64_exe": "178.2 KB",
-  "linux_mips64_bin": "106.3 KB",
+  "linux_mips64_exe": "226.9 KB",
+  "linux_mips64_bin": "132.7 KB",
   "windows_aarch64_exe": "90.0 KB",
   "windows_aarch64_bin": "89.1 KB",
   "freebsd_riscv64_exe": "84.9 KB",

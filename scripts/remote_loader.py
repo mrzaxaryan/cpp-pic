@@ -56,11 +56,26 @@ _HOST_TO_ARTIFACT = {
     ('sunos',   'x86',   32): ('solaris', 'i386'),
     ('sunos',   'arm',   64): ('solaris', 'aarch64'),
     ('linux',   'mips',  64): ('linux',   'mips64'),
+    ('android', 'arm',   64): ('android', 'aarch64'),
+    ('android', 'arm',   32): ('android', 'armv7a'),
+    ('android', 'x86',   64): ('android', 'x86_64'),
+    ('android', 'x86',   32): ('android', 'i386'),
 }
+
+
+def _is_android():
+    try:
+        with open('/system/build.prop') as _:
+            return True
+    except (OSError, IOError):
+        pass
+    return 'ANDROID_ROOT' in os.environ
 
 
 def get_host():
     os_name = platform.system().lower()
+    if os_name == 'linux' and _is_android():
+        os_name = 'android'
     machine = platform.machine().lower()
     for aliases, family, bits in _HOST_FAMILIES:
         if machine in aliases:

@@ -69,9 +69,9 @@
  *      https://datatracker.ietf.org/doc/html/rfc9293#section-3.1
  * @{
  */
-#if defined(PLATFORM_SOLARIS)
-#define SOCK_STREAM 2 ///< Stream socket — Solaris value (TCP)
-#define SOCK_DGRAM 1  ///< Datagram socket — Solaris value (UDP)
+#if defined(PLATFORM_SOLARIS) || defined(PLATFORM_LINUX_MIPS64)
+#define SOCK_STREAM 2 ///< Stream socket — Solaris/MIPS value (TCP)
+#define SOCK_DGRAM 1  ///< Datagram socket — Solaris/MIPS value (UDP)
 #else
 #define SOCK_STREAM 1 ///< Stream socket — reliable, ordered, connection-oriented (TCP)
 #define SOCK_DGRAM 2  ///< Datagram socket — unreliable, connectionless (UDP)

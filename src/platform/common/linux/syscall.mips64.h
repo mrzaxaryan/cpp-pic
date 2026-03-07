@@ -14,6 +14,10 @@
 
 #include "core/types/primitives.h"
 
+// *at-style file descriptor base
+constexpr SSIZE AT_FDCWD = -100;
+constexpr INT32 AT_REMOVEDIR = 0x200;
+
 // File I/O
 constexpr USIZE SYS_READ = 5000;
 constexpr USIZE SYS_WRITE = 5001;
@@ -25,10 +29,13 @@ constexpr USIZE SYS_OPENAT = 5247;
 // File operations
 constexpr USIZE SYS_STAT = 5004;
 constexpr USIZE SYS_FSTAT = 5005;
+constexpr USIZE SYS_FSTATAT = 5256;
 constexpr USIZE SYS_UNLINK = 5087;
+constexpr USIZE SYS_UNLINKAT = 5233;
 
 // Directory operations
 constexpr USIZE SYS_MKDIR = 5083;
+constexpr USIZE SYS_MKDIRAT = 5252;
 constexpr USIZE SYS_RMDIR = 5084;
 constexpr USIZE SYS_GETDENTS64 = 5308;
 

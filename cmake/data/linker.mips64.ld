@@ -23,6 +23,11 @@
 
 SECTIONS
 {
+    /* Standard MIPS64 n64 ABI base address.  Without this the non-PIE
+       executable (required by -mno-abicalls) gets VirtAddr 0, which
+       qemu-mips64el-static cannot map. */
+    . = 0x120000000;
+
     .text : {
         *(.text .text.*)
         *(.rodata .rodata.*)

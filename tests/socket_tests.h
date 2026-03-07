@@ -320,7 +320,7 @@ private:
 	// Test 7: HTTP GET request to httpbin.org
 	static BOOL TestHttpBin()
 	{
-		auto dnsResult = DNS::Resolve("httpbin.org"_embed);
+		auto dnsResult = DNS::Resolve("httpbin.org"_embed, DnsRecordType::A);
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve httpbin.org (error: %e)", dnsResult.Error());

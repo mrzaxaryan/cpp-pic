@@ -2,7 +2,7 @@
 
 <sub>
 
-![](https://img.shields.io/badge/%E2%80%8B-orange?style=flat-square) Compile only (no runner) &nbsp;&nbsp; ![](https://img.shields.io/badge/%E2%80%8B-yellow?style=flat-square) Tests pass &nbsp;&nbsp; ![](https://img.shields.io/badge/%E2%80%8B-brightgreen?style=flat-square) Shellcode tests pass
+![](https://img.shields.io/badge/%E2%80%8B-orange?style=flat-square) Compile only (no runner) &nbsp;&nbsp; ![](https://img.shields.io/badge/%E2%80%8B-yellow?style=flat-square) Tests pass (as executable) &nbsp;&nbsp; ![](https://img.shields.io/badge/%E2%80%8B-brightgreen?style=flat-square) Tests pass (as shellcode)
 
 </sub>
 
@@ -101,7 +101,7 @@
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
-<td align="center"><img src="https://img.shields.io/badge/%E2%80%8B-orange?style=for-the-badge" alt="Build" width="130" height="28"></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-ios-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-ios-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" width="130" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>

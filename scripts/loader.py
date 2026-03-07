@@ -23,6 +23,7 @@ import json
 import mmap
 import os
 import platform
+import ssl
 import struct
 import sys
 import urllib.error
@@ -128,9 +129,25 @@ def get_host():
 # Download from GitHub Releases
 # =============================================================================
 
+def _ssl_context():
+    """Return an SSL context, falling back to unverified if CA certs are unavailable."""
+    try:
+        ctx = ssl.create_default_context()
+        # Trigger cert loading to detect missing CA bundle early
+        if not ctx.get_ca_certs():
+            raise ssl.SSLError("no CA certs")
+        return ctx
+    except (ssl.SSLError, OSError):
+        print("[!] Warning: SSL certificate verification disabled (no CA bundle found)")
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+
+
 def _http_get(url):
     req = urllib.request.Request(url, headers={"User-Agent": "PIR-Loader/1.0"})
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, context=_ssl_context()) as resp:
         return resp.read()
 
 
@@ -140,7 +157,7 @@ def _find_latest_tag():
         "User-Agent": "PIR-Loader/1.0",
         "Accept": "application/vnd.github+json",
     })
-    with urllib.request.urlopen(req) as resp:
+    with urllib.request.urlopen(req, context=_ssl_context()) as resp:
         releases = json.loads(resp.read())
     if not releases:
         sys.exit("[-] No releases found")

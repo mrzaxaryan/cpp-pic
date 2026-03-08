@@ -1,0 +1,32 @@
+{
+  "date": "2026-03-08",
+  "commit": "e5ff18a",
+  "sizes": {
+    "linux_armv7a_bin": 121388,
+    "linux_mips64_bin": 124864,
+    "windows_aarch64_bin": 105160,
+    "freebsd_riscv64_bin": 94256,
+    "linux_i386_bin": 117911,
+    "freebsd_i386_bin": 112893,
+    "uefi_x86_64_bin": 107475,
+    "windows_x86_64_bin": 110931,
+    "freebsd_aarch64_bin": 92448,
+    "linux_riscv32_bin": 94280,
+    "android_x86_64_bin": 104274,
+    "windows_armv7a_bin": 93630,
+    "macos_x86_64_bin": 102840,
+    "freebsd_x86_64_bin": 104296,
+    "linux_riscv64_bin": 85136,
+    "solaris_i386_bin": 109460,
+    "solaris_aarch64_bin": 91632,
+    "uefi_aarch64_bin": 102344,
+    "android_armv7a_bin": 121504,
+    "linux_x86_64_bin": 104274,
+    "android_aarch64_bin": 92404,
+    "macos_aarch64_bin": 89800,
+    "linux_aarch64_bin": 92392,
+    "ios_aarch64_bin": 89752,
+    "solaris_x86_64_bin": 104104,
+    "windows_i386_bin": 116592
+  }
+}

@@ -2,7 +2,7 @@
 #include "platform/platform.h"
 #include "platform/common/windows/peb.h"
 
-#define ResolveGdi32ExportAddress(functionName) ResolveExportAddressFromPebModule(Djb2::HashCompileTime(L"gdi32.dll"), Djb2::HashCompileTime(functionName))
+#define ResolveGdi32ExportAddress(functionName) ResolveExportAddress((const WCHAR *)L"gdi32.dll"_embed, Djb2::HashCompileTime(functionName))
 
 // CreateCompatibleDC
 PVOID Gdi32::CreateCompatibleDC(PVOID hdc)

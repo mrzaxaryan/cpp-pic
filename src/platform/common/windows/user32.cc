@@ -2,7 +2,7 @@
 #include "platform/platform.h"
 #include "platform/common/windows/peb.h"
 
-#define ResolveUser32ExportAddress(functionName) ResolveExportAddressFromPebModule(Djb2::HashCompileTime(L"user32.dll"), Djb2::HashCompileTime(functionName))
+#define ResolveUser32ExportAddress(functionName) ResolveExportAddress((const WCHAR *)L"user32.dll"_embed, Djb2::HashCompileTime(functionName))
 
 // EnumDisplayDevicesW
 BOOL User32::EnumDisplayDevicesW(const WCHAR *lpDevice, UINT32 iDevNum, PDISPLAY_DEVICEW lpDisplayDevice, UINT32 dwFlags)

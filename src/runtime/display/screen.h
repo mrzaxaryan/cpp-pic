@@ -20,17 +20,7 @@
 #pragma once
 
 #include "platform/platform.h"
-
-/// @brief RGB pixel with 8-bit color channels
-struct RGB
-{
-	UINT8 Red;   ///< Red channel (0–255)
-	UINT8 Green; ///< Green channel (0–255)
-	UINT8 Blue;  ///< Blue channel (0–255)
-};
-
-using PRGB = RGB *;
-using PCRGB = const RGB *;
+#include "core/types/rgb.h"
 
 /// @brief Information about a connected display device
 struct ScreenDevice

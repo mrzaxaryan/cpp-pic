@@ -20,27 +20,8 @@
 #pragma once
 
 #include "platform/platform.h"
-
-/// @brief RGB pixel with 8-bit color channels
-struct RGB
-{
-	UINT8 Red;
-	UINT8 Green;
-	UINT8 Blue;
-};
-
-using PRGB = RGB *;
-using PCRGB = const RGB *;
-
-/// @brief 2D point with row/column indices
-struct Point
-{
-	INT32 Row;
-	INT32 Col;
-};
-
-using PPoint = Point *;
-using PPPoint = Point **;
+#include "core/types/rgb.h"
+#include "core/types/point.h"
 
 /// @brief Contour: array of points and its size
 struct Contour

@@ -1,6 +1,9 @@
 name: Windows i386
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - "**"

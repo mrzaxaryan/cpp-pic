@@ -1,6 +1,9 @@
 name: Linux mips64
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - "**"

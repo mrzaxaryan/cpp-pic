@@ -1,6 +1,9 @@
 name: Android armv7a
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - "**"

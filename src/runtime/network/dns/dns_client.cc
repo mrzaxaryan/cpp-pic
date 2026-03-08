@@ -1,10 +1,10 @@
-#include "runtime/network/dns/dns.h"
+#include "runtime/network/dns/dns_client.h"
 #include "core/io/binary_reader.h"
-#include "runtime/network/http/http.h"
+#include "runtime/network/http/http_client.h"
 #include "platform/io/logger.h"
 #include "core/memory/memory.h"
 #include "core/string/string.h"
-#include "runtime/network/tls/tls.h"
+#include "runtime/network/tls/tls_client.h"
 #include "core/types/embedded/embedded_string.h"
 
 /**
@@ -510,7 +510,7 @@ static_assert(sizeof(DNS_REQUEST_QUESTION) == 4, "DNS question must be 4 bytes (
  * @see RFC 8484 Section 4.2 — HTTP Response (Content-Type: application/dns-message)
  *      https://datatracker.ietf.org/doc/html/rfc8484#section-4.2
  */
-Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAddress &dnsServerIp, Span<const CHAR> dnsServerName, DnsRecordType dnstype)
+Result<IPAddress, Error> DnsClient::ResolveOverHttp(Span<const CHAR> host, const IPAddress &dnsServerIp, Span<const CHAR> dnsServerName, DnsRecordType dnstype)
 {
 	// Short-circuit for "localhost" — return loopback without network I/O (RFC 6761 Section 6.3)
 	auto localhost = "localhost"_embed;
@@ -621,7 +621,7 @@ Result<IPAddress, Error> DNS::ResolveOverHttp(Span<const CHAR> host, const IPAdd
  *
  * @see https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/
  */
-Result<IPAddress, Error> DNS::CloudflareResolve(Span<const CHAR> host, DnsRecordType dnstype)
+Result<IPAddress, Error> DnsClient::CloudflareResolve(Span<const CHAR> host, DnsRecordType dnstype)
 {
 	auto serverName = "one.one.one.one"_embed;
 	const IPAddress ips[] = {IPAddress::FromIPv4(0x01010101), IPAddress::FromIPv4(0x01000001)};
@@ -642,7 +642,7 @@ Result<IPAddress, Error> DNS::CloudflareResolve(Span<const CHAR> host, DnsRecord
  *
  * @see https://developers.google.com/speed/public-dns/docs/doh
  */
-Result<IPAddress, Error> DNS::GoogleResolve(Span<const CHAR> host, DnsRecordType dnstype)
+Result<IPAddress, Error> DnsClient::GoogleResolve(Span<const CHAR> host, DnsRecordType dnstype)
 {
 	auto serverName = "dns.google"_embed;
 	const IPAddress ips[] = {IPAddress::FromIPv4(0x08080808), IPAddress::FromIPv4(0x08080404)};
@@ -665,7 +665,7 @@ Result<IPAddress, Error> DNS::GoogleResolve(Span<const CHAR> host, DnsRecordType
  * The AAAA→A fallback handles environments without IPv6 connectivity or hosts
  * that only have A records.
  */
-Result<IPAddress, Error> DNS::Resolve(Span<const CHAR> host, DnsRecordType dnstype)
+Result<IPAddress, Error> DnsClient::Resolve(Span<const CHAR> host, DnsRecordType dnstype)
 {
 	LOG_DEBUG("Resolve(host: %s) called", host.Data());
 

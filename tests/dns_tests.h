@@ -12,7 +12,7 @@ private:
 	{
 		LOG_INFO("Test: Localhost Resolution");
 
-		auto result = DNS::CloudflareResolve("localhost"_embed, DnsRecordType::A);
+		auto result = DnsClient::CloudflareResolve("localhost"_embed, DnsRecordType::A);
 		if (!result)
 		{
 			LOG_ERROR("Localhost A resolution failed (error: %e)", result.Error());
@@ -27,7 +27,7 @@ private:
 			return false;
 		}
 
-		auto result6 = DNS::CloudflareResolve("localhost"_embed, DnsRecordType::AAAA);
+		auto result6 = DnsClient::CloudflareResolve("localhost"_embed, DnsRecordType::AAAA);
 		if (!result6)
 		{
 			LOG_ERROR("Localhost AAAA resolution failed (error: %e)", result6.Error());
@@ -53,7 +53,7 @@ private:
 	{
 		LOG_INFO("Test: Cloudflare DNS Resolution (dns.google)");
 
-		auto result = DNS::CloudflareResolve("dns.google"_embed, DnsRecordType::A);
+		auto result = DnsClient::CloudflareResolve("dns.google"_embed, DnsRecordType::A);
 		if (!result)
 		{
 			LOG_ERROR("Cloudflare DNS resolution failed (error: %e)", result.Error());
@@ -79,7 +79,7 @@ private:
 	{
 		LOG_INFO("Test: Google DNS Resolution (one.one.one.one)");
 
-		auto result = DNS::GoogleResolve("one.one.one.one"_embed, DnsRecordType::A);
+		auto result = DnsClient::GoogleResolve("one.one.one.one"_embed, DnsRecordType::A);
 		if (!result)
 		{
 			LOG_ERROR("Google DNS resolution failed (error: %e)", result.Error());
@@ -105,7 +105,7 @@ private:
 	{
 		LOG_INFO("Test: Main DNS Resolve Function");
 
-		auto result = DNS::Resolve("example.com"_embed);
+		auto result = DnsClient::Resolve("example.com"_embed);
 		if (!result)
 		{
 			LOG_ERROR("Main DNS resolution failed (error: %e)", result.Error());
@@ -122,7 +122,7 @@ private:
 	{
 		LOG_INFO("Test: Known IP Resolution (dns.google)");
 
-		auto result = DNS::Resolve("dns.google"_embed);
+		auto result = DnsClient::Resolve("dns.google"_embed);
 		if (!result)
 		{
 			LOG_ERROR("DNS resolution for dns.google failed (error: %e)", result.Error());

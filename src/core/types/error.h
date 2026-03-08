@@ -211,6 +211,11 @@ struct Error
 		// JPEG encoder errors (110)
 		// -------------------------
 		Jpeg_InvalidParams = 110, // invalid image dimensions or component count
+
+		// -------------------------
+		// Image processing errors (111)
+		// -------------------------
+		Image_AllocationFailed = 111, // memory allocation failed during contour finding
 	};
 
 	/**

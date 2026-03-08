@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file dns.h
+ * @file dns_client.h
  * @brief DNS-over-HTTPS (DoH) resolver — resolves hostnames to IP addresses via encrypted DNS
  *
  * @details Implements a minimal DNS stub resolver that sends standard DNS wire-format queries
@@ -68,7 +68,7 @@ enum class DnsRecordType
  * @see RFC 8484 Section 4.1 — DNS Wire Format for DoH POST requests
  *      https://datatracker.ietf.org/doc/html/rfc8484#section-4.1
  */
-class DNS
+class DnsClient
 {
 private:
 	/**

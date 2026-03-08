@@ -1,6 +1,6 @@
 /**
  * @file screen.cc
- * @brief POSIX Screen Implementation (Linux/Android/FreeBSD)
+ * @brief POSIX Screen Implementation (Linux/Android/FreeBSD/Solaris)
  *
  * @details Implements screen device enumeration and capture via the Linux
  * framebuffer device interface (/dev/fb0..fb7). Uses ioctl with
@@ -10,6 +10,10 @@
  *
  * The framebuffer API is shared between Linux, Android (same kernel),
  * and FreeBSD (via the linuxkpi DRM compatibility layer on FreeBSD 13+).
+ *
+ * Solaris uses a different framebuffer API (Visual I/O via vis_io.h)
+ * that is not yet implemented. Both methods return
+ * Screen_GetDevicesFailed / Screen_CaptureFailed on Solaris.
  *
  * @note Framebuffer devices are limited to one display per /dev/fbN.
  * Multi-monitor setups with separate framebuffers are enumerated as
@@ -32,7 +36,30 @@
 #elif defined(PLATFORM_FREEBSD)
 #include "platform/common/freebsd/syscall.h"
 #include "platform/common/freebsd/system.h"
+#elif defined(PLATFORM_SOLARIS)
+#include "platform/common/solaris/syscall.h"
+#include "platform/common/solaris/system.h"
 #endif
+
+// =============================================================================
+// Solaris stub — Visual I/O (vis_io) not yet implemented
+// =============================================================================
+
+#if defined(PLATFORM_SOLARIS)
+
+Result<ScreenDeviceList, Error> Screen::GetDevices()
+{
+	return Result<ScreenDeviceList, Error>::Err(Error(Error::Screen_GetDevicesFailed));
+}
+
+Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer)
+{
+	(void)device;
+	(void)buffer;
+	return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+}
+
+#else // Linux, Android, FreeBSD — framebuffer implementation
 
 // =============================================================================
 // Framebuffer ioctl constants
@@ -350,3 +377,5 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 
 	return Result<void, Error>::Ok();
 }
+
+#endif // PLATFORM_SOLARIS

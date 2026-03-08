@@ -29,6 +29,11 @@
 #include "runtime/network/websocket/websocket.h"
 /// @}
 
+/// @name Image
+/// @{
+#include "runtime/image/jpeg.h"
+/// @}
+
 /// @name TLS 1.3
 /// @{
 #include "runtime/network/tls/tls.h"

@@ -206,6 +206,11 @@ struct Error
 		Tls_CreateFailed  = 102, // Socket::Create() failed in TlsClient::Create()
 		Http_CreateFailed = 103, // URL parse / DNS / TLS create failed in HttpClient::Create()
 		Ws_CreateFailed   = 104, // URL parse / DNS / TLS create failed in WebSocketClient::Create()
+
+		// -------------------------
+		// JPEG encoder errors (110)
+		// -------------------------
+		Jpeg_InvalidParams = 110, // invalid image dimensions or component count
 	};
 
 	/**

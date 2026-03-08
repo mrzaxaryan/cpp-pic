@@ -35,10 +35,11 @@ public:
 		RunTest(allPassed, EMBED_FUNC(TestNonTrivialDestructor), "Non-trivial destructor"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestMoveTransfersOwnership), "Move transfers ownership"_embed);
 
-		// Single-error storage (E = Error)
+		// Error chaining (E = Error)
 		RunTest(allPassed, EMBED_FUNC(TestSingleError), "Single error storage"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestTwoArgErrCompat), "Two-arg Err compatibility"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestPropagationErrCompat), "Propagation Err compatibility"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestTwoArgErrChaining), "Two-arg Err chaining"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestPropagationErrChaining), "Propagation Err chaining"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestMultiLevelChaining), "Multi-level error chaining"_embed);
 
 		// Non-chainable E
 		RunTest(allPassed, EMBED_FUNC(TestNonChainableErr), "Non-chainable E type"_embed);
@@ -54,6 +55,10 @@ public:
 		RunTest(allPassed, EMBED_FUNC(TestCompactTwoArgErr), "Compact void two-arg Err"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestCompactErrorOnOk), "Compact Error() on Ok is well-defined"_embed);
 		RunTest(allPassed, EMBED_FUNC(TestCompactMoveConstruction), "Compact void move construction"_embed);
+
+		// Error chain accessors
+		RunTest(allPassed, EMBED_FUNC(TestErrorRootCause), "Error root cause accessors"_embed);
+		RunTest(allPassed, EMBED_FUNC(TestErrorChainOverflow), "Error chain overflow truncation"_embed);
 
 		if (allPassed)
 			LOG_INFO("All Result tests passed!");
@@ -165,6 +170,11 @@ private:
 		if (err.Platform != Error::PlatformKind::Runtime)
 		{
 			LOG_ERROR("Platform mismatch: expected Runtime");
+			return false;
+		}
+		if (err.Depth != 0)
+		{
+			LOG_ERROR("Single error should have Depth == 0, got %u", (UINT32)err.Depth);
 			return false;
 		}
 		return true;
@@ -390,7 +400,7 @@ private:
 	}
 
 	// =====================================================================
-	// Single-error storage (E = Error)
+	// Error chaining (E = Error)
 	// =====================================================================
 
 	static BOOL TestSingleError()
@@ -413,12 +423,17 @@ private:
 			LOG_ERROR("SingleError: Platform mismatch");
 			return false;
 		}
+		if (err.Depth != 0)
+		{
+			LOG_ERROR("SingleError: Depth should be 0");
+			return false;
+		}
 		return true;
 	}
 
-	static BOOL TestTwoArgErrCompat()
+	static BOOL TestTwoArgErrChaining()
 	{
-		// 2-arg Err stores only the last (outermost) code
+		// 2-arg Err chains both: outer=Socket_OpenFailed_Connect, inner=Windows(0xC0000034)
 		auto r = Result<UINT32, Error>::Err(
 			Error::Windows(0xC0000034),
 			Error::Socket_OpenFailed_Connect);
@@ -429,27 +444,45 @@ private:
 		}
 
 		const Error &err = r.Error();
+		// Outermost code is Socket_OpenFailed_Connect
 		if (err.Code != Error::Socket_OpenFailed_Connect)
 		{
-			LOG_ERROR("TwoArgErr: Code mismatch, expected Socket_OpenFailed_Connect");
+			LOG_ERROR("TwoArgErr: Code mismatch, expected Socket_OpenFailed_Connect, got %u",
+				(UINT32)err.Code);
 			return false;
 		}
 		if (err.Platform != Error::PlatformKind::Runtime)
 		{
-			LOG_ERROR("TwoArgErr: Platform mismatch");
+			LOG_ERROR("TwoArgErr: Platform mismatch, expected Runtime");
+			return false;
+		}
+		// Inner chain has the Windows NTSTATUS
+		if (err.Depth != 1)
+		{
+			LOG_ERROR("TwoArgErr: Depth mismatch, expected 1, got %u", (UINT32)err.Depth);
+			return false;
+		}
+		if (err.InnerCodes[0] != 0xC0000034)
+		{
+			LOG_ERROR("TwoArgErr: InnerCodes[0] mismatch, expected 0xC0000034");
+			return false;
+		}
+		if (err.InnerPlatforms[0] != Error::PlatformKind::Windows)
+		{
+			LOG_ERROR("TwoArgErr: InnerPlatforms[0] mismatch, expected Windows");
 			return false;
 		}
 		return true;
 	}
 
-	static BOOL TestPropagationErrCompat()
+	static BOOL TestPropagationErrChaining()
 	{
-		// Build an inner error
+		// Build an inner error with its own chain
 		auto inner = Result<UINT32, Error>::Err(
 			Error::Posix(111),
 			Error::Socket_WriteFailed_Send);
 
-		// Propagate — stores the underlying result's (inner) error
+		// Propagate — both inner chain and outer site code are preserved
 		auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
 		if (!outer.IsErr())
 		{
@@ -458,9 +491,11 @@ private:
 		}
 
 		const Error &err = outer.Error();
-		if (err.Code != Error::Socket_WriteFailed_Send)
+		// Outermost code is Tls_WriteFailed_Send
+		if (err.Code != Error::Tls_WriteFailed_Send)
 		{
-			LOG_ERROR("PropagationErr: Code mismatch, expected Socket_WriteFailed_Send");
+			LOG_ERROR("PropagationErr: Code mismatch, expected Tls_WriteFailed_Send, got %u",
+				(UINT32)err.Code);
 			return false;
 		}
 		if (err.Platform != Error::PlatformKind::Runtime)
@@ -468,6 +503,109 @@ private:
 			LOG_ERROR("PropagationErr: Platform mismatch");
 			return false;
 		}
+		// Inner chain: [0]=Socket_WriteFailed_Send, [1]=Posix(111)
+		if (err.Depth != 2)
+		{
+			LOG_ERROR("PropagationErr: Depth mismatch, expected 2, got %u", (UINT32)err.Depth);
+			return false;
+		}
+		if (err.InnerCodes[0] != (UINT32)Error::Socket_WriteFailed_Send)
+		{
+			LOG_ERROR("PropagationErr: InnerCodes[0] mismatch");
+			return false;
+		}
+		if (err.InnerPlatforms[0] != Error::PlatformKind::Runtime)
+		{
+			LOG_ERROR("PropagationErr: InnerPlatforms[0] mismatch");
+			return false;
+		}
+		if (err.InnerCodes[1] != 111)
+		{
+			LOG_ERROR("PropagationErr: InnerCodes[1] mismatch, expected 111");
+			return false;
+		}
+		if (err.InnerPlatforms[1] != Error::PlatformKind::Posix)
+		{
+			LOG_ERROR("PropagationErr: InnerPlatforms[1] mismatch, expected Posix");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestMultiLevelChaining()
+	{
+		// Simulate: OS -> Socket -> TLS -> HTTP (4 levels)
+		// Level 1: OS error
+		auto osResult = Result<void, Error>::Err(Error::Windows(0xC0000034));
+
+		// Level 2: Socket wraps OS
+		auto socketResult = Result<void, Error>::Err(osResult, Error::Socket_OpenFailed_Connect);
+
+		// Level 3: TLS wraps Socket
+		auto tlsResult = Result<void, Error>::Err(socketResult, Error::Tls_OpenFailed_Socket);
+
+		// Level 4: HTTP wraps TLS
+		auto httpResult = Result<void, Error>::Err(tlsResult, Error::Http_OpenFailed);
+
+		const Error &err = httpResult.Error();
+
+		// Outermost
+		if (err.Code != Error::Http_OpenFailed)
+		{
+			LOG_ERROR("MultiLevel: Code mismatch, expected Http_OpenFailed");
+			return false;
+		}
+
+		// Full chain depth = 3 inner entries
+		if (err.Depth != 3)
+		{
+			LOG_ERROR("MultiLevel: Depth mismatch, expected 3, got %u", (UINT32)err.Depth);
+			return false;
+		}
+
+		// Inner[0] = Tls_OpenFailed_Socket (Runtime)
+		if (err.InnerCodes[0] != (UINT32)Error::Tls_OpenFailed_Socket)
+		{
+			LOG_ERROR("MultiLevel: InnerCodes[0] mismatch");
+			return false;
+		}
+
+		// Inner[1] = Socket_OpenFailed_Connect (Runtime)
+		if (err.InnerCodes[1] != (UINT32)Error::Socket_OpenFailed_Connect)
+		{
+			LOG_ERROR("MultiLevel: InnerCodes[1] mismatch");
+			return false;
+		}
+
+		// Inner[2] = 0xC0000034 (Windows) — root cause
+		if (err.InnerCodes[2] != 0xC0000034)
+		{
+			LOG_ERROR("MultiLevel: InnerCodes[2] mismatch, expected 0xC0000034");
+			return false;
+		}
+		if (err.InnerPlatforms[2] != Error::PlatformKind::Windows)
+		{
+			LOG_ERROR("MultiLevel: InnerPlatforms[2] mismatch, expected Windows");
+			return false;
+		}
+
+		// RootCode/RootPlatform accessors
+		if (err.RootCode() != 0xC0000034)
+		{
+			LOG_ERROR("MultiLevel: RootCode mismatch");
+			return false;
+		}
+		if (err.RootPlatform() != Error::PlatformKind::Windows)
+		{
+			LOG_ERROR("MultiLevel: RootPlatform mismatch");
+			return false;
+		}
+		if (err.TotalDepth() != 4)
+		{
+			LOG_ERROR("MultiLevel: TotalDepth mismatch, expected 4");
+			return false;
+		}
+
 		return true;
 	}
 
@@ -527,8 +665,6 @@ private:
 	{
 		static_assert(sizeof(Result<void, Error>) == sizeof(Error),
 			"Compact specialization must equal sizeof(Error)");
-		static_assert(sizeof(Result<void, Error>) == 8,
-			"Compact specialization must be 8 bytes");
 		// Primary template is NOT affected
 		static_assert(sizeof(Result<void, UINT32>) > sizeof(UINT32),
 			"Primary template Result<void, UINT32> should have m_isOk overhead");
@@ -603,14 +739,32 @@ private:
 		}
 
 		const Error &err = outer.Error();
-		if (err.Code != Error::Socket_WriteFailed_Send)
+		// Outermost code is Tls_WriteFailed_Send
+		if (err.Code != Error::Tls_WriteFailed_Send)
 		{
-			LOG_ERROR("Compact propagation: Code mismatch");
+			LOG_ERROR("Compact propagation: Code mismatch, expected Tls_WriteFailed_Send, got %u",
+				(UINT32)err.Code);
 			return false;
 		}
 		if (err.Platform != Error::PlatformKind::Runtime)
 		{
 			LOG_ERROR("Compact propagation: Platform mismatch");
+			return false;
+		}
+		// Inner chain preserved
+		if (err.Depth != 2)
+		{
+			LOG_ERROR("Compact propagation: Depth mismatch, expected 2, got %u", (UINT32)err.Depth);
+			return false;
+		}
+		if (err.InnerCodes[0] != (UINT32)Error::Socket_WriteFailed_Send)
+		{
+			LOG_ERROR("Compact propagation: InnerCodes[0] mismatch");
+			return false;
+		}
+		if (err.InnerCodes[1] != 111)
+		{
+			LOG_ERROR("Compact propagation: InnerCodes[1] mismatch");
 			return false;
 		}
 		return true;
@@ -628,14 +782,32 @@ private:
 		}
 
 		const Error &err = r.Error();
-		if (err.Code != (Error::ErrorCodes)0xC0000034)
+		// Outermost is Socket_OpenFailed_Connect
+		if (err.Code != Error::Socket_OpenFailed_Connect)
 		{
-			LOG_ERROR("Compact two-arg Err: Code mismatch");
+			LOG_ERROR("Compact two-arg Err: Code mismatch, expected Socket_OpenFailed_Connect, got %u",
+				(UINT32)err.Code);
 			return false;
 		}
-		if (err.Platform != Error::PlatformKind::Windows)
+		if (err.Platform != Error::PlatformKind::Runtime)
 		{
 			LOG_ERROR("Compact two-arg Err: Platform mismatch");
+			return false;
+		}
+		// Inner has the Windows NTSTATUS
+		if (err.Depth != 1)
+		{
+			LOG_ERROR("Compact two-arg Err: Depth mismatch, expected 1, got %u", (UINT32)err.Depth);
+			return false;
+		}
+		if (err.InnerCodes[0] != 0xC0000034)
+		{
+			LOG_ERROR("Compact two-arg Err: InnerCodes[0] mismatch");
+			return false;
+		}
+		if (err.InnerPlatforms[0] != Error::PlatformKind::Windows)
+		{
+			LOG_ERROR("Compact two-arg Err: InnerPlatforms[0] mismatch");
 			return false;
 		}
 		return true;
@@ -682,6 +854,76 @@ private:
 		if (err2.Error().Code != Error::Dns_ConnectFailed)
 		{
 			LOG_ERROR("Compact move Err: Code mismatch after move");
+			return false;
+		}
+		return true;
+	}
+
+	// =====================================================================
+	// Error chain accessors
+	// =====================================================================
+
+	static BOOL TestErrorRootCause()
+	{
+		// Single error — root is itself
+		Error single(Error::Socket_CreateFailed_Open);
+		if (single.RootCode() != (UINT32)Error::Socket_CreateFailed_Open)
+		{
+			LOG_ERROR("RootCause: single error RootCode mismatch");
+			return false;
+		}
+		if (single.RootPlatform() != Error::PlatformKind::Runtime)
+		{
+			LOG_ERROR("RootCause: single error RootPlatform mismatch");
+			return false;
+		}
+		if (single.TotalDepth() != 1)
+		{
+			LOG_ERROR("RootCause: single error TotalDepth mismatch");
+			return false;
+		}
+
+		// Chained error — root is the innermost
+		Error chained = Error::Wrap(Error::Windows(0xC0000001), Error::Socket_CreateFailed_Open);
+		if (chained.RootCode() != 0xC0000001)
+		{
+			LOG_ERROR("RootCause: chained RootCode mismatch");
+			return false;
+		}
+		if (chained.RootPlatform() != Error::PlatformKind::Windows)
+		{
+			LOG_ERROR("RootCause: chained RootPlatform mismatch");
+			return false;
+		}
+		if (chained.TotalDepth() != 2)
+		{
+			LOG_ERROR("RootCause: chained TotalDepth mismatch");
+			return false;
+		}
+		return true;
+	}
+
+	static BOOL TestErrorChainOverflow()
+	{
+		// Build a chain deeper than MaxInnerDepth to verify truncation
+		Error err(Error::Socket_CreateFailed_Open);
+		for (UINT32 i = 0; i < Error::MaxDepth + 2; i++)
+		{
+			err = Error::Wrap(err, 100 + i);
+		}
+
+		// Depth should be capped at MaxInnerDepth
+		if (err.Depth > Error::MaxInnerDepth)
+		{
+			LOG_ERROR("ChainOverflow: Depth %u exceeds MaxInnerDepth %u",
+				(UINT32)err.Depth, (UINT32)Error::MaxInnerDepth);
+			return false;
+		}
+
+		// Should still be a valid error
+		if (err.Code == Error::None)
+		{
+			LOG_ERROR("ChainOverflow: Code is None after overflow");
 			return false;
 		}
 		return true;

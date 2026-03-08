@@ -467,7 +467,7 @@ private:
 			return false;
 		}
 
-		// Test 4: Propagation Err stores first (inner) error -> "6"
+		// Test 4: Chained propagation -> "16 <- 6 <- 0xC0000034[W]"
 		auto twoCode = Result<UINT32, Error>::Err(
 			Error::Windows(0xC0000034),
 			Error::Socket_OpenFailed_Connect);
@@ -475,15 +475,16 @@ private:
 		Memory::Zero(buffer, 128);
 		ctx.index = 0;
 		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_e, propagated.Error());
-		auto expected_prop = "6"_embed;
-		if (Memory::Compare(buffer, (const CHAR *)expected_prop, 1) != 0)
+		auto expected_prop = "16 <- 6 <- 0xC0000034[W]"_embed;
+		USIZE propLen = 25;
+		if (Memory::Compare(buffer, (const CHAR *)expected_prop, propLen) != 0)
 		{
 			LOG_ERROR("%%e propagated error: got '%s'", buffer);
 			return false;
 		}
-		if (buffer[1] != '\0')
+		if (buffer[propLen] != '\0')
 		{
-			LOG_ERROR("%%e propagated error not null-terminated at pos 1");
+			LOG_ERROR("%%e propagated error not null-terminated at pos %u", (UINT32)propLen);
 			return false;
 		}
 

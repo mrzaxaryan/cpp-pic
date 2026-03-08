@@ -30,8 +30,8 @@ private:
 		auto r = Screen::GetDevices();
 		if (!r)
 		{
-			LOG_ERROR("GetDevices failed: %e", r.Error());
-			return false;
+			LOG_WARNING("GetDevices unavailable (no display): %e", r.Error());
+			return true;
 		}
 
 		auto list = r.Value();
@@ -67,8 +67,8 @@ private:
 		auto r = Screen::GetDevices();
 		if (!r)
 		{
-			LOG_ERROR("GetDevices failed: %e", r.Error());
-			return false;
+			LOG_WARNING("GetDevices unavailable (no display): %e", r.Error());
+			return true;
 		}
 
 		auto list = r.Value();
@@ -99,16 +99,16 @@ private:
 		auto r = Screen::GetDevices();
 		if (!r)
 		{
-			LOG_ERROR("GetDevices failed: %e", r.Error());
-			return false;
+			LOG_WARNING("GetDevices unavailable (no display): %e", r.Error());
+			return true;
 		}
 
 		auto list = r.Value();
 		if (list.Count == 0)
 		{
-			LOG_ERROR("No devices to capture");
+			LOG_WARNING("No devices to capture (headless?)");
 			list.Free();
-			return false;
+			return true;
 		}
 
 		// Capture the primary display (or first device)

@@ -1,6 +1,6 @@
 /**
  * @file screen.cc
- * @brief POSIX Screen Implementation (Linux/Android/FreeBSD/Solaris/macOS/iOS)
+ * @brief POSIX Screen Implementation (Linux/Android/FreeBSD/Solaris)
  *
  * @details Implements screen device enumeration and capture via the Linux
  * framebuffer device interface (/dev/fb0..fb7). Uses ioctl with
@@ -15,9 +15,8 @@
  * ioctl to query /dev/fb device parameters and mmap to read pixel data.
  * Only a single console framebuffer is supported.
  *
- * macOS and iOS require CoreGraphics framework for screen capture,
- * which is not available in a position-independent runtime context.
- * Both platforms return Screen_GetDevicesFailed / Screen_CaptureFailed.
+ * macOS and iOS are handled by separate platform-specific files:
+ * macos/screen.cc (CoreGraphics via dyld) and ios/screen.cc (stub).
  *
  * @note Framebuffer devices are limited to one display per /dev/fbN.
  * Multi-monitor setups with separate framebuffers are enumerated as
@@ -53,25 +52,7 @@
 #include "platform/common/ios/system.h"
 #endif
 
-// =============================================================================
-// Stubs — macOS/iOS (CoreGraphics requires framework loading)
-// =============================================================================
-
-#if defined(PLATFORM_MACOS) || defined(PLATFORM_IOS)
-
-Result<ScreenDeviceList, Error> Screen::GetDevices()
-{
-	return Result<ScreenDeviceList, Error>::Err(Error(Error::Screen_GetDevicesFailed));
-}
-
-Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer)
-{
-	(void)device;
-	(void)buffer;
-	return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
-}
-
-#elif defined(PLATFORM_SOLARIS)
+#if defined(PLATFORM_SOLARIS)
 
 // =============================================================================
 // Solaris framebuffer — FBIOGTYPE ioctl + mmap (/dev/fb)
@@ -82,12 +63,12 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 ///      https://docs.oracle.com/cd/E36784_01/html/E36884/fbio-7i.html
 struct FbType
 {
-	INT32 Type;    ///< Frame buffer type (FBTYPE_* constant)
-	INT32 Height;  ///< Height in pixels
-	INT32 Width;   ///< Width in pixels
-	INT32 Depth;   ///< Bits per pixel
-	INT32 CmSize;  ///< Size of color map (entries)
-	INT32 Size;    ///< Total framebuffer memory in bytes
+	INT32 Type;	  ///< Frame buffer type (FBTYPE_* constant)
+	INT32 Height; ///< Height in pixels
+	INT32 Width;  ///< Width in pixels
+	INT32 Depth;  ///< Bits per pixel
+	INT32 CmSize; ///< Size of color map (entries)
+	INT32 Size;	  ///< Total framebuffer memory in bytes
 };
 
 /// @brief Get framebuffer type information
@@ -129,20 +110,20 @@ static PVOID MmapFramebuffer(USIZE size, SSIZE fd)
 	// slots. The 6-arg System::Call only pushes one slot for the offset.
 	// Use inline asm to push all 7 argument slots + dummy return address.
 	SSIZE result;
-	register USIZE r1 __asm__("ebx") = 0;              // addr
-	register USIZE r2 __asm__("ecx") = size;            // len
-	register USIZE r3 __asm__("edx") = (USIZE)prot;    // prot
-	register USIZE r4 __asm__("esi") = (USIZE)flags;   // flags
-	register USIZE r5 __asm__("edi") = (USIZE)fd;      // fd
+	register USIZE r1 __asm__("ebx") = 0;			 // addr
+	register USIZE r2 __asm__("ecx") = size;		 // len
+	register USIZE r3 __asm__("edx") = (USIZE)prot;	 // prot
+	register USIZE r4 __asm__("esi") = (USIZE)flags; // flags
+	register USIZE r5 __asm__("edi") = (USIZE)fd;	 // fd
 	__asm__ volatile(
-		"pushl $0\n"          // off_t pos high 32 bits = 0
-		"pushl $0\n"          // off_t pos low 32 bits = 0
-		"pushl %%edi\n"       // fd
-		"pushl %%esi\n"       // flags
-		"pushl %%edx\n"       // prot
-		"pushl %%ecx\n"       // len
-		"pushl %%ebx\n"       // addr
-		"pushl $0\n"          // dummy return address
+		"pushl $0\n"	// off_t pos high 32 bits = 0
+		"pushl $0\n"	// off_t pos low 32 bits = 0
+		"pushl %%edi\n" // fd
+		"pushl %%esi\n" // flags
+		"pushl %%edx\n" // prot
+		"pushl %%ecx\n" // len
+		"pushl %%ebx\n" // addr
+		"pushl $0\n"	// dummy return address
 		"int $0x91\n"
 		"jnc 1f\n"
 		"negl %%eax\n"
@@ -150,11 +131,10 @@ static PVOID MmapFramebuffer(USIZE size, SSIZE fd)
 		"addl $32, %%esp\n"
 		: "=a"(result)
 		: "a"((USIZE)SYS_MMAP), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
-		: "memory", "cc"
-	);
+		: "memory", "cc");
 #else
 	SSIZE result = System::Call(SYS_MMAP, (USIZE)0, size,
-		(USIZE)prot, (USIZE)flags, (USIZE)fd, (USIZE)0);
+								(USIZE)prot, (USIZE)flags, (USIZE)fd, (USIZE)0);
 #endif
 
 	if (result < 0 && result >= -4095)
@@ -237,7 +217,7 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 
 	// Use fb_size from FBIOGTYPE, fall back to computed size
 	USIZE mapSize = (fbt.Size > 0) ? (USIZE)fbt.Size
-		: (USIZE)fbt.Width * (USIZE)fbt.Height * bytesPerPixel;
+								   : (USIZE)fbt.Width * (USIZE)fbt.Height * bytesPerPixel;
 
 	PVOID mapped = MmapFramebuffer(mapSize, fd);
 	System::Call(SYS_CLOSE, (USIZE)fd);
@@ -292,7 +272,7 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 	return Result<void, Error>::Ok();
 }
 
-#else // Linux, Android, FreeBSD — framebuffer implementation
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID) || defined(PLATFORM_FREEBSD)
 
 // =============================================================================
 // Framebuffer ioctl constants
@@ -311,63 +291,63 @@ constexpr USIZE FBIOGET_FSCREENINFO = 0x4602;
 /// @brief Color component bitfield descriptor
 struct FbBitfield
 {
-	UINT32 Offset;   ///< Bit position of the least significant bit
-	UINT32 Length;   ///< Number of bits in this component
+	UINT32 Offset;	 ///< Bit position of the least significant bit
+	UINT32 Length;	 ///< Number of bits in this component
 	UINT32 MsbRight; ///< MSB is rightmost (!=0) or leftmost (==0)
 };
 
 /// @brief Variable screen information (resolution, pixel format, virtual size)
 struct FbVarScreeninfo
 {
-	UINT32 Xres;         ///< Visible horizontal resolution in pixels
-	UINT32 Yres;         ///< Visible vertical resolution in pixels
-	UINT32 XresVirtual;  ///< Virtual horizontal resolution
-	UINT32 YresVirtual;  ///< Virtual vertical resolution
-	UINT32 Xoffset;      ///< Horizontal offset into virtual resolution
-	UINT32 Yoffset;      ///< Vertical offset into virtual resolution
+	UINT32 Xres;		 ///< Visible horizontal resolution in pixels
+	UINT32 Yres;		 ///< Visible vertical resolution in pixels
+	UINT32 XresVirtual;	 ///< Virtual horizontal resolution
+	UINT32 YresVirtual;	 ///< Virtual vertical resolution
+	UINT32 Xoffset;		 ///< Horizontal offset into virtual resolution
+	UINT32 Yoffset;		 ///< Vertical offset into virtual resolution
 	UINT32 BitsPerPixel; ///< Bits per pixel (16, 24, or 32)
-	UINT32 Grayscale;    ///< Non-zero for grayscale displays
-	FbBitfield Red;      ///< Red component bitfield
-	FbBitfield Green;    ///< Green component bitfield
-	FbBitfield Blue;     ///< Blue component bitfield
-	FbBitfield Transp;   ///< Transparency component bitfield
-	UINT32 Nonstd;       ///< Non-standard pixel format flag
-	UINT32 Activate;     ///< Activation flag
-	UINT32 HeightMm;     ///< Height of picture in mm
-	UINT32 WidthMm;      ///< Width of picture in mm
-	UINT32 AccelFlags;   ///< Obsolete acceleration flags
-	UINT32 Pixclock;     ///< Pixel clock in picoseconds
-	UINT32 LeftMargin;   ///< Time from sync to picture (horizontal)
-	UINT32 RightMargin;  ///< Time from picture to sync (horizontal)
-	UINT32 UpperMargin;  ///< Time from sync to picture (vertical)
-	UINT32 LowerMargin;  ///< Time from picture to sync (vertical)
-	UINT32 HsyncLen;     ///< Horizontal sync length
-	UINT32 VsyncLen;     ///< Vertical sync length
-	UINT32 Sync;         ///< Sync type flags
-	UINT32 Vmode;        ///< Video mode flags
-	UINT32 Rotate;       ///< Rotation angle (0, 90, 180, 270)
-	UINT32 Colorspace;   ///< Colorspace for FOURCC-based modes
-	UINT32 Reserved[4];  ///< Reserved for future use
+	UINT32 Grayscale;	 ///< Non-zero for grayscale displays
+	FbBitfield Red;		 ///< Red component bitfield
+	FbBitfield Green;	 ///< Green component bitfield
+	FbBitfield Blue;	 ///< Blue component bitfield
+	FbBitfield Transp;	 ///< Transparency component bitfield
+	UINT32 Nonstd;		 ///< Non-standard pixel format flag
+	UINT32 Activate;	 ///< Activation flag
+	UINT32 HeightMm;	 ///< Height of picture in mm
+	UINT32 WidthMm;		 ///< Width of picture in mm
+	UINT32 AccelFlags;	 ///< Obsolete acceleration flags
+	UINT32 Pixclock;	 ///< Pixel clock in picoseconds
+	UINT32 LeftMargin;	 ///< Time from sync to picture (horizontal)
+	UINT32 RightMargin;	 ///< Time from picture to sync (horizontal)
+	UINT32 UpperMargin;	 ///< Time from sync to picture (vertical)
+	UINT32 LowerMargin;	 ///< Time from picture to sync (vertical)
+	UINT32 HsyncLen;	 ///< Horizontal sync length
+	UINT32 VsyncLen;	 ///< Vertical sync length
+	UINT32 Sync;		 ///< Sync type flags
+	UINT32 Vmode;		 ///< Video mode flags
+	UINT32 Rotate;		 ///< Rotation angle (0, 90, 180, 270)
+	UINT32 Colorspace;	 ///< Colorspace for FOURCC-based modes
+	UINT32 Reserved[4];	 ///< Reserved for future use
 };
 
 /// @brief Fixed screen information (memory layout, line length)
 struct FbFixScreeninfo
 {
-	CHAR Id[16];         ///< Identification string (e.g. "VESA VGA")
-	USIZE SmemStart;     ///< Start of frame buffer memory (physical address)
-	UINT32 SmemLen;      ///< Length of frame buffer memory in bytes
-	UINT32 Type;         ///< Frame buffer type
-	UINT32 TypeAux;      ///< Interleave for interleaved planes
-	UINT32 Visual;       ///< Visual type (truecolor, pseudocolor, etc.)
-	UINT16 Xpanstep;     ///< Zero if no hardware panning
-	UINT16 Ypanstep;     ///< Zero if no hardware panning
-	UINT16 Ywrapstep;    ///< Zero if no hardware ywrap
-	UINT32 LineLength;   ///< Length of a line in bytes
-	USIZE MmioStart;     ///< Start of memory-mapped I/O (physical address)
-	UINT32 MmioLen;      ///< Length of memory-mapped I/O
-	UINT32 Accel;        ///< Acceleration capabilities
+	CHAR Id[16];		 ///< Identification string (e.g. "VESA VGA")
+	USIZE SmemStart;	 ///< Start of frame buffer memory (physical address)
+	UINT32 SmemLen;		 ///< Length of frame buffer memory in bytes
+	UINT32 Type;		 ///< Frame buffer type
+	UINT32 TypeAux;		 ///< Interleave for interleaved planes
+	UINT32 Visual;		 ///< Visual type (truecolor, pseudocolor, etc.)
+	UINT16 Xpanstep;	 ///< Zero if no hardware panning
+	UINT16 Ypanstep;	 ///< Zero if no hardware panning
+	UINT16 Ywrapstep;	 ///< Zero if no hardware ywrap
+	UINT32 LineLength;	 ///< Length of a line in bytes
+	USIZE MmioStart;	 ///< Start of memory-mapped I/O (physical address)
+	UINT32 MmioLen;		 ///< Length of memory-mapped I/O
+	UINT32 Accel;		 ///< Acceleration capabilities
 	UINT16 Capabilities; ///< Feature flags
-	UINT16 Reserved[2];  ///< Reserved for future use
+	UINT16 Reserved[2];	 ///< Reserved for future use
 };
 
 // =============================================================================
@@ -415,26 +395,26 @@ static PVOID MmapFramebuffer(USIZE size, SSIZE fd)
 #if (defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)) && (defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A) || defined(ARCHITECTURE_RISCV32))
 	// 32-bit Linux/Android uses mmap2 with page-shifted offset
 	SSIZE result = System::Call(SYS_MMAP2, (USIZE)0, size,
-		(USIZE)prot, (USIZE)flags, (USIZE)fd, (USIZE)0);
+								(USIZE)prot, (USIZE)flags, (USIZE)fd, (USIZE)0);
 #elif defined(PLATFORM_FREEBSD) && defined(ARCHITECTURE_I386)
 	// FreeBSD i386: mmap takes 64-bit off_t split across two 32-bit stack
 	// slots. System::Call only pushes one slot, so use inline asm to push
 	// all 7 argument slots + dummy return address = 32 bytes.
 	SSIZE result;
-	register USIZE r1 __asm__("ebx") = 0;           // addr
-	register USIZE r2 __asm__("ecx") = size;         // len
-	register USIZE r3 __asm__("edx") = (USIZE)prot;  // prot
-	register USIZE r4 __asm__("esi") = (USIZE)flags;  // flags
-	register USIZE r5 __asm__("edi") = (USIZE)fd;     // fd
+	register USIZE r1 __asm__("ebx") = 0;			 // addr
+	register USIZE r2 __asm__("ecx") = size;		 // len
+	register USIZE r3 __asm__("edx") = (USIZE)prot;	 // prot
+	register USIZE r4 __asm__("esi") = (USIZE)flags; // flags
+	register USIZE r5 __asm__("edi") = (USIZE)fd;	 // fd
 	__asm__ volatile(
-		"pushl $0\n"          // off_t pos high 32 bits = 0
-		"pushl $0\n"          // off_t pos low 32 bits = 0
-		"pushl %%edi\n"       // fd
-		"pushl %%esi\n"       // flags
-		"pushl %%edx\n"       // prot
-		"pushl %%ecx\n"       // len
-		"pushl %%ebx\n"       // addr
-		"pushl $0\n"          // dummy return address
+		"pushl $0\n"	// off_t pos high 32 bits = 0
+		"pushl $0\n"	// off_t pos low 32 bits = 0
+		"pushl %%edi\n" // fd
+		"pushl %%esi\n" // flags
+		"pushl %%edx\n" // prot
+		"pushl %%ecx\n" // len
+		"pushl %%ebx\n" // addr
+		"pushl $0\n"	// dummy return address
 		"int $0x80\n"
 		"jnc 1f\n"
 		"negl %%eax\n"
@@ -442,11 +422,10 @@ static PVOID MmapFramebuffer(USIZE size, SSIZE fd)
 		"addl $32, %%esp\n"
 		: "=a"(result)
 		: "a"((USIZE)SYS_MMAP), "r"(r1), "r"(r2), "r"(r3), "r"(r4), "r"(r5)
-		: "memory", "cc"
-	);
+		: "memory", "cc");
 #else
 	SSIZE result = System::Call(SYS_MMAP, (USIZE)0, size,
-		(USIZE)prot, (USIZE)flags, (USIZE)fd, (USIZE)0);
+								(USIZE)prot, (USIZE)flags, (USIZE)fd, (USIZE)0);
 #endif
 
 	if (result < 0 && result >= -4095)
@@ -503,7 +482,7 @@ Result<ScreenDeviceList, Error> Screen::GetDevices()
 		if (vinfo.Xres == 0 || vinfo.Yres == 0)
 			continue;
 
-		tempDevices[deviceCount].Left = (INT32)i;  // framebuffer index
+		tempDevices[deviceCount].Left = (INT32)i; // framebuffer index
 		tempDevices[deviceCount].Top = 0;
 		tempDevices[deviceCount].Width = vinfo.Xres;
 		tempDevices[deviceCount].Height = vinfo.Yres;
@@ -579,7 +558,7 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 	// Calculate pointer to the visible area
 	UINT8 *fbBase = (UINT8 *)mapped;
 	USIZE visibleOffset = (USIZE)vinfo.Yoffset * finfo.LineLength +
-		(USIZE)vinfo.Xoffset * bytesPerPixel;
+						  (USIZE)vinfo.Xoffset * bytesPerPixel;
 
 	PRGB rgbBuf = buffer.Data();
 	UINT32 width = device.Width;

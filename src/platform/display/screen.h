@@ -12,7 +12,8 @@
  * - Linux/Android/FreeBSD: Framebuffer device (/dev/fb0..fb7) with ioctl + mmap
  * - UEFI: Graphics Output Protocol (GOP) QueryMode/Blt
  * - Solaris: Framebuffer device (/dev/fb) with FBIOGTYPE ioctl + mmap
- * - macOS/iOS: Stub (CoreGraphics requires framework loading)
+ * - macOS: CoreGraphics via dyld framework loader (dlopen/dlsym resolved from dyld Mach-O)
+ * - iOS: Stub (requires UIKit/Objective-C runtime, not available in PIR context)
  *
  * @ingroup platform
  *

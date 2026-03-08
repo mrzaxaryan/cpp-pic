@@ -17,6 +17,7 @@
 #pragma once
 
 #include "core/types/primitives.h"
+#include "platform/kernel/macos/system.h"
 
 // =============================================================================
 // Mach trap numbers (negative — dispatched via kernel trap table)

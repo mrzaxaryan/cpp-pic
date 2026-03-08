@@ -24,7 +24,7 @@
 #include "platform/kernel/macos/syscall.h"
 #include "platform/kernel/macos/system.h"
 #include "core/memory/memory.h"
-#include "core/string/string_utils.h"
+#include "core/string/string.h"
 
 // =============================================================================
 // MIG message structures for task_info

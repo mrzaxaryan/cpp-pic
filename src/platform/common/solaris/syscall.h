@@ -45,6 +45,9 @@ constexpr USIZE SYS_RMDIR      = 79;
 constexpr USIZE SYS_GETDENTS   = 81;   // LP64: native 64-bit dirent; ILP32: 32-bit dirent (use getdents64)
 constexpr USIZE SYS_GETDENTS64 = 213;  // ILP32 only: 64-bit dirent for 32-bit processes
 
+// I/O control
+constexpr USIZE SYS_IOCTL      = 54;
+
 // Memory operations
 constexpr USIZE SYS_MMAP       = 115;
 constexpr USIZE SYS_MUNMAP     = 117;
@@ -144,6 +147,7 @@ constexpr INT32 PROT_WRITE = 0x02;
 constexpr INT32 PROT_EXEC  = 0x04;
 
 // Memory mapping flags (Solaris values -- differ from Linux!)
+constexpr INT32 MAP_SHARED    = 0x01;
 constexpr INT32 MAP_PRIVATE   = 0x02;
 constexpr INT32 MAP_ANONYMOUS = 0x100;  // Linux: 0x20
 #define MAP_FAILED ((PVOID)(-1))

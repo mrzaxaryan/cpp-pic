@@ -44,11 +44,43 @@ PVOID GetExportAddress(PVOID hModule, UINT64 functionNameHash)
 			// Use ordinal as index into AddressOfFunctions
 			UINT32 funcRva = funcRvas[ordinal];
 
-			// Skip forwarded exports (RVA points inside export directory)
+			// Check for forwarded exports (RVA points inside export directory)
 			UINT32 exportSize = ntHeader->OptionalHeader
 				.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
 			if (funcRva >= exportRva && funcRva < (exportRva + exportSize))
-				return nullptr;
+			{
+				// Forwarded export string: "MODULE.FunctionName"
+				PCHAR forwardStr = (PCHAR)hModule + funcRva;
+
+				// Find the dot separator
+				PCHAR dot = forwardStr;
+				while (*dot != '\0' && *dot != '.')
+					dot++;
+				if (*dot != '.')
+					return nullptr;
+
+				// Build wide module name with .dll suffix for PEB lookup
+				UINT32 moduleLen = (UINT32)(dot - forwardStr);
+				WCHAR wideModuleName[64];
+				if (moduleLen + 4 >= 64) // +4 for ".dll"
+					return nullptr;
+				for (UINT32 j = 0; j < moduleLen; j++)
+					wideModuleName[j] = (WCHAR)forwardStr[j];
+				wideModuleName[moduleLen] = L'.';
+				wideModuleName[moduleLen + 1] = L'd';
+				wideModuleName[moduleLen + 2] = L'l';
+				wideModuleName[moduleLen + 3] = L'l';
+				wideModuleName[moduleLen + 4] = L'\0';
+
+				UINT64 targetModuleHash = Djb2::Hash(wideModuleName);
+				UINT64 targetFuncHash = Djb2::Hash(dot + 1);
+
+				PVOID targetModule = GetModuleHandleFromPEB(targetModuleHash);
+				if (targetModule == nullptr)
+					return nullptr;
+
+				return GetExportAddress(targetModule, targetFuncHash);
+			}
 
 			// Convert RVA → VA and return
 			return (PVOID)((PCHAR)hModule + funcRva);

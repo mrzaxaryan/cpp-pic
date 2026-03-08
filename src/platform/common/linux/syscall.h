@@ -94,6 +94,7 @@ constexpr INT32 PROT_WRITE = 0x02;
 constexpr INT32 PROT_EXEC = 0x04;
 
 // Memory mapping flags
+constexpr INT32 MAP_SHARED = 0x01;
 constexpr INT32 MAP_PRIVATE = 0x02;
 #if defined(ARCHITECTURE_MIPS64)
 constexpr INT32 MAP_ANONYMOUS = 0x0800;

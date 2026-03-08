@@ -2,6 +2,7 @@
 #include "platform/platform.h"
 #include "core/algorithms/djb2.h"
 #include "platform/common/windows/pe.h"
+#include "platform/common/windows/ntdll.h"
 
 // Returns the current process's PEB pointer
 PPEB GetCurrentPEB(VOID)
@@ -59,4 +60,30 @@ PVOID ResolveExportAddressFromPebModule(UINT64 moduleNameHash, UINT64 functionNa
 	// Resolve the function address
 	PVOID functionAddress = GetExportAddress(moduleBase, functionNameHash);
 	return functionAddress;
+}
+
+PVOID ResolveExportAddress(const WCHAR *moduleName, UINT64 functionNameHash)
+{
+	// Compute module name hash from the wide string
+	UINT64 moduleNameHash = Djb2::Hash(moduleName);
+
+	// Fast path: module already loaded
+	PVOID moduleBase = GetModuleHandleFromPEB(moduleNameHash);
+
+	// Slow path: load module via LdrLoadDll
+	if (moduleBase == nullptr)
+	{
+		UINT16 nameLen = (UINT16)StringUtils::Length(moduleName);
+
+		UNICODE_STRING dllName;
+		dllName.Length = nameLen * sizeof(WCHAR);
+		dllName.MaximumLength = dllName.Length + sizeof(WCHAR);
+		dllName.Buffer = (PWCHAR)moduleName;
+
+		auto r = NTDLL::LdrLoadDll(nullptr, nullptr, &dllName, &moduleBase);
+		if (!r || moduleBase == nullptr)
+			return nullptr;
+	}
+
+	return GetExportAddress(moduleBase, functionNameHash);
 }

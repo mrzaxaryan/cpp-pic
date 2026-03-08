@@ -218,6 +218,21 @@ PVOID GetModuleHandleFromPEB(UINT64 moduleNameHash);
  */
 PVOID ResolveExportAddressFromPebModule(UINT64 moduleNameHash, UINT64 functionNameHash);
 
+/**
+ * @brief Resolves an exported function, loading the module via LdrLoadDll if needed.
+ *
+ * @details First attempts to find the module in the PEB (fast path). If the
+ * module is not loaded, falls back to NTDLL::LdrLoadDll to load it, then
+ * resolves the export. The module name hash is computed internally from
+ * the provided wide string name.
+ *
+ * @param moduleName Wide string name of the module (e.g., L"user32.dll").
+ * @param functionNameHash DJB2 hash of the target function name (case-sensitive).
+ *
+ * @return Address of the exported function, or nullptr if not found.
+ */
+PVOID ResolveExportAddress(const WCHAR *moduleName, UINT64 functionNameHash);
+
 #else
 #error Unsupported platform
 #endif

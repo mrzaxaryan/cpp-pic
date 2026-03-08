@@ -892,4 +892,29 @@ public:
 	 *      https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-zwquerydirectoryfile
 	 */
 	[[nodiscard]] static Result<NTSTATUS, Error> ZwQueryDirectoryFile(PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass, BOOL ReturnSingleEntry, PUNICODE_STRING FileName, BOOL RestartScan);
+
+	/**
+	 * @brief Loads a DLL into the address space of the calling process.
+	 *
+	 * @details Maps the specified DLL into the process address space and
+	 * resolves its imports. If the DLL is already loaded, increments its
+	 * reference count and returns the existing base address.
+	 *
+	 * @param SearchPath Optional DLL search path, or NULL for default search order.
+	 * @param DllCharacteristics Optional pointer to DLL characteristics flags, or NULL.
+	 * @param DllName Pointer to UNICODE_STRING containing the DLL name.
+	 * @param BaseAddress Receives the base address of the loaded DLL.
+	 *
+	 * @return Result<NTSTATUS, Error> Ok(status) on NT_SUCCESS, Err on failure.
+	 *
+	 * @par Requirements
+	 * Minimum supported client: Windows 2000 Professional
+	 * Minimum supported server: Windows 2000 Server
+	 *
+	 * @note This function is undocumented by Microsoft.
+	 *
+	 * @see LoadLibraryW (documented Win32 equivalent)
+	 *      https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
+	 */
+	[[nodiscard]] static Result<NTSTATUS, Error> LdrLoadDll(PWCHAR SearchPath, UINT32 *DllCharacteristics, PUNICODE_STRING DllName, PPVOID BaseAddress);
 };

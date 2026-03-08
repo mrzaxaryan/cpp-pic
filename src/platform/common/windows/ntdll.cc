@@ -224,3 +224,9 @@ Result<NTSTATUS, Error> NTDLL::ZwQueryDirectoryFile(PVOID FileHandle, PVOID Even
 						  : CALL_FUNCTION("ZwQueryDirectoryFile", PVOID FileHandle, PVOID Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation, UINT32 Length, UINT32 FileInformationClass, BOOL ReturnSingleEntry, PUNICODE_STRING FileName, BOOL RestartScan);
 	return result::FromNTSTATUS<NTSTATUS>(status);
 }
+
+Result<NTSTATUS, Error> NTDLL::LdrLoadDll(PWCHAR SearchPath, UINT32 *DllCharacteristics, PUNICODE_STRING DllName, PPVOID BaseAddress)
+{
+	NTSTATUS status = ((NTSTATUS(STDCALL *)(PWCHAR SearchPath, UINT32 *DllCharacteristics, PUNICODE_STRING DllName, PPVOID BaseAddress))ResolveNtdllExportAddress("LdrLoadDll"))(SearchPath, DllCharacteristics, DllName, BaseAddress);
+	return result::FromNTSTATUS<NTSTATUS>(status);
+}

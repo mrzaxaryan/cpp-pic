@@ -66,6 +66,11 @@ NO_RETURN VOID ExitProcess(USIZE code);
 #include "platform/network/socket.h"
 /// @}
 
+/// @name Display
+/// @{
+#include "platform/display/screen.h"
+/// @}
+
 /// @name Process Management
 /// @{
 #include "platform/system/process.h"

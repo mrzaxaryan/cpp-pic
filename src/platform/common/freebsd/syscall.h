@@ -25,6 +25,9 @@ constexpr USIZE SYS_OPEN       = 5;
 constexpr USIZE SYS_CLOSE      = 6;
 constexpr USIZE SYS_LSEEK      = 478;
 
+// Device I/O
+constexpr USIZE SYS_IOCTL      = 54;
+
 // File operations
 constexpr USIZE SYS_STAT       = 188;
 constexpr USIZE SYS_FSTAT      = 551;
@@ -121,6 +124,7 @@ constexpr INT32 PROT_WRITE = 0x02;
 constexpr INT32 PROT_EXEC  = 0x04;
 
 // Memory mapping flags (BSD values)
+constexpr INT32 MAP_SHARED    = 0x0001;
 constexpr INT32 MAP_PRIVATE   = 0x0002;
 constexpr INT32 MAP_ANONYMOUS = 0x1000;
 #define MAP_FAILED ((PVOID)(-1))

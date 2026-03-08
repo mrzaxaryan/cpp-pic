@@ -47,10 +47,8 @@ struct CGRect
 constexpr INT32 kCGErrorSuccess = 0;
 
 /// @brief CGBitmapInfo: byte order and alpha info
-constexpr UINT32 kCGImageAlphaNoneSkipFirst = 6;  ///< xRGB (skip first byte)
-constexpr UINT32 kCGImageAlphaNoneSkipLast = 5;   ///< RGBx (skip last byte)
+constexpr UINT32 kCGImageAlphaNoneSkipFirst = 6;       ///< xRGB (skip first byte)
 constexpr UINT32 kCGBitmapByteOrder32Little = 2 << 12; ///< Little-endian 32-bit
-constexpr UINT32 kCGBitmapByteOrder32Big = 4 << 12;    ///< Big-endian 32-bit
 
 // =============================================================================
 // CoreGraphics function pointer types

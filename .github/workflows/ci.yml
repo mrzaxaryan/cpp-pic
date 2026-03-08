@@ -16,33 +16,37 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Wait for all checks to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const sha = context.event_name === 'pull_request'
-              ? context.payload.pull_request.head.sha
-              : context.sha;
+
+            // For pull_request events, github.sha is the merge commit but
+            // workflow runs are indexed by the PR branch head SHA
+            const sha = process.env.PR_HEAD_SHA || context.sha;
             const selfWorkflow = 'CI';
 
             const maxWait = 45 * 60 * 1000;
             const poll = 30 * 1000;
             const start = Date.now();
 
-            core.info(`Commit SHA: ${sha}`);
+            core.info(`Event: ${context.eventName}`);
+            core.info(`Workflow runs SHA: ${sha}`);
             core.info('Waiting 60s for other workflows to start...');
             await new Promise(r => setTimeout(r, 60000));
 
             while (Date.now() - start < maxWait) {
-              // Use workflow runs API instead of checks API
               const { data: { workflow_runs } } = await github.rest.actions.listWorkflowRunsForRepo({
                 owner, repo, head_sha: sha, per_page: 100
               });
 
               const others = workflow_runs.filter(wr => wr.name !== selfWorkflow);
 
-              core.info(`Found ${others.length} workflow run(s) for SHA ${sha.substring(0, 7)}`);
+              core.info(`Found ${others.length} workflow run(s) for ${sha.substring(0, 7)}`);
 
               if (others.length === 0) {
                 core.info('No other workflow runs found yet, waiting...');

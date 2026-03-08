@@ -67,6 +67,7 @@
 #include "ip_address_tests.h"
 #include "uuid_tests.h"
 #include "jpeg_tests.h"
+#include "screen_tests.h"
 #include "size_report_tests.h"
 
 static BOOL RunPIRTests()
@@ -109,6 +110,9 @@ static BOOL RunPIRTests()
 
 	// RUNTIME - Image
 	RunTestSuite<JpegTests>(allPassed);
+
+	// RUNTIME - Display
+	RunTestSuite<ScreenTests>(allPassed);
 
 	// Size Report always runs last since it's just informational and doesn't test functionality
 	RunTestSuite<SizeReportTests>(allPassed);

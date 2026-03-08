@@ -211,6 +211,18 @@ struct Error
 		// JPEG encoder errors (110)
 		// -------------------------
 		Jpeg_InvalidParams = 110, // invalid image dimensions or component count
+
+		// -------------------------
+		// Image processing errors (111)
+		// -------------------------
+		Image_AllocationFailed = 111, // memory allocation failed during contour finding
+
+		// -------------------------
+		// Screen errors (120–122)
+		// -------------------------
+		Screen_GetDevicesFailed = 120, // display enumeration failed
+		Screen_CaptureFailed    = 121, // screen capture failed
+		Screen_AllocFailed      = 122, // memory allocation failed
 	};
 
 	/**

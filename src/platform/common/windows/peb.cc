@@ -62,16 +62,21 @@ PVOID ResolveExportAddressFromPebModule(UINT64 moduleNameHash, UINT64 functionNa
 	return functionAddress;
 }
 
-PVOID ResolveExportAddress(UINT64 moduleNameHash, const WCHAR *moduleName, UINT16 moduleNameLen, UINT64 functionNameHash)
+PVOID ResolveExportAddress(const WCHAR *moduleName, UINT64 functionNameHash)
 {
+	// Compute module name hash from the wide string
+	UINT64 moduleNameHash = Djb2::Hash(moduleName);
+
 	// Fast path: module already loaded
 	PVOID moduleBase = GetModuleHandleFromPEB(moduleNameHash);
 
 	// Slow path: load module via LdrLoadDll
 	if (moduleBase == nullptr)
 	{
+		UINT16 nameLen = (UINT16)StringUtils::Length(moduleName);
+
 		UNICODE_STRING dllName;
-		dllName.Length = moduleNameLen * sizeof(WCHAR);
+		dllName.Length = nameLen * sizeof(WCHAR);
 		dllName.MaximumLength = dllName.Length + sizeof(WCHAR);
 		dllName.Buffer = (PWCHAR)moduleName;
 

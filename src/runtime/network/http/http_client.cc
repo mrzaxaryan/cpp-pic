@@ -1,5 +1,5 @@
-#include "runtime/network/http/http.h"
-#include "runtime/network/dns/dns.h"
+#include "runtime/network/http/http_client.h"
+#include "runtime/network/dns/dns_client.h"
 #include "platform/io/logger.h"
 
 // Helper to append a null-terminated string to a buffer
@@ -26,7 +26,7 @@ Result<HttpClient, Error> HttpClient::Create(Span<const CHAR> url)
 	if (!parseResult)
 		return Result<HttpClient, Error>::Err(parseResult, Error::Http_CreateFailed);
 
-	auto dnsResult = DNS::Resolve(Span<const CHAR>(host, StringUtils::Length(host)));
+	auto dnsResult = DnsClient::Resolve(Span<const CHAR>(host, StringUtils::Length(host)));
 	if (!dnsResult)
 	{
 		LOG_ERROR("Failed to resolve hostname %s", host);
@@ -39,7 +39,7 @@ Result<HttpClient, Error> HttpClient::Create(Span<const CHAR> url)
 	// IPv6 socket creation can fail on platforms without IPv6 support (e.g. UEFI)
 	if (!tlsResult && ip.IsIPv6())
 	{
-		auto dnsResultV4 = DNS::Resolve(Span<const CHAR>(host, StringUtils::Length(host)), DnsRecordType::A);
+		auto dnsResultV4 = DnsClient::Resolve(Span<const CHAR>(host, StringUtils::Length(host)), DnsRecordType::A);
 		if (dnsResultV4)
 		{
 			ip = dnsResultV4.Value();

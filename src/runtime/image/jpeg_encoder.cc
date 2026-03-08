@@ -1,5 +1,5 @@
 /**
- * @file jpeg.cc
+ * @file jpeg_encoder.cc
  * @brief Position-Independent JPEG Encoder Implementation
  *
  * @details Implements baseline JPEG encoding (ITU-T T.81) with the
@@ -17,7 +17,7 @@
  *      Trans. IEICE E-71(11):1095, 1988
  */
 
-#include "runtime/image/jpeg.h"
+#include "runtime/image/jpeg_encoder.h"
 #include "core/memory/memory.h"
 #include "core/math/byteorder.h"
 

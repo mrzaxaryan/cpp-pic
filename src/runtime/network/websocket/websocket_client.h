@@ -13,7 +13,7 @@
  */
 
 #include "platform/platform.h"
-#include "runtime/network/tls/tls.h"
+#include "runtime/network/tls/tls_client.h"
 
 /**
  * @brief WebSocket frame opcodes
@@ -287,7 +287,7 @@ public:
 	 *
 	 * @details Performs the full connection sequence:
 	 *   1. Parses the URL into host, path, port, and secure flag via HttpClient::ParseUrl
-	 *   2. Resolves the hostname via DNS::Resolve (AAAA first, A fallback)
+	 *   2. Resolves the hostname via DnsClient::Resolve (AAAA first, A fallback)
 	 *   3. Creates the TLS transport via TlsClient::Create (with IPv4 fallback)
 	 *   4. Performs the WebSocket opening handshake (RFC 6455 Section 4)
 	 *

@@ -1,10 +1,10 @@
-#include "runtime/network/websocket/websocket.h"
+#include "runtime/network/websocket/websocket_client.h"
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 #include "platform/system/random.h"
 #include "platform/io/logger.h"
-#include "runtime/network/dns/dns.h"
-#include "runtime/network/http/http.h"
+#include "runtime/network/dns/dns_client.h"
+#include "runtime/network/http/http_client.h"
 #include "core/types/embedded/embedded_string.h"
 
 /**
@@ -25,7 +25,7 @@ Result<void, Error> WebSocketClient::Open(PCCHAR path)
 	{
 		LOG_DEBUG("Failed to open network transport for WebSocket client using IPv6 address, attempting IPv4 fallback");
 
-		auto dnsResult = DNS::Resolve(Span<const CHAR>(hostName, StringUtils::Length(hostName)), DnsRecordType::A);
+		auto dnsResult = DnsClient::Resolve(Span<const CHAR>(hostName, StringUtils::Length(hostName)), DnsRecordType::A);
 		if (!dnsResult)
 		{
 			LOG_ERROR("Failed to resolve IPv4 address for %s, cannot connect to WebSocket server", hostName);
@@ -493,7 +493,7 @@ Result<WebSocketMessage, Error> WebSocketClient::Read()
  *
  * @details Performs the full connection sequence:
  *   1. Parses the URL into host, path, port, and secure flag via HttpClient::ParseUrl
- *   2. Resolves the hostname to an IP address via DNS::Resolve (AAAA first, A fallback)
+ *   2. Resolves the hostname to an IP address via DnsClient::Resolve (AAAA first, A fallback)
  *   3. Creates the TLS transport via TlsClient::Create (with IPv4 fallback on IPv6 failure)
  *   4. Performs the WebSocket opening handshake (RFC 6455 Section 4)
  *
@@ -514,7 +514,7 @@ Result<WebSocketClient, Error> WebSocketClient::Create(Span<const CHAR> url)
 		return Result<WebSocketClient, Error>::Err(parseResult, Error::Ws_CreateFailed);
 
 	Span<const CHAR> hostSpan(host, StringUtils::Length(host));
-	auto dnsResult = DNS::Resolve(hostSpan);
+	auto dnsResult = DnsClient::Resolve(hostSpan);
 	if (!dnsResult)
 	{
 		LOG_ERROR("Failed to resolve hostname %s", host);
@@ -527,7 +527,7 @@ Result<WebSocketClient, Error> WebSocketClient::Create(Span<const CHAR> url)
 	// IPv6 socket creation can fail on platforms without IPv6 support (e.g. UEFI)
 	if (!tlsResult && ip.IsIPv6())
 	{
-		auto dnsResultV4 = DNS::Resolve(hostSpan, DnsRecordType::A);
+		auto dnsResultV4 = DnsClient::Resolve(hostSpan, DnsRecordType::A);
 		if (dnsResultV4)
 		{
 			ip = dnsResultV4.Value();

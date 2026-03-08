@@ -29,20 +29,20 @@
 
 /// @name Networking
 /// @{
-#include "runtime/network/dns/dns.h"
-#include "runtime/network/http/http.h"
-#include "runtime/network/websocket/websocket.h"
+#include "runtime/network/dns/dns_client.h"
+#include "runtime/network/http/http_client.h"
+#include "runtime/network/websocket/websocket_client.h"
 /// @}
 
 /// @name Image
 /// @{
-#include "runtime/image/jpeg.h"
-#include "runtime/image/image.h"
+#include "runtime/image/jpeg_encoder.h"
+#include "runtime/image/image_processor.h"
 /// @}
 
 /// @name TLS 1.3
 /// @{
-#include "runtime/network/tls/tls.h"
+#include "runtime/network/tls/tls_client.h"
 #include "runtime/network/tls/tls_buffer.h"
 #include "runtime/network/tls/tls_cipher.h"
 #include "runtime/network/tls/tls_hash.h"

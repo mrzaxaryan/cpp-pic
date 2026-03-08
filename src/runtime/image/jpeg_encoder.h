@@ -1,5 +1,5 @@
 /**
- * @file jpeg.h
+ * @file jpeg_encoder.h
  * @brief Position-Independent JPEG Encoder
  *
  * @details Implements a baseline JPEG encoder (ITU-T T.81) that compresses

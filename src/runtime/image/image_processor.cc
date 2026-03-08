@@ -1,5 +1,5 @@
 /**
- * @file image.cc
+ * @file image_processor.cc
  * @brief Image Processing Utilities — Implementation
  *
  * @details Implements the Suzuki-Abe border following algorithm for contour
@@ -10,7 +10,7 @@
  *      Binary Images by Border Following," CVGIP 30(1):32-46, 1985.
  */
 
-#include "runtime/image/image.h"
+#include "runtime/image/image_processor.h"
 #include "runtime/vector.h"
 
 // ============================================================

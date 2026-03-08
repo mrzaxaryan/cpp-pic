@@ -20,7 +20,7 @@
  */
 
 #include "platform/platform.h"
-#include "runtime/network/tls/tls.h"
+#include "runtime/network/tls/tls_client.h"
 
 /// HTTP client for making HTTP/1.1 requests over plaintext or TLS 1.3 connections
 class HttpClient

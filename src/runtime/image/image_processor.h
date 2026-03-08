@@ -1,5 +1,5 @@
 /**
- * @file image.h
+ * @file image_processor.h
  * @brief Image Processing Utilities
  *
  * @details Provides contour detection (Suzuki-Abe border following algorithm),

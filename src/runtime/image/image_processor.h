@@ -119,7 +119,7 @@ public:
 	 * image by border following. The image is modified in-place (border pixels
 	 * are relabeled with sequence numbers).
 	 *
-	 * @param image Binary image buffer (signed, modified in-place)
+	 * @param image Binary image buffer (INT8 signed, modified in-place)
 	 * @param numRows Number of rows in the image
 	 * @param numCols Number of columns in the image
 	 * @return Ok(ContourResult) on success, or error on allocation failure
@@ -127,7 +127,7 @@ public:
 	 * @see Suzuki & Abe, CVGIP 30(1), 1985
 	 */
 	[[nodiscard]] static Result<ContourResult, Error> FindContours(
-		Span<CHAR> image,
+		Span<INT8> image,
 		INT32 numRows,
 		INT32 numCols);
 

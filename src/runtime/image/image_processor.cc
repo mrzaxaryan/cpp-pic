@@ -130,7 +130,7 @@ static VOID StepCCW(Point *current, Point pivot)
  * @return true on success, false on allocation failure
  */
 [[nodiscard]] static BOOL FollowBorder(
-	Span<CHAR> image,
+	Span<INT8> image,
 	INT32 numRows,
 	INT32 numCols,
 	INT32 row,
@@ -155,7 +155,7 @@ static VOID StepCCW(Point *current, Point pivot)
 		StepCW(&current, start);
 		if (SamePoint(current, p2))
 		{
-			image[start.Row * numCols + start.Col] = (CHAR)(-nbd.SeqNum);
+			image[start.Row * numCols + start.Col] = (INT8)(-nbd.SeqNum);
 			PPoint temp = new Point[1];
 			if (temp == nullptr)
 				return false;
@@ -205,11 +205,11 @@ static VOID StepCCW(Point *current, Point pivot)
 		// (3.4) Update pixel value at p3
 		if ((p3.Col + 1 >= numCols || image[p3.Row * numCols + p3.Col + 1] == 0) && checked[0])
 		{
-			image[p3.Row * numCols + p3.Col] = (CHAR)(-nbd.SeqNum);
+			image[p3.Row * numCols + p3.Col] = (INT8)(-nbd.SeqNum);
 		}
 		else if (p3.Col + 1 < numCols && image[p3.Row * numCols + p3.Col] == 1)
 		{
-			image[p3.Row * numCols + p3.Col] = (CHAR)nbd.SeqNum;
+			image[p3.Row * numCols + p3.Col] = (INT8)nbd.SeqNum;
 		}
 
 		if (!pointStorage.Add(p3))
@@ -250,7 +250,7 @@ static VOID StepCCW(Point *current, Point pivot)
 // ============================================================
 
 [[nodiscard]] Result<ContourResult, Error> ImageProcessor::FindContours(
-	Span<CHAR> image,
+	Span<INT8> image,
 	INT32 numRows,
 	INT32 numCols)
 {

@@ -209,7 +209,7 @@ private:
 	static BOOL TestFindContours_EmptyImage()
 	{
 		// 4x4 all-zero image — no contours expected (only padding entry)
-		CHAR image[16];
+		INT8 image[16];
 		Memory::Zero(image, sizeof(image));
 
 		auto r = ImageProcessor::FindContours(image, 4, 4);
@@ -237,7 +237,7 @@ private:
 	{
 		// 3x3 image with a single pixel set in the center
 		// The border needs room, so place '1' at (1,1)
-		CHAR image[9];
+		INT8 image[9];
 		Memory::Zero(image, sizeof(image));
 		image[1 * 3 + 1] = 1; // center pixel
 
@@ -279,7 +279,7 @@ private:
 		//   0 0 0 0 0 0
 		//   0 0 0 0 0 0
 		//   0 0 0 0 0 0
-		CHAR image[36];
+		INT8 image[36];
 		Memory::Zero(image, sizeof(image));
 		for (INT32 r = 1; r <= 2; r++)
 			for (INT32 c = 1; c <= 4; c++)
@@ -329,7 +329,7 @@ private:
 		//   0 1 0 0 0 1 0 0
 		//   0 0 0 0 0 0 0 0
 		//   0 0 0 0 0 0 0 0
-		CHAR image[32];
+		INT8 image[32];
 		Memory::Zero(image, sizeof(image));
 		image[1 * 8 + 1] = 1; // object 1
 		image[1 * 8 + 5] = 1; // object 2

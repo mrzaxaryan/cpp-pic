@@ -69,7 +69,7 @@ jobs:
           path: release/
 
       - name: Clean build artifacts before VM sync
-        run: rm -rf build
+        run: rm -rf build "${{ runner.temp }}"
 
       - name: Test all optimization levels
         uses: vmactions/solaris-vm@v1

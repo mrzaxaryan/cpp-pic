@@ -68,6 +68,7 @@
 #include "uuid_tests.h"
 #include "jpeg_tests.h"
 #include "image_tests.h"
+#include "vector_tests.h"
 #include "size_report_tests.h"
 
 static BOOL RunPIRTests()
@@ -107,6 +108,9 @@ static BOOL RunPIRTests()
 	RunTestSuite<TlsTests>(allPassed);
 	RunTestSuite<DnsTests>(allPassed);
 	RunTestSuite<WebSocketTests>(allPassed);
+
+	// CORE - Containers
+	RunTestSuite<VectorTests>(allPassed);
 
 	// RUNTIME - Image
 	RunTestSuite<JpegTests>(allPassed);

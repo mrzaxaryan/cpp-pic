@@ -22,6 +22,9 @@ constexpr USIZE SYS_OPENAT = 56;
 constexpr USIZE SYS_CLOSE = 57;
 constexpr USIZE SYS_LSEEK = 62;
 
+// Device I/O
+constexpr USIZE SYS_IOCTL = 29;
+
 // File operations
 constexpr USIZE SYS_FSTATAT = 79;
 constexpr USIZE SYS_FSTAT = 80;

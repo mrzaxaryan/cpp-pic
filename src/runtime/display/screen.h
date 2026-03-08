@@ -9,6 +9,7 @@
  *
  * @par Platform Implementations
  * - Windows: User32 EnumDisplayDevicesW/EnumDisplaySettingsW, GDI BitBlt/GetDIBits
+ * - Linux/FreeBSD: Framebuffer device (/dev/fb0..fb7) with ioctl + mmap
  *
  * @ingroup runtime
  *

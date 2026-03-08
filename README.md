@@ -513,4 +513,6 @@ We welcome contributions of all kinds. Please read:
 
 ## License
 
-This project is intended for researchers, systems programmers, and security engineers who work beneath high-level abstractions and take full control of the machine.
+This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0). See [LICENSE](LICENSE) for full terms.
+
+You are free to use, modify, and distribute this software, provided that any derivative work -- including network services -- is also made available under the AGPL-3.0. For proprietary/closed-source licensing, contact [mrzaxaryan](https://github.com/mrzaxaryan).

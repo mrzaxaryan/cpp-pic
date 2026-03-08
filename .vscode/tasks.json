@@ -18,7 +18,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-i386-debug && cmake --build --preset windows-i386-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-i386-debug && cmake --build --preset windows-i386-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -29,7 +29,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-i386-release && cmake --build --preset windows-i386-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-i386-release && cmake --build --preset windows-i386-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -40,7 +40,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-x86_64-debug && cmake --build --preset windows-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-x86_64-debug && cmake --build --preset windows-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -51,7 +51,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-x86_64-release && cmake --build --preset windows-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-x86_64-release && cmake --build --preset windows-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -62,7 +62,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-aarch64-debug && cmake --build --preset windows-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-aarch64-debug && cmake --build --preset windows-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -73,7 +73,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-aarch64-release && cmake --build --preset windows-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-aarch64-release && cmake --build --preset windows-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -84,7 +84,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-armv7a-debug && cmake --build --preset windows-armv7a-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-armv7a-debug && cmake --build --preset windows-armv7a-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -95,7 +95,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-armv7a-release && cmake --build --preset windows-armv7a-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-armv7a-release && cmake --build --preset windows-armv7a-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -106,7 +106,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-i386-debug && cmake --build --preset linux-i386-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-i386-debug && cmake --build --preset linux-i386-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -117,7 +117,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-i386-release && cmake --build --preset linux-i386-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-i386-release && cmake --build --preset linux-i386-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -128,7 +128,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-x86_64-debug && cmake --build --preset linux-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-x86_64-debug && cmake --build --preset linux-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -139,7 +139,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-x86_64-release && cmake --build --preset linux-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-x86_64-release && cmake --build --preset linux-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -150,7 +150,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-armv7a-debug && cmake --build --preset linux-armv7a-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-armv7a-debug && cmake --build --preset linux-armv7a-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -161,7 +161,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-armv7a-release && cmake --build --preset linux-armv7a-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-armv7a-release && cmake --build --preset linux-armv7a-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -172,7 +172,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-aarch64-debug && cmake --build --preset linux-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-aarch64-debug && cmake --build --preset linux-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -183,7 +183,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-aarch64-release && cmake --build --preset linux-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-aarch64-release && cmake --build --preset linux-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -194,7 +194,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv32-debug && cmake --build --preset linux-riscv32-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv32-debug && cmake --build --preset linux-riscv32-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -205,7 +205,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv32-release && cmake --build --preset linux-riscv32-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv32-release && cmake --build --preset linux-riscv32-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -216,7 +216,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv64-debug && cmake --build --preset linux-riscv64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv64-debug && cmake --build --preset linux-riscv64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -227,7 +227,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv64-release && cmake --build --preset linux-riscv64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-riscv64-release && cmake --build --preset linux-riscv64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -238,7 +238,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-mips64-debug && cmake --build --preset linux-mips64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-mips64-debug && cmake --build --preset linux-mips64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -249,7 +249,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-mips64-release && cmake --build --preset linux-mips64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset linux-mips64-release && cmake --build --preset linux-mips64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -260,7 +260,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-x86_64-debug && cmake --build --preset macos-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-x86_64-debug && cmake --build --preset macos-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -271,7 +271,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-x86_64-release && cmake --build --preset macos-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-x86_64-release && cmake --build --preset macos-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -282,7 +282,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-aarch64-debug && cmake --build --preset macos-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-aarch64-debug && cmake --build --preset macos-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -293,7 +293,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-aarch64-release && cmake --build --preset macos-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset macos-aarch64-release && cmake --build --preset macos-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -304,7 +304,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-x86_64-debug && cmake --build --preset uefi-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-x86_64-debug && cmake --build --preset uefi-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -315,7 +315,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-x86_64-release && cmake --build --preset uefi-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-x86_64-release && cmake --build --preset uefi-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -326,7 +326,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-aarch64-debug && cmake --build --preset uefi-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-aarch64-debug && cmake --build --preset uefi-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -337,7 +337,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-aarch64-release && cmake --build --preset uefi-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset uefi-aarch64-release && cmake --build --preset uefi-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -348,7 +348,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-x86_64-debug && cmake --build --preset solaris-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-x86_64-debug && cmake --build --preset solaris-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -359,7 +359,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-x86_64-release && cmake --build --preset solaris-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-x86_64-release && cmake --build --preset solaris-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -370,7 +370,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-i386-debug && cmake --build --preset solaris-i386-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-i386-debug && cmake --build --preset solaris-i386-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -381,7 +381,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-i386-release && cmake --build --preset solaris-i386-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-i386-release && cmake --build --preset solaris-i386-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -392,7 +392,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-aarch64-debug && cmake --build --preset solaris-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-aarch64-debug && cmake --build --preset solaris-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -403,7 +403,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-aarch64-release && cmake --build --preset solaris-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset solaris-aarch64-release && cmake --build --preset solaris-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -414,7 +414,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-i386-debug && cmake --build --preset freebsd-i386-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-i386-debug && cmake --build --preset freebsd-i386-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -425,7 +425,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-i386-release && cmake --build --preset freebsd-i386-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-i386-release && cmake --build --preset freebsd-i386-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -436,7 +436,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-x86_64-debug && cmake --build --preset freebsd-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-x86_64-debug && cmake --build --preset freebsd-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -447,7 +447,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-x86_64-release && cmake --build --preset freebsd-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-x86_64-release && cmake --build --preset freebsd-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -458,7 +458,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-aarch64-debug && cmake --build --preset freebsd-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-aarch64-debug && cmake --build --preset freebsd-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -469,7 +469,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-aarch64-release && cmake --build --preset freebsd-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-aarch64-release && cmake --build --preset freebsd-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -480,7 +480,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-riscv64-debug && cmake --build --preset freebsd-riscv64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-riscv64-debug && cmake --build --preset freebsd-riscv64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -491,7 +491,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-riscv64-release && cmake --build --preset freebsd-riscv64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset freebsd-riscv64-release && cmake --build --preset freebsd-riscv64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -502,7 +502,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-x86_64-debug && cmake --build --preset android-x86_64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-x86_64-debug && cmake --build --preset android-x86_64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -513,7 +513,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-x86_64-release && cmake --build --preset android-x86_64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-x86_64-release && cmake --build --preset android-x86_64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -524,7 +524,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-armv7a-debug && cmake --build --preset android-armv7a-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-armv7a-debug && cmake --build --preset android-armv7a-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -535,7 +535,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-armv7a-release && cmake --build --preset android-armv7a-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-armv7a-release && cmake --build --preset android-armv7a-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -546,7 +546,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-aarch64-debug && cmake --build --preset android-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-aarch64-debug && cmake --build --preset android-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -557,7 +557,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-aarch64-release && cmake --build --preset android-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset android-aarch64-release && cmake --build --preset android-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -568,7 +568,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset ios-aarch64-debug && cmake --build --preset ios-aarch64-debug"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset ios-aarch64-debug && cmake --build --preset ios-aarch64-debug"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -579,7 +579,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset ios-aarch64-release && cmake --build --preset ios-aarch64-release"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset ios-aarch64-release && cmake --build --preset ios-aarch64-release"
       ],
       "problemMatcher": ["$gcc"],
       "group": "build"
@@ -704,7 +704,7 @@
       "command": "wsl",
       "args": [
         "--", "bash", "-lc",
-        "export PATH=\"/opt/llvm/bin:$PATH\" && cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-x86_64-release && cmake --build --preset windows-x86_64-release --target docs"
+        "cd \"$(wslpath '${workspaceFolder}')\" && cmake --preset windows-x86_64-release && cmake --build --preset windows-x86_64-release --target docs"
       ],
       "problemMatcher": [],
       "group": "build"

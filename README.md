@@ -1,4 +1,6 @@
-# Position-Independent Runtime (PIR): A Modern C++ Approach to Zero-Dependency, Position-Independent Code Generation
+# Position-Independent Runtime (PIR)
+
+### A Modern C++23 Approach to Zero-Dependency, Position-Independent Code Generation
 
 <sub>
 
@@ -108,6 +110,9 @@
 </tr>
 </table>
 
+<details>
+<summary>Shellcode sizes (release builds)</summary>
+
 <table>
 <tr>
 <th width="30">#</th>
@@ -210,295 +215,189 @@
 </tr>
 </table>
 
+</details>
+
+---
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Motivation](#motivation)
+- [Architecture](#architecture)
+- [Common Problems and Solutions](#common-problems-and-solutions)
+- [Build System](#build-system)
+- [Windows Implementation](#windows-implementation)
+- [Use Cases](#use-cases)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
 ## Introduction
 
-Shellcode, in security research and malware analysis, is a small, self-contained sequence of machine instructions that can be injected into memory and executed from an arbitrary location. It must operate without relying on external components such as DLLs, runtime initialization routines, or fixed stack layouts. Because of these strict constraints, shellcode is traditionally written in assembly language, which provides precise control over instructions, registers, and memory access.
-While assembly ensures fully dependency-free and position-independent execution, it quickly becomes impractical as complexity grows due to its low-level nature and limited expressiveness. High-level languages like C offer improved readability, maintainability, and development speed, but standard C and C++ compilation models introduce significant challenges for shellcode development. Modern compilers typically generate binaries that depend on runtime libraries, import tables, relocation information, and read-only data sections. These dependencies violate the core requirement of shellcode—execution independent of any fixed memory layout or external support—and these problems do not admit simple or universally effective solutions.
+Shellcode is a small, self-contained sequence of machine instructions that can be injected into memory and executed from an arbitrary location. It must operate without relying on external components such as DLLs, runtime initialization routines, or fixed stack layouts. Because of these strict constraints, shellcode is traditionally written in assembly language, which provides precise control over instructions, registers, and memory access.
+
+While assembly ensures fully dependency-free and position-independent execution, it quickly becomes impractical as complexity grows due to its low-level nature and limited expressiveness. High-level languages like C offer improved readability, maintainability, and development speed, but standard C and C++ compilation models introduce significant challenges for shellcode development. Modern compilers typically generate binaries that depend on runtime libraries, import tables, relocation information, and read-only data sections. These dependencies violate the core requirement of shellcode -- execution independent of any fixed memory layout or external support -- and these problems do not admit simple or universally effective solutions.
+
 As a result, code produced by conventional toolchains cannot be used as standalone shellcode without substantial modification or manual restructuring.
 
+---
+
 ## Motivation
-A long time ago, in a corner of the darknet, two users debated which programming language was better. One argued that assembly provides almost complete control over execution, while the other claimed that C, as a higher-level language, is a better choice for implementing complex systems, since writing something like a TLS client in assembly is impractical.
-That debate ended with the assembly coder being kicked out of that forum.
+
+A long time ago, in a corner of the darknet, two users debated which programming language was better. One argued that assembly provides almost complete control over execution, while the other claimed that C, as a higher-level language, is a better choice for implementing complex systems, since writing something like a TLS client in assembly is impractical. That debate ended with the assembly coder being kicked out of that forum.
 
 With this work, we would like to add our two cents to that debate by arguing that it is possible to leverage modern C++23 without compromising the strict execution guarantees required for shellcode.
 
+---
+
+## Architecture
+
+PIR is built on a clean three-layer abstraction that separates concerns and enables multi-platform support:
+
+```
++-------------------------------------------------------------+
+|  RUNTIME (Runtime Abstraction Layer)                         |
+|  High-level features: Cryptography, Networking, TLS 1.3     |
++-------------------------------------------------------------+
+|  PLATFORM (Platform Abstraction Layer)                       |
+|  OS-specific: Windows PEB/NTAPI, Linux/macOS syscalls        |
++-------------------------------------------------------------+
+|  CORE (Core Abstraction Layer)                               |
+|  Platform-independent: Types, Memory, Strings, Algorithms    |
++-------------------------------------------------------------+
+```
+
+**CORE** provides platform-independent primitives:
+- Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
+- Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
+- Memory operations, string utilities, and formatting
+- Algorithms (DJB2 hashing, Base64, random number generation)
+
+**PLATFORM** handles OS and hardware specifics:
+- Windows: PEB walking, PE parsing, NTAPI-based operations
+- Linux: Direct syscall interface without libc
+- macOS/iOS: Direct BSD syscall interface without libc (shared XNU kernel)
+- FreeBSD: Direct BSD syscall interface without libc
+- Android: Direct Linux kernel syscall interface without libc/Bionic
+- Solaris: Direct syscall interface
+- UEFI: Boot/runtime services
+- Console I/O, file system, networking, memory allocation
+
+**RUNTIME** provides high-level application features:
+- Cryptography: SHA-256/384/512, HMAC, ChaCha20-Poly1305, ECC
+- Networking: DNS resolution, HTTP client, WebSocket, TLS 1.3
+
+Upper layers depend on lower layers, never the reverse. See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the full project structure and source tree layout.
+
+---
+
 ## Common Problems and Solutions
 
-When writing shellcode in C/C++, developers face several fundamental challenges.This section examines each of these problems, outlines the traditional approaches used to address them, explains the limitations of those approaches, and demonstrates how Position-Independent Runtime provides a robust solution.
+When writing shellcode in C/C++, developers face several fundamental challenges. This section examines each problem, outlines traditional approaches, explains their limitations, and demonstrates how PIR provides a robust solution.
 
-### Problem 1: String literals in .rdata and other relocation Dependencies
+### Problem 1: String Literals in .rdata and Relocation Dependencies
 
 C-generated shellcode relies on loader-handled relocations that are not applied in a loaderless execution environment, preventing reliable execution from arbitrary memory.
 
-#### Traditional Approach
+<details>
+<summary>Traditional approaches and why they fail</summary>
 
-**Option 1:** Use a custom shellcode loader.
+**Option 1: Custom shellcode loader.** Requires saving the `.reloc` section in shellcode and implementing relocation logic -- not straightforward.
 
-This aproach is not that easy to implement. Main difficulty is saving .reloc section in shellcode. 
-
-**Option 2:** Minimize usage of constructs that cause generation of data in `.rdata` or `.data` sections. In case of string it can be done by moving string literals onto the stack. Stack-based strings can be created by representing the string as a character array stored in a local variable. This solution also obfuscates strings:
+**Option 2: Stack-based strings.** Represent strings as character arrays on the stack:
 
 ```cpp
-// "example.exe"
 char path[] = {'e', 'x', 'a', 'm', 'p', 'l', 'e', '.', 'e', 'x', 'e', '\0'};
 ```
 
-and in the case of wide character strings, the notation is as follows:
+**Option 3: Manual runtime relocation.** Merge `.rdata` into `.text` via `/MERGE:.rdata=.text`, then fix up absolute addresses at runtime using pattern scanning:
 
 ```cpp
-// L"example.exe"
-wchar_t path[] = { L'e', L'x', L'a', L'm', L'p', L'l', L'e', L'.', L'e', L'x', L'e', L'\0' };
-```
-
-**Alternative:** Manually assign each character to an array element on the stack, one by one:
-
-```cpp
-char path[12];
-path[0] = 'e';
-path[1] = 'x';
-path[2] = 'a';
-path[3] = 'm';
-path[4] = 'p';
-path[5] = 'l';
-path[6] = 'e';
-path[7] = '.';
-path[8] = 'e';
-path[9] = 'x';
-path[10] = 'e';
-path[11] = '\0';
-```
-
-**Option 3:** Perform the relocation manually at runtime. The shellcode determines its own position in memory and performs the loader's work manually. Constants and strings may reside in sections such as `.rdata`, which are then merged into the `.text` section using `/MERGE:.rdata=.text` with link.exe. Function ordering is controlled via a [function order file](cmake/function.order) across all platforms. During execution, relocation entries are processed explicitly to fix up absolute addresses:
-```cpp
-PCHAR GetInstructionAddress(VOID)
-{
-    return __builtin_return_address(0);
-}
-
-PCHAR ReversePatternSearch(PCHAR rip, const CHAR *pattern, UINT32 len)
-{
-    PCHAR p = rip;
-    while (1)
-    {
-        UINT32 i = 0;
-        for (; i < len; i++)
-        {
-            if (p[i] != pattern[i])
-                break;
-        }
-        if (i == len)
-            return p; // found match
-        p--;    // move backward
-    }
-}
-
-ENTRYPOINT INT32 entry_point(VOID)
-{
-#if defined(PLATFORM_WINDOWS_I386)
-
-    PCHAR currentAddress = GetInstructionAddress(); // Get the return address of the caller function
-    UINT16 functionPrologue = 0x8955; // i386 function prologue: push ebp; mov ebp, esp
-        // Scan backward for function prologue
-    PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue));
-
-#endif
-```
-
-Then, perform relocation like this:
-
-```cpp
-CHAR *string = "Hello, World!";
+PCHAR currentAddress = GetInstructionAddress();
+PCHAR startAddress = ReversePatternSearch(currentAddress, (PCHAR)&functionPrologue, sizeof(functionPrologue));
 CHAR *relocatedString = string + (SSIZE)startAddress;
-
-WCHAR *wideString = L"Hello, World!";
-WCHAR *relocatedWideString = (WCHAR*)((CHAR*)wideString + (SSIZE)startAddress);
 ```
-**Note**: In this example the solution is shown for string literals but same aproach works in other cases (f.e. function pointers).
 
-Similar to strings, constant arrays-such as lookup tables, binary blobs, are placed into `.rdata` by the compiler, making them inaccessible in a loaderless execution environment. And traditional approaches are the same to apply.
+**Why they fail:** Modern compilers are sophisticated enough to recognize stack string patterns; with optimizations enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a `memcpy` call. This defeats the technique and reintroduces the `.rdata` dependency. Manual relocation approaches are fragile, increase binary size, and rely on compiler-specific behavior.
+</details>
 
-#### Why Traditional Approaches Fail
+**PIR Solution: Compile-Time Embedding**
 
-These approaches are not universal, as they rely on compiler-specific behavior and assumptions about stack layout. Modern compilers are sophisticated enough to recognize these patterns; when optimizations are enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a single `memcpy` call. This defeats the purpose of the technique and reintroduces the same `.rdata` dependency the approach was meant to avoid. Additionally, manually embedding constants and strings increases shellcode size, making it easier to detect and difficult to scale. These approaches also make the code less readable and harder to maintain.
+By eliminating all `.rdata` dependencies through compile-time embedding, PIR produces code that requires no relocations. String characters are packed into 64-bit words at compile time and written as immediate values in the instruction stream:
 
-#### Position-Independent Runtime Solution: No Relocations Needed
-
-By eliminating all `.rdata` dependencies through compile-time embedding of strings, arrays, floating-point constants-and using pure relative addressing for function pointers, Position-Independent Runtime produces code that requires no relocations. The resulting binary is inherently position-independent without any runtime fixups.
-To achieve this, Position-Independent Runtime replaces conventional string literals with compile-time–decomposed representations. Leveraging C++23 features—such as user-defined literals and variadic templates—string characters are packed into 64-bit words at compile time and written as immediate values in the instruction stream, reducing instruction count by up to 8x compared to character-by-character writes:
-
-Usage:
 ```cpp
 auto msg = "Hello, World!"_embed; // Embedded in code, not .rdata
 ```
 
-Assembly Output:
+Assembly output:
 ```asm
 movabsq $0x57202C6F6C6C6548, (%rsp)   ; "Hello, W" packed into a single immediate
-movabsq $0x00000021646C726F, 8(%rsp)  ; "orld!\0"
-```
-As a result, string data exists only transiently in registers or on the stack and never appears in static data sections, fully eliminating loader dependencies and relocation requirements.
-In case of working with constant arrays, array elements are packed into machine-word-sized integers at compile time and unpacked at runtime:
-
-```cpp
-template <typename TChar, USIZE N>
-class EMBEDDED_ARRAY
-{
-    alignas(USIZE) USIZE words[WordCount]{};
-
-    consteval EMBEDDED_ARRAY(const TChar (&src)[N]) {
-        for (USIZE i = 0; i < N; ++i) {
-            // Pack each element byte-by-byte into words
-            for (USIZE b = 0; b < sizeof(TChar); ++b)
-                SetByte(i * sizeof(TChar) + b, (src[i] >> (b * 8)) & 0xFF);
-        }
-    }
-
-    TChar operator[](USIZE index) const {
-        // Unpack element from words at runtime
-    }
-};
+movabsq $0x00000021646C726F, 8(%rsp)   ; "orld!\0"
 ```
 
-Usage:
+The same technique applies to constant arrays via `MakeEmbedArray<T>(vals...)`:
+
 ```cpp
-constexpr UINT32 lookup[] = {0x12345678, 0xABCDEF00};
-auto embedded = MakeEmbedArray(lookup);
+auto embedded = MakeEmbedArray<UINT32>(0x12345678, 0xABCDEF00);
 UINT32 value = embedded[0]; // Unpacked at runtime
 ```
 
 ### Problem 2: Floating-Point Constants
 
-Using floating-point arithmetic in C-generated shellcode introduces additional issues, as floating-point constants are typically emitted into read-only data sections such as `.rdata`. In a loaderless execution environment, these sections are not available, causing generated code to reference invalid memory. Despite its similarity to the previous problem, the approaches and technical details differ markedly.
+Floating-point constants are emitted into `.rdata` sections, making them inaccessible in loaderless environments.
 
-#### Traditional Approach
+<details>
+<summary>Traditional approaches and why they fail</summary>
 
-Represent floating-point values using their hexadecimal (IEEE-754) representation and cast to double at runtime:
+Represent values using IEEE-754 hex and cast at runtime:
 
 ```cpp
-UINT64 f = 0x3426328629; // IEEE-754 representation
+UINT64 f = 0x3426328629;
 double d = *((double*)&f);
 ```
 
-Or convert from string/integer at runtime:
+This avoids embedding float literals but increases code size and complexity.
+</details>
 
-```cpp
-// Two ways: with string or with integer
-toDouble("1.2353");
-toDouble(1, 232342);
-```
+**PIR Solution: Floating-Point Constant Embedding**
 
-#### Why Traditional Approaches Fail
+Values are converted at compile time into IEEE-754 bit patterns and injected as immediate operands:
 
-While this avoids embedding floating-point literals, it increases code size and complexity, which is not suitable for this type of work.
-
-#### Position-Independent Runtime Solution: Floating-Point Constant Embedding
-
-We solve this issue for double values; applying the same technique to float values is straightforward. Floating-point values are converted at compile time into IEEE-754 bit patterns and injected directly into registers as immediate operands:
-
-```cpp
-struct EMBEDDED_DOUBLE
-{
-    consteval explicit EMBEDDED_DOUBLE(double v) {
-        bits = __builtin_bit_cast(unsigned long long, v);
-    }
-
-    operator double() const {
-        return __builtin_bit_cast(double, bits);
-    }
-};
-```
-
-Usage:
 ```cpp
 auto pi = 3.14159_embed; // IEEE-754 as immediate value
 ```
 
-Assembly Output:
 ```asm
 movabsq $0x400921f9f01b866e, %rax ; Pi as 64-bit immediate
 ```
 
-This eliminates all floating-point constants from `.rdata` and avoids implicit compiler-generated helpers.
-
 ### Problem 3: Function Pointers
 
-Using function pointers in C-generated shellcode introduces relocation dependencies, as function addresses are normally resolved by the loader. In a loaderless execution environment, these relocations are not applied, causing indirect function calls to reference invalid addresses.
+Function pointer addresses are resolved by the loader. Without the loader, indirect calls reference invalid addresses.
 
-#### Traditional Approach
-
-Perform manual relocation at runtime, as discussed above.
-
-#### Why Traditional Approaches Fail
-
-The same issues remain: increased complexity, fragility, and sensitivity to compiler optimizations.
-
-#### Position-Independent Runtime Solution: Function Pointer Embedding
-
-We introduce the `EMBED_FUNC` macro, which uses inline assembly to compute pure relative offsets without relying on absolute addresses. The target architecture is selected at compile time using CMake-defined macros, ensuring correct code generation without relocation dependencies. The implementation is located [here](src/core/types/embedded/embedded_function_pointer.h).
+**PIR Solution:** The `EMBED_FUNC` macro uses inline assembly to compute pure PC-relative offsets, eliminating relocation dependencies entirely. See [embedded_function_pointer.h](src/core/types/embedded/embedded_function_pointer.h).
 
 ### Problem 4: 64-bit Arithmetic on 32-bit Systems
 
-Performing arithmetic with 64-bit integers on a 32-bit system, or with floating-point numbers, can cause issues because the compiler expects certain helper routines to be present.
+64-bit arithmetic on 32-bit systems causes the compiler to emit helper routines that may not be present.
 
-#### Traditional Approach
-
-Implement those helper routines manually.
-
-#### Why Traditional Approaches Fail
-
-Manual implementations are error-prone and may not cover all edge cases the compiler expects.
-
-#### Position-Independent Runtime Solution: 64-bit Arithmetic on 32-bit Systems
-
-We define custom `UINT64` and `INT64` classes that store values as two 32-bit words (high and low). All operations are decomposed into 32-bit arithmetic with manual carry handling:
-
-- **Multiplication**: Uses 16-bit partial products to avoid overflow, accumulating results with carry propagation across four 16-bit result segments
-- **Division**: Implements bit-by-bit long division, extracting one quotient bit per iteration from most-significant to least-significant
-- **Shifts**: Combines shifts across the word boundary with proper carry handling
-
-```cpp
-// 64-bit multiplication using only 32-bit operations
-// Split into 16-bit parts: (a3,a2,a1,a0) * (b3,b2,b1,b0)
-UINT32 p0 = a0 * b0;  // bits [0:31]
-UINT32 p1 = a1 * b0;  // bits [16:47]
-UINT32 p2 = a0 * b1;  // bits [16:47]
-// ... accumulate with carry propagation
-```
-
-This eliminates the need for compiler-expected helper routines and guarantees no `.rdata` generation.
+**PIR Solution:** Custom `UINT64` and `INT64` classes store values as two 32-bit words. All operations (multiplication via 16-bit partial products, division via bit-by-bit long division, shifts with carry handling) are decomposed into 32-bit arithmetic with manual carry propagation.
 
 ### Problem 5: CRT and Runtime Dependencies
 
-Standard C/C++ programs depend on the C runtime (CRT) for initialization, memory management, and various helper functions. Shellcode cannot assume the presence of these.
+Standard programs depend on the CRT for initialization, memory management, and helper functions.
 
-#### Traditional Approach
-
-Manually implement required CRT functions and avoid using features that depend on runtime initialization.
-
-#### Why Traditional Approaches Fail
-
-This is tedious, incomplete, and doesn't address the fundamental issue of static API imports remaining visible to analysis tools.
-
-#### Position-Independent Runtime Solution: Runtime Independence
-
-Position-Independent Runtime achieves complete independence from the C runtime (CRT) and standard libraries by providing fully custom implementations for essential services such as memory management, string manipulation, formatted output, and runtime initialization. Instead of relying on CRT startup code, Position-Independent Runtime defines a custom entry point, enabling execution without loader-managed runtime setup.
-
-Interaction with Windows system functionality is performed through low-level native interfaces. The runtime traverses the Process Environment Block (PEB) to locate loaded modules and parses PE export tables to resolve function addresses using hash-based lookup. By avoiding import tables, string-based API resolution, and `GetProcAddress` calls, Position-Independent Runtime minimizes static analysis visibility and enables execution in constrained or adversarial environments.
+**PIR Solution:** Complete independence from the CRT by providing custom implementations for memory management, string manipulation, formatted output, and runtime initialization. A custom entry point eliminates loader-managed startup. On Windows, the PEB is traversed to locate modules and PE export tables are parsed using hash-based lookup -- no import tables, no `GetProcAddress`.
 
 ### Problem 6: Type Conversions
 
-Type conversions between integers and floating-point values can cause the compiler to emit hidden constants or helper routines.
+Integer-to-float conversions can cause the compiler to emit hidden constants or helper routines.
 
-#### Traditional Approach
-
-Avoid type conversions or implement manual conversion functions.
-
-#### Position-Independent Runtime Solution: Pure Integer-Based Conversions
-
-All type conversions are implemented using explicit bitwise and integer operations, preventing the compiler from emitting hidden constants or helper routines:
+**PIR Solution:** All conversions use explicit bitwise and integer operations, preventing hidden constant generation:
 
 ```cpp
-// Extracts integer value from IEEE-754 without FPU instructions
 INT64 d_to_i64(const DOUBLE& d)
 {
     UINT64 bits = d.bits;
@@ -508,185 +407,111 @@ INT64 d_to_i64(const DOUBLE& d)
 }
 ```
 
-## Position-Independent Runtime Architecture Overview
-
-Within this work, we present Position-Independent Runtime, a C++23 runtime designed to achieve fully position-independent execution by eliminating dependencies on `.rdata`, the C runtime (CRT), and other loader-managed components. Position-Independent Runtime provides full position-independence for shellcode, code injection, and embedded systems, enabling execution from arbitrary memory locations.
-
-### Design Goals
-
-Position-Independent Runtime is designed around the following goals:
-
-1. **True position independence**
-   Execution must not depend on fixed load addresses or loader-handled relocations.
-
-2. **Elimination of `.rdata` dependencies**
-   No string literals or floating-point constants stored in read-only data sections.
-
-3. **No CRT or standard library reliance**
-   A completely standalone runtime with no dependency on the C runtime or standard libraries.
-
-4. **No static imports**
-   All Windows functionality is resolved dynamically at runtime.
-
-5. **Modern C++ expressiveness**
-   Support for C++23 language features without requiring runtime initialization.
-
-6. **Multi-architecture and multi-platform support**
-   Compatibility across x86, x64, ARM, RISC-V, and MIPS64 architectures on Windows, Linux, macOS, iOS, Android, Solaris, FreeBSD, and UEFI. The platform abstraction layer cleanly separates OS-specific code, making it straightforward to add support for additional operating systems by implementing the appropriate low-level interfaces.
-
-7. **Full optimization support**
-   Supports all LLVM optimization levels, allowing builds from unoptimized (`-O0`) to maximum optimization (`-O3`) or size optimization (`-Oz`).
-
-### Three-Layer Architecture
-
-Position-Independent Runtime is built on a clean three-layer abstraction that separates concerns and enables multi-platform support:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  RUNTIME (Runtime Abstraction Layer)                        │
-│  High-level features: Cryptography, Networking, TLS 1.3     │
-├─────────────────────────────────────────────────────────────┤
-│  PLATFORM (Platform Abstraction Layer)                      │
-│  OS-specific: Windows PEB/NTAPI, Linux/macOS syscalls        │
-├─────────────────────────────────────────────────────────────┤
-│  CORE (Core Abstraction Layer)                              │
-│  Platform-independent: Types, Memory, Strings, Algorithms   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**CORE (Core Abstraction Layer)** provides platform-independent primitives:
-- Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
-- Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
-- Memory operations, string utilities, and formatting
-- Algorithms (DJB2 hashing, Base64, random number generation)
-
-**PLATFORM (Platform Abstraction Layer)** handles OS and hardware specifics:
-- Windows: PEB walking, PE parsing, NTAPI-based operations
-- Linux: Direct syscall interface without libc
-- macOS: Direct BSD syscall interface without libc
-- iOS: Direct BSD syscall interface without libc (shared XNU kernel with macOS)
-- FreeBSD: Direct BSD syscall interface without libc
-- Android: Direct Linux kernel syscall interface without libc/Bionic
-- Console I/O, file system, networking, memory allocation
-
-**RUNTIME (Runtime Abstraction Layer)** provides high-level application features:
-- Cryptography: SHA-256/384/512, HMAC, ChaCha20-Poly1305, ECC
-- Networking: DNS resolution, HTTP client, WebSocket, TLS 1.3
-
-### Entry Point Placement
-
-We would also like to highlight a challenge faced during development. Ensuring that the shellcode entry point was placed at the very beginning of the `.text` section proved to be challenging, yet crucial for this architecture. After extensive research, we discovered a solution:
-
-For MSVC:
-```
-# Custom entry point (no CRT)
-/Entry:entry_point
-
-# Function ordering for MSVC
-/ORDER:@cmake/function.order
-```
-
-For Clang, we used custom linker scripts with section ordering directives to achieve the same result.
+---
 
 ## Build System
 
-### Critical Compiler Flags
+### Quick Start
 
-Achieving true position-independence requires specific compiler flags that prevent the compiler from generating `.rdata` dependencies:
+**Requirements:** Clang/LLVM 21+, CMake 3.20+, Ninja 1.10+, C++23.
 
 ```bash
--fno-jump-tables      # CRITICAL: Prevents switch statement jump tables in .rdata
--fno-exceptions       # No exception handling tables (.pdata/.xdata)
--fno-rtti             # No runtime type information (no typeinfo in .rdata)
--nostdlib             # No standard C/C++ libraries (no CRT linkage)
--fno-builtin          # Disable compiler built-in functions
--ffunction-sections   # Each function in own section (enables dead code elimination)
--fdata-sections       # Each data item in own section (enables garbage collection)
+# Configure
+cmake --preset {platform}-{arch}-{build_type}
+
+# Build
+cmake --build --preset {platform}-{arch}-{build_type}
+
+# Test (exit code 0 = all pass)
+./build/{build_type}/{platform}/{arch}/output.{exe|elf|efi}
 ```
 
-The `-fno-jump-tables` flag is particularly critical—without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
+Presets: `windows|linux|macos|ios|android|freebsd|solaris|uefi` x `i386|x86_64|armv7a|aarch64|riscv32|riscv64|mips64` x `debug|release`
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for toolchain installation instructions per platform.
+
+### Critical Compiler Flags
+
+Achieving true position-independence requires specific compiler flags:
+
+```bash
+-fno-jump-tables      # Prevents switch statement jump tables in .rdata
+-fno-exceptions       # No exception handling tables
+-fno-rtti             # No runtime type information
+-nostdlib             # No standard C/C++ libraries
+-fno-builtin          # Disable compiler built-in functions
+-ffunction-sections   # Each function in own section (dead code elimination)
+-fdata-sections       # Each data item in own section (garbage collection)
+```
+
+The `-fno-jump-tables` flag is particularly critical -- without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
 
 ### Post-Build Verification
 
-The build system automatically verifies that the final binary contains no separate data sections:
+The build system automatically verifies that the final binary contains no data sections (`.rdata`, `.rodata`, `.data`, `.bss`, `.got`, `.plt`). This check runs after every build via `cmake/VerifyPICMode.cmake`.
 
-```cmake
-# Verify no .rdata/.rodata/.data/.bss sections exist
-string(REGEX MATCH "\\.rdata" RDATA_FOUND "${MAP_CONTENT}")
-string(REGEX MATCH "\\.rodata" RODATA_FOUND "${MAP_CONTENT}")
-string(REGEX MATCH "\\.data" DATA_FOUND "${MAP_CONTENT}")
-string(REGEX MATCH "\\.bss" BSS_FOUND "${MAP_CONTENT}")
-
-if(RDATA_FOUND OR RODATA_FOUND OR DATA_FOUND OR BSS_FOUND)
-    message(FATAL_ERROR "Data section detected - breaks position-independence!")
-endif()
-```
-
-This verification runs after every build, ensuring that code changes don't accidentally introduce `.rdata` dependencies.
+---
 
 ## Windows Implementation
 
-Position-Independent Runtime integrates deeply with Windows internals to provide a fully functional, standalone execution environment while maintaining position independence.
-
 ### Low-Level Native Interfaces
 
-A core goal of the Windows implementation is to provide comprehensive wrappers for all `ntdll.dll` functionality and its underlying system calls. By building directly on top of the NT Native API, Position-Independent Runtime avoids higher-level Win32 abstractions and maintains the thinnest possible layer between application code and the kernel. On x86_64 and i386, Zw* wrappers use indirect syscalls—resolving System Service Numbers (SSNs) at runtime and executing through `syscall`/`sysenter` gadgets found in ntdll—to invoke kernel services without calling ntdll directly. On ARM64, where the kernel validates that the `svc` instruction originates from within ntdll, wrappers resolve and call the ntdll export address directly. This gives callers full access to the capabilities exposed by `ntdll`—file I/O, memory management, process and thread control, registry operations, synchronization, and more—while preserving position-independence guarantees.
+PIR builds directly on the NT Native API. On x86_64 and i386, Zw* wrappers use indirect syscalls -- resolving System Service Numbers (SSNs) at runtime and executing through `syscall`/`sysenter` gadgets found in ntdll. On ARM64, where the kernel validates that the `svc` instruction originates from within ntdll, wrappers call the ntdll export directly.
 
-By completely eliminating static import tables and bypassing loader-dependent API resolution mechanisms such as `GetProcAddress`, Position-Independent Runtime removes all dependencies on the operating system's runtime initialization and dynamic linking processes. This ensures that all required function addresses are resolved internally at runtime, using hash-based lookups of exported symbols in loaded modules. As a result, the generated binaries are fully self-contained, do not rely on predefined memory locations, and can execute correctly from any arbitrary memory address without requiring relocation tables or loader-managed fixups.
+By eliminating static import tables and bypassing `GetProcAddress`, PIR removes all dependencies on the OS runtime initialization and dynamic linking. Function addresses are resolved internally using hash-based lookups of exported symbols.
 
-### File System Support
-A complete abstraction over `NTAPI` enables file and directory operations:
-* File creation, reading, writing, deletion
-* Directory creation, enumeration, deletion
-* Path and attribute management
+### Capabilities
 
-All file system operations are executed without relying on CRT or standard libraries.
+- **File system:** File creation, reading, writing, deletion; directory operations; path management -- all via NTAPI
+- **Console output:** Printf-style output implemented natively within the runtime
+- **Cryptography:** SHA-256/512, HMAC, ChaCha20, ECC, Base64
+- **Networking:** DNS resolution, HTTP client, WebSocket, TLS 1.3 with certificate verification
 
-### Console Output
-Printf-style output is implemented natively within the runtime. This allows robust console output without runtime support.
+---
 
-### Cryptography and Networking
-Position-Independent Runtime provides a complete cryptographic and networking stack:
-* Cryptography: SHA-256/512, HMAC, ChaCha20, ECC, Base64 encoding/decoding
-* Networking: DNS resolution, HTTP client, WebSocket connections, TLS 1.3 with certificate verification
+## Use Cases
 
-All functionality is implemented using low-level native interfaces to avoid external dependencies.
+PIR is designed for execution environments where traditional runtime assumptions do not apply:
 
-## Practical Use Cases
-
-Position-Independent Runtime is designed for execution environments where traditional runtime assumptions do not apply. Its architecture makes it particularly suitable for the following domains:
 - **Authorized penetration testing** with written scope and client approval
 - **Security research** with proper disclosure practices
 - Shellcode and loaderless code execution
-- Security research and malware analysis
 - Embedded and low-level system programming
 - Cross-architecture C++ development
 - Environments without standard C runtime support
 
-## To Do
-This project is still a work in progress. Below is a list of remaining tasks and planned improvements. Any help or contributions are greatly appreciated.
+> **Disclaimer:** Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project's design goals.
 
-### Platforms
-- NetBSD
-- OpenBSD
-- HaikuOS
-- QNX
+---
 
-### Architectures
-- PowerPC64 (ppc64/ppc64le)
-- LoongArch64
-- s390x
+## Roadmap
 
-### Windows
-- Additional direct syscall implementations (bypassing ntdll)
+This project is a work in progress. Contributions are welcome -- see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+
+### Planned Platforms
+- NetBSD, OpenBSD, HaikuOS, QNX
+
+### Planned Architectures
+- PowerPC64 (ppc64/ppc64le), LoongArch64, s390x
 
 ### Other
+- Additional Windows direct syscall implementations
 - Compile-time polymorphism
 
-## Conclusion
+---
 
-Position-Independent Runtime is not merely a library—it is a proof of concept that challenges long-held assumptions about C++, binary formats, and position-independent execution across multiple platforms. This project compiles into a PE file on Windows, an ELF file on Linux, Solaris, FreeBSD, and Android, a Mach-O file on macOS and iOS, or a UEFI application, supporting i386, x86_64, armv7a, aarch64, riscv32, riscv64, and mips64 architectures. The resulting binary can run both as a standalone executable and as shellcode after extracting the `.text` section. By eliminating `.rdata`, CRT dependencies, relocations, and static API references, Position-Independent Runtime enables a new class of C++ programs capable of running in environments where traditional C++ has never been viable.
+## Contributing
 
-The platform abstraction layer demonstrates that the same high-level C++23 codebase can target fundamentally different operating systems—Windows with its PEB walking and NTAPI interfaces, Linux, Android, and Solaris with their direct syscall approaches, macOS, iOS, and FreeBSD with their BSD syscall interfaces, and UEFI with its boot/runtime services—while maintaining identical position-independence guarantees. As demonstrated throughout this work, modern C++23 compile-time features and carefully selected compiler intrinsics play a key role in achieving these guarantees, allowing expressive high-level code while preserving strict low-level control.
+We welcome contributions of all kinds. Please read:
 
-This project is intended for researchers, systems programmers, and security engineers who are willing to work beneath high-level abstractions and take full control of the machine. Any unauthorized or malicious use of this software is strictly prohibited and falls outside the scope of the project's design goals.
+- [Contributing Guide](.github/CONTRIBUTING.md) -- build instructions, code style, project structure
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md) -- community standards
+- [Security Policy](.github/SECURITY.md) -- reporting vulnerabilities
+
+---
+
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0). See [LICENSE](LICENSE) for full terms.
+
+You are free to use, modify, and distribute this software, provided that any derivative work -- including network services -- is also made available under the AGPL-3.0. For proprietary/closed-source licensing, contact [mrzaxaryan](https://github.com/mrzaxaryan).

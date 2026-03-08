@@ -27,7 +27,6 @@ pir_add_link_flags(
     /Entry:entry_point
     /SUBSYSTEM:CONSOLE
     /ORDER:@${PIR_ROOT_DIR}/cmake/data/function.order.windows
-    /MERGE:.rdata=.text
     /MAP:${PIR_MAP_FILE}
     /FILEALIGN:0x200
 )

@@ -233,4 +233,29 @@ consteval auto MakeEmbedArray(const TElement (&arr)[N]) noexcept
 	return EMBEDDED_ARRAY<TElement, N>(arr);
 }
 
+/**
+ * @brief Variadic helper for compile-time array embedding
+ *
+ * @tparam TElement Element type (explicit)
+ * @tparam Args Argument types (deduced)
+ * @param args Element values to embed
+ * @return EMBEDDED_ARRAY instance
+ *
+ * @details Accepts element values directly as arguments without requiring a
+ * named constexpr array, preventing .rdata leaks at -O0. The array size is
+ * deduced from the number of arguments.
+ *
+ * @par Example:
+ * @code
+ * auto embedded = MakeEmbedArray<UINT32>(0x12345678, 0xABCDEF00, 0x11223344);
+ * UINT32 value = embedded[1];
+ * @endcode
+ */
+template <typename TElement, typename... Args>
+consteval auto MakeEmbedArray(Args... args) noexcept
+{
+	const TElement values[] = { static_cast<TElement>(args)... };
+	return EMBEDDED_ARRAY<TElement, sizeof...(Args)>(values);
+}
+
 /** @} */ // end of embedded_array group

@@ -2,13 +2,11 @@ name: Android x86_64
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  push:
     branches:
       - "**"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 env:

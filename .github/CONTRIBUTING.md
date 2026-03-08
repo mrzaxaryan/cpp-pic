@@ -1,5 +1,7 @@
 # Contributing to Position-Independent Runtime
 
+Thank you for your interest in contributing to PIR! This guide covers everything you need to build, develop, and submit changes.
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
@@ -63,6 +65,7 @@ clang --version && clang++ --version && lld-link --version && cmake --version &&
 ### Linux (Ubuntu/Debian)
 
 ```bash
+
 # Install all dependencies (LLVM 21)
 LLVM_VER=21 && sudo apt-get update && sudo apt-get install -y wget lsb-release ca-certificates gnupg cmake ninja-build && sudo mkdir -p /etc/apt/keyrings && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null && echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list && sudo apt-get update && sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER} lldb-${LLVM_VER} && sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lldb-dap lldb-dap /usr/bin/lldb-dap-${LLVM_VER} 100 && sudo update-alternatives --set clang "/usr/bin/clang-${LLVM_VER}" && sudo update-alternatives --set clang++ "/usr/bin/clang++-${LLVM_VER}" && sudo update-alternatives --set lld "/usr/bin/lld-${LLVM_VER}" && sudo update-alternatives --set llvm-objdump "/usr/bin/llvm-objdump-${LLVM_VER}" && sudo update-alternatives --set llvm-objcopy "/usr/bin/llvm-objcopy-${LLVM_VER}" && sudo update-alternatives --set llvm-strings "/usr/bin/llvm-strings-${LLVM_VER}" && sudo update-alternatives --set lldb-dap "/usr/bin/lldb-dap-${LLVM_VER}"
 ```
@@ -108,11 +111,11 @@ clang --version && clang++ --version && ld64.lld --version && cmake --version &&
 
 ### Visual Studio Code
 
-This project is designed and optimized for [Visual Studio Code](https://code.visualstudio.com/). When you open this project in VSCode, you will be automatically prompted to install the recommended extensions.
+This project is designed and optimized for [Visual Studio Code](https://code.visualstudio.com/). When you open the project in VSCode, you will be automatically prompted to install the recommended extensions.
 
 ### WSL Integration
 
-If you're developing on Windows with WSL, navigate to the project directory inside WSL and run `code .`.
+If developing on Windows with WSL, navigate to the project directory inside WSL and run `code .`.
 
 **Prerequisites:**
 - WSL properly configured on your Windows system
@@ -121,7 +124,7 @@ If you're developing on Windows with WSL, navigate to the project directory insi
   sudo apt-get update && sudo apt-get install -y qemu-user-static qemu-system-x86 qemu-system-arm ovmf qemu-efi-aarch64 dosfstools mtools
   ```
 
-For more information, see the [VSCode WSL documentation](https://code.visualstudio.com/docs/remote/wsl) and [.vscode/README.md](.vscode/README.md).
+For more information, see the [VSCode WSL documentation](https://code.visualstudio.com/docs/remote/wsl) and [.vscode/README.md](../.vscode/README.md).
 
 ---
 
@@ -188,7 +191,7 @@ tests/                      # pir_tests.h (master), tests.h (helpers), *_tests.h
 cmake/                      # CMake modules, linker scripts, function.order
 ```
 
-Three-layer architecture (RUNTIME > PLATFORM > CORE) — upper layers depend on lower, never the reverse. See [README.md](README.md) for details.
+Three-layer architecture (RUNTIME > PLATFORM > CORE) -- upper layers depend on lower, never the reverse. See [README.md](../README.md) for an overview.
 
 ---
 
@@ -203,7 +206,7 @@ The binary must contain **only** a `.text` section. No `.rdata`, `.rodata`, `.da
 | `3.14` float literals | `3.14_embed` |
 | `&MyFunc` function pointers | `EMBED_FUNC(MyFunc)` |
 | Global/static variables | Stack-local variables |
-| `const` arrays at file scope | `MakeEmbedArray(...)` |
+| `const`/`constexpr` arrays | `MakeEmbedArray<T>(vals...)` |
 | STL containers/algorithms | Custom PIR implementations |
 | Exceptions (`throw`/`try`/`catch`) | `Result<T, Error>` |
 | Raw `BOOL`/`NTSTATUS`/`SSIZE` for fallible returns | `Result<T, Error>` or `Result<void, Error>` |
@@ -215,7 +218,7 @@ The binary must contain **only** a `.text` section. No `.rdata`, `.rodata`, `.da
 ## Code Style
 
 - **Indentation:** Tabs (not spaces)
-- **Braces:** Allman style — opening brace on its own line
+- **Braces:** Allman style -- opening brace on its own line
 - **Include guard:** `#pragma once` in every header
 - **No STL, no exceptions, no RTTI**
 - **`FORCE_INLINE`** for force-inlined functions, **`NOINLINE`** when inlining must be prevented
@@ -244,10 +247,10 @@ All public APIs and protocol implementations **must** include Doxygen documentat
 
 Platform-specific OS API wrappers must include `@see` links to the official Microsoft Learn documentation instead of RFC links.
 
-- **WDK-documented functions** — link to the WDK DDI reference
-- **Partially documented functions** — link to the closest available page (Win32 DevNotes or Nt prefix equivalent)
-- **Undocumented functions** — add `@note This function is undocumented by Microsoft.` and link to the closest documented Win32 equivalent
-- **Requirements** — every function must include a `@par Requirements` block listing minimum supported Windows client and server versions
+- **WDK-documented functions** -- link to the WDK DDI reference
+- **Partially documented functions** -- link to the closest available page (Win32 DevNotes or Nt prefix equivalent)
+- **Undocumented functions** -- add `@note This function is undocumented by Microsoft.` and link to the closest documented Win32 equivalent
+- **Requirements** -- every function must include a `@par Requirements` block listing minimum supported Windows client and server versions
 
 **Required for:** all NTDLL Zw*/Nt* and Rtl* wrappers, all Kernel32/Win32 wrappers, and Windows-specific structs/enums/constants.
 
@@ -308,13 +311,13 @@ Platform-specific OS API wrappers must include `@see` links to the official Micr
 
 ### Key Rules
 
-- **Prefer references over pointers** for non-null arguments. References provide a compile-time non-null guarantee; reserve pointers for output parameters, nullable arguments, and Windows API compatibility.
-- **Use `Span<T>` instead of raw pointer buffer parameters.** This applies to both `(T*, USIZE)` pairs and bare `T*` pointers. Exempt: core primitives that `Span` itself is built on (`Memory::Copy`, `Memory::Set`, `Memory::Compare`) and null-terminated string functions (`StringUtils::Length`, etc.).
-- **Prefer `Span<T, N>` (static extent) when the size is a compile-time constant.** Static extent encodes the size in the type and enables compile-time bounds checks. Use a template parameter `N` when the exact size varies per call site but is still known at compile time. Reserve `Span<T>` (dynamic extent) for genuinely runtime-only sizes.
-- **`Span<T, N>` implicitly converts to `Span<T>`** (static-to-dynamic), so callers with static-extent spans can pass them to functions accepting dynamic extent without explicit conversion.
-- **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). The `Result` class itself is `[[nodiscard]]`. Adding `[[nodiscard]]` on the function declaration is encouraged for explicitness.
-- **Never use `Result<bool, Error>`** — use `Result<void, Error>` instead. `Result` is already bool-testable via `operator BOOL`.
-- Infallible functions (getters, pure computations, operators) return their value directly — they do not use `Result`.
+- **Prefer references over pointers** for non-null arguments. Reserve pointers for output parameters, nullable arguments, and Windows API compatibility.
+- **Use `Span<T>` instead of raw pointer buffer parameters.** Exempt: core primitives that `Span` itself is built on (`Memory::Copy`, `Memory::Set`, `Memory::Compare`) and null-terminated string functions (`StringUtils::Length`, etc.).
+- **Prefer `Span<T, N>` (static extent) when the size is a compile-time constant.** Use a template parameter `N` when the exact size varies per call site but is still known at compile time. Reserve `Span<T>` (dynamic extent) for genuinely runtime-only sizes.
+- **`Span<T, N>` implicitly converts to `Span<T>`** (static-to-dynamic), so callers with static-extent spans can pass them to functions accepting dynamic extent.
+- **All fallible functions must return `Result<T, Error>`** (or `Result<void, Error>` when there is no value). The `Result` class itself is `[[nodiscard]]`.
+- **Never use `Result<bool, Error>`** -- use `Result<void, Error>` instead. `Result` is already bool-testable via `operator BOOL`.
+- Infallible functions (getters, pure computations, operators) return their value directly.
 
 ---
 
@@ -326,28 +329,28 @@ PIR has no exceptions. Every fallible function returns `Result<T, Error>` or `Re
 
 `Error` is a `(Code, Platform)` pair (8 bytes) defined in `src/core/error.h`:
 
-- **Runtime codes** (`PlatformKind::Runtime`): named `ErrorCodes` enumerators — `Socket_WriteFailed_Send`, `Tls_OpenFailed_Handshake`, etc.
-- **OS codes**: created via factories — `Error::Windows(ntstatus)`, `Error::Posix(errno)`, `Error::Uefi(efiStatus)`
+- **Runtime codes** (`PlatformKind::Runtime`): named `ErrorCodes` enumerators -- `Socket_WriteFailed_Send`, `Tls_OpenFailed_Handshake`, etc.
+- **OS codes**: created via factories -- `Error::Windows(ntstatus)`, `Error::Posix(errno)`, `Error::Uefi(efiStatus)`
 
 ### Construction Rules
 
-`Error` stores a single `(Code, Platform)` slot — there is no call chain. Each layer picks the most useful code to surface:
+`Error` stores a single `(Code, Platform)` slot -- there is no call chain. Each layer picks the most useful code to surface:
 
-- **Single runtime error (no prior result):** pass a bare `ErrorCodes` enumerator to `Result::Err` — only when there is no underlying `Result` to forward (e.g., pure validation failures, null checks)
+- **Single runtime error (no prior result):** pass a bare `ErrorCodes` enumerator to `Result::Err` -- only when there is no underlying `Result` to forward
 - **Single OS error:** use `Error::Windows()`, `Error::Posix()`, or `Error::Uefi()` factory methods
 - **Propagate unchanged:** forward `r.Error()` from the lower-level result
-- **Replace with own layer's error:** use the two-arg shorthand (see below) when the caller's context is more useful
-- **Two-arg shorthand (preferred):** `Result::Err(r, Error::Tls_WriteFailed_Send)` — always use this form when an underlying `Result` failed. This documents the error chain even though only the new code is stored
+- **Replace with own layer's error:** use the two-arg shorthand when the caller's context is more useful
+- **Two-arg shorthand (preferred):** `Result::Err(r, Error::Tls_WriteFailed_Send)` -- always use this form when an underlying `Result` failed
 
-**Important:** When a lower-level call returns a failed `Result` and you return `Err` with your own layer's error code, **always** pass the failed result as the first argument. Never discard a failed result by using the single-arg `Err(Error::MyCode)` form when a result variable is available:
+**Important:** When a lower-level call returns a failed `Result` and you return `Err` with your own error code, **always** pass the failed result as the first argument:
 
 ```cpp
-// WRONG — discards the underlying error
+// WRONG -- discards the underlying error
 auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
 if (!tlsResult)
     return Result<void, Error>::Err(Error::Ws_CreateFailed);
 
-// CORRECT — forwards the underlying result
+// CORRECT -- forwards the underlying result
 auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
 if (!tlsResult)
     return Result<void, Error>::Err(tlsResult, Error::Ws_CreateFailed);
@@ -355,7 +358,7 @@ if (!tlsResult)
 
 ### Platform Conversion Factories
 
-Each platform provides `result::From*` template functions in `src/platform/<platform>/platform_result.h`. These convert a raw OS status into `Ok`/`Err` in one call. Use them in low-level wrappers: `result::FromNTSTATUS<T>(status)`, `result::FromLinux<T>(result)`, `result::FromMacOS<T>(result)`, `result::FromFreeBSD<T>(result)`, `result::FromEfiStatus<T>(status)`. For `void` Results, the raw value is discarded on success.
+Each platform provides `result::From*` template functions in `src/platform/<platform>/platform_result.h`. These convert a raw OS status into `Ok`/`Err` in one call: `result::FromNTSTATUS<T>(status)`, `result::FromLinux<T>(result)`, `result::FromMacOS<T>(result)`, `result::FromFreeBSD<T>(result)`, `result::FromEfiStatus<T>(status)`.
 
 ### Formatting
 
@@ -363,9 +366,9 @@ Use `%e` with `result.Error()` in log macros. Output format: runtime codes print
 
 ### Exceptions to Result
 
-- **Low-level primitives** (`System::Call`, `Memory::Copy`, etc.) return raw OS types or operate infallibly. Higher-level wrappers convert to `Result`.
-- **Best-effort output** (`Console::Write`, logging callbacks) — failures are non-actionable.
-- **Infallible functions** (getters, pure computations, operators) return their value directly.
+- **Low-level primitives** (`System::Call`, `Memory::Copy`, etc.) return raw OS types or operate infallibly
+- **Best-effort output** (`Console::Write`, logging callbacks) -- failures are non-actionable
+- **Infallible functions** (getters, pure computations, operators) return their value directly
 
 ### Rules Summary
 
@@ -381,7 +384,7 @@ Use `%e` with `result.Error()` in log macros. Output format: runtime codes print
 ### Heap & Stack
 
 - **Avoid heap** unless no alternative. Prefer stack-local variables and fixed-size buffers.
-- **`new`/`new[]`/`delete`/`delete[]` are safe** — globally overloaded to route through the custom `Allocator` (see `src/platform/allocator.cc`).
+- **`new`/`new[]`/`delete`/`delete[]` are safe** -- globally overloaded to route through the custom `Allocator` (see `src/platform/allocator.cc`).
 - **Embed by value**, not by pointer: `IPAddress ipAddress;` not `IPAddress *ipAddress;`
 - **Watch stack size**: `EMBEDDED_STRING` temporaries materialize words on stack; avoid deep recursion.
 
@@ -396,7 +399,7 @@ Every resource-owning class follows: destructor calls `Close()`, copy deleted, m
 
 ### Stack-Only Types
 
-Delete heap allocation operators (`operator new`/`operator delete = delete`);
+Delete heap allocation operators (`operator new`/`operator delete = delete`).
 
 ---
 
@@ -408,12 +411,14 @@ Delete heap allocation operators (`operator new`/`operator delete = delete`);
 |------|---------|--------|
 | `EMBEDDED_STRING` | `"text"_embed` / `L"text"_embed` | Characters packed into machine words |
 | `DOUBLE` | `3.14_embed` | IEEE-754 bits as `UINT64` immediate |
-| `EMBEDDED_ARRAY` | `MakeEmbedArray(arr)` | Elements packed into machine words |
+| `EMBEDDED_ARRAY` | `MakeEmbedArray<T>(vals...)` | Elements packed into machine words |
 | `EMBEDDED_FUNCTION_POINTER` | `EMBED_FUNC(Fn)` | PC-relative offset, no relocation |
+
+**Variadic `MakeEmbedArray<T>(vals...)`** -- Pass values directly as arguments instead of through a named `constexpr` array. Named `constexpr` arrays leak to `.rdata` at `-O0` on some compilers (e.g., Clang cross-compiling from Linux). The variadic overload constructs the array inside a `consteval` function where it cannot leak. For compound literal callers, `MakeEmbedArray((const T[]){...})` also works.
 
 A **register barrier** (`__asm__ volatile("" : "+r"(word))`) prevents the compiler from coalescing values back into `.rdata`.
 
-**LOG macros auto-embed** — `LOG_INFO`, `LOG_ERROR`, `LOG_WARNING`, and `LOG_DEBUG` automatically apply `_embed` to their format string. Write `LOG_INFO("msg")` not `LOG_INFO("msg"_embed)`.
+**LOG macros auto-embed** -- `LOG_INFO`, `LOG_ERROR`, `LOG_WARNING`, and `LOG_DEBUG` automatically apply `_embed` to their format string. Write `LOG_INFO("msg")` not `LOG_INFO("msg"_embed)`.
 
 ### Traits-Based Dispatch
 
@@ -438,7 +443,7 @@ C++20 concepts and `requires` clauses enforce type safety. Use Clang builtins, n
 
 - **Factory-created types**: the factory + RAII pattern ensures validity.
 - **Non-factory types** parsing external input: validate at entry, return `Result::Err` on failure.
-- Only validate at system boundaries — trust internal code.
+- Only validate at system boundaries -- trust internal code.
 
 ### Platform Dispatch
 
@@ -476,22 +481,33 @@ Two strategies: **conditional compilation** (`#if defined(PLATFORM_*)`) for smal
 
 ## Common Pitfalls
 
-1. **Inline asm register clobbers** — On x86_64, declare all volatile registers (RAX, RCX, RDX, R8-R11) as outputs or clobbers
-2. **Memory operands with RSP modification** — Never use `"m"` constraints in asm blocks that modify RSP; under `-Oz` the compiler uses RSP-relative addressing
-3. **i386 `EMBEDDED_STRING` indexing** — Cast indices to `USIZE` to avoid ambiguous overload between `operator[]` and pointer decay
+1. **Inline asm register clobbers** -- On x86_64, declare all volatile registers (RAX, RCX, RDX, R8-R11) as outputs or clobbers
+2. **Memory operands with RSP modification** -- Never use `"m"` constraints in asm blocks that modify RSP; under `-Oz` the compiler uses RSP-relative addressing
+3. **i386 `EMBEDDED_STRING` indexing** -- Cast indices to `USIZE` to avoid ambiguous overload between `operator[]` and pointer decay
 
 ---
 
 ## Submitting Changes
 
+### Before You Submit
+
 1. Build cleanly for at least one platform/architecture preset
-2. Verify post-build PIC check passes (no data sections)
-3. Run the test binary — all tests pass
+2. Verify the post-build PIC check passes (no data sections)
+3. Run the test binary -- all tests pass
 4. Follow naming conventions and code style above
-5. **Report the binary size diff** — build the same preset before and after your change, then include the `.text` section size (exe and bin) in the PR description. Size regressions require justification; prefer `-Oz` builds for the comparison. Use `llvm-size` or `llvm-objdump -h` to measure:
+
+### Pull Request Requirements
+
+- Use the [pull request template](pull_request_template.md)
+- **Report the binary size diff** -- build the same preset before and after your change, then include the `.text` section size (exe and bin) in the PR description. Size regressions require justification; prefer `-Oz` builds for the comparison:
 
    ```bash
    llvm-size build/release/<platform>/<arch>/output.exe
    ```
 
-   Example PR note: `windows-x86_64-release: exe 42 312 → 42 480 (+168 B), bin 39 888 → 40 056 (+168 B)`
+   Example PR note: `windows-x86_64-release: exe 42 312 -> 42 480 (+168 B), bin 39 888 -> 40 056 (+168 B)`
+
+### Community
+
+- Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating
+- Report security vulnerabilities privately -- see [Security Policy](SECURITY.md)

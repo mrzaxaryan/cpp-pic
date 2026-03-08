@@ -79,7 +79,7 @@ class IPAddressTests
 private:
 	static BOOL TestConstexprIPv4()
 	{
-		constexpr IPAddress ip = IPAddress::FromIPv4(0x0100007F);
+		IPAddress ip = IPAddress::FromIPv4(0x0100007F);
 		if (!ip.IsIPv4())
 			return false;
 		if (ip.ToIPv4() != 0x0100007F)
@@ -91,8 +91,11 @@ private:
 
 	static BOOL TestConstexprIPv6()
 	{
-		constexpr UINT8 addr[16] = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-		constexpr IPAddress ip = IPAddress::FromIPv6(addr);
+		auto addrEmbed = MakeEmbedArray<UINT8>(0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+		UINT8 addr[16];
+		for (USIZE i = 0; i < 16; i++)
+			addr[i] = addrEmbed[i];
+		IPAddress ip = IPAddress::FromIPv6(addr);
 		if (!ip.IsIPv6())
 			return false;
 		if (ip.IsIPv4())
@@ -104,8 +107,8 @@ private:
 
 	static BOOL TestConstexprLocalHost()
 	{
-		constexpr IPAddress v4 = IPAddress::LocalHost();
-		constexpr IPAddress v6 = IPAddress::LocalHost(true);
+		IPAddress v4 = IPAddress::LocalHost();
+		IPAddress v6 = IPAddress::LocalHost(true);
 
 		if (!v4.IsIPv4())
 			return false;
@@ -118,9 +121,9 @@ private:
 
 	static BOOL TestConstexprEquality()
 	{
-		constexpr IPAddress a = IPAddress::FromIPv4(0x01010101);
-		constexpr IPAddress b = IPAddress::FromIPv4(0x01010101);
-		constexpr IPAddress c = IPAddress::FromIPv4(0x08080808);
+		IPAddress a = IPAddress::FromIPv4(0x01010101);
+		IPAddress b = IPAddress::FromIPv4(0x01010101);
+		IPAddress c = IPAddress::FromIPv4(0x08080808);
 
 		if (!(a == b))
 			return false;
@@ -133,8 +136,8 @@ private:
 
 	static BOOL TestConstexprCopy()
 	{
-		constexpr IPAddress original = IPAddress::FromIPv4(0xC0A80001);
-		constexpr IPAddress copy(original);
+		IPAddress original = IPAddress::FromIPv4(0xC0A80001);
+		IPAddress copy(original);
 
 		if (copy.ToIPv4() != original.ToIPv4())
 			return false;
@@ -145,7 +148,7 @@ private:
 
 	static BOOL TestConstexprInvalid()
 	{
-		constexpr IPAddress inv = IPAddress::Invalid();
+		IPAddress inv = IPAddress::Invalid();
 		if (inv.IsValid())
 			return false;
 		if (inv.IsIPv4())
@@ -153,7 +156,7 @@ private:
 		if (inv.IsIPv6())
 			return false;
 
-		constexpr IPAddress def;
+		IPAddress def;
 		if (def.IsValid())
 			return false;
 		if (!(inv == def))

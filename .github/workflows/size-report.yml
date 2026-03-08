@@ -340,7 +340,6 @@ jobs:
           lines.append("| Platform | Arch | Exe | .bin (main) | .bin (PR) | Delta |")
           lines.append("|----------|------|-----|-------------|-----------|-------|")
 
-          total_delta = 0
           has_baseline = bool(baseline_raw)
 
           for plat_name, archs in platforms:
@@ -357,8 +356,6 @@ jobs:
 
                   if pr_bin and base_bin:
                       delta = fmt_delta(base_bin, pr_bin)
-                      d = pr_bin - base_bin
-                      total_delta += d
                   elif pr_bin and not base_bin:
                       delta = "new"
                   else:
@@ -366,16 +363,8 @@ jobs:
 
                   lines.append(f"| **{plat_name}** | {arch_name} | {exe_val} | {base_bin_str} | {pr_bin_str} | {delta} |")
 
-          lines.append("")
-          if has_baseline and total_delta != 0:
-              sign = "+" if total_delta > 0 else ""
-              if abs(total_delta) < 1024:
-                  lines.append(f"**Total .bin change: {sign}{total_delta} B**")
-              else:
-                  lines.append(f"**Total .bin change: {sign}{total_delta/1024:.1f} KB**")
-          elif has_baseline:
-              lines.append("**Total .bin change: no change**")
-          else:
+          if not has_baseline:
+              lines.append("")
               lines.append("*No baseline available yet — sizes will be compared after the first merge to main.*")
 
           comment_body = "\n".join(lines)

@@ -38,11 +38,10 @@ private:
 
 	static BOOL TestFromBytes()
 	{
-		constexpr UINT8 bytes[16] = {
+		auto mArray = MakeEmbedArray<UINT8>(
 			0x55, 0x0e, 0x84, 0x00, 0xe2, 0x9b, 0x41, 0xd4,
 			0xa7, 0x16, 0x44, 0x66, 0x55, 0x44, 0x00, 0x00
-		};
-		auto mArray = MakeEmbedArray(bytes);
+		);
 		UINT8 unpacked[16];
 		for (USIZE i = 0; i < 16; i++)
 			unpacked[i] = mArray[i];

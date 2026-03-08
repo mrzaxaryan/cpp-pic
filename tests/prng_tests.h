@@ -34,15 +34,14 @@ private:
 		Prng prng(1);
 
 		// Expected xorshift64 output for seed=1
-		constexpr INT32 expected[] = {1082269761, 201397313, 1854285353, 1432191013, 274305637};
-		auto embedded = MakeEmbedArray(expected);
+		auto expected = MakeEmbedArray<INT32>(1082269761, 201397313, 1854285353, 1432191013, 274305637);
 
 		for (INT32 i = 0; i < 5; i++)
 		{
 			INT32 val = prng.Get();
-			if (val != embedded[(USIZE)i])
+			if (val != expected[(USIZE)i])
 			{
-				LOG_ERROR("Seed 1, index %d: expected %d, got %d", i, embedded[(USIZE)i], val);
+				LOG_ERROR("Seed 1, index %d: expected %d, got %d", i, expected[(USIZE)i], val);
 				return false;
 			}
 		}

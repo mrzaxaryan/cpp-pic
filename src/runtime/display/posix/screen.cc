@@ -1,6 +1,6 @@
 /**
  * @file screen.cc
- * @brief POSIX Screen Implementation (Linux/Android/FreeBSD/Solaris)
+ * @brief POSIX Screen Implementation (Linux/Android/FreeBSD/Solaris/macOS/iOS)
  *
  * @details Implements screen device enumeration and capture via the Linux
  * framebuffer device interface (/dev/fb0..fb7). Uses ioctl with
@@ -14,6 +14,10 @@
  * Solaris uses a different framebuffer API (Visual I/O via vis_io.h)
  * that is not yet implemented. Both methods return
  * Screen_GetDevicesFailed / Screen_CaptureFailed on Solaris.
+ *
+ * macOS and iOS require CoreGraphics framework for screen capture,
+ * which is not available in a position-independent runtime context.
+ * Both platforms return Screen_GetDevicesFailed / Screen_CaptureFailed.
  *
  * @note Framebuffer devices are limited to one display per /dev/fbN.
  * Multi-monitor setups with separate framebuffers are enumerated as
@@ -39,13 +43,19 @@
 #elif defined(PLATFORM_SOLARIS)
 #include "platform/common/solaris/syscall.h"
 #include "platform/common/solaris/system.h"
+#elif defined(PLATFORM_MACOS)
+#include "platform/common/macos/syscall.h"
+#include "platform/common/macos/system.h"
+#elif defined(PLATFORM_IOS)
+#include "platform/common/ios/syscall.h"
+#include "platform/common/ios/system.h"
 #endif
 
 // =============================================================================
-// Solaris stub — Visual I/O (vis_io) not yet implemented
+// Stubs — Solaris (vis_io), macOS/iOS (CoreGraphics) not yet implemented
 // =============================================================================
 
-#if defined(PLATFORM_SOLARIS)
+#if defined(PLATFORM_SOLARIS) || defined(PLATFORM_MACOS) || defined(PLATFORM_IOS)
 
 Result<ScreenDeviceList, Error> Screen::GetDevices()
 {

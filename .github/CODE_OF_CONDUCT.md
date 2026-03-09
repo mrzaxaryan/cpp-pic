@@ -33,7 +33,7 @@ This project is designed for **legitimate security research, authorized penetrat
 
 ## Scope
 
-This Code of Conduct applies within all project spaces -- including the GitHub repository, issue tracker, pull requests, and any related communication channels. It also applies when an individual is representing the project in public spaces.
+This Code of Conduct applies within all project spaces - including the GitHub repository, issue tracker, pull requests, and any related communication channels. It also applies when an individual is representing the project in public spaces.
 
 ## Enforcement
 

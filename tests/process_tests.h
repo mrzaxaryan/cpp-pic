@@ -81,10 +81,15 @@ private:
 	{
 #if defined(PLATFORM_WINDOWS)
 		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "/c", "exit", "0", nullptr};
+		auto a1 = "/c"_embed;
+		auto a2 = "exit"_embed;
+		auto a3 = "0"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
 		auto cmd = "/bin/sh"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "-c", "exit 0", nullptr};
+		auto a1 = "-c"_embed;
+		auto a2 = "exit 0"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
 		auto result = Process::Create((const CHAR *)cmd, args);
@@ -122,11 +127,17 @@ private:
 	{
 #if defined(PLATFORM_WINDOWS)
 		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		// /c pause would wait for input; use ping -n 60 to sleep
-		const CHAR *args[] = {(const CHAR *)cmd, "/c", "ping", "-n", "60", "127.0.0.1", nullptr};
+		auto a1 = "/c"_embed;
+		auto a2 = "ping"_embed;
+		auto a3 = "-n"_embed;
+		auto a4 = "60"_embed;
+		auto a5 = "127.0.0.1"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, (const CHAR *)a4, (const CHAR *)a5, nullptr};
 #else
 		auto cmd = "/bin/sh"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "-c", "sleep 60", nullptr};
+		auto a1 = "-c"_embed;
+		auto a2 = "sleep 60"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
 		auto result = Process::Create((const CHAR *)cmd, args);
@@ -160,10 +171,17 @@ private:
 	{
 #if defined(PLATFORM_WINDOWS)
 		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "/c", "ping", "-n", "60", "127.0.0.1", nullptr};
+		auto a1 = "/c"_embed;
+		auto a2 = "ping"_embed;
+		auto a3 = "-n"_embed;
+		auto a4 = "60"_embed;
+		auto a5 = "127.0.0.1"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, (const CHAR *)a4, (const CHAR *)a5, nullptr};
 #else
 		auto cmd = "/bin/sh"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "-c", "sleep 60", nullptr};
+		auto a1 = "-c"_embed;
+		auto a2 = "sleep 60"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
 		auto result = Process::Create((const CHAR *)cmd, args);
@@ -192,10 +210,15 @@ private:
 	{
 #if defined(PLATFORM_WINDOWS)
 		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "/c", "exit", "0", nullptr};
+		auto a1 = "/c"_embed;
+		auto a2 = "exit"_embed;
+		auto a3 = "0"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
 		auto cmd = "/bin/sh"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "-c", "exit 0", nullptr};
+		auto a1 = "-c"_embed;
+		auto a2 = "exit 0"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
 		auto result = Process::Create((const CHAR *)cmd, args);
@@ -228,16 +251,17 @@ private:
 
 	static BOOL TestCreateWithIO()
 	{
-		// Test that Create with IO redirection parameters doesn't crash
-		// We can't easily verify IO was redirected without pipes, but we can
-		// verify the process runs and exits normally with fd params
-
 #if defined(PLATFORM_WINDOWS)
 		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "/c", "exit", "0", nullptr};
+		auto a1 = "/c"_embed;
+		auto a2 = "exit"_embed;
+		auto a3 = "0"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
 		auto cmd = "/bin/sh"_embed;
-		const CHAR *args[] = {(const CHAR *)cmd, "-c", "exit 0", nullptr};
+		auto a1 = "-c"_embed;
+		auto a2 = "exit 0"_embed;
+		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
 		// Create with -1 (inherit) — should behave like no redirection

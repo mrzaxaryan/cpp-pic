@@ -93,8 +93,8 @@
 
 /// @name Binary I/O
 /// @{
-#include "core/io/binary_reader.h"
-#include "core/io/binary_writer.h"
+#include "core/binary/binary_reader.h"
+#include "core/binary/binary_writer.h"
 /// @}
 
 /** @} */ // end of core group

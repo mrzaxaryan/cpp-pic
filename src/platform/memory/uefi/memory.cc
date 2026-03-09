@@ -6,7 +6,7 @@
  */
 
 #include "platform/memory/allocator.h"
-#include "platform/common/uefi/efi_context.h"
+#include "platform/kernel/uefi/efi_context.h"
 
 /**
  * @brief Allocates memory from the UEFI pool.

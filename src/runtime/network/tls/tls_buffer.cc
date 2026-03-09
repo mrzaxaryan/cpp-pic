@@ -1,6 +1,6 @@
 #include "runtime/network/tls/tls_buffer.h"
 #include "core/memory/memory.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 
 /// @brief Append data to the TLS buffer
 /// @param data Pointer to the data to append

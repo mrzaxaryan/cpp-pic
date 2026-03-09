@@ -15,8 +15,8 @@ pir_filter_sources(windows linux macos uefi solaris freebsd android)
 # iOS reuses macOS XNU syscalls — re-add the macOS common include path
 # that pir_filter_sources(macos) removed.
 list(APPEND PIR_INCLUDE_PATHS
-    "${PIR_ROOT_DIR}/src/platform/common/macos"
-    "${PIR_ROOT_DIR}/src/platform/common/ios")
+    "${PIR_ROOT_DIR}/src/platform/kernel/macos"
+    "${PIR_ROOT_DIR}/src/platform/kernel/ios")
 
 # iOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)

@@ -1,9 +1,9 @@
 #include "platform/fs/directory.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "core/types/primitives.h"
 #include "core/memory/memory.h"
-#include "platform/common/windows/windows_types.h"
-#include "platform/common/windows/ntdll.h"
+#include "platform/kernel/windows/windows_types.h"
+#include "platform/kernel/windows/ntdll.h"
 
 Result<void, Error> Directory::Create(PCWCHAR path)
 {

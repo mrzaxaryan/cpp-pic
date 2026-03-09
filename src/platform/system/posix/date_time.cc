@@ -1,22 +1,22 @@
 #include "platform/system/date_time.h"
 #if defined(PLATFORM_LINUX)
-#include "platform/common/linux/syscall.h"
-#include "platform/common/linux/system.h"
+#include "platform/kernel/linux/syscall.h"
+#include "platform/kernel/linux/system.h"
 #elif defined(PLATFORM_ANDROID)
-#include "platform/common/android/syscall.h"
-#include "platform/common/android/system.h"
+#include "platform/kernel/android/syscall.h"
+#include "platform/kernel/android/system.h"
 #elif defined(PLATFORM_MACOS)
-#include "platform/common/macos/syscall.h"
-#include "platform/common/macos/system.h"
+#include "platform/kernel/macos/syscall.h"
+#include "platform/kernel/macos/system.h"
 #elif defined(PLATFORM_IOS)
-#include "platform/common/ios/syscall.h"
-#include "platform/common/ios/system.h"
+#include "platform/kernel/ios/syscall.h"
+#include "platform/kernel/ios/system.h"
 #elif defined(PLATFORM_SOLARIS)
-#include "platform/common/solaris/syscall.h"
-#include "platform/common/solaris/system.h"
+#include "platform/kernel/solaris/syscall.h"
+#include "platform/kernel/solaris/system.h"
 #elif defined(PLATFORM_FREEBSD)
-#include "platform/common/freebsd/syscall.h"
-#include "platform/common/freebsd/system.h"
+#include "platform/kernel/freebsd/syscall.h"
+#include "platform/kernel/freebsd/system.h"
 #endif
 
 DateTime DateTime::Now()

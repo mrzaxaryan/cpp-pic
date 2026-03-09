@@ -8,7 +8,7 @@ pir_get_target_info()
 pir_filter_sources(linux macos uefi posix solaris freebsd android ios)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${PIR_ROOT_DIR}/src/platform/common/windows")
+    "${PIR_ROOT_DIR}/src/platform/kernel/windows")
 
 # Debug-specific
 if(PIR_BUILD_TYPE STREQUAL "debug")

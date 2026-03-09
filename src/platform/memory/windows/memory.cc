@@ -6,8 +6,8 @@
  */
 
 #include "platform/memory/allocator.h"
-#include "platform/common/windows/ntdll.h"
-#include "platform/common/windows/windows_types.h"
+#include "platform/kernel/windows/ntdll.h"
+#include "platform/kernel/windows/windows_types.h"
 
 PVOID Allocator::AllocateMemory(USIZE len)
 {

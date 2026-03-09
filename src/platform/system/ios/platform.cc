@@ -1,6 +1,6 @@
 #include "platform/platform.h"
-#include "platform/common/ios/syscall.h"
-#include "platform/common/ios/system.h"
+#include "platform/kernel/ios/syscall.h"
+#include "platform/kernel/ios/system.h"
 
 // ARM64 iOS cannot use -static (kernel requires dyld). The linker adds
 // dyld_stub_binder to the initial undefined symbols list for all dynamic

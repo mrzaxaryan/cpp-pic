@@ -1,6 +1,6 @@
 #include "runtime/network/tls/tls_hkdf.h"
-#include "core/io/binary_writer.h"
-#include "platform/io/logger.h"
+#include "core/binary/binary_writer.h"
+#include "platform/console/logger.h"
 #include "core/memory/memory.h"
 #include "runtime/crypto/sha2.h"
 #include "runtime/network/tls/tls_buffer.h"

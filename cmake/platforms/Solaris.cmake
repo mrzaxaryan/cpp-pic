@@ -13,7 +13,7 @@ pir_get_target_info()
 pir_filter_sources(windows linux macos uefi freebsd android ios)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${PIR_ROOT_DIR}/src/platform/common/solaris")
+    "${PIR_ROOT_DIR}/src/platform/kernel/solaris")
 
 # Architecture-specific compiler flags
 if(PIR_ARCH STREQUAL "x86_64")

@@ -2,7 +2,7 @@
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 #include "platform/system/random.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "runtime/network/dns/dns_client.h"
 #include "runtime/network/http/http_client.h"
 #include "core/types/embedded/embedded_string.h"

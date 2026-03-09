@@ -8,10 +8,10 @@
  */
 
 #include "platform/system/process.h"
-#include "platform/common/windows/ntdll.h"
-#include "platform/common/windows/kernel32.h"
+#include "platform/kernel/windows/ntdll.h"
+#include "platform/kernel/windows/kernel32.h"
 #include "core/memory/memory.h"
-#include "platform/common/windows/peb.h"
+#include "platform/kernel/windows/peb.h"
 
 // Windows doesn't have fork() - use stub implementation
 Result<SSIZE, Error> Process::Fork() noexcept

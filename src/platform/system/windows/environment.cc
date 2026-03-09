@@ -6,7 +6,7 @@
  */
 
 #include "platform/system/environment.h"
-#include "platform/common/windows/peb.h"
+#include "platform/kernel/windows/peb.h"
 #include "core/memory/memory.h"
 
 // Extended RTL_USER_PROCESS_PARAMETERS with Environment field

@@ -10,7 +10,7 @@ pir_filter_sources(windows linux macos uefi solaris freebsd ios)
 # Android reuses Linux kernel syscalls — re-add the Linux common include path
 # that pir_filter_sources(linux) removed.
 list(APPEND PIR_INCLUDE_PATHS
-    "${PIR_ROOT_DIR}/src/platform/common/linux")
+    "${PIR_ROOT_DIR}/src/platform/kernel/linux")
 
 # Architecture-specific compiler flags
 if(PIR_ARCH STREQUAL "armv7a")

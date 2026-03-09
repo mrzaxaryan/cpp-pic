@@ -17,11 +17,11 @@
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 
 #if defined(PLATFORM_ANDROID)
-#include "platform/common/android/syscall.h"
-#include "platform/common/android/system.h"
+#include "platform/kernel/android/syscall.h"
+#include "platform/kernel/android/system.h"
 #else
-#include "platform/common/linux/syscall.h"
-#include "platform/common/linux/system.h"
+#include "platform/kernel/linux/syscall.h"
+#include "platform/kernel/linux/system.h"
 #endif
 #include "core/memory/memory.h"
 

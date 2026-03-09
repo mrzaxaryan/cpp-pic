@@ -6,7 +6,7 @@
  */
 
 #include "platform/system/date_time.h"
-#include "platform/common/uefi/efi_context.h"
+#include "platform/kernel/uefi/efi_context.h"
 
 /**
  * DateTime::Now - Get current date and time from UEFI

@@ -5,7 +5,7 @@
  */
 
 #include "platform/platform.h"
-#include "platform/common/uefi/efi_context.h"
+#include "platform/kernel/uefi/efi_context.h"
 
 /**
  * ExitProcess - Shutdown the system

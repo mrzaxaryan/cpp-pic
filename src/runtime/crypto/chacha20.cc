@@ -14,7 +14,7 @@
 #include "runtime/crypto/chacha20.h"
 #include "core/memory/memory.h"
 #include "platform/platform.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "core/math/bitops.h"
 
 static constexpr FORCE_INLINE UINT32 U8To32Little(const UINT8 *p)

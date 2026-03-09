@@ -1,8 +1,8 @@
 #include "platform/fs/directory_iterator.h"
 #include "core/types/primitives.h"
 #include "core/memory/memory.h"
-#include "platform/common/windows/windows_types.h"
-#include "platform/common/windows/ntdll.h"
+#include "platform/kernel/windows/windows_types.h"
+#include "platform/kernel/windows/ntdll.h"
 
 // Helper to fill the entry from FILE_BOTH_DIR_INFORMATION
 static VOID FillEntry(DirectoryEntry &entry, const FILE_BOTH_DIR_INFORMATION &data)

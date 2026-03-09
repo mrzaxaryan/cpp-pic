@@ -8,7 +8,7 @@ pir_get_target_info()
 pir_filter_sources(windows macos uefi solaris freebsd android ios)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${PIR_ROOT_DIR}/src/platform/common/linux")
+    "${PIR_ROOT_DIR}/src/platform/kernel/linux")
 
 # Linker configuration (ELF)
 pir_add_link_flags(

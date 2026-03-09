@@ -7,7 +7,7 @@
  */
 
 #include "runtime/crypto/chacha20_encoder.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "core/memory/memory.h"
 
 /** @brief TLS record header size in bytes (content type + version + length) */

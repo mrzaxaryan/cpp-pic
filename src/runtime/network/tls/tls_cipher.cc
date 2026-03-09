@@ -1,5 +1,5 @@
 #include "runtime/network/tls/tls_cipher.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "core/memory/memory.h"
 #include "platform/system/random.h"
 #include "runtime/crypto/sha2.h"

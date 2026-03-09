@@ -22,9 +22,9 @@
 
 #if defined(PLATFORM_UEFI)
 // UEFI platform - include EFI types and system table
-#include "platform/common/uefi/efi_types.h"
-#include "platform/common/uefi/efi_system_table.h"
-#include "platform/common/uefi/efi_context.h"
+#include "platform/kernel/uefi/efi_types.h"
+#include "platform/kernel/uefi/efi_system_table.h"
+#include "platform/kernel/uefi/efi_context.h"
 #endif
 
 // =============================================================================
@@ -51,24 +51,24 @@ NO_RETURN VOID ExitProcess(USIZE code);
 
 /// @name I/O Services
 /// @{
-#include "platform/io/console.h"
+#include "platform/console/console.h"
 #include "platform/fs/offset_origin.h"
 #include "platform/fs/directory_entry.h"
 #include "platform/fs/file.h"
 #include "platform/fs/directory.h"
 #include "platform/fs/directory_iterator.h"
 #include "platform/fs/path.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 /// @}
 
 /// @name Network Services
 /// @{
-#include "platform/network/socket.h"
+#include "platform/socket/socket.h"
 /// @}
 
 /// @name Display
 /// @{
-#include "platform/display/screen.h"
+#include "platform/screen/screen.h"
 /// @}
 
 /// @name Process Management

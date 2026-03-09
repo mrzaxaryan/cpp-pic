@@ -8,8 +8,8 @@
  */
 #pragma once
 
-#include "platform/common/uefi/efi_context.h"
-#include "platform/common/uefi/efi_file_protocol.h"
+#include "platform/kernel/uefi/efi_context.h"
+#include "platform/kernel/uefi/efi_file_protocol.h"
 #include "core/types/primitives.h"
 #include "core/types/span.h"
 

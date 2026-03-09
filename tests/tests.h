@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "core/types/span.h"
 
 /**

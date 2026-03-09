@@ -1,5 +1,5 @@
 #include "runtime/network/tls/tls_hash.h"
-#include "platform/io/logger.h"
+#include "platform/console/logger.h"
 #include "runtime/crypto/sha2.h"
 
 /// @brief Reset the hash cache by clearing the underlying buffer

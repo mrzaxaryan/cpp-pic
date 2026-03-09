@@ -137,7 +137,7 @@ src/                        # Source layers
     compiler/               # Compiler abstractions (FORCE_INLINE, NOINLINE, compiler runtime)
     memory/                 # Memory operations (Copy, Set, Compare, Zero)
     math/                   # Math utilities, bit operations, byte order
-    io/                     # Binary reader/writer
+    binary/                 # Binary reader/writer
     types/                  # Primitives, Span, Result, Error, Double, IP address
       embedded/             # EMBEDDED_STRING, EMBEDDED_DOUBLE, EMBEDDED_ARRAY, EMBEDDED_FUNCTION_POINTER
     string/                 # String utilities and formatting
@@ -145,7 +145,7 @@ src/                        # Source layers
     encoding/               # UTF-16
   platform/                 # PLATFORM layer
     platform.h              # Aggregate header for PLATFORM layer
-    common/                 # Per-OS shared infrastructure
+    kernel/                 # Per-OS kernel interfaces
       windows/              # PEB, PE, NTDLL, System, Kernel32, types
       linux/                # Syscall numbers, System::Call, result conversion
       macos/                # Syscall numbers, System::Call, result conversion
@@ -157,7 +157,7 @@ src/                        # Source layers
       windows/              # NtAllocateVirtualMemory/NtFreeVirtualMemory
       posix/                # mmap/munmap
       uefi/                 # AllocatePool/FreePool
-    io/                     # Console, Logger
+    console/                # Console, Logger
       windows/              # ZwWriteFile console output
       posix/                # write() syscall to STDOUT
       uefi/                 # SimpleTextOut protocol
@@ -165,12 +165,9 @@ src/                        # Source layers
       windows/              # NtCreateFile, NtReadFile, NtWriteFile
       posix/                # open/read/write/close syscalls, posix_path
       uefi/                 # EFI_FILE_PROTOCOL, uefi_fs_helpers
-    network/                # Socket
+    socket/                 # Socket
       windows/              # AFD (Auxiliary Function Driver)
-      linux/                # Direct socket syscalls
-      macos/                # Direct socket syscalls (shared with iOS)
-      solaris/              # Direct socket syscalls
-      freebsd/              # Direct socket syscalls
+      posix/                # Direct socket syscalls
       uefi/                 # EFI_TCP4/TCP6_PROTOCOL
     system/                 # DateTime, Environment, Process, Random
       windows/              # Windows-specific system operations

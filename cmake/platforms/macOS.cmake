@@ -13,7 +13,7 @@ pir_get_target_info()
 pir_filter_sources(windows linux uefi solaris freebsd android ios)
 
 list(APPEND PIR_INCLUDE_PATHS
-    "${PIR_ROOT_DIR}/src/platform/common/macos")
+    "${PIR_ROOT_DIR}/src/platform/kernel/macos")
 
 # macOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)

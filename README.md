@@ -272,7 +272,7 @@ PIR is built on a clean three-layer abstraction that separates concerns and enab
 **CORE** provides:
 - Platform-independent primitives
 - Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
-- Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
+- Numeric types (`UINT64`, `INT64`, `DOUBLE`)
 - Memory operations, string utilities, and formatting
 - Algorithms (DJB2 hashing, Base64, random number generation)
 

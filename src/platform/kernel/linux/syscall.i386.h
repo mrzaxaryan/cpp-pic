@@ -66,5 +66,6 @@ constexpr USIZE SYS_FORK = 2;
 constexpr USIZE SYS_EXECVE = 11;
 constexpr USIZE SYS_DUP2 = 63;
 constexpr USIZE SYS_WAIT4 = 114;
+constexpr USIZE SYS_KILL = 37;
 constexpr USIZE SYS_SETSID = 66;
 constexpr USIZE SYS_PIPE = 42;

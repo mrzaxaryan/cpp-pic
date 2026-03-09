@@ -182,13 +182,11 @@ struct Error
 		Tls_ReadFailed_Channel     = 85, // ReadChannel returned 0 bytes
 
 		// -------------------------
-		// Process errors (90–94)
+		// Process errors (90–92)
 		// -------------------------
-		Process_ForkFailed      = 90, // fork() syscall failed
-		Process_Dup2Failed      = 91, // dup2() syscall failed
-		Process_ExecveFailed    = 92, // execve() syscall failed
-		Process_SetsidFailed    = 93, // setsid() syscall failed
-		Process_BindShellFailed = 94, // shell binding failed
+		Process_CreateFailed    = 90, // process creation failed
+		Process_WaitFailed      = 91, // waiting for process failed
+		Process_TerminateFailed = 92, // process termination failed
 
 		Pipe_ReadFailed = 109, // pipe read failed
 		Pipe_WriteFailed = 110, // pipe write failed

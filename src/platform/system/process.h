@@ -1,9 +1,14 @@
 /**
  * @file process.h
- * @brief Process execution and I/O redirection functions
- * @details Provides process creation and I/O redirection for bind/reverse shell
- * functionality. Position-independent with no data section dependencies.
+ * @brief Cross-platform process creation and management
+ * @details RAII process handle with create, wait, terminate, and optional
+ * I/O redirection. Position-independent with no data section dependencies.
  * Part of the PLATFORM layer of the Position-Independent Runtime (PIR).
+ *
+ * Platform implementations:
+ * - POSIX: fork + execve, wait4, kill
+ * - Windows: CreateProcessW, ZwWaitForSingleObject, ZwTerminateProcess
+ * - UEFI: Not supported (all operations return failure)
  */
 
 #pragma once
@@ -11,63 +16,135 @@
 #include "core/core.h"
 
 /**
- * Process - Static class for process management operations
+ * Process - RAII wrapper for a spawned child process
  *
- * Provides fork/exec functionality with I/O redirection for shell binding.
+ * Follows the Socket pattern: static factory, move-only, destructor cleans up.
  */
 class Process
 {
 public:
 	/**
-	 * BindSocketToShell - Spawn a process and redirect socket to its stdin/stdout/stderr
+	 * Create - Spawn a new process
 	 *
-	 * @param socketFd Socket file descriptor to redirect
-	 * @param processPath Full path to executable (e.g., "/bin/sh" or "C:\Windows\System32\cmd.exe")
-	 * @return Result with child PID/handle on success, Error on failure
-	 *
-	 * NOTE: Caller must provide the full path to the executable.
-	 *       Use environment variables to get correct paths:
-	 *       - Linux: SHELL (e.g., "/bin/bash")
-	 *       - Windows: COMSPEC (e.g., "C:\Windows\System32\cmd.exe")
+	 * @param path Full path to executable
+	 * @param args Null-terminated argument array (first element = program name)
+	 * @param stdinFd File descriptor/handle for child's stdin (-1 to inherit parent's)
+	 * @param stdoutFd File descriptor/handle for child's stdout (-1 to inherit parent's)
+	 * @param stderrFd File descriptor/handle for child's stderr (-1 to inherit parent's)
+	 * @return Process handle on success, Error on failure
 	 */
-	[[nodiscard]] static Result<SSIZE, Error> BindSocketToShell(SSIZE socketFd, const CHAR *processPath) noexcept;
+	[[nodiscard]] static Result<Process, Error> Create(
+		const CHAR *path,
+		const CHAR *const args[],
+		SSIZE stdinFd = -1,
+		SSIZE stdoutFd = -1,
+		SSIZE stderrFd = -1) noexcept;
 
 	/**
-	 * Fork - Create a child process
+	 * Wait - Block until the process exits
 	 *
-	 * @return Result with 0 in child, child PID in parent, Error on failure
+	 * @return Exit code on success, Error on failure
 	 */
-	[[nodiscard]] static Result<SSIZE, Error> Fork() noexcept;
+	[[nodiscard]] Result<SSIZE, Error> Wait() noexcept;
 
 	/**
-	 * Dup2 - Duplicate file descriptor
+	 * Terminate - Forcefully kill the process
 	 *
-	 * @param oldfd Source file descriptor
-	 * @param newfd Target file descriptor
-	 * @return Result with newfd on success, Error on failure
+	 * @return void on success, Error on failure
 	 */
-	[[nodiscard]] static Result<SSIZE, Error> Dup2(SSIZE oldfd, SSIZE newfd) noexcept;
+	[[nodiscard]] Result<void, Error> Terminate() noexcept;
 
 	/**
-	 * Execve - Execute a program
+	 * IsRunning - Check if the process is still alive
 	 *
-	 * @param pathname Path to executable
-	 * @param argv Argument array (nullptr terminated)
-	 * @param envp Environment array (nullptr terminated)
-	 * @return Does not return on success, Error on failure
+	 * @return true if running, false if exited or invalid
 	 */
-	[[nodiscard]] static Result<SSIZE, Error> Execve(const CHAR *pathname, CHAR *const argv[], CHAR *const envp[]) noexcept;
+	[[nodiscard]] BOOL IsRunning() const noexcept;
 
 	/**
-	 * Setsid - Create a new session
+	 * Id - Get the process identifier
 	 *
-	 * @return Result with session ID on success, Error on failure
+	 * @return PID on POSIX, process ID on Windows
 	 */
-	[[nodiscard]] static Result<SSIZE, Error> Setsid() noexcept;
+	[[nodiscard]] SSIZE Id() const noexcept { return id; }
 
-	// Prevent instantiation
+	/**
+	 * IsValid - Check if this Process holds a valid handle
+	 *
+	 * @return true if valid
+	 */
+	[[nodiscard]] BOOL IsValid() const noexcept { return id != INVALID_ID; }
+
+	/// @name RAII
+	/// @{
+	~Process() noexcept
+	{
+		if (IsValid())
+			(void)Close();
+	}
+
+	Process(Process &&other) noexcept
+		: id(other.id)
+#if defined(PLATFORM_WINDOWS)
+		, handle(other.handle)
+#endif
+	{
+		other.id = INVALID_ID;
+#if defined(PLATFORM_WINDOWS)
+		other.handle = nullptr;
+#endif
+	}
+
+	Process &operator=(Process &&other) noexcept
+	{
+		if (this != &other)
+		{
+			if (IsValid())
+				(void)Close();
+			id = other.id;
+#if defined(PLATFORM_WINDOWS)
+			handle = other.handle;
+			other.handle = nullptr;
+#endif
+			other.id = INVALID_ID;
+		}
+		return *this;
+	}
+
+	Process(const Process &) = delete;
+	Process &operator=(const Process &) = delete;
+	/// @}
+
+	/// @name Stack-Only Enforcement
+	/// @{
 	VOID *operator new(USIZE) = delete;
 	VOID operator delete(VOID *) = delete;
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 	VOID operator delete(VOID *, PVOID) noexcept {}
+	/// @}
+
+private:
+	static constexpr SSIZE INVALID_ID = -1;
+
+	SSIZE id;
+#if defined(PLATFORM_WINDOWS)
+	PVOID handle;
+#endif
+
+	explicit Process(SSIZE processId) noexcept
+		: id(processId)
+#if defined(PLATFORM_WINDOWS)
+		, handle(nullptr)
+#endif
+	{
+	}
+
+#if defined(PLATFORM_WINDOWS)
+	Process(SSIZE processId, PVOID processHandle) noexcept
+		: id(processId), handle(processHandle)
+	{
+	}
+#endif
+
+	Result<void, Error> Close() noexcept;
 };

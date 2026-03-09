@@ -18,6 +18,7 @@
  *   JpegTests              - JPEG decoding tests
  *   MemoryTests            - Memory operations tests
  *   PrngTests              - Pseudorandom number generator tests
+ *   ProcessTests           - Process creation, wait, terminate tests
  *   RandomTests            - Random number generation tests
  *   ResultTests            - Result<T,E> type tests
  *   ScreenTests            - Screen/display device tests
@@ -65,6 +66,7 @@
 #include "ip_address_tests.h"
 #include "jpeg_tests.h"
 #include "memory_tests.h"
+#include "process_tests.h"
 #include "prng_tests.h"
 #include "random_tests.h"
 #include "result_tests.h"
@@ -107,6 +109,7 @@ static BOOL RunPIRTests()
 	// PLATFORM - Memory, System, File I/O, and Display
 	RunTestSuite<FileSystemTests>(allPassed);
 	RunTestSuite<MemoryTests>(allPassed);
+	RunTestSuite<ProcessTests>(allPassed);
 	RunTestSuite<RandomTests>(allPassed);
 	RunTestSuite<ScreenTests>(allPassed);
 

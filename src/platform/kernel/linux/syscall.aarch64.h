@@ -63,5 +63,6 @@ constexpr USIZE SYS_CLONE = 220;  // aarch64 uses clone instead of fork
 constexpr USIZE SYS_EXECVE = 221;
 constexpr USIZE SYS_DUP3 = 24;    // aarch64 uses dup3 instead of dup2
 constexpr USIZE SYS_WAIT4 = 260;
+constexpr USIZE SYS_KILL = 129;
 constexpr USIZE SYS_SETSID = 157;
 constexpr USIZE SYS_PIPE2 = 59;   // aarch64 uses pipe2 instead of pipe

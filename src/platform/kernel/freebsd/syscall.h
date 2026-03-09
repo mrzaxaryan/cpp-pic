@@ -71,6 +71,7 @@ constexpr USIZE SYS_EXECVE     = 59;
 constexpr USIZE SYS_DUP2       = 90;
 constexpr USIZE SYS_SETSID     = 147;
 constexpr USIZE SYS_WAIT4      = 7;
+constexpr USIZE SYS_KILL       = 37;
 constexpr USIZE SYS_PIPE       = 42;
 
 // =============================================================================
@@ -153,6 +154,12 @@ constexpr INT16 POLLHUP = 0x0010;
 // Clock IDs
 constexpr INT32 CLOCK_REALTIME  = 0;
 constexpr INT32 CLOCK_MONOTONIC = 4;
+
+// Signal numbers
+constexpr INT32 SIGKILL = 9;
+
+// wait4 options
+constexpr INT32 WNOHANG = 1;
 
 // Invalid file descriptor
 constexpr SSIZE INVALID_FD = -1;

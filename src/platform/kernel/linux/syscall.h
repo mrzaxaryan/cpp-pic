@@ -148,6 +148,12 @@ constexpr INT16 POLLOUT = 0x0004;
 constexpr INT16 POLLERR = 0x0008;
 constexpr INT16 POLLHUP = 0x0010;
 
+// Signal numbers
+constexpr INT32 SIGKILL = 9;
+
+// wait4 options
+constexpr INT32 WNOHANG = 1;
+
 // Invalid file descriptor
 constexpr SSIZE INVALID_FD = -1;
 

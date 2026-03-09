@@ -238,7 +238,7 @@
 
 Shellcode is a small, self-contained sequence of machine instructions that can be injected into memory and executed from an arbitrary location. It must operate without relying on external components such as DLLs, runtime initialization routines, or fixed stack layouts. Because of these strict constraints, shellcode is traditionally written in assembly language, which provides precise control over instructions, registers, and memory access.
 
-While assembly ensures fully dependency-free and position-independent execution, it quickly becomes impractical as complexity grows due to its low-level nature and limited expressiveness. High-level languages like C offer improved readability, maintainability, and development speed, but standard C and C++ compilation models introduce significant challenges for shellcode development. Modern compilers typically generate binaries that depend on runtime libraries, import tables, relocation information, and read-only data sections. These dependencies violate the core requirement of shellcode -- execution independent of any fixed memory layout or external support -- and these problems do not admit simple or universally effective solutions.
+While assembly ensures fully dependency-free and position-independent execution, it quickly becomes impractical as complexity grows due to its low-level nature and limited expressiveness. High-level languages like C offer improved readability, maintainability, and development speed, but standard C and C++ compilation models introduce significant challenges for shellcode development. Modern compilers typically generate binaries that depend on runtime libraries, import tables, relocation information, and read-only data sections. These dependencies violate the core requirement of shellcode - execution independent of any fixed memory layout or external support - and these problems do not admit simple or universally effective solutions.
 
 As a result, code produced by conventional toolchains cannot be used as standalone shellcode without substantial modification or manual restructuring.
 
@@ -269,7 +269,8 @@ PIR is built on a clean three-layer abstraction that separates concerns and enab
 +-------------------------------------------------------------+
 ```
 
-**CORE** provides platform-independent primitives:
+**CORE** provides:
+- Platform-independent primitives
 - Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
 - Numeric types (`UINT64`, `INT64`, `DOUBLE`) with guaranteed no `.rdata` generation
 - Memory operations, string utilities, and formatting
@@ -304,7 +305,7 @@ C-generated shellcode relies on loader-handled relocations that are not applied 
 <details>
 <summary>Traditional approaches and why they fail</summary>
 
-**Option 1: Custom shellcode loader.** Requires saving the `.reloc` section in shellcode and implementing relocation logic -- not straightforward.
+**Option 1: Custom shellcode loader.** Requires saving the `.reloc` section in shellcode and implementing relocation logic - not straightforward.
 
 **Option 2: Stack-based strings.** Represent strings as character arrays on the stack:
 
@@ -444,7 +445,7 @@ Achieving true position-independence requires specific compiler flags:
 -fdata-sections       # Each data item in own section (garbage collection)
 ```
 
-The `-fno-jump-tables` flag is particularly critical -- without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
+The `-fno-jump-tables` flag is particularly critical - without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
 
 ### Post-Build Verification
 
@@ -456,13 +457,13 @@ The build system automatically verifies that the final binary contains no data s
 
 ### Low-Level Native Interfaces
 
-PIR builds directly on the NT Native API. On x86_64 and i386, Zw* wrappers use indirect syscalls -- resolving System Service Numbers (SSNs) at runtime and executing through `syscall`/`sysenter` gadgets found in ntdll. On ARM64, where the kernel validates that the `svc` instruction originates from within ntdll, wrappers call the ntdll export directly.
+PIR builds directly on the NT Native API. On x86_64 and i386, Zw* wrappers use indirect syscalls - resolving System Service Numbers (SSNs) at runtime and executing through `syscall`/`sysenter` gadgets found in ntdll. On ARM64, where the kernel validates that the `svc` instruction originates from within ntdll, wrappers call the ntdll export directly.
 
 By eliminating static import tables and bypassing `GetProcAddress`, PIR removes all dependencies on the OS runtime initialization and dynamic linking. Function addresses are resolved internally using hash-based lookups of exported symbols.
 
 ### Capabilities
 
-- **File system:** File creation, reading, writing, deletion; directory operations; path management -- all via NTAPI
+- **File system:** File creation, reading, writing, deletion; directory operations; path management - all via NTAPI
 - **Console output:** Printf-style output implemented natively within the runtime
 - **Cryptography:** SHA-256/512, HMAC, ChaCha20, ECC, Base64
 - **Networking:** DNS resolution, HTTP client, WebSocket, TLS 1.3 with certificate verification
@@ -486,7 +487,7 @@ PIR is designed for execution environments where traditional runtime assumptions
 
 ## Roadmap
 
-This project is a work in progress. Contributions are welcome -- see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+This project is a work in progress. Contributions are welcome - see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 ### Planned Platforms
 - NetBSD, OpenBSD, HaikuOS, QNX
@@ -504,9 +505,9 @@ This project is a work in progress. Contributions are welcome -- see [CONTRIBUTI
 
 We welcome contributions of all kinds. Please read:
 
-- [Contributing Guide](.github/CONTRIBUTING.md) -- build instructions, code style, project structure
-- [Code of Conduct](.github/CODE_OF_CONDUCT.md) -- community standards
-- [Security Policy](.github/SECURITY.md) -- reporting vulnerabilities
+- [Contributing Guide](.github/CONTRIBUTING.md) - build instructions, code style, project structure
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md) - community standards
+- [Security Policy](.github/SECURITY.md) - reporting vulnerabilities
 
 ---
 
@@ -514,4 +515,4 @@ We welcome contributions of all kinds. Please read:
 
 This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0). See [LICENSE](LICENSE) for full terms.
 
-You are free to use, modify, and distribute this software, provided that any derivative work -- including network services -- is also made available under the AGPL-3.0. For proprietary/closed-source licensing, contact [mrzaxaryan](https://github.com/mrzaxaryan).
+You are free to use, modify, and distribute this software, provided that any derivative work - including network services, is also made available under the AGPL-3.0. For proprietary/closed-source licensing, contact [mrzaxaryan](https://github.com/mrzaxaryan).

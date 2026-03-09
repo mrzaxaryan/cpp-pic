@@ -11,8 +11,7 @@ VOID TlsHash::Reset()
 }
 
 /// @brief Append data to the hash cache by adding it to the underlying buffer
-/// @param buffer The data to append
-/// @param size The size of the data to append
+/// @param buffer Span containing the data to append to the hash cache
 /// @return void
 
 VOID TlsHash::Append(Span<const CHAR> buffer)

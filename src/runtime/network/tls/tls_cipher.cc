@@ -78,7 +78,6 @@ VOID TlsCipher::GetHash(Span<CHAR> out)
 
 /// @brief Update the handshake hash with new input data
 /// @param in Pointer to the input data to be added to the handshake hash
-/// @param len Length of the input data
 /// @return void
 
 VOID TlsCipher::UpdateHash(Span<const CHAR> in)
@@ -130,7 +129,6 @@ Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 /// @brief Compute the pre-master key using the specified ECC group and server key, and store it in the provided output buffer
 /// @param ecc Specified ECC group to use for key computation
 /// @param serverKey Server's public key to use for pre-master key computation
-/// @param serverKeyLen Server key length in bytes
 /// @param premasterKey Pointer to the buffer where the computed pre-master key will be stored
 /// @return Result<void, Error>::Ok() if the pre-master key was successfully computed
 
@@ -178,7 +176,6 @@ Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, Span<const CHAR> ser
 /// @brief Compute the TLS key using the specified ECC group and server key, and store it in the provided finished hash
 /// @param ecc Specified ECC group to use for key computation
 /// @param serverKey Server's public key to use for TLS key computation
-/// @param serverKeyLen Server key length in bytes
 /// @param finishedHash Pointer to the buffer where the computed finished hash will be stored
 /// @return Result<void, Error>::Ok() if the TLS key was successfully computed
 
@@ -330,7 +327,6 @@ Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, I
 /// @brief Encode a TLS record using the ChaCha20 encoder and append it to the send buffer
 /// @param sendbuf Pointer to the buffer where the encoded TLS record will be appended
 /// @param packet Pointer to the TLS record to encode
-/// @param packetSize Size of the TLS record to encode
 /// @param keepOriginal Indicates whether to keep the original TLS record without encoding
 /// @return void
 

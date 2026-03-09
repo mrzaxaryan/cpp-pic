@@ -226,7 +226,7 @@
 - [Architecture](#architecture)
 - [Common Problems and Solutions](#common-problems-and-solutions)
 - [Build System](#build-system)
-- [Windows Implementation](#windows-implementation)
+- [Platform Implementations](#platform-implementation)
 - [Use Cases](#use-cases)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -447,7 +447,6 @@ Each platform provides its own implementation using its native kernel interface:
 
 - **Windows**
   - Uses the **NT Native API**
-  - System calls performed through `ntdll`
 
 - **Linux**
   - Uses **direct Linux system calls**

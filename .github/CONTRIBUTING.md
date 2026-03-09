@@ -426,8 +426,6 @@ These functions convert a raw OS status into `Ok`/`Err` in a single call. Exampl
 
 Use `%e` with `result.Error()` in log macros.
 
-Use `%e` with `result.Error()` in log macros.  
-
 **Output format:**
 
 - **Runtime codes:** decimal  

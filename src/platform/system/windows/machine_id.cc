@@ -54,7 +54,7 @@ Result<UUID, Error> GetMachineUUID()
 	PUINT8 tableEnd = tableData + tableLength;
 
 	UUID uuid{};
-	BOOL found = FALSE;
+	BOOL found = false;
 
 	while (tableData < tableEnd)
 	{
@@ -69,12 +69,12 @@ Result<UUID, Error> GetMachineUUID()
 			auto systemInfo = (PSMBIOS_TYPE1_SYSTEM_INFORMATION)tableData;
 
 			// Check for all-FF (not set) or all-00 (not present).
-			BOOL allZero = TRUE;
-			BOOL allFF = TRUE;
+			BOOL allZero = true;
+			BOOL allFF = true;
 			for (INT32 i = 0; i < 16; i++)
 			{
-				if (systemInfo->UUID[i] != 0x00) allZero = FALSE;
-				if (systemInfo->UUID[i] != 0xFF) allFF = FALSE;
+				if (systemInfo->UUID[i] != 0x00) allZero = false;
+				if (systemInfo->UUID[i] != 0xFF) allFF = false;
 			}
 
 			if (!allZero && !allFF)
@@ -103,7 +103,7 @@ Result<UUID, Error> GetMachineUUID()
 					uuidBytes[i] = systemInfo->UUID[i];
 
 				uuid = UUID(Span<const UINT8, 16>(uuidBytes));
-				found = TRUE;
+				found = true;
 				break;
 			}
 		}

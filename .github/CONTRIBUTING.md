@@ -43,26 +43,7 @@ cmake --build --preset {platform}-{arch}-{build_type}
 ./build/{build_type}/{platform}/{arch}/output.{exe|elf|efi}
 ```
 
-**Presets:** Build presets follow this format:
-
-* Platforms
-    - `windows`
-    - `linux`
-    - `macos`
-    - `ios`
-    - `freebsd`
-    - `uefi`
-
-* Architectures
-    - `i386`
-    - `x86_64`
-    - `armv7a`
-    - `aarch64`
-
-* Configurations
-    - `debug`
-    - `release`
----
+**Presets:** `windows|linux|macos|ios|freebsd|uefi` x `i386|x86_64|armv7a|aarch64` x `debug|release`
 
 ## Toolchain Installation
 

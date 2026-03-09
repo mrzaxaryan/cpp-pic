@@ -219,7 +219,7 @@ cmake/                      # CMake modules, linker scripts, function.order
 Three-layer architecture (**RUNTIME → PLATFORM → CORE**).  
 Upper layers depend on lower layers, never the reverse.
 
-See [README.md](../README.md) for an overview.
+See [documentation]([../README.md](https://github.com/mrzaxaryan/Position-Independent-Runtime/blob/main/README.md)) for an overview.
 
 ---
 

@@ -47,6 +47,8 @@ cmake --build --preset {platform}-{arch}-{build_type}
 
 ## Toolchain Installation
 
+**Note:** On Windows, use [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) (Windows Subsystem for Linux) and follow the Linux instructions below.
+
 ### Linux (Ubuntu/Debian) / WSL
 
 ```bash

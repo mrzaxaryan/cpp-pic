@@ -54,7 +54,7 @@ endif()
 # as macOS ARM64 — Apple's ld places non-LTO input sections before LTO ones.
 if(PIR_BUILD_TYPE STREQUAL "release")
     set_source_files_properties(
-        "${PIR_ROOT_DIR}/src/runtime/entry_point.cc"
+        "${PIR_ROOT_DIR}/src/entry_point.cc"
         PROPERTIES
         COMPILE_FLAGS "-fno-lto"
     )

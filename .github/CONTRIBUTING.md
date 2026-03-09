@@ -178,9 +178,9 @@ src/                        # Source layers
       solaris/              # Solaris-specific environment, platform, process
       freebsd/              # FreeBSD-specific environment, platform, process
       uefi/                 # UEFI-specific system operations
+  entry_point.cc            # Program entry point (no CRT)
   runtime/                  # RUNTIME layer (.h + .cc co-located)
     runtime.h               # Aggregate header (CORE + PLATFORM + RUNTIME)
-    entry_point.cc          # Program entry point (no CRT)
     crypto/                 # SHA2, ECC, ChaCha20
     network/                # DNS, HTTP, WebSocket
       tls/                  # TLS 1.3 implementation

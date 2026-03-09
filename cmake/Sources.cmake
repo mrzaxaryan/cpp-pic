@@ -19,11 +19,15 @@ foreach(_hdr ${_all_headers})
     list(APPEND PIR_INCLUDE_PATHS "${_dir}")
 endforeach()
 
+file(GLOB PIR_SOURCES_ROOT CONFIGURE_DEPENDS
+    "${PIR_ROOT_DIR}/src/*.cc"
+)
 file(GLOB_RECURSE PIR_SOURCES CONFIGURE_DEPENDS
     "${PIR_ROOT_DIR}/src/core/*.cc"
     "${PIR_ROOT_DIR}/src/platform/*.cc"
     "${PIR_ROOT_DIR}/src/runtime/*.cc"
 )
+list(APPEND PIR_SOURCES ${PIR_SOURCES_ROOT})
 file(GLOB_RECURSE PIR_HEADERS CONFIGURE_DEPENDS
     "${PIR_ROOT_DIR}/src/core/*.h"
     "${PIR_ROOT_DIR}/src/platform/*.h"

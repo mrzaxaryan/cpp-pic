@@ -60,12 +60,32 @@ Result<Process, Error> Process::Create(
 			(void)Kernel32::SetHandleInformation(si.hStdError, 1, 1);
 	}
 
-	// Build command line: path + args as a single wide string
-	// For simplicity, use just the path as the command line
-	WCHAR cmdWide[260]{};
-	StringUtils::Utf8ToWide(
-		Span<const CHAR>(path, StringUtils::Length(path)),
-		Span<WCHAR>(cmdWide, 260));
+	// Build command line: concatenate args with spaces into a wide string
+	// Windows CreateProcessW expects a single command line string
+	WCHAR cmdWide[1024]{};
+	USIZE cmdPos = 0;
+
+	if (args != nullptr)
+	{
+		for (USIZE i = 0; args[i] != nullptr; ++i)
+		{
+			if (i > 0 && cmdPos < 1023)
+				cmdWide[cmdPos++] = L' ';
+
+			USIZE argLen = StringUtils::Length(args[i]);
+			USIZE converted = StringUtils::Utf8ToWide(
+				Span<const CHAR>(args[i], argLen),
+				Span<WCHAR>(cmdWide + cmdPos, 1024 - cmdPos));
+			cmdPos += converted;
+		}
+	}
+	else
+	{
+		// No args — use path as the command line
+		StringUtils::Utf8ToWide(
+			Span<const CHAR>(path, StringUtils::Length(path)),
+			Span<WCHAR>(cmdWide, 1024));
+	}
 
 	PROCESS_INFORMATION pi = {};
 	auto createResult = Kernel32::CreateProcessW(

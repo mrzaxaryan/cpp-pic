@@ -22,6 +22,8 @@
 
 #include "platform/screen/screen.h"
 #include "platform/kernel/macos/dyld.h"
+#include "platform/kernel/macos/syscall.h"
+#include "platform/kernel/macos/system.h"
 #include "core/memory/memory.h"
 
 // =============================================================================
@@ -165,21 +167,98 @@ static BOOL LoadCGFunctions(CGFunctions &cg)
 }
 
 // =============================================================================
+// Internal: Fork wrapper and display availability probe
+// =============================================================================
+
+/// @brief Fork wrapper that correctly distinguishes parent/child on macOS.
+/// @details macOS fork() returns child_pid in rax for BOTH parent and child.
+/// The secondary return value (rdx on x86_64, x1 on aarch64) is 0 in the
+/// parent and 1 in the child. System::Call clobbers this, so we use custom asm.
+/// @return child_pid in parent, 0 in child, negative on error
+static NOINLINE SSIZE MacFork()
+{
+#if defined(ARCHITECTURE_X86_64)
+	register USIZE r_rax __asm__("rax") = SYS_FORK;
+	register USIZE r_rdx __asm__("rdx");
+	__asm__ volatile(
+		"syscall\n"
+		"jnc 1f\n"
+		"negq %%rax\n"
+		"1:\n"
+		: "+r"(r_rax), "=r"(r_rdx)
+		:
+		: "rcx", "r11", "memory", "cc"
+	);
+	if ((SSIZE)r_rax < 0) return (SSIZE)r_rax;
+	if (r_rdx != 0) return 0;
+	return (SSIZE)r_rax;
+#elif defined(ARCHITECTURE_AARCH64)
+	register USIZE x0 __asm__("x0");
+	register USIZE x1 __asm__("x1");
+	register USIZE x16 __asm__("x16") = SYS_FORK;
+	__asm__ volatile(
+		"svc #0x80\n"
+		"b.cc 1f\n"
+		"neg x0, x0\n"
+		"1:\n"
+		: "=r"(x0), "=r"(x1)
+		: "r"(x16)
+		: "memory", "cc"
+	);
+	if ((SSIZE)x0 < 0) return (SSIZE)x0;
+	if (x1 != 0) return 0;
+	return (SSIZE)x0;
+#endif
+}
+
+/// @brief Probe if CoreGraphics display services are usable.
+/// @details Forks a child process that attempts to load CoreGraphics and
+/// query the main display. If the child crashes (SIGKILL from TCC or
+/// SIGSYS from blocked syscalls on headless CI runners), the parent
+/// survives and returns false. This avoids crashing the main process.
+/// @return true if display services are available, false otherwise
+static BOOL ProbeDisplayAvailable()
+{
+	SSIZE pid = MacFork();
+	if (pid < 0)
+		return false;
+
+	if (pid == 0)
+	{
+		// Child: attempt CG operations that may crash on headless systems
+		CGFunctions cg;
+		Memory::Zero(&cg, sizeof(cg));
+		BOOL ok = LoadCGFunctions(cg);
+		if (ok)
+			ok = (cg.MainDisplayID() != 0);
+		System::Call(SYS_EXIT, (USIZE)(ok ? 0 : 1));
+		for (;;) {} // unreachable
+	}
+
+	// Parent: wait for child and check exit status
+	INT32 status = 0;
+	System::Call(SYS_WAIT4, (USIZE)pid, (USIZE)&status, (USIZE)0, (USIZE)0);
+
+	// WIFEXITED(status) && WEXITSTATUS(status) == 0
+	return (status & 0x7F) == 0 && ((status >> 8) & 0xFF) == 0;
+}
+
+// =============================================================================
 // Screen::GetDevices
 // =============================================================================
 
 Result<ScreenDeviceList, Error> Screen::GetDevices()
 {
+	// Probe display availability in a forked child process.
+	// CoreGraphics functions may crash (SIGKILL/SIGSYS) on headless CI
+	// runners or sandboxed environments. The fork isolates the crash.
+	if (!ProbeDisplayAvailable())
+		return Result<ScreenDeviceList, Error>::Err(Error(Error::Screen_GetDevicesFailed));
+
 	CGFunctions cg;
 	Memory::Zero(&cg, sizeof(cg));
 
 	if (!LoadCGFunctions(cg))
-		return Result<ScreenDeviceList, Error>::Err(Error(Error::Screen_GetDevicesFailed));
-
-	// Check if a display is available before calling functions that may
-	// crash on headless systems (CI runners without a WindowServer).
-	// CGMainDisplayID returns 0 (kCGNullDirectDisplay) when no display exists.
-	if (cg.MainDisplayID() == 0)
 		return Result<ScreenDeviceList, Error>::Err(Error(Error::Screen_GetDevicesFailed));
 
 	// Enumerate active displays (up to 16)
@@ -218,13 +297,13 @@ Result<ScreenDeviceList, Error> Screen::GetDevices()
 
 Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer)
 {
+	if (!ProbeDisplayAvailable())
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+
 	CGFunctions cg;
 	Memory::Zero(&cg, sizeof(cg));
 
 	if (!LoadCGFunctions(cg))
-		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
-
-	if (cg.MainDisplayID() == 0)
 		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
 
 	// Find the matching display ID

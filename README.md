@@ -384,7 +384,7 @@ Function pointer addresses are resolved by the loader. Without the loader, indir
 
 Standard programs depend on the CRT for initialization, memory management, and helper functions.
 
-**PIR Solution:** Complete independence from the CRT by providing custom implementations for memory management, string manipulation, formatted output, and runtime initialization. A custom entry point eliminates loader-managed startup. On Windows, the PEB is traversed to locate modules and PE export tables are parsed using hash-based lookup -- no import tables, no `GetProcAddress`.
+**PIR Solution:** Complete independence from the CRT by providing custom implementations for memory management, string manipulation, formatted output, and runtime initialization. A custom entry point eliminates loader-managed startup. On Windows, the PEB is traversed to locate modules and PE export tables are parsed using hash-based lookup - no import tables, no `GetProcAddress`.
 
 ### Problem 5: Type Conversions
 
@@ -403,27 +403,6 @@ INT64 d_to_i64(const DOUBLE& d)
 ```
 
 ---
-
-## Build System
-
-### Quick Start
-
-**Requirements:** Clang/LLVM 22+, CMake 3.20+, Ninja 1.10+, C++23.
-
-```bash
-# Configure
-cmake --preset {platform}-{arch}-{build_type}
-
-# Build
-cmake --build --preset {platform}-{arch}-{build_type}
-
-# Test (exit code 0 = all pass)
-./build/{build_type}/{platform}/{arch}/output.{exe|elf|efi}
-```
-
-Presets: `windows|linux|macos|ios|android|freebsd|solaris|uefi` x `i386|x86_64|armv7a|aarch64|riscv32|riscv64|mips64` x `debug|release`
-
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for toolchain installation instructions per platform.
 
 ### Critical Compiler Flags
 

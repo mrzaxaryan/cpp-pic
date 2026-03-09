@@ -12,7 +12,7 @@ Thank you for your interest in contributing to PIR! This guide covers everything
 - [Code Style](#code-style)
 - [Documentation](#documentation)
 - [Naming Conventions](#naming-conventions)
-- [Parameters & Returns](#parameters-returns)
+- [Parameters & Returns](#parameters--returns)
 - [Error Handling](#error-handling)
 - [Memory & Resources](#memory-resources)
 - [Patterns](#patterns)

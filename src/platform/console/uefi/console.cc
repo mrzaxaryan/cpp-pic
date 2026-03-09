@@ -8,6 +8,7 @@
 #include "platform/console/console.h"
 #include "platform/kernel/uefi/efi_context.h"
 
+
 UINT32 Console::Write(Span<const WCHAR> text)
 {
 	if (text.Data() == nullptr || text.Size() == 0)

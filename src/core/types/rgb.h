@@ -20,5 +20,6 @@ struct RGB
 	UINT8 Blue;  ///< Blue channel (0–255)
 };
 
+// Pointer types for RGB
 using PRGB = RGB *;
 using PCRGB = const RGB *;

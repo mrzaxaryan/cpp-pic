@@ -771,8 +771,7 @@ Result<void, Error> TlsClient::Close()
 }
 
 /// @brief Write data to the TLS channel, encrypting it if the handshake is complete and the encoding is enabled
-/// @param buffer Pointer to the input buffer containing the data to be sent to the server
-/// @param bufferLength Length of the input buffer in bytes
+/// @param buffer Span containing the data to write to the TLS channel
 /// @return Result with the number of bytes written, or an error
 
 Result<UINT32, Error> TlsClient::Write(Span<const CHAR> buffer)
@@ -819,8 +818,7 @@ Result<UINT32, Error> TlsClient::Write(Span<const CHAR> buffer)
 }
 
 /// @brief Read from the TLS channel, decrypting data if the handshake is complete and the encoding is enabled, and store it in the provided buffer
-/// @param buffer Buffer where the read data will be stored
-/// @param bufferLength Length of the buffer in bytes, indicating the maximum number of bytes to read from the TLS channel
+/// @param buffer Span where the read data will be stored
 /// @return Result with the number of bytes read, or an error
 
 Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)

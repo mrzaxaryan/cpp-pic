@@ -14,7 +14,8 @@
  * 2. Linux framebuffer (/dev/fb0..fb7): Legacy fallback when DRM is
  *    unavailable. Uses FBIOGET_VSCREENINFO and FBIOGET_FSCREENINFO ioctls
  *    with mmap to read pixel data. Shared between Linux, Android, and
- *    FreeBSD (via linuxkpi compatibility). ScreenDevice::Left stores the
+ *    FreeBSD (via linuxkpi compatibility). On Android, /dev/graphics/fb0..fb7
+ *    is tried when /dev/fb* is unavailable. ScreenDevice::Left stores the
  *    framebuffer index.
  *
  * GetDevices() tries DRM first; if no displays are found, falls back to
@@ -481,23 +482,44 @@ constexpr USIZE DRM_IOCTL_GEM_CLOSE         = 0x40086409;
 // Internal helpers — shared
 // =============================================================================
 
-/// @brief Open a framebuffer device by index (/dev/fb0../dev/fb7)
+/// @brief Open a framebuffer device by index
+/// @details Tries /dev/fb<N> first (Linux/FreeBSD). On Android, falls back to
+/// /dev/graphics/fb<N> which is the standard Android framebuffer path.
 /// @param index Framebuffer device number (0-7)
 /// @return File descriptor on success, negative errno on failure
 static SSIZE OpenFramebuffer(UINT32 index)
 {
 	auto devFb = "/dev/fb"_embed;
-	CHAR path[16];
+	CHAR path[24];
 	Memory::Copy(path, (const CHAR *)devFb, 8);
 	path[7] = '0' + (CHAR)index;
 	path[8] = '\0';
 
 #if ((defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32))) || \
 	(defined(PLATFORM_FREEBSD) && (defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64)))
-	return System::Call(SYS_OPENAT, (USIZE)AT_FDCWD, (USIZE)path, (USIZE)O_RDONLY);
+	SSIZE fd = System::Call(SYS_OPENAT, (USIZE)AT_FDCWD, (USIZE)path, (USIZE)O_RDONLY);
 #else
-	return System::Call(SYS_OPEN, (USIZE)path, (USIZE)O_RDONLY);
+	SSIZE fd = System::Call(SYS_OPEN, (USIZE)path, (USIZE)O_RDONLY);
 #endif
+
+#if defined(PLATFORM_ANDROID)
+	// Android framebuffer lives at /dev/graphics/fb<N> instead of /dev/fb<N>
+	if (fd < 0)
+	{
+		auto devGfxFb = "/dev/graphics/fb"_embed;
+		Memory::Copy(path, (const CHAR *)devGfxFb, 17);
+		path[16] = '0' + (CHAR)index;
+		path[17] = '\0';
+
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+		fd = System::Call(SYS_OPENAT, (USIZE)AT_FDCWD, (USIZE)path, (USIZE)O_RDONLY);
+#else
+		fd = System::Call(SYS_OPEN, (USIZE)path, (USIZE)O_RDONLY);
+#endif
+	}
+#endif
+
+	return fd;
 }
 
 /// @brief Open a DRM card device by index (/dev/dri/card0../dev/dri/card7)

@@ -188,7 +188,7 @@ tests/                      # pir_tests.h (master), tests.h (helpers), *_tests.h
 cmake/                      # CMake modules, linker scripts, function.order
 ```
 
-Three-layer architecture (RUNTIME > PLATFORM > CORE) -- upper layers depend on lower, never the reverse. See [README.md](../README.md) for an overview.
+Three-layer architecture (RUNTIME > PLATFORM > CORE) - upper layers depend on lower, never the reverse. See [README.md](../README.md) for an overview.
 
 ---
 

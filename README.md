@@ -445,14 +445,12 @@ This approach removes dependencies on runtime initialization, dynamic linking, a
 
 Each platform provides its own implementation using its native kernel interface:
 
-- **Windows**
-  - Uses the **NT Native API**
+**Windows:** Uses the **NT Native API**
 
-- **Linux**
-  - Uses **direct Linux system calls**
+**Linux:** Uses **direct Linux system calls**
 
-- **macOS**
-  - Uses **BSD system calls**
+**macOS:** Uses **BSD system calls**
+
 ---
 
 ## Use Cases

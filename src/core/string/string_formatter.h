@@ -165,6 +165,8 @@ private:
 	template <TCHAR TChar>
 	static INT32 FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID context, const WCHAR *wstr, INT32 fieldWidth = 0, INT32 leftAlign = 0);
 	template <TCHAR TChar>
+	static INT32 FormatErrorEntry(BOOL (*writer)(PVOID, TChar), PVOID context, UINT32 code, Error::PlatformKind platform);
+	template <TCHAR TChar>
 	static INT32 FormatError(BOOL (*writer)(PVOID, TChar), PVOID context, const Error &error);
 	/// @}
 
@@ -414,12 +416,10 @@ INT32 StringFormatter::FormatWideString(BOOL (*writer)(PVOID, TChar), PVOID cont
 }
 
 template <TCHAR TChar>
-INT32 StringFormatter::FormatError(BOOL (*writer)(PVOID, TChar), PVOID context, const Error &error)
+INT32 StringFormatter::FormatErrorEntry(BOOL (*writer)(PVOID, TChar), PVOID context,
+	UINT32 code, Error::PlatformKind platform)
 {
 	INT32 j = 0;
-
-	UINT32 code = (UINT32)error.Code;
-	Error::PlatformKind platform = error.Platform;
 
 	// Windows/UEFI: hex with 0x prefix (uppercase digits). Runtime/Posix: decimal.
 	if (platform == Error::PlatformKind::Windows || platform == Error::PlatformKind::Uefi)
@@ -457,6 +457,38 @@ INT32 StringFormatter::FormatError(BOOL (*writer)(PVOID, TChar), PVOID context, 
 		if (!writer(context, (TChar)']'))
 			return j;
 		j++;
+	}
+
+	return j;
+}
+
+template <TCHAR TChar>
+INT32 StringFormatter::FormatError(BOOL (*writer)(PVOID, TChar), PVOID context, const Error &error)
+{
+	INT32 j = 0;
+
+	// Format the outermost (top-level) error
+	j += FormatErrorEntry<TChar>(writer, context, (UINT32)error.Code, error.Platform);
+
+	// Format inner cause chain separated by " <- "
+	for (UINT8 i = 0; i < error.Depth; i++)
+	{
+		// Write " <- " separator
+		if (!writer(context, (TChar)' '))
+			return j;
+		j++;
+		if (!writer(context, (TChar)'<'))
+			return j;
+		j++;
+		if (!writer(context, (TChar)'-'))
+			return j;
+		j++;
+		if (!writer(context, (TChar)' '))
+			return j;
+		j++;
+
+		j += FormatErrorEntry<TChar>(writer, context,
+			error.InnerCodes[i], error.InnerPlatforms[i]);
 	}
 
 	return j;

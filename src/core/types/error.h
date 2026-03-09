@@ -1,15 +1,17 @@
 /**
  * @file error.h
- * @brief Unified Error Type for Result-Based Error Handling
+ * @brief Unified Error Type with Chain for Result-Based Error Handling
  *
- * @details Provides a compact error representation used by the `Result<T, Error>`
- * type throughout the codebase. Each Error is a (Code, Platform) pair that
- * identifies either a PIR runtime failure point or a raw OS error code.
+ * @details Provides an error representation used by the `Result<T, Error>`
+ * type throughout the codebase. Each Error has a top-level (Code, Platform)
+ * pair plus a fixed-capacity chain of inner (cause) errors, preserving
+ * the full error propagation path from root cause to failure site.
  *
  * Design principles:
- * - Zero-cost: Error is 8 bytes, stored directly in Result (no heap allocation)
- * - Single slot: no error chain — each layer picks the most useful code to surface
+ * - Fixed-size: no heap allocation, stored directly in Result
+ * - Full chain: up to MaxDepth errors preserved (outermost + inner causes)
  * - Platform-aware: factory methods tag errors with their OS origin for formatting
+ * - Backward-compatible: Code and Platform fields remain the outermost error
  *
  * @see result.h — Result<T, Error> tagged union that stores Error on failure
  *
@@ -26,25 +28,27 @@
 
 /**
  * @struct Error
- * @brief Unified error code identifying a single failure point
+ * @brief Unified error with a fixed-capacity cause chain
  *
- * @details Stores a (Code, Platform) pair. When Platform is Runtime, Code is
- * an ErrorCodes enumerator identifying the PIR failure site. When Platform is
- * Windows/Posix/Uefi, Code holds the raw OS error value (NTSTATUS, errno, or
- * EFI_STATUS).
+ * @details The top-level Code/Platform identifies the outermost failure site.
+ * The inner arrays hold cause errors from most-recent-inner to root-cause,
+ * preserving the full propagation path.
  *
- * Result<T, Error> stores a single Error directly — zero-cost, no chain overhead.
+ * When Depth == 0, there is no chain (single error, equivalent to old behavior).
+ * When Depth > 0, Inner[0..Depth-1] holds the cause chain.
  *
  * @par Example Usage:
  * @code
- * // Runtime error:
+ * // Single runtime error:
  * return Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
  *
- * // OS error (Windows NTSTATUS):
- * return Result<void, Error>::Err(Error::Windows(status));
+ * // Chained: OS error wrapped by runtime code:
+ * return Result<void, Error>::Err(osResult, Error::Socket_CreateFailed_Open);
+ * // Result: Code=Socket_CreateFailed_Open, Inner[0]=NTSTATUS value
  *
- * // OS error (POSIX errno):
- * return Result<void, Error>::Err(Error::Posix((UINT32)(-result)));
+ * // Multi-level chain:
+ * return Result<void, Error>::Err(socketResult, Error::Tls_OpenFailed_Socket);
+ * // Result: Code=Tls_OpenFailed_Socket, Inner[0]=Socket_*, Inner[1]=NTSTATUS
  * @endcode
  */
 struct Error
@@ -241,16 +245,28 @@ struct Error
 		Uefi    = 3, ///< EFI_STATUS — Code holds the raw EFI_STATUS value
 	};
 
-	ErrorCodes   Code;     ///< Error code value (ErrorCodes enumerator or raw OS code)
-	PlatformKind Platform; ///< OS layer that produced this code
+	/// Maximum number of inner (cause) errors stored in the chain
+	static constexpr USIZE MaxInnerDepth = 4;
+
+	/// Maximum total depth (outermost + inner causes)
+	static constexpr USIZE MaxDepth = 1 + MaxInnerDepth;
+
+	ErrorCodes   Code;     ///< Outermost error code (ErrorCodes enumerator or raw OS code)
+	PlatformKind Platform; ///< OS layer that produced the outermost code
+	UINT8        Depth;    ///< Number of inner cause entries used (0 = single error)
+
+	/// Inner cause codes, ordered most-recent-inner [0] to root-cause [Depth-1]
+	UINT32       InnerCodes[MaxInnerDepth];
+	/// Platform tags corresponding to each InnerCodes entry
+	PlatformKind InnerPlatforms[MaxInnerDepth];
 
 	/**
-	 * @brief Construct an error with explicit code and platform
+	 * @brief Construct a single error with no cause chain
 	 * @param code Error code value
 	 * @param platform Platform origin (defaults to Runtime)
 	 */
 	constexpr Error(UINT32 code = 0, PlatformKind platform = PlatformKind::Runtime)
-		: Code((ErrorCodes)code), Platform(platform)
+		: Code((ErrorCodes)code), Platform(platform), Depth(0), InnerCodes{}, InnerPlatforms{}
 	{
 	}
 
@@ -284,6 +300,74 @@ struct Error
 	 *      https://uefi.org/specs/UEFI/2.10/Apx_D_Status_Codes.html
 	 */
 	[[nodiscard]] static constexpr Error Uefi(UINT32 efiStatus)   { return Error(efiStatus, PlatformKind::Uefi); }
+
+	/// @}
+
+	/// @name Chain Operations
+	/// @{
+
+	/**
+	 * @brief Create a new Error that wraps an inner error under a new outer code
+	 *
+	 * @details The resulting Error has outerCode as its top-level Code, with the
+	 * inner error's full chain preserved beneath it. If the combined depth exceeds
+	 * MaxInnerDepth, the deepest (oldest) cause errors are truncated.
+	 *
+	 * @param inner The cause error (becomes part of the inner chain)
+	 * @param outerCode The new outermost error code
+	 * @param outerPlatform Platform of the outer code (defaults to Runtime)
+	 * @return Error with outerCode on top and inner's chain beneath
+	 */
+	[[nodiscard]] static constexpr Error Wrap(const Error &inner, UINT32 outerCode,
+		PlatformKind outerPlatform = PlatformKind::Runtime)
+	{
+		Error result;
+		result.Code = (ErrorCodes)outerCode;
+		result.Platform = outerPlatform;
+		result.Depth = 0;
+
+		// Inner[0] = the inner error's top-level code
+		if (result.Depth < MaxInnerDepth)
+		{
+			result.InnerCodes[result.Depth] = (UINT32)inner.Code;
+			result.InnerPlatforms[result.Depth] = inner.Platform;
+			result.Depth++;
+		}
+
+		// Copy inner's own chain beneath
+		for (USIZE i = 0; i < inner.Depth && result.Depth < MaxInnerDepth; i++)
+		{
+			result.InnerCodes[result.Depth] = inner.InnerCodes[i];
+			result.InnerPlatforms[result.Depth] = inner.InnerPlatforms[i];
+			result.Depth++;
+		}
+
+		return result;
+	}
+
+	/**
+	 * @brief Get the total number of errors in the chain (outermost + inner causes)
+	 * @return 1 + Depth
+	 */
+	[[nodiscard]] constexpr USIZE TotalDepth() const { return 1 + Depth; }
+
+	/**
+	 * @brief Get the innermost (root cause) error code
+	 * @return Root cause code if chain exists, otherwise this error's Code
+	 */
+	[[nodiscard]] constexpr UINT32 RootCode() const
+	{
+		return Depth > 0 ? InnerCodes[Depth - 1] : (UINT32)Code;
+	}
+
+	/**
+	 * @brief Get the innermost (root cause) error platform
+	 * @return Root cause platform if chain exists, otherwise this error's Platform
+	 */
+	[[nodiscard]] constexpr PlatformKind RootPlatform() const
+	{
+		return Depth > 0 ? InnerPlatforms[Depth - 1] : Platform;
+	}
 
 	/// @}
 };

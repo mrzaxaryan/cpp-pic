@@ -324,33 +324,34 @@ PIR has no exceptions. Every fallible function returns `Result<T, Error>` or `Re
 
 ### The Error Struct
 
-`Error` is a `(Code, Platform)` pair (8 bytes) defined in `src/core/error.h`:
+`Error` stores a top-level `(Code, Platform)` pair plus a fixed-capacity chain of inner (cause) errors, defined in `src/core/types/error.h`:
 
 - **Runtime codes** (`PlatformKind::Runtime`): named `ErrorCodes` enumerators -- `Socket_WriteFailed_Send`, `Tls_OpenFailed_Handshake`, etc.
 - **OS codes**: created via factories -- `Error::Windows(ntstatus)`, `Error::Posix(errno)`, `Error::Uefi(efiStatus)`
+- **Chain**: `Code`/`Platform` is the outermost error; `InnerCodes[0..Depth-1]` holds cause errors from most-recent-inner to root-cause (max `MaxInnerDepth=4` inner entries, total `MaxDepth=5`)
 
 ### Construction Rules
 
-`Error` stores a single `(Code, Platform)` slot -- there is no call chain. Each layer picks the most useful code to surface:
+`Error` preserves the full error propagation path. The two-arg `Err` overloads chain both errors using `Error::Wrap()`:
 
 - **Single runtime error (no prior result):** pass a bare `ErrorCodes` enumerator to `Result::Err` -- only when there is no underlying `Result` to forward
 - **Single OS error:** use `Error::Windows()`, `Error::Posix()`, or `Error::Uefi()` factory methods
-- **Propagate unchanged:** forward `r.Error()` from the lower-level result
-- **Replace with own layer's error:** use the two-arg shorthand when the caller's context is more useful
-- **Two-arg shorthand (preferred):** `Result::Err(r, Error::Tls_WriteFailed_Send)` -- always use this form when an underlying `Result` failed
+- **Two-arg shorthand (preferred):** `Result::Err(r, Error::Tls_WriteFailed_Send)` -- always use this form when an underlying `Result` failed. Both the inner result's full chain and the outer site code are preserved.
+- **Manual wrapping:** `Error::Wrap(innerError, outerCode, outerPlatform)` creates a new Error with `outerCode` on top and `innerError`'s chain beneath
 
 **Important:** When a lower-level call returns a failed `Result` and you return `Err` with your own error code, **always** pass the failed result as the first argument:
 
 ```cpp
-// WRONG -- discards the underlying error
+// WRONG -- loses the underlying error chain
 auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
 if (!tlsResult)
     return Result<void, Error>::Err(Error::Ws_CreateFailed);
 
-// CORRECT -- forwards the underlying result
+// CORRECT -- chains the underlying error under Ws_CreateFailed
 auto tlsResult = TlsClient::Create(host, ip, port, isSecure);
 if (!tlsResult)
     return Result<void, Error>::Err(tlsResult, Error::Ws_CreateFailed);
+// Result: Code=Ws_CreateFailed, Inner[0]=Tls_*, Inner[1]=Socket_*, Inner[2]=NTSTATUS
 ```
 
 ### Platform Conversion Factories
@@ -359,7 +360,7 @@ Each platform provides `result::From*` template functions in `src/platform/<plat
 
 ### Formatting
 
-Use `%e` with `result.Error()` in log macros. Output format: runtime codes print as decimal, Windows as `"0xNNNNNNNN[W]"`, Posix as `"N[P]"`, UEFI as `"0xNNNN...[U]"`.
+Use `%e` with `result.Error()` in log macros. Output format: runtime codes print as decimal, Windows as `"0xNNNNNNNN[W]"`, Posix as `"N[P]"`, UEFI as `"0xNNNN...[U]"`. When an error has a chain, entries are separated by ` <- ` from outermost to root cause: `22 <- 15 <- 0xC0000034[W]`.
 
 ### Exceptions to Result
 

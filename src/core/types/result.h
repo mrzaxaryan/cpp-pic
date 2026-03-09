@@ -6,12 +6,12 @@
  * When T is void, a trivial sentinel replaces the value member so a single
  * template handles both cases without a separate specialization.
  *
- * E is stored directly — no chain, no overhead beyond sizeof(E).
+ * E is stored directly — no heap allocation beyond sizeof(E).
  * Compile-time safety via `[[nodiscard]]` and `operator BOOL` ensures callers
  * check results without any runtime cost.
  *
- * Backward-compatible multi-arg and propagation Err() overloads are provided
- * for source compatibility; they store only the outermost error code.
+ * Multi-arg and propagation Err() overloads chain errors using Error::Wrap(),
+ * preserving the full error propagation path from root cause to failure site.
  *
  * @note Uses Clang builtin __is_trivially_destructible for zero-overhead destruction.
  *
@@ -107,7 +107,7 @@ public:
 	// Err factories
 	// =====================================================================
 
-	/// Single error — stores E directly (zero-cost)
+	/// Single error — stores E directly
 	[[nodiscard]] static constexpr FORCE_INLINE Result Err(E error) noexcept
 	{
 		Result r;
@@ -116,21 +116,21 @@ public:
 		return r;
 	}
 
-	/// Backward-compatible 2-arg Err — stores only the last (outermost) code.
-	/// Keeps source compatibility with Err(osError, runtimeCode) pattern.
+	/// 2-arg Err — chains first (inner/cause) error under last (outer/site) error.
+	/// Both errors are preserved in the chain via Error::Wrap().
 	template <typename First>
 		requires(requires(First f) { E(f); })
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(First, E last) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(First first, E last) noexcept
 	{
-		return Err(static_cast<E &&>(last));
+		return Err(E::Wrap(E(static_cast<First &&>(first)), (UINT32)last.Code, last.Platform));
 	}
 
-	/// Propagation Err — stores the underlying result's error for diagnostics.
-	/// The second argument documents the PIR failure site but is not stored.
+	/// Propagation Err — chains the underlying result's error under the new site code.
+	/// Both the inner result's full error chain and the outer site code are preserved.
 	template <typename OtherT>
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, E> &r, E) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, E> &r, E outer) noexcept
 	{
-		return Err(r.Error());
+		return Err(E::Wrap(r.Error(), (UINT32)outer.Code, outer.Platform));
 	}
 
 	// =====================================================================
@@ -193,8 +193,7 @@ private:
 /// Compact specialization for Result<void, Error>.
 ///
 /// Encodes success as Error.Code == Error::None, eliminating the discriminant
-/// flag and union.  This halves the size from 12 bytes to 8 bytes, enabling
-/// register-return on x86_64 and ARM64.
+/// flag and union.  sizeof matches sizeof(Error) exactly.
 ///
 /// The API surface is identical to the primary template instantiated with
 /// T = void, E = Error.  No call-site changes are needed.
@@ -225,7 +224,7 @@ public:
 	// Err factories
 	// =====================================================================
 
-	/// Single error — stores Error directly (zero-cost)
+	/// Single error — stores Error directly
 	[[nodiscard]] static constexpr FORCE_INLINE Result Err(struct Error error) noexcept
 	{
 		Result r;
@@ -233,21 +232,22 @@ public:
 		return r;
 	}
 
-	/// 2-arg Err — stores the first (inner/OS) error for diagnostics.
-	/// The second argument documents the PIR failure site but is not stored.
+	/// 2-arg Err — chains first (inner/cause) error under second (outer/site) error.
+	/// Both errors are preserved in the chain via Error::Wrap().
 	template <typename Second>
 		requires(__is_constructible(struct Error, Second))
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(struct Error first, Second) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(struct Error first, Second second) noexcept
 	{
-		return Err(first);
+		struct Error outer(second);
+		return Err(Error::Wrap(first, (UINT32)outer.Code, outer.Platform));
 	}
 
-	/// Propagation Err — stores the underlying result's error for diagnostics.
-	/// The second argument documents the PIR failure site but is not stored.
+	/// Propagation Err — chains the underlying result's error under the new site code.
+	/// Both the inner result's full error chain and the outer site code are preserved.
 	template <typename OtherT>
-	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, struct Error> &r, struct Error) noexcept
+	[[nodiscard]] static constexpr FORCE_INLINE Result Err(const Result<OtherT, struct Error> &r, struct Error outer) noexcept
 	{
-		return Err(r.Error());
+		return Err(Error::Wrap(r.Error(), (UINT32)outer.Code, outer.Platform));
 	}
 
 	// =====================================================================

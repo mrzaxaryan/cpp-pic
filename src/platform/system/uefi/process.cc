@@ -1,37 +1,44 @@
 /**
- * process.cc - UEFI Process Execution Stub
+ * @file process.cc
+ * @brief UEFI process management stub
  *
- * UEFI does not support process creation - all functions return failure.
+ * @details UEFI does not support process creation. All operations return failure.
  */
 
 #include "platform/system/process.h"
 
-// UEFI doesn't have fork
-Result<SSIZE, Error> Process::Fork() noexcept
+Result<Process, Error> Process::Create(
+	const CHAR *path,
+	const CHAR *const args[],
+	SSIZE stdinFd,
+	SSIZE stdoutFd,
+	SSIZE stderrFd) noexcept
 {
-	return Result<SSIZE, Error>::Err(Error::Process_ForkFailed);
+	(void)path;
+	(void)args;
+	(void)stdinFd;
+	(void)stdoutFd;
+	(void)stderrFd;
+	return Result<Process, Error>::Err(Error::Process_CreateFailed);
 }
 
-// UEFI doesn't have dup2
-Result<SSIZE, Error> Process::Dup2(SSIZE oldfd, SSIZE newfd) noexcept
+Result<SSIZE, Error> Process::Wait() noexcept
 {
-	(void)oldfd;
-	(void)newfd;
-	return Result<SSIZE, Error>::Err(Error::Process_Dup2Failed);
+	return Result<SSIZE, Error>::Err(Error::Process_WaitFailed);
 }
 
-// UEFI doesn't have execve
-Result<SSIZE, Error> Process::Execve(const CHAR* pathname, CHAR* const argv[], CHAR* const envp[]) noexcept
+Result<void, Error> Process::Terminate() noexcept
 {
-	(void)pathname;
-	(void)argv;
-	(void)envp;
-	return Result<SSIZE, Error>::Err(Error::Process_ExecveFailed);
+	return Result<void, Error>::Err(Error::Process_TerminateFailed);
 }
 
-// UEFI doesn't have setsid
-Result<SSIZE, Error> Process::Setsid() noexcept
+BOOL Process::IsRunning() const noexcept
 {
-	return Result<SSIZE, Error>::Err(Error::Process_SetsidFailed);
+	return false;
 }
 
+Result<void, Error> Process::Close() noexcept
+{
+	id = INVALID_ID;
+	return Result<void, Error>::Ok();
+}

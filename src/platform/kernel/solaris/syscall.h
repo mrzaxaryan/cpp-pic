@@ -179,7 +179,13 @@ constexpr INT32 EEXIST = 17;                    // same across all POSIX platfor
 constexpr INT32 EINPROGRESS = 150;  // Linux: 115, macOS: 36
 
 // Signal numbers
+constexpr INT32 SIGKILL = 9;
 constexpr INT32 SIGCHLD = 18;  // Linux: 17
+
+// waitid constants
+constexpr INT32 P_PID = 0;
+constexpr INT32 WEXITED = 1;
+constexpr INT32 WNOHANG = 0x40;
 
 // poll event flags
 constexpr INT16 POLLOUT = 0x0004;

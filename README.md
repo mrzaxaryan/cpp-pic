@@ -445,7 +445,7 @@ This approach removes dependencies on runtime initialization, dynamic linking, a
 
 Each platform provides its own implementation using its native kernel interface:
 
-**Windows:** Uses the **NT Native API**
+**Windows:** Uses the **NT Native API and system calls**
 
 **Linux:** Uses **direct Linux system calls**
 

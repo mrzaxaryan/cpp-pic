@@ -413,7 +413,7 @@ INT64 d_to_i64(const DOUBLE& d)
 
 ### Quick Start
 
-**Requirements:** Clang/LLVM 21+, CMake 3.20+, Ninja 1.10+, C++23.
+**Requirements:** Clang/LLVM 22+, CMake 3.20+, Ninja 1.10+, C++23.
 
 ```bash
 # Configure

@@ -74,6 +74,7 @@ jobs:
       - name: Test all optimization levels
         uses: vmactions/freebsd-vm@v1
         with:
+          sync: scp
           prepare: pkg install -y python3
           usesh: true
           run: |

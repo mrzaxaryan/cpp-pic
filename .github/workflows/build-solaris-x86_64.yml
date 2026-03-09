@@ -74,6 +74,7 @@ jobs:
       - name: Test all optimization levels
         uses: vmactions/solaris-vm@v1
         with:
+          sync: scp
           usesh: true
           run: |
             for dir in release/*/; do

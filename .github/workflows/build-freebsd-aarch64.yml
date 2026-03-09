@@ -75,6 +75,7 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           arch: aarch64
+          sync: scp
           prepare: pkg install -y python3
           usesh: true
           run: |

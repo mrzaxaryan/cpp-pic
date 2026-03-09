@@ -180,10 +180,6 @@ static SSIZE PosixSetsid() noexcept
 #endif
 }
 
-// Use waitid instead of wait4 on platforms where wait4 is unavailable or
-// the native wait interface uses waitid (Solaris, Linux riscv32)
-#define USE_WAITID (defined(PLATFORM_SOLARIS) || (defined(PLATFORM_LINUX) && defined(ARCHITECTURE_RISCV32)))
-
 // Linux riscv32 waitid constants (different values from Solaris)
 #if defined(PLATFORM_LINUX) && defined(ARCHITECTURE_RISCV32)
 constexpr INT32 LINUX_P_PID = 1;
@@ -278,7 +274,7 @@ Result<SSIZE, Error> Process::Wait() noexcept
 	if (!IsValid())
 		return Result<SSIZE, Error>::Err(Error::Process_WaitFailed);
 
-#if USE_WAITID
+#if defined(PLATFORM_SOLARIS) || (defined(PLATFORM_LINUX) && defined(ARCHITECTURE_RISCV32))
 	// Solaris and Linux riscv32 use waitid(P_PID, pid, &siginfo, WEXITED)
 	UINT8 siginfo[256];
 	Memory::Zero(siginfo, sizeof(siginfo));
@@ -360,7 +356,7 @@ Result<void, Error> Process::Close() noexcept
 		return Result<void, Error>::Ok();
 
 	// Try to reap zombie (non-blocking) to avoid resource leak
-#if USE_WAITID
+#if defined(PLATFORM_SOLARIS) || (defined(PLATFORM_LINUX) && defined(ARCHITECTURE_RISCV32))
 	UINT8 siginfo[256];
 	Memory::Zero(siginfo, sizeof(siginfo));
 #if defined(PLATFORM_SOLARIS)

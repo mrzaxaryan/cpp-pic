@@ -258,14 +258,14 @@ PIR is built on a clean three-layer abstraction that separates concerns and enab
 
 ```
 +-------------------------------------------------------------+
-|  RUNTIME (Runtime Abstraction Layer)                         |
+|  RUNTIME (Runtime Abstraction Layer)                        |
 |  High-level features: Cryptography, Networking, TLS 1.3     |
 +-------------------------------------------------------------+
-|  PLATFORM (Platform Abstraction Layer)                       |
-|  OS-specific: Windows PEB/NTAPI, Linux/macOS syscalls        |
+|  PLATFORM (Platform Abstraction Layer)                      |
+|  OS-specific: Windows PEB/NTAPI, Linux/macOS syscalls       |
 +-------------------------------------------------------------+
-|  CORE (Core Abstraction Layer)                               |
-|  Platform-independent: Types, Memory, Strings, Algorithms    |
+|  CORE (Core Abstraction Layer)                              |
+|  Platform-independent: Types, Memory, Strings, Algorithms   |
 +-------------------------------------------------------------+
 ```
 

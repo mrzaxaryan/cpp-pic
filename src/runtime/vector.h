@@ -54,6 +54,7 @@ struct Vector
 	VOID operator delete(VOID *) = delete;
 	VOID operator delete[](VOID *) = delete;
 
+	// Constructor, destructor, and move semantics
 	Vector() : Data(nullptr), Capacity(0), Count(0) {}
 
 	~Vector()

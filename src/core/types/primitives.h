@@ -74,6 +74,11 @@ typedef wchar_t WCHAR, *PWCHAR, **PPWCHAR;
 /** @brief Const wide char pointer */
 typedef const WCHAR *PCWCHAR;
 
+/** @brief Fixed-width 16-bit character type for wire protocol (always 2 bytes) */
+typedef unsigned short CHAR16, *PCHAR16, **PPCHAR16;
+/** @brief Const CHAR16 pointer */
+typedef const CHAR16 *PCCHAR16;
+
 // =============================================================================
 // BOOLEAN TYPE
 // =============================================================================

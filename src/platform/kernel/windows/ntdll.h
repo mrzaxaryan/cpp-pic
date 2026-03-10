@@ -917,4 +917,27 @@ public:
 	 *      https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw
 	 */
 	[[nodiscard]] static Result<NTSTATUS, Error> LdrLoadDll(PWCHAR SearchPath, UINT32 *DllCharacteristics, PUNICODE_STRING DllName, PPVOID BaseAddress);
+
+	/**
+	 * @brief Retrieves system information of the specified class.
+	 *
+	 * @details Queries a wide range of system information depending on the
+	 * information class. Used here primarily for SystemFirmwareTableInformation
+	 * (class 76) to retrieve raw SMBIOS firmware tables.
+	 *
+	 * @param SystemInformationClass Identifies the type of information to query.
+	 * @param SystemInformation Output buffer to receive the requested information.
+	 * @param SystemInformationLength Size of the SystemInformation buffer in bytes.
+	 * @param ReturnLength Optional pointer to receive the actual size of information returned.
+	 *
+	 * @return Result<NTSTATUS, Error> Ok(status) on NT_SUCCESS, Err on failure.
+	 *
+	 * @par Requirements
+	 * Minimum supported client: Windows 2000 Professional
+	 * Minimum supported server: Windows 2000 Server
+	 *
+	 * @see NtQuerySystemInformation
+	 *      https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
+	 */
+	[[nodiscard]] static Result<NTSTATUS, Error> ZwQuerySystemInformation(UINT32 SystemInformationClass, PVOID SystemInformation, UINT32 SystemInformationLength, PUINT32 ReturnLength);
 };

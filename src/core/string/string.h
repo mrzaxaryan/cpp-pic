@@ -398,21 +398,41 @@ public:
 	/// @{
 
 	/**
-	 * @brief Convert UTF-8 string to UTF-16 (wide string)
+	 * @brief Convert UTF-8 string to wide string
 	 * @param utf8 Source UTF-8 string span
 	 * @param wide Destination wide string buffer span
 	 * @return Number of wide characters written (excluding null terminator)
 	 *
-	 * @details Decodes UTF-8 multibyte sequences (1-4 bytes per codepoint) and
-	 * encodes them as UTF-16 code units. Codepoints above U+FFFF are encoded
-	 * as surrogate pairs per RFC 2781.
-	 *
-	 * @see RFC 3629 — UTF-8, a transformation format of ISO 10646
-	 *      https://datatracker.ietf.org/doc/html/rfc3629
-	 * @see RFC 2781 — UTF-16, an encoding of ISO 10646
-	 *      https://datatracker.ietf.org/doc/html/rfc2781
+	 * @details Decodes UTF-8 multibyte sequences (1-4 bytes per codepoint).
+	 * On platforms where WCHAR is 2 bytes (Windows/UEFI), codepoints above
+	 * U+FFFF are encoded as UTF-16 surrogate pairs. On platforms where WCHAR
+	 * is 4 bytes (Linux/macOS), codepoints are stored directly.
 	 */
 	static USIZE Utf8ToWide(Span<const CHAR> utf8, Span<WCHAR> wide);
+
+	/**
+	 * @brief Convert CHAR16 (wire-format UTF-16) string to native WCHAR string
+	 * @param src Source CHAR16 span (UTF-16LE from wire protocol)
+	 * @param dst Destination WCHAR buffer span
+	 * @return Number of WCHAR characters written (excluding null terminator)
+	 *
+	 * @details On Windows/UEFI where WCHAR is 2 bytes, this is a direct copy.
+	 * On Linux/macOS where WCHAR is 4 bytes, surrogate pairs are decoded into
+	 * full codepoints.
+	 */
+	static constexpr USIZE Char16ToWide(Span<const CHAR16> src, Span<WCHAR> dst) noexcept;
+
+	/**
+	 * @brief Convert native WCHAR string to CHAR16 (wire-format UTF-16)
+	 * @param src Source WCHAR span
+	 * @param dst Destination CHAR16 buffer span
+	 * @return Number of CHAR16 code units written (excluding null terminator)
+	 *
+	 * @details On Windows/UEFI where WCHAR is 2 bytes, this is a direct copy.
+	 * On Linux/macOS where WCHAR is 4 bytes, codepoints above U+FFFF are
+	 * encoded as UTF-16 surrogate pairs.
+	 */
+	static constexpr USIZE WideToChar16(Span<const WCHAR> src, Span<CHAR16> dst) noexcept;
 
 	/// @}
 };
@@ -956,6 +976,67 @@ constexpr Result<INT64, Error> StringUtils::ParseInt64(PCCHAR str) noexcept
 	if (!str)
 		return Result<INT64, Error>::Err(Error::String_ParseIntFailed);
 	return ParseInt64(Span<const CHAR>(str, Length(str)));
+}
+
+// ============================================================================
+// CHAR16 <-> WCHAR CONVERSION IMPLEMENTATIONS
+// ============================================================================
+
+constexpr USIZE StringUtils::Char16ToWide(Span<const CHAR16> src, Span<WCHAR> dst) noexcept
+{
+	if (dst.Size() == 0)
+		return 0;
+
+	USIZE si = 0, di = 0;
+	while (si < src.Size() && src[si] != 0 && di + 1 < dst.Size())
+	{
+		UINT32 ch = src[si++];
+
+		// Decode UTF-16 surrogate pair
+		if (ch >= 0xD800 && ch <= 0xDBFF && si < src.Size())
+		{
+			UINT32 low = src[si];
+			if (low >= 0xDC00 && low <= 0xDFFF)
+			{
+				ch = 0x10000 + ((ch & 0x3FF) << 10) + (low & 0x3FF);
+				si++;
+			}
+		}
+
+		dst[di++] = (WCHAR)ch;
+	}
+
+	dst[di] = (WCHAR)0;
+	return di;
+}
+
+constexpr USIZE StringUtils::WideToChar16(Span<const WCHAR> src, Span<CHAR16> dst) noexcept
+{
+	if (dst.Size() == 0)
+		return 0;
+
+	USIZE si = 0, di = 0;
+	while (si < src.Size() && src[si] != 0 && di + 1 < dst.Size())
+	{
+		UINT32 ch = (UINT32)src[si++];
+
+		if (ch >= 0x10000)
+		{
+			// Encode as UTF-16 surrogate pair
+			if (di + 2 >= dst.Size())
+				break;
+			ch -= 0x10000;
+			dst[di++] = (CHAR16)(0xD800 + (ch >> 10));
+			dst[di++] = (CHAR16)(0xDC00 + (ch & 0x3FF));
+		}
+		else
+		{
+			dst[di++] = (CHAR16)ch;
+		}
+	}
+
+	dst[di] = 0;
+	return di;
 }
 
 /** @} */ // end of string group

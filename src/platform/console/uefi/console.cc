@@ -22,7 +22,7 @@ UINT32 Console::Write(Span<const WCHAR> text)
 
 	// Output in chunks with null terminator
 	constexpr USIZE BUFFER_SIZE = 256;
-	WCHAR buffer[BUFFER_SIZE];
+	CHAR16 buffer[BUFFER_SIZE];
 	UINT32 totalWritten = 0;
 	USIZE offset = 0;
 
@@ -31,8 +31,8 @@ UINT32 Console::Write(Span<const WCHAR> text)
 		USIZE remaining = text.Size() - offset;
 		USIZE chunk = (remaining < BUFFER_SIZE - 1) ? remaining : BUFFER_SIZE - 1;
 		for (USIZE i = 0; i < chunk; i++)
-			buffer[i] = text[offset + i];
-		buffer[chunk] = L'\0';
+			buffer[i] = (CHAR16)text[offset + i];
+		buffer[chunk] = 0;
 		conOut->OutputString(conOut, buffer);
 		totalWritten += chunk;
 		offset += chunk;
@@ -52,9 +52,9 @@ UINT32 Console::Write(Span<const CHAR> text)
 	if (conOut == nullptr)
 		return 0;
 
-	// Convert to wide and output in chunks
+	// Convert to CHAR16 and output in chunks
 	constexpr USIZE BUFFER_SIZE = 256;
-	WCHAR buffer[BUFFER_SIZE];
+	CHAR16 buffer[BUFFER_SIZE];
 	UINT32 totalWritten = 0;
 	USIZE offset = 0;
 
@@ -63,8 +63,8 @@ UINT32 Console::Write(Span<const CHAR> text)
 		USIZE remaining = text.Size() - offset;
 		USIZE chunk = (remaining < BUFFER_SIZE - 1) ? remaining : BUFFER_SIZE - 1;
 		for (USIZE i = 0; i < chunk; i++)
-			buffer[i] = (WCHAR)(UINT8)text[offset + i];
-		buffer[chunk] = L'\0';
+			buffer[i] = (CHAR16)(UINT8)text[offset + i];
+		buffer[chunk] = 0;
 		conOut->OutputString(conOut, buffer);
 		totalWritten += chunk;
 		offset += chunk;

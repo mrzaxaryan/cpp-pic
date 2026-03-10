@@ -284,3 +284,97 @@ typedef union _LARGE_INTEGER
 	} u;                  ///< Named struct variant for compatibility
 	INT64 QuadPart;       ///< Full 64-bit signed integer value
 } LARGE_INTEGER, *PLARGE_INTEGER;
+
+/** @brief System information class for querying firmware tables. */
+#define SystemFirmwareTableInformation 76
+
+/** @brief Firmware table provider signature for raw SMBIOS data. */
+#define RSMB_PROVIDER_SIGNATURE 0x52534D42 // 'RSMB'
+
+/**
+ * @brief Action codes for SYSTEM_FIRMWARE_TABLE_INFORMATION.
+ * @{
+ */
+#define SystemFirmwareTable_Enumerate 0
+#define SystemFirmwareTable_Get 1
+/** @} */
+
+/**
+ * @brief Input/output structure for SystemFirmwareTableInformation queries.
+ *
+ * @details Used with ZwQuerySystemInformation (class 76) to enumerate or
+ * retrieve firmware tables. For SMBIOS, set ProviderSignature to 'RSMB',
+ * Action to SystemFirmwareTable_Get, and TableID to 0.
+ *
+ * @see NtQuerySystemInformation
+ *      https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
+ */
+typedef struct _SYSTEM_FIRMWARE_TABLE_INFORMATION
+{
+	UINT32 ProviderSignature;  ///< Firmware table provider ('RSMB' for SMBIOS, 'FIRM' for firmware, 'ACPI' for ACPI)
+	UINT32 Action;             ///< SystemFirmwareTable_Enumerate or SystemFirmwareTable_Get
+	UINT32 TableID;            ///< Table identifier (0 for SMBIOS raw table)
+	UINT32 TableBufferLength;  ///< Size of TableBuffer in bytes
+	UINT8  TableBuffer[1];     ///< Variable-length buffer containing the firmware table data
+} SYSTEM_FIRMWARE_TABLE_INFORMATION, *PSYSTEM_FIRMWARE_TABLE_INFORMATION;
+
+/**
+ * @brief Raw SMBIOS firmware table data header.
+ *
+ * @details Returned in SYSTEM_FIRMWARE_TABLE_INFORMATION::TableBuffer when
+ * querying the 'RSMB' provider. The SMBIOSTableData array contains the
+ * concatenated SMBIOS structures.
+ *
+ * @see GetSystemFirmwareTable
+ *      https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemfirmwaretable
+ */
+typedef struct _RAW_SMBIOS_DATA
+{
+	UINT8  Used20CallingMethod; ///< Whether the 2.0 calling method was used
+	UINT8  SMBIOSMajorVersion;  ///< SMBIOS major version
+	UINT8  SMBIOSMinorVersion;  ///< SMBIOS minor version
+	UINT8  DmiRevision;         ///< DMI revision
+	UINT32 Length;              ///< Total length of SMBIOSTableData in bytes
+	UINT8  SMBIOSTableData[1];  ///< Variable-length SMBIOS structure data
+} RAW_SMBIOS_DATA, *PRAW_SMBIOS_DATA;
+
+/**
+ * @brief SMBIOS structure header common to all structure types.
+ *
+ * @details Each SMBIOS structure begins with this 4-byte header, followed
+ * by the formatted area (type-specific fields), then a string table
+ * terminated by a double null (0x00, 0x00).
+ *
+ * @see SMBIOS Reference Specification (DSP0134)
+ *      https://www.dmtf.org/standards/smbios
+ */
+typedef struct _SMBIOS_HEADER
+{
+	UINT8  Type;   ///< Structure type (0=BIOS, 1=System, 2=Baseboard, etc.)
+	UINT8  Length; ///< Length of the formatted area (including this header)
+	UINT16 Handle; ///< Unique handle for this structure instance
+} SMBIOS_HEADER, *PSMBIOS_HEADER;
+
+/**
+ * @brief SMBIOS Type 1 — System Information.
+ *
+ * @details Contains the system manufacturer, product name, version, serial
+ * number, and a 16-byte UUID assigned by the OEM. The UUID is valid for
+ * SMBIOS version 2.1+ (Length >= 0x19).
+ *
+ * @note The UUID bytes are stored in mixed-endian format per SMBIOS spec:
+ * the first three fields (TimeLow, TimeMid, TimeHiAndVersion) are
+ * little-endian, while the remaining 8 bytes are big-endian.
+ *
+ * @see SMBIOS Reference Specification — Type 1: System Information
+ *      https://www.dmtf.org/standards/smbios
+ */
+typedef struct _SMBIOS_TYPE1_SYSTEM_INFORMATION
+{
+	SMBIOS_HEADER Header;      ///< Type=1, Length>=0x19 for UUID-bearing entries
+	UINT8  Manufacturer;       ///< String index for manufacturer name
+	UINT8  ProductName;        ///< String index for product name
+	UINT8  Version;            ///< String index for version string
+	UINT8  SerialNumber;       ///< String index for serial number
+	UINT8  UUID[16];           ///< 16-byte system UUID (valid when Header.Length >= 0x19)
+} SMBIOS_TYPE1_SYSTEM_INFORMATION, *PSMBIOS_TYPE1_SYSTEM_INFORMATION;

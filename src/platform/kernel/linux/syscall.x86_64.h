@@ -24,6 +24,7 @@ constexpr USIZE SYS_IOCTL = 16;
 // File operations
 constexpr USIZE SYS_STAT = 4;
 constexpr USIZE SYS_FSTAT = 5;
+constexpr USIZE SYS_NEWFSTATAT = 262;
 constexpr USIZE SYS_UNLINK = 87;
 
 // Directory operations

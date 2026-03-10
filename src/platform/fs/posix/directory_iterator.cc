@@ -43,7 +43,7 @@ Result<DirectoryIterator, Error> DirectoryIterator::Create(PCWCHAR path)
 	}
 	else
 	{
-		utf8Path[0] = '.';
+		utf8Path[0] = '/';
 		utf8Path[1] = '\0';
 	}
 
@@ -148,39 +148,102 @@ Result<void, Error> DirectoryIterator::Next()
 
 	StringUtils::Utf8ToWide(Span<const CHAR>(d->Name, StringUtils::Length(d->Name)), Span<WCHAR>(currentEntry.Name, 256));
 
-#if defined(PLATFORM_SOLARIS)
-	// Solaris dirent has no Type field; determine IsDirectory via fstatat.
+	// --- Populate metadata via fstatat (Linux/Android/Solaris) ---
+	// getdents does not return size/timestamps; fstatat fills them in.
+	// Also provides reliable IsDirectory (d_type can be DT_UNKNOWN on some filesystems).
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID) || defined(PLATFORM_SOLARIS)
 	{
-		UINT8 statbuf[144];
+		UINT8 statbuf[256];
+		Memory::Zero(statbuf, sizeof(statbuf));
+
+#if defined(ARCHITECTURE_X86_64) && !defined(PLATFORM_SOLARIS)
+		SSIZE statResult = System::Call(SYS_NEWFSTATAT, (USIZE)handle, (USIZE)d->Name, (USIZE)statbuf, 0);
+#elif (defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)) && !defined(PLATFORM_SOLARIS)
+		SSIZE statResult = System::Call(SYS_FSTATAT64, (USIZE)handle, (USIZE)d->Name, (USIZE)statbuf, 0);
+#else // aarch64, riscv64, riscv32, mips64, Solaris
 		SSIZE statResult = System::Call(SYS_FSTATAT, (USIZE)handle, (USIZE)d->Name, (USIZE)statbuf, 0);
+#endif
+
 		if (statResult == 0)
 		{
-			// st_mode offset: ILP32 = 20 (dev4+pad12+ino4), LP64 = 16 (dev8+ino8)
-#if defined(ARCHITECTURE_I386)
-			constexpr USIZE MODE_OFFSET = 20;
-#else
-			constexpr USIZE MODE_OFFSET = 16;
+			// Architecture-specific stat field offsets: st_mode, st_size, st_mtime
+#if defined(PLATFORM_SOLARIS) && defined(ARCHITECTURE_I386)
+			constexpr USIZE OFF_MODE = 20;
+			constexpr USIZE OFF_SIZE = 44;
+			constexpr USIZE OFF_MTIME = 72;
+			constexpr BOOL MTIME_64 = false;
+#elif defined(PLATFORM_SOLARIS)
+			constexpr USIZE OFF_MODE = 16;
+			constexpr USIZE OFF_SIZE = 48;
+			constexpr USIZE OFF_MTIME = 88;
+			constexpr BOOL MTIME_64 = true;
+#elif defined(ARCHITECTURE_X86_64)
+			// x86_64 struct stat: st_nlink is 8 bytes, pushing st_mode to 24
+			constexpr USIZE OFF_MODE = 24;
+			constexpr USIZE OFF_SIZE = 48;
+			constexpr USIZE OFF_MTIME = 88;
+			constexpr BOOL MTIME_64 = true;
+#elif defined(ARCHITECTURE_I386) || defined(ARCHITECTURE_ARMV7A)
+			// i386/armv7a struct stat64
+			constexpr USIZE OFF_MODE = 16;
+			constexpr USIZE OFF_SIZE = 44;
+			constexpr USIZE OFF_MTIME = 72;
+			constexpr BOOL MTIME_64 = false;
+#elif defined(ARCHITECTURE_MIPS64)
+			// MIPS64 n64 struct stat
+			constexpr USIZE OFF_MODE = 24;
+			constexpr USIZE OFF_SIZE = 56;
+			constexpr USIZE OFF_MTIME = 72;
+			constexpr BOOL MTIME_64 = false;
+#else // aarch64, riscv64, riscv32 — generic Linux stat
+			constexpr USIZE OFF_MODE = 16;
+			constexpr USIZE OFF_SIZE = 48;
+			constexpr USIZE OFF_MTIME = 88;
+			constexpr BOOL MTIME_64 = true;
 #endif
-			UINT32 mode = *(UINT32 *)(statbuf + MODE_OFFSET);
+
+			UINT32 mode = *(UINT32 *)(statbuf + OFF_MODE);
 			currentEntry.IsDirectory = ((mode & 0xF000) == 0x4000); // S_IFDIR
+
+			INT64 fileSize = *(INT64 *)(statbuf + OFF_SIZE);
+			currentEntry.Size = (fileSize > 0) ? (UINT64)fileSize : 0;
+
+			INT64 mtime;
+			if constexpr (MTIME_64)
+				mtime = *(INT64 *)(statbuf + OFF_MTIME);
+			else
+				mtime = (INT64)(*(INT32 *)(statbuf + OFF_MTIME));
+			currentEntry.LastModifiedTime = (UINT64)mtime;
+			currentEntry.CreationTime = currentEntry.LastModifiedTime;
 		}
 		else
 		{
+			currentEntry.Size = 0;
+			currentEntry.CreationTime = 0;
+			currentEntry.LastModifiedTime = 0;
+#if defined(PLATFORM_SOLARIS)
 			currentEntry.IsDirectory = false;
+#else
+			currentEntry.IsDirectory = (d->Type == DT_DIR);
+#endif
 		}
 	}
-	currentEntry.Type = currentEntry.IsDirectory ? 4 : 0; // DT_DIR=4 or DT_UNKNOWN=0
-#else // Linux, macOS, FreeBSD — dirent has Type field
+#if defined(PLATFORM_SOLARIS)
+	currentEntry.Type = currentEntry.IsDirectory ? 4 : 0;
+#else
+	currentEntry.Type = (UINT32)d->Type;
+#endif
+#else // macOS, iOS, FreeBSD — use dirent d_type
 	currentEntry.IsDirectory = (d->Type == DT_DIR);
 	currentEntry.Type = (UINT32)d->Type;
+	currentEntry.Size = 0;
+	currentEntry.CreationTime = 0;
+	currentEntry.LastModifiedTime = 0;
 #endif
 	currentEntry.IsDrive = false;
 	currentEntry.IsHidden = (d->Name[0] == '.');
 	currentEntry.IsSystem = false;
 	currentEntry.IsReadOnly = false;
-	currentEntry.Size = 0;
-	currentEntry.CreationTime = 0;
-	currentEntry.LastModifiedTime = 0;
 
 	bufferPosition += d->Reclen;
 

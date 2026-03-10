@@ -9,10 +9,6 @@
 #include "platform/kernel/uefi/efi_context.h"
 
 
-/// @brief Function pointer callback for character-by-character output from StringFormatter
-/// @param text Span of characters to write to the console
-/// @return Number of characters written, 0 on error
-
 UINT32 Console::Write(Span<const WCHAR> text)
 {
 	if (text.Data() == nullptr || text.Size() == 0)
@@ -45,10 +41,6 @@ UINT32 Console::Write(Span<const WCHAR> text)
 	return totalWritten;
 }
 
-
-/// @brief Write a span of characters to the console, converting to wide characters if necessary
-/// @param text Span of characters to write to the console
-/// @return Number of characters written, 0 on error
 UINT32 Console::Write(Span<const CHAR> text)
 {
 	if (text.Data() == nullptr || text.Size() == 0)

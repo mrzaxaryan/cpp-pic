@@ -185,10 +185,8 @@ UINT32 Console::Write(const TChar *text)
  *   - For small outputs, overhead is negligible
  */
 template <TCHAR TChar>
-BOOL Console::FormatterCallback(PVOID context, TChar ch)
+BOOL Console::FormatterCallback([[maybe_unused]] PVOID context, TChar ch)
 {
-	(VOID) context; // Unused - reserved for future use (e.g., buffer pointer)
-
 	// Write single character to console
 	// Return value: true = success, false = error
 	return Write(Span<const TChar>(&ch, 1));

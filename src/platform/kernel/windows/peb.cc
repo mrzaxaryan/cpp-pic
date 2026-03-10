@@ -33,10 +33,12 @@ PPEB GetCurrentPEB(VOID)
 // Get the base address of a module by its name
 PVOID GetModuleHandleFromPEB(UINT64 moduleNameHash)
 {
+	// Get PEB and modules
 	PPEB peb = GetCurrentPEB();
 	PLIST_ENTRY list = &peb->LoaderData->InMemoryOrderModuleList;
 	PLIST_ENTRY entry = list->Flink;
 
+	// Traverse the loaded modules list to find the target module by name hash
 	while (entry != list)
 	{
 		PLDR_DATA_TABLE_ENTRY module = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderModuleList);
@@ -44,12 +46,14 @@ PVOID GetModuleHandleFromPEB(UINT64 moduleNameHash)
 		if (module->BaseDllName.Buffer != nullptr && Djb2::Hash(module->BaseDllName.Buffer) == moduleNameHash)
 			return module->DllBase;
 
+		// Move to the next module in the list
 		entry = entry->Flink;
 	}
 
 	return nullptr;
 }
 
+// Get the address of an exported function from PEB module
 PVOID ResolveExportAddressFromPebModule(UINT64 moduleNameHash, UINT64 functionNameHash)
 {
 	// Resolve the module handle
@@ -62,6 +66,7 @@ PVOID ResolveExportAddressFromPebModule(UINT64 moduleNameHash, UINT64 functionNa
 	return functionAddress;
 }
 
+// Get the address of an exported function using module name
 PVOID ResolveExportAddress(const WCHAR *moduleName, UINT64 functionNameHash)
 {
 	// Compute module name hash from the wide string
@@ -80,6 +85,7 @@ PVOID ResolveExportAddress(const WCHAR *moduleName, UINT64 functionNameHash)
 		dllName.MaximumLength = dllName.Length + sizeof(WCHAR);
 		dllName.Buffer = (PWCHAR)moduleName;
 
+		// Load the DLL and get the base address
 		auto r = NTDLL::LdrLoadDll(nullptr, nullptr, &dllName, &moduleBase);
 		if (!r || moduleBase == nullptr)
 			return nullptr;

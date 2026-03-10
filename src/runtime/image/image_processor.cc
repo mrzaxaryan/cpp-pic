@@ -36,7 +36,11 @@ static VOID ResetNode(ContourNode *n)
 	return a.Row == b.Row && a.Col == b.Col;
 }
 
-/// @brief Mark which cardinal direction around center has been examined
+/// @brief Mark a neighbor as examined based on its position relative to the center point
+/// @param mark Point being examined
+/// @param center Center point of reference
+/// @param checked Array of booleans indicating which directions have been checked
+/// @return void
 static VOID MarkExamined(Point mark, Point center, BOOL checked[4])
 {
 	//    3
@@ -59,6 +63,9 @@ static VOID MarkExamined(Point mark, Point center, BOOL checked[4])
 }
 
 /// @brief Step clockwise around a pivot point
+/// @param current Current point to be updated
+/// @param pivot Pivot point around which to step
+/// @return void
 static VOID StepCW(Point *current, Point pivot)
 {
 	if (current->Col > pivot.Col)
@@ -84,6 +91,9 @@ static VOID StepCW(Point *current, Point pivot)
 }
 
 /// @brief Step counter-clockwise around a pivot point
+/// @param current Current point to be updated
+/// @param pivot Pivot point around which to step
+/// @return void
 static VOID StepCCW(Point *current, Point pivot)
 {
 	if (current->Col > pivot.Col)
@@ -432,6 +442,13 @@ static VOID StepCCW(Point *current, Point pivot)
 	return Result<ContourResult, Error>::Ok(result);
 }
 
+/// @brief Calculate per-pixel binary difference between two RGB images
+/// @param image1 First image (width * height RGB pixels)
+/// @param image2 Second image (same dimensions)
+/// @param width Image width in pixels
+/// @param height Image height in pixels
+/// @param biDiff Output binary difference image (width * height)
+/// @return void
 VOID ImageProcessor::CalculateBiDifference(
 	Span<const RGB> image1,
 	Span<const RGB> image2,
@@ -458,6 +475,11 @@ VOID ImageProcessor::CalculateBiDifference(
 	}
 }
 
+/// @brief Remove noise from a binary difference image using block averaging
+/// @param biDiff Binary difference image (modified in-place)
+/// @param width Width of the image in pixels
+/// @param height Height of the image in pixels
+/// @return void
 VOID ImageProcessor::RemoveNoise(
 	Span<UINT8> biDiff,
 	UINT32 width,

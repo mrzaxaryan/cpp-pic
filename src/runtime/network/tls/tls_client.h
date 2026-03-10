@@ -52,15 +52,18 @@ public:
 	// Factory — caller MUST check the result (enforced by [[nodiscard]])
 	[[nodiscard]] static Result<TlsClient, Error> Create(PCCHAR host, const IPAddress &ipAddress, UINT16 port, BOOL secure = true);
 
+	// Destructor
 	~TlsClient()
 	{
 		if (IsValid())
 			(void)Close();
 	}
 
+	// Disallow copy construction and assignment
 	TlsClient(const TlsClient &) = delete;
 	TlsClient &operator=(const TlsClient &) = delete;
 
+	// Move semantics
 	TlsClient(TlsClient &&other) noexcept
 		: host(other.host), ip(other.ip), context(static_cast<Socket &&>(other.context)), crypto(static_cast<TlsCipher &&>(other.crypto)), secure(other.secure), stateIndex(other.stateIndex), sendBuffer(static_cast<TlsBuffer &&>(other.sendBuffer)), recvBuffer(static_cast<TlsBuffer &&>(other.recvBuffer)), channelBuffer(static_cast<TlsBuffer &&>(other.channelBuffer)), channelBytesRead(other.channelBytesRead)
 	{
@@ -94,6 +97,7 @@ public:
 		return *this;
 	}
 
+	// Accessors and operations
 	BOOL IsValid() const { return context.IsValid(); }
 	BOOL IsSecure() const { return secure; }
 	[[nodiscard]] Result<void, Error> Open();

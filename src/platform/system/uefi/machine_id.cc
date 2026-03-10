@@ -58,17 +58,22 @@ struct SMBIOS_TYPE1
 
 #pragma pack(pop)
 
+/// @brief Parse the SMBIOS table to find the system UUID (Type 1 structure)
+/// @param tableData Pointer to the SMBIOS table data
+/// @param tableLength Length of the SMBIOS table
+/// @return UUID on success, or an error if it cannot be retrieved
 static Result<UUID, Error> ParseSmbiosTable(PUINT8 tableData, UINT32 tableLength)
 {
+	// Fixing the end pointer for bounds checking
 	PUINT8 tableEnd = tableData + tableLength;
-
+	// Iteration through SMBIOS structures 
 	while (tableData < tableEnd)
 	{
 		auto header = (SMBIOS_HEADER *)tableData;
 
 		if (tableData + header->Length > tableEnd)
 			break;
-
+		// Checking of type and length to find the system information structure (Type 1)
 		if (header->Type == 1 && header->Length >= 0x19)
 		{
 			auto systemInfo = (SMBIOS_TYPE1 *)tableData;
@@ -145,10 +150,12 @@ Result<UUID, Error> GetMachineUUID()
 	smbiosGuid.Data4[4] = 0x27; smbiosGuid.Data4[5] = 0x3f;
 	smbiosGuid.Data4[6] = 0xc1; smbiosGuid.Data4[7] = 0x4d;
 
+	// Iteration through EFI configuration tables
 	for (USIZE i = 0; i < st->NumberOfTableEntries; i++)
 	{
 		EFI_CONFIGURATION_TABLE *entry = &st->ConfigurationTable[i];
 
+		// First look for SMBIOS 3.0 table
 		if (memcmp(&entry->VendorGuid, &smbios3Guid, sizeof(EFI_GUID)) == 0)
 		{
 			auto ep = (SMBIOS3_ENTRY_POINT *)entry->VendorTable;
@@ -162,7 +169,7 @@ Result<UUID, Error> GetMachineUUID()
 	for (USIZE i = 0; i < st->NumberOfTableEntries; i++)
 	{
 		EFI_CONFIGURATION_TABLE *entry = &st->ConfigurationTable[i];
-
+		// Look for SMBIOS 2.x table if SMBIOS 3.0 is not found
 		if (memcmp(&entry->VendorGuid, &smbiosGuid, sizeof(EFI_GUID)) == 0)
 		{
 			auto ep = (SMBIOS_ENTRY_POINT *)entry->VendorTable;

@@ -22,9 +22,11 @@ DateTime DateTime::Now()
 	EFI_CONTEXT *ctx = GetEfiContext();
 	EFI_RUNTIME_SERVICES *rs = ctx->SystemTable->RuntimeServices;
 
+	// Initalizing Time structure to be filled by GetTime
 	EFI_TIME efiTime{};
 	EFI_STATUS status = rs->GetTime(&efiTime, nullptr);
-
+	
+	// Status check
 	if (status == EFI_SUCCESS)
 	{
 		dt.Years = efiTime.Year;

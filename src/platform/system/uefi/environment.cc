@@ -7,10 +7,8 @@
 
 #include "platform/system/environment.h"
 
-USIZE Environment::GetVariable(const CHAR* name, Span<CHAR> buffer) noexcept
+USIZE Environment::GetVariable([[maybe_unused]] const CHAR* name, Span<CHAR> buffer) noexcept
 {
-	(void)name;  // Unused
-
 	if (buffer.Size() > 0)
 	{
 		buffer[0] = '\0';

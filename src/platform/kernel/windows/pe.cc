@@ -15,11 +15,13 @@ PVOID GetExportAddress(PVOID hModule, UINT64 functionNameHash)
 	IMAGE_NT_HEADERS *ntHeader = (IMAGE_NT_HEADERS *)((PCHAR)dosHeader + dosHeader->e_lfanew);
 	if (ntHeader->Signature != IMAGE_NT_SIGNATURE)
 		return nullptr;
+	
 	// Use the proper index for exports
 	UINT32 exportRva = ntHeader->OptionalHeader
 						   .DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]
 						   .VirtualAddress;
 
+	// Check exportRva validity
 	if (exportRva == 0)
 		return nullptr;
 
@@ -75,6 +77,7 @@ PVOID GetExportAddress(PVOID hModule, UINT64 functionNameHash)
 				UINT64 targetModuleHash = Djb2::Hash(wideModuleName);
 				UINT64 targetFuncHash = Djb2::Hash(dot + 1);
 
+				// Get the target module base address from the PEB and validate it
 				PVOID targetModule = GetModuleHandleFromPEB(targetModuleHash);
 				if (targetModule == nullptr)
 					return nullptr;

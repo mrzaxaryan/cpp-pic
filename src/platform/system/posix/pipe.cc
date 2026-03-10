@@ -83,7 +83,7 @@ Result<USIZE, Error> Pipe::Write(Span<const UINT8> data) noexcept
 {
 	// Validate the write end of the pipe
 	if (writeFd == INVALID_FD)
-		return Result<USIZE, Error>::Err(Error::Pipe_ReadFailed);
+		return Result<USIZE, Error>::Err(Error::Pipe_WriteFailed);
 
 	// System call to write to the pipe
 	SSIZE result = System::Call(SYS_WRITE, (USIZE)writeFd, (USIZE)data.Data(), data.Size());
@@ -91,7 +91,7 @@ Result<USIZE, Error> Pipe::Write(Span<const UINT8> data) noexcept
 	if (result < 0)
 	{
 		return Result<USIZE, Error>::Err(
-			Error::Posix((UINT32)(-result)), Error::Pipe_ReadFailed);
+			Error::Posix((UINT32)(-result)), Error::Pipe_WriteFailed);
 	}
 
 	return Result<USIZE, Error>::Ok((USIZE)result);

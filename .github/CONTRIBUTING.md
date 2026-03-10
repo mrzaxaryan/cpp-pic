@@ -218,11 +218,26 @@ The binary must contain **only** a `.text` section. No `.rdata`, `.rodata`, `.da
 - **Braces:** Allman style - opening brace on its own line
 - **Include guard:** `#pragma once` in every header
 - **No STL, no exceptions, no RTTI**
-- **`FORCE_INLINE`** for force-inlined functions, **`NOINLINE`** when inlining must be prevented
-- **`constexpr`/`consteval` everywhere possible:** mark every function and variable `constexpr` if it *can* be evaluated at compile time; use `consteval` when it *must* be compile-time only
-- **Cast to `USIZE`** when passing pointer/handle arguments to `System::Call`
-- **Includes:** `runtime.h` = everything; `platform.h` = CORE + PLATFORM; implementation files include own header first
-- **Include paths:** Always use full paths relative to `src/` (e.g., `"core/types/primitives.h"`, not `"primitives.h"`). This eliminates ambiguity and does not rely on CMake include-path ordering. Exception: test files in `tests/` may use bare filenames for other test headers in the same directory.
+
+### Function Attributes
+- **`FORCE_INLINE`** for force-inlined functions
+- **`NOINLINE`** when inlining must be prevented
+
+### Compile-Time Evaluation
+- Use `constexpr` / `consteval` wherever possible  
+- Mark every function and variable `constexpr` if it can be evaluated at compile time  
+- Use `consteval` when evaluation **must** occur at compile time
+
+### System Calls
+- Cast pointer or handle arguments to `USIZE` when passing them to `System::Call`
+
+### Includes
+- `runtime.h` → includes everything  
+- `platform.h` → includes **CORE + PLATFORM**  
+- Implementation files must include their **own header first**
+
+### Include Paths
+- Always use full paths relative to `src/` (e.g., `"core/types/primitives.h"`, not `"primitives.h"`). This eliminates ambiguity and does not rely on CMake include-path ordering. Exception: test files in `tests/` may use bare filenames for other test headers in the same directory.
 
 ---
 

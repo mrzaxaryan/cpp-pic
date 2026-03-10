@@ -42,8 +42,8 @@ typedef UINT64 EFI_PHYSICAL_ADDRESS;
 typedef UINT64 EFI_VIRTUAL_ADDRESS;
 typedef USIZE EFI_TPL;
 
-// CHAR16 maps to WCHAR (both 2-byte on UEFI/Windows targets)
-typedef WCHAR CHAR16;
+// CHAR16 is defined in primitives.h as a fixed-width 16-bit type (unsigned short).
+// On UEFI targets, WCHAR is also 2 bytes, so CHAR16 and WCHAR are interchangeable.
 
 // =============================================================================
 // GUID Structure

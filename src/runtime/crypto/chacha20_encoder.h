@@ -102,6 +102,10 @@ public:
 	VOID *operator new(USIZE, PVOID ptr) noexcept { return ptr; }
 	VOID operator delete(VOID *, PVOID) noexcept {}
 
+
+	// ====================================================
+	// Move semantics 
+	// ====================================================
 	ChaCha20Encoder(ChaCha20Encoder &&other) noexcept
 		: remoteCipher(static_cast<ChaCha20Poly1305 &&>(other.remoteCipher)), localCipher(static_cast<ChaCha20Poly1305 &&>(other.localCipher)), ivLength(other.ivLength), initialized(other.initialized)
 	{

@@ -36,18 +36,21 @@ struct VOID_TAG
 {
 };
 
+// Helper to map void to VOID_TAG for storage, while keeping T as the user-facing type
 template <typename T>
 struct VOID_TO_TAG
 {
 	using Type = T;
 };
 
+// Specialization for void maps to VOID_TAG
 template <>
 struct VOID_TO_TAG<void>
 {
 	using Type = VOID_TAG;
 };
 
+// Class template for Result
 template <typename T, typename E>
 class [[nodiscard]] Result
 {

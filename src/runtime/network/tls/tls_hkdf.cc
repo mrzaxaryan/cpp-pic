@@ -11,7 +11,6 @@
 /// @param hkdflabel The buffer to store the created HKDF label
 /// @param length Length of the output keying material (OKM) that will be derived using this label
 /// @return The total length of the created HKDF label
-
 INT32 TlsHKDF::Label(Span<const CHAR> label, Span<const UCHAR> data, PUCHAR hkdflabel, UINT16 length)
 {
 	auto prefix = "tls13 "_embed;
@@ -43,7 +42,6 @@ INT32 TlsHKDF::Label(Span<const CHAR> label, Span<const UCHAR> data, PUCHAR hkdf
 /// @param salt Span containing the salt value
 /// @param ikm Span containing the input keying material
 /// @return void
-
 VOID TlsHKDF::Extract(Span<UCHAR> output, Span<const UCHAR> salt, Span<const UCHAR> ikm)
 {
 	HMAC_SHA256 hmac;
@@ -59,7 +57,6 @@ VOID TlsHKDF::Extract(Span<UCHAR> output, Span<const UCHAR> salt, Span<const UCH
 /// @param secret Span containing the secret value
 /// @param info Span containing the info value
 /// @return void
-
 VOID TlsHKDF::Expand(Span<UCHAR> output, Span<const UCHAR> secret, Span<const UCHAR> info)
 {
 	UCHAR digestOut[SHA256_DIGEST_SIZE];
@@ -115,7 +112,6 @@ VOID TlsHKDF::Expand(Span<UCHAR> output, Span<const UCHAR> secret, Span<const UC
 /// @param label Span containing the label to use in the HKDF label
 /// @param data Span containing the data to include in the HKDF label
 /// @return void 
-
 VOID TlsHKDF::ExpandLabel(Span<UCHAR> output, Span<const UCHAR> secret, Span<const CHAR> label, Span<const UCHAR> data)
 {
 	UCHAR hkdfLabel[512];

@@ -2,10 +2,6 @@
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 
-/// @brief Parse IP address from string span
-/// @param ipString The string span containing the IP address
-/// @return Result containing the parsed IPAddress or an error
-
 Result<IPAddress, Error> IPAddress::FromString(Span<const CHAR> ipString)
 {
 	if (ipString.Size() == 0)
@@ -214,10 +210,6 @@ Result<IPAddress, Error> IPAddress::FromString(Span<const CHAR> ipString)
 	}
 }
 
-/// @brief Parse IP address from null-terminated string
-/// @param ipString The null-terminated string containing the IP address
-/// @return Result containing the parsed IPAddress or an error
-
 Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 {
 	if (ipString == nullptr)
@@ -227,9 +219,6 @@ Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 	return FromString(Span<const CHAR>(ipString, StringUtils::Length(ipString)));
 }
 
-/// @brief Convert IP address to string representation
-/// @param buffer The buffer to store the string representation
-/// @return Result indicating success or failure
 
 Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 {

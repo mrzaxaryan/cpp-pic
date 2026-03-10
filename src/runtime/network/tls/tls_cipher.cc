@@ -8,7 +8,6 @@
 
 /// @brief Reset the TlsCipher object to its initial state
 /// @return void
-
 VOID TlsCipher::Reset()
 {
 	for (INT32 i = 0; i < ECC_COUNT; i++)
@@ -20,6 +19,7 @@ VOID TlsCipher::Reset()
 			privateEccKeys[i] = nullptr;
 		}
 	}
+	// Zero out the private ECC key pointers to prevent dangling references
 	Memory::Zero(privateEccKeys, sizeof(privateEccKeys));
 	publicKey.Clear();
 	decodeBuffer.Clear();
@@ -35,7 +35,6 @@ VOID TlsCipher::Reset()
 
 /// @brief Destroy the TlsCipher object and clean up resources
 /// @return void
-
 VOID TlsCipher::Destroy()
 {
 	Reset();
@@ -43,9 +42,9 @@ VOID TlsCipher::Destroy()
 
 /// @brief Create client random data
 /// @return Pointer to the client random data
-
 PINT8 TlsCipher::CreateClientRand()
 {
+	// Use a local Random instance to generate client random data
 	Random random;
 
 	LOG_DEBUG("Creating client random data for cipher: %p", this);
@@ -59,7 +58,6 @@ PINT8 TlsCipher::CreateClientRand()
 
 /// @brief Update server information for the TLS cipher
 /// @return Result<void, Error>::Ok() if the update was successful
-
 Result<void, Error> TlsCipher::UpdateServerInfo()
 {
 	cipherIndex = 0;
@@ -70,16 +68,14 @@ Result<void, Error> TlsCipher::UpdateServerInfo()
 /// @brief Get the current handshake hash and store it in the provided output span
 /// @param out Output span; size determines which hash algorithm is used
 /// @return void
-
 VOID TlsCipher::GetHash(Span<CHAR> out)
 {
 	handshakeHash.GetHash(out);
 }
 
 /// @brief Update the handshake hash with new input data
-/// @param in Pointer to the input data to be added to the handshake hash
+/// @param in Input span containing the data to be added to the handshake hash
 /// @return void
-
 VOID TlsCipher::UpdateHash(Span<const CHAR> in)
 {
 	handshakeHash.Append(in);
@@ -87,13 +83,14 @@ VOID TlsCipher::UpdateHash(Span<const CHAR> in)
 
 /// @brief Compute the public key for the specified ECC index and store it in the provided output buffer
 /// @param eccIndex Index of the ECC key to use for public key computation
-/// @param out Pointer to the buffer where the computed public key will be stored
-/// @return Result<void, Error>::Ok() if the public key was successfully computed
-
+/// @param out Span to receive the computed public key
+/// @return void on success, or an error result if the computation failed
 Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 {
 	if (eccIndex < 0 || eccIndex >= ECC_COUNT)
 		return Result<void, Error>::Err(Error::TlsCipher_ComputePublicKeyFailed);
+
+	// Allocate ECC key if it doesn't exist
 	if (privateEccKeys[eccIndex] == nullptr)
 	{
 		LOG_DEBUG("Allocating memory for private ECC key at index %d", eccIndex);
@@ -101,7 +98,7 @@ Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 		INT32 ecc_size_list[2];
 		ecc_size_list[0] = 32;
 		ecc_size_list[1] = 48;
-
+		// Initialize the ECC key and validate initialization
 		auto initResult = privateEccKeys[eccIndex]->Initialize(ecc_size_list[eccIndex]);
 		if (!initResult)
 		{
@@ -111,11 +108,12 @@ Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 			return Result<void, Error>::Err(initResult, Error::TlsCipher_ComputePublicKeyFailed);
 		}
 	}
-
+	// Validate size
 	auto checkResult = out.CheckSize(MAX_PUBKEY_SIZE);
 	if (!checkResult)
 		return Result<void, Error>::Err(checkResult, Error::TlsCipher_ComputePublicKeyFailed);
 
+	// Export the public key and validate export
 	auto exportResult = privateEccKeys[eccIndex]->ExportPublicKey(Span<UINT8>((UINT8 *)out.GetBuffer() + out.GetSize(), MAX_PUBKEY_SIZE));
 	if (!exportResult)
 		return Result<void, Error>::Err(exportResult, Error::TlsCipher_ComputePublicKeyFailed);
@@ -129,9 +127,8 @@ Result<void, Error> TlsCipher::ComputePublicKey(INT32 eccIndex, TlsBuffer &out)
 /// @brief Compute the pre-master key using the specified ECC group and server key, and store it in the provided output buffer
 /// @param ecc Specified ECC group to use for key computation
 /// @param serverKey Server's public key to use for pre-master key computation
-/// @param premasterKey Pointer to the buffer where the computed pre-master key will be stored
-/// @return Result<void, Error>::Ok() if the pre-master key was successfully computed
-
+/// @param premasterKey Span to receive the computed pre-master key
+/// @return void on success, or an error result if the computation failed
 Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, Span<const CHAR> serverKey, TlsBuffer &premasterKey)
 {
 	INT32 eccIndex;
@@ -152,17 +149,20 @@ Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, Span<const CHAR> ser
 	{
 		return Result<void, Error>::Err(Error::TlsCipher_ComputePreKeyFailed);
 	}
+
+	// Compute the public key for the specified ECC group and validate computation
 	auto pubKeyResult = ComputePublicKey(eccIndex, publicKey);
 	if (!pubKeyResult)
 	{
 		LOG_DEBUG("Failed to compute public key for ECC group %d", ecc);
 		return Result<void, Error>::Err(pubKeyResult, Error::TlsCipher_ComputePreKeyFailed);
 	}
-
+	// Set size 
 	auto premasterSizeResult = premasterKey.SetSize(eccSize);
 	if (!premasterSizeResult)
 		return Result<void, Error>::Err(premasterSizeResult, Error::TlsCipher_ComputePreKeyFailed);
 
+	// Compute shared secret using the server's public key and validate computation
 	auto secretResult = privateEccKeys[eccIndex]->ComputeSharedSecret(Span<const UINT8>((UINT8 *)serverKey.Data(), serverKey.Size()), Span<UINT8>((UINT8 *)premasterKey.GetBuffer(), eccSize));
 	if (!secretResult)
 	{
@@ -176,9 +176,8 @@ Result<void, Error> TlsCipher::ComputePreKey(ECC_GROUP ecc, Span<const CHAR> ser
 /// @brief Compute the TLS key using the specified ECC group and server key, and store it in the provided finished hash
 /// @param ecc Specified ECC group to use for key computation
 /// @param serverKey Server's public key to use for TLS key computation
-/// @param finishedHash Pointer to the buffer where the computed finished hash will be stored
-/// @return Result<void, Error>::Ok() if the TLS key was successfully computed
-
+/// @param finishedHash Span to receive the computed finished hash
+/// @return void on success, or an error result if the computation failed
 Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, Span<const CHAR> serverKey, Span<CHAR> finishedHash)
 {
 	if (cipherIndex == -1)
@@ -206,6 +205,7 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, Span<const CHAR> server
 	hash2.GetHash(Span<CHAR>((CHAR *)hash, hashLen));
 	Memory::Zero(earlysecret, sizeof(earlysecret));
 
+	// For ECC_NONE, the pre-master key is all zeros and the client/server random values are not used in key computation
 	if (ecc == ECC_NONE)
 	{
 		LOG_DEBUG("Using ECC_NONE for TLS key computation");
@@ -277,8 +277,7 @@ Result<void, Error> TlsCipher::ComputeKey(ECC_GROUP ecc, Span<const CHAR> server
 /// @param out Pointer to the buffer where the computed verify data will be stored
 /// @param verifySize Size of the verify data to compute
 /// @param localOrRemote Indicates whether to use the local or remote finished key
-/// @return Result<void, Error>::Ok() if the verify data was successfully computed
-
+/// @return void on success, or an error result if the computation failed
 Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, INT32 localOrRemote)
 {
 	if (cipherIndex == -1)
@@ -289,10 +288,12 @@ Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, I
 	CHAR hash[MAX_HASH_LEN];
 	INT32 hashLen = CIPHER_HASH_SIZE;
 	LOG_DEBUG("tls_cipher_compute_verify: Getting handshake hash, hash_len=%d", hashLen);
+	// Get the current handshake hash
 	GetHash(Span<CHAR>(hash, hashLen));
 
 	UINT8 finished_key[MAX_HASH_LEN];
 	auto finishedLabel = "finished"_embed;
+	// Compute the finished key based on whether localOrRemote indicates local or remote, and validate computation
 	if (localOrRemote)
 	{
 		LOG_DEBUG("tls_cipher_compute_verify: Using server finished key");
@@ -303,6 +304,7 @@ Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, I
 		LOG_DEBUG("tls_cipher_compute_verify: Using client finished key");
 		TlsHKDF::ExpandLabel(Span<UCHAR>(finished_key, hashLen), Span<const UCHAR>(data13.handshakeSecret, hashLen), Span<const CHAR>(finishedLabel, 8), Span<const UCHAR>());
 	}
+	// Set size and validate 
 	auto setSizeResult = out.SetSize(verifySize);
 	if (!setSizeResult)
 	{
@@ -312,6 +314,7 @@ Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, I
 	}
 	LOG_DEBUG("tls_cipher_compute_verify: Calculating HMAC for verify, verify_size=%d", verifySize);
 	HMAC_SHA256 hmac;
+	// Initialize HMAC with the finished key and validate initialization and update with the handshake hash
 	hmac.Init(Span<const UCHAR>(finished_key, hashLen));
 	hmac.Update(Span<const UCHAR>((UINT8 *)hash, hashLen));
 
@@ -326,10 +329,9 @@ Result<void, Error> TlsCipher::ComputeVerify(TlsBuffer &out, INT32 verifySize, I
 
 /// @brief Encode a TLS record using the ChaCha20 encoder and append it to the send buffer
 /// @param sendbuf Pointer to the buffer where the encoded TLS record will be appended
-/// @param packet Pointer to the TLS record to encode
+/// @param packet TLS record to encode
 /// @param keepOriginal Indicates whether to keep the original TLS record without encoding
 /// @return void
-
 VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOriginal)
 {
 	if (!isEncoding || keepOriginal)
@@ -346,19 +348,19 @@ VOID TlsCipher::Encode(TlsBuffer &sendbuf, Span<const CHAR> packet, BOOL keepOri
 	aad[0] = CONTENT_APPLICATION_DATA;
 	aad[1] = sendbuf.GetBuffer()[1];
 	aad[2] = sendbuf.GetBuffer()[2];
+	// Swap 16-bit packet size to big-endian and copy to AAD
 	UINT16 encSize = ByteOrder::Swap16(ChaCha20Encoder::ComputeSize(packetSize, CipherDirection::Encode));
 	Memory::Copy(aad + 3, &encSize, sizeof(UINT16));
 	UINT64 clientSeq = ByteOrder::Swap64(clientSeqNum++);
 	Memory::Copy(aad + 5, &clientSeq, sizeof(UINT64));
-
+	// Encode the packet
 	chacha20Context.Encode(sendbuf, packet, Span<const UCHAR>(aad));
 }
 
 /// @brief Decode a TLS record using the ChaCha20 encoder and store the result in the provided buffer
 /// @param inout Pointer to the buffer containing the TLS record to decode, and also where the decoded data will be stored
 /// @param version TLS version of the record to decode
-/// @return Result<void, Error>::Ok() if the TLS record was successfully decoded
-
+/// @return void on success, or an error result if the decoding failed
 Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 {
 	if (!isEncoding)
@@ -366,6 +368,7 @@ Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 		LOG_DEBUG("Encoding not enabled or encoder is nullptr, cannot Decode packet");
 		return Result<void, Error>::Ok();
 	}
+	// Initalize AAD with content type and version
 	UCHAR aad[13];
 
 	aad[0] = CONTENT_APPLICATION_DATA;
@@ -375,7 +378,7 @@ Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 	Memory::Copy(aad + 3, &decSize, sizeof(UINT16));
 	UINT64 serverSeq = ByteOrder::Swap64(serverSeqNum++);
 	Memory::Copy(aad + 5, &serverSeq, sizeof(UINT64));
-
+	// Decode the packet
 	auto decodeResult = chacha20Context.Decode(inout, decodeBuffer, Span<const UCHAR>(aad));
 	if (!decodeResult)
 	{
@@ -394,7 +397,6 @@ Result<void, Error> TlsCipher::Decode(TlsBuffer &inout, INT32 version)
 /// @brief Set the encoding status for the TLS cipher
 /// @param encoding Indicates whether encoding should be enabled or disabled
 /// @return void
-
 VOID TlsCipher::SetEncoding(BOOL encoding)
 {
 	isEncoding = encoding;
@@ -402,7 +404,6 @@ VOID TlsCipher::SetEncoding(BOOL encoding)
 
 /// @brief Request a reset of the sequence numbers for both client and server
 /// @return void
-
 VOID TlsCipher::ResetSequenceNumber()
 {
 	clientSeqNum = 0;

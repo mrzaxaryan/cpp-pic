@@ -4,7 +4,6 @@
 
 #define ResolveUser32ExportAddress(functionName) ResolveExportAddress((const WCHAR *)L"user32.dll"_embed, Djb2::HashCompileTime(functionName))
 
-// EnumDisplayDevicesW
 BOOL User32::EnumDisplayDevicesW(const WCHAR *lpDevice, UINT32 iDevNum, PDISPLAY_DEVICEW lpDisplayDevice, UINT32 dwFlags)
 {
 	auto fn = (BOOL(STDCALL *)(const WCHAR *, UINT32, PDISPLAY_DEVICEW, UINT32))ResolveUser32ExportAddress("EnumDisplayDevicesW");
@@ -13,7 +12,6 @@ BOOL User32::EnumDisplayDevicesW(const WCHAR *lpDevice, UINT32 iDevNum, PDISPLAY
 	return fn(lpDevice, iDevNum, lpDisplayDevice, dwFlags);
 }
 
-// EnumDisplaySettingsW
 BOOL User32::EnumDisplaySettingsW(const WCHAR *lpszDeviceName, UINT32 iModeNum, PDEVMODEW lpDevMode)
 {
 	auto fn = (BOOL(STDCALL *)(const WCHAR *, UINT32, PDEVMODEW))ResolveUser32ExportAddress("EnumDisplaySettingsW");
@@ -22,7 +20,6 @@ BOOL User32::EnumDisplaySettingsW(const WCHAR *lpszDeviceName, UINT32 iModeNum, 
 	return fn(lpszDeviceName, iModeNum, lpDevMode);
 }
 
-// GetDC
 PVOID User32::GetDC(PVOID hWnd)
 {
 	auto fn = (PVOID(STDCALL *)(PVOID))ResolveUser32ExportAddress("GetDC");
@@ -31,7 +28,6 @@ PVOID User32::GetDC(PVOID hWnd)
 	return fn(hWnd);
 }
 
-// ReleaseDC
 INT32 User32::ReleaseDC(PVOID hWnd, PVOID hDC)
 {
 	auto fn = (INT32(STDCALL *)(PVOID, PVOID))ResolveUser32ExportAddress("ReleaseDC");

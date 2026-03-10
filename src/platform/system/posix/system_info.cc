@@ -39,7 +39,7 @@ VOID GetSystemInfo(SystemInfo *info)
 			}
 		}
 	}
-
+	
 	if (info->Hostname[0] == '\0')
 	{
 		auto fallback = "unknown"_embed;

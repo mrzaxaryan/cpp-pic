@@ -21,7 +21,7 @@ Result<USIZE, Error> Pipe::Read(Span<UINT8> buffer) noexcept
 Result<USIZE, Error> Pipe::Write(Span<const UINT8> data) noexcept
 {
 	(void)data;
-	return Result<USIZE, Error>::Err(Error::Pipe_ReadFailed);
+	return Result<USIZE, Error>::Err(Error::Pipe_WriteFailed);
 }
 
 Result<void, Error> Pipe::CloseRead() noexcept

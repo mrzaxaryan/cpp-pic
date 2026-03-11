@@ -46,12 +46,19 @@ else()
         -fomit-frame-pointer
         -fno-asynchronous-unwind-tables
         -fno-unwind-tables
-        -flto=full
         -fvisibility=hidden
         -fno-threadsafe-statics
         -fno-math-errno
         -${PIR_OPT_LEVEL}
     )
+    # MIPS64 + -Og: LLVM 22.1.0 LLD crashes during LTO codegen with
+    # "Unsupported instruction: <MCInst 44>" in MipsAsmPrinter. Disable LTO
+    # for this specific combination; all other opt levels work with LTO.
+    if(PIR_ARCH STREQUAL "mips64" AND PIR_OPT_LEVEL STREQUAL "Og")
+        list(APPEND PIR_BASE_FLAGS -fno-lto)
+    else()
+        list(APPEND PIR_BASE_FLAGS -flto=full)
+    endif()
 endif()
 
 # =============================================================================

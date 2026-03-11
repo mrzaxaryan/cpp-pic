@@ -78,8 +78,11 @@ public:
 
 	constexpr FORCE_INLINE Span(T *data, USIZE size) : m_data(data), m_size(size) {}
 
+	// Array constructor: for non-character arrays, size = N (full array).
+	// For const char/wchar_t arrays (string literals), size = N-1 (exclude null terminator).
 	template <USIZE N>
-	constexpr FORCE_INLINE Span(T (&arr)[N]) : m_data(arr), m_size(N) {}
+	constexpr FORCE_INLINE Span(T (&arr)[N]) : m_data(arr),
+		m_size((__is_const(T) && (__is_same_as(__remove_const(T), char) || __is_same_as(__remove_const(T), wchar_t)) && N > 0) ? N - 1 : N) {}
 
 	// Span<U> -> Span<const U> implicit conversion (dynamic to dynamic)
 	template <typename U>

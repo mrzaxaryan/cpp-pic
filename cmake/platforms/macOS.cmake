@@ -18,17 +18,6 @@ list(APPEND PIR_INCLUDE_PATHS
 # macOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
 
-# Prevent GOT indirection. macOS enforces PIC, so by default the compiler may
-# emit GOT-relative relocations instead of direct PC-relative accesses:
-#   x86_64:  mov sym@GOTPCREL(%rip), %rax  →  lea sym(%rip), %rax
-#   aarch64: adrp+ldr via GOT page          →  adrp+add direct
-# The linker materializes these into a __DATA_CONST,__got section — a synthetic
-# section that CANNOT be merged into __TEXT,__text via -rename_section. Since
-# the PIC loader only maps __TEXT,__text, any GOT reference hits unmapped memory
-# and crashes (SIGSEGV). This flag forces direct PC-relative access for all
-# data symbols on both architectures.
-list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data)
-
 # Force hidden visibility in all build types. Without hidden visibility the
 # linker treats weak symbols (e.g. template explicit instantiations like
 # SHABase<SHA256Traits>) as interposable and generates __TEXT,__stubs +

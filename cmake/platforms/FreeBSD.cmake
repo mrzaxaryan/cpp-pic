@@ -21,15 +21,6 @@ if(PIR_ARCH STREQUAL "x86_64")
     list(APPEND PIR_BASE_FLAGS -mno-red-zone)
 endif()
 
-# Prevent GOT indirection. Clang's FreeBSD target defaults to PIC, producing
-# GOT-relative relocations for data that require a loader-initialized GOT.
-# Instead of disabling PIC entirely (which causes LTO code generation issues at
-# -O1+), use -fdirect-access-external-data to force direct PC-relative access
-# for all data symbols while keeping PIC enabled for code. This matches the
-# approach used on macOS. Combined with -fvisibility=hidden (which prevents
-# GOT/PLT entries for all internal symbols), the binary has zero GOT references.
-list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data)
-
 # Force hidden visibility in all build types (release already gets this from
 # CompilerFlags.cmake; debug builds need it explicitly). Hidden visibility
 # prevents the linker from generating GOT/PLT entries for interposable symbols,

@@ -21,11 +21,6 @@ list(APPEND PIR_INCLUDE_PATHS
 # iOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
 
-# Prevent GOT indirection. Same rationale as macOS — iOS enforces PIC and
-# the compiler may emit GOT-relative relocations. This flag forces direct
-# PC-relative access for all data symbols.
-list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data)
-
 # Force hidden visibility to eliminate lazy-binding stubs and __DATA sections.
 list(APPEND PIR_BASE_FLAGS -fvisibility=hidden)
 

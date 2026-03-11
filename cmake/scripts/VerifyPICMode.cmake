@@ -161,7 +161,7 @@ if(_found)
         "Common causes:\n"
         "  - Static/global variables (use stack-local variables)\n"
         "  - String literals (use auto str = \"...\" on the stack)\n"
-        "  - Floating-point constants (use DOUBLE with _embed suffix)\n"
+        "  - Floating-point constants (pic-transform should handle these automatically)\n"
         "  - Array literals (use stack-local arrays)\n\n"
         "Map file: ${MAP_FILE}"
     )

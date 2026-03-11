@@ -13,7 +13,6 @@
  * - Byte order manipulation
  * - Bit manipulation operations
  * - Primitive type definitions
- * - Numeric types with PIC guarantees (DOUBLE)
  * - Embedded types for position-independent function pointer storage
  * - String utilities and formatting
  * - Hash algorithms (DJB2, Base64)
@@ -55,10 +54,6 @@
 #include "core/types/result.h"
 /// @}
 
-/// @name Numeric Types
-/// @{
-#include "core/types/double.h"
-/// @}
 
 /// @name String Utilities
 /// @{

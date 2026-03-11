@@ -271,7 +271,7 @@ PIR is built on a clean three-layer abstraction that separates concerns and enab
 
 **CORE** provides:
 - Platform-independent primitives
-- Numeric types (`UINT64`, `INT64`, `DOUBLE`)
+- Numeric types (`UINT64`, `INT64`, `double`)
 - Memory operations, string utilities, and formatting
 - Algorithms (DJB2 hashing, Base64, random number generation)
 
@@ -370,7 +370,7 @@ double pi = 3.14159; // Normal literal -- transformed automatically
 movabsq $0x400921f9f01b866e, %rax ; Pi as 64-bit immediate
 ```
 
-For arithmetic operations on floating-point values without FPU dependency, PIR provides the `DOUBLE` class which implements IEEE-754 operations using pure integer math.
+The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts floating-point literals from `.rdata` into stack-local immediate stores, so native `double` can be used directly.
 
 ### Problem 3: Function Pointers
 
@@ -383,22 +383,6 @@ Function pointer addresses are resolved by the loader. Without the loader, indir
 Standard programs depend on the CRT for initialization, memory management, and helper functions.
 
 **PIR Solution:** Complete independence from the CRT by providing custom implementations for memory management, string manipulation, formatted output, and runtime initialization. A custom entry point eliminates loader-managed startup. On Windows, the PEB is traversed to locate modules and PE export tables are parsed using hash-based lookup - no import tables, no `GetProcAddress`.
-
-### Problem 5: Type Conversions
-
-Integer-to-float conversions can cause the compiler to emit hidden constants or helper routines.
-
-**PIR Solution:** All conversions use explicit bitwise and integer operations, preventing hidden constant generation:
-
-```cpp
-INT64 d_to_i64(const DOUBLE& d)
-{
-    UINT64 bits = d.bits;
-    int exponent = ((bits >> 52) & 0x7FF) - 1023;
-    UINT64 mantissa = (bits & 0xFFFFFFFFFFFFF) | 0x10000000000000;
-    // ... bit shifting logic ...
-}
-```
 
 ---
 

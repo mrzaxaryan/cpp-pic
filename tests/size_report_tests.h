@@ -50,7 +50,7 @@ private:
 
 		// ── CORE layer ──
 		{ auto n = "Error";           CopyName(entries[count++], (PCCHAR)n, sizeof(Error)); }
-		{ auto n = "DOUBLE";          CopyName(entries[count++], (PCCHAR)n, sizeof(DOUBLE)); }
+		{ auto n = "double";          CopyName(entries[count++], (PCCHAR)n, sizeof(double)); }
 		{ auto n = "IPAddress";       CopyName(entries[count++], (PCCHAR)n, sizeof(IPAddress)); }
 		{ auto n = "Prng";            CopyName(entries[count++], (PCCHAR)n, sizeof(Prng)); }
 		{ auto n = "BinaryReader";    CopyName(entries[count++], (PCCHAR)n, sizeof(BinaryReader)); }

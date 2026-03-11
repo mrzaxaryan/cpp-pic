@@ -118,7 +118,7 @@ public:
 	 *   %ld   - Long signed decimal integer
 	 *   %X    - Uppercase hexadecimal
 	 *   %x    - Lowercase hexadecimal
-	 *   %f    - Floating-point (default precision) - accepts DOUBLE directly!
+	 *   %f    - Floating-point (default precision)
 	 *   %.Nf  - Floating-point with N decimal places
 	 *   %c    - Single character
 	 *   %s    - Narrow string (CHAR*)
@@ -135,7 +135,7 @@ public:
 	 *   Console::WriteFormatted<WCHAR>(
 	 *       L"Value: %d, Pi: %.5f\n",
 	 *       42,
-	 *       3.14159  // Pass DOUBLE directly - no casting needed!
+	 *       3.14159
 	 *   );
 	 *
 	 * POSITION-INDEPENDENT IMPLEMENTATION:
@@ -201,7 +201,7 @@ BOOL Console::FormatterCallback([[maybe_unused]] PVOID context, TChar ch)
  *
  * BENEFITS OVER VA_LIST:
  *   - Type-safe: compiler knows exact types at compile time
- *   - Supports custom types like DOUBLE without casting
+ *   - Supports custom types without casting
  *   - No POD requirement
  *   - Better optimization opportunities
  */

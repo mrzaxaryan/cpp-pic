@@ -174,4 +174,11 @@ typedef __builtin_va_list VA_LIST;
 #define STDCALL // Default: no special calling convention
 #endif
 
+// =============================================================================
+// FLOATING-POINT TYPES
+// =============================================================================
+
+/** @brief Double-precision floating-point (64-bit IEEE-754) */
+typedef double DOUBLE, *PDOUBLE;
+
 /** @} */ // end of primitives group

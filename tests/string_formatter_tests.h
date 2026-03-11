@@ -342,7 +342,7 @@ private:
 		auto fmt_0f = "%.0f";
 		auto fmt_1f = "%.1f";
 
-		// Simple float - now passing DOUBLE directly!
+		// Simple float
 		Memory::Zero(buffer, 64);
 		ctx.index = 0;
 		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_2f, 3.14);
@@ -354,7 +354,7 @@ private:
 			return false;
 		}
 
-		// Integer value as float - now passing DOUBLE directly!
+		// Integer value as float
 		Memory::Zero(buffer, 64);
 		ctx.index = 0;
 		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_0f, 42.0);
@@ -366,7 +366,7 @@ private:
 			return false;
 		}
 
-		// Negative float - now passing DOUBLE directly!
+		// Negative float
 		Memory::Zero(buffer, 64);
 		ctx.index = 0;
 		StringFormatter::Format<CHAR>(fixed, &ctx, fmt_1f, -1.5);

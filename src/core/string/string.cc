@@ -1,11 +1,10 @@
 #include "core/string/string.h"
-#include "core/types/double.h"
 
 // ============================================================================
-// NUMBER CONVERSION IMPLEMENTATIONS (non-constexpr — use DOUBLE operations)
+// NUMBER CONVERSION IMPLEMENTATIONS
 // ============================================================================
 
-USIZE StringUtils::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) noexcept
+USIZE StringUtils::FloatToStr(double value, Span<CHAR> buffer, UINT8 precision) noexcept
 {
 	if (buffer.Size() < 2)
 		return 0;
@@ -13,10 +12,9 @@ USIZE StringUtils::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) 
 		precision = 15;
 
 	USIZE pos = 0;
-	DOUBLE zero = DOUBLE(INT32(0));
 
 	// Handle negative
-	if (value < zero)
+	if (value < 0.0)
 	{
 		if (pos < buffer.Size() - 1)
 			buffer[pos++] = '-';
@@ -26,19 +24,19 @@ USIZE StringUtils::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) 
 	// Rounding: add 0.5 / 10^precision
 	if (precision > 0)
 	{
-		DOUBLE scale = DOUBLE(INT32(1));
+		double scale = 1.0;
 		for (UINT8 p = 0; p < precision; p++)
-			scale = scale * DOUBLE(INT32(10));
-		value = value + DOUBLE(INT32(5)) / (scale * DOUBLE(INT32(10)));
+			scale = scale * 10.0;
+		value = value + 5.0 / (scale * 10.0);
 	}
 	else
 	{
-		value = value + DOUBLE(INT32(5)) / DOUBLE(INT32(10));
+		value = value + 0.5;
 	}
 
 	// Integer part
 	UINT64 intPart = (UINT64)value;
-	DOUBLE fracPart = value - intPart;
+	double fracPart = value - (double)intPart;
 
 	CHAR intBuf[24];
 	USIZE intLen = UIntToStr(intPart, Span<CHAR>(intBuf));
@@ -52,14 +50,14 @@ USIZE StringUtils::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) 
 
 		for (UINT8 p = 0; p < precision && pos < buffer.Size() - 1; p++)
 		{
-			fracPart = fracPart * DOUBLE(INT32(10));
+			fracPart = fracPart * 10.0;
 			INT32 digit = (INT32)fracPart;
 			if (digit < 0)
 				digit = 0;
 			if (digit > 9)
 				digit = 9;
 			buffer[pos++] = '0' + digit;
-			fracPart = fracPart - DOUBLE(digit);
+			fracPart = fracPart - (double)digit;
 		}
 
 		// Trim trailing zeros
@@ -71,11 +69,11 @@ USIZE StringUtils::FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision) 
 	return pos;
 }
 
-Result<DOUBLE, Error> StringUtils::StrToFloat(Span<const CHAR> str) noexcept
+Result<double, Error> StringUtils::StrToFloat(Span<const CHAR> str) noexcept
 {
 	if (str.Size() == 0)
 	{
-		return Result<DOUBLE, Error>::Err(Error::String_ParseFloatFailed);
+		return Result<double, Error>::Err(Error::String_ParseFloatFailed);
 	}
 
 	// Validate that the string contains at least one digit
@@ -91,11 +89,47 @@ Result<DOUBLE, Error> StringUtils::StrToFloat(Span<const CHAR> str) noexcept
 
 	if (!hasDigit)
 	{
-		return Result<DOUBLE, Error>::Err(Error::String_ParseFloatFailed);
+		return Result<double, Error>::Err(Error::String_ParseFloatFailed);
 	}
 
-	DOUBLE result = DOUBLE::Parse(str);
-	return Result<DOUBLE, Error>::Ok(result);
+	USIZE i = 0;
+	double sign = 1.0;
+	double result = 0.0;
+	double frac = 0.0;
+	double base = 1.0;
+
+	// sign
+	if (str[i] == '-')
+	{
+		sign = -1.0;
+		i++;
+	}
+	else if (str[i] == '+')
+	{
+		i++;
+	}
+
+	// integer part
+	while (i < str.Size() && str[i] >= '0' && str[i] <= '9')
+	{
+		result = result * 10.0 + (double)(str[i] - '0');
+		i++;
+	}
+
+	// fractional part
+	if (i < str.Size() && str[i] == '.')
+	{
+		i++;
+		while (i < str.Size() && str[i] >= '0' && str[i] <= '9')
+		{
+			frac = frac * 10.0 + (double)(str[i] - '0');
+			base = base * 10.0;
+			i++;
+		}
+	}
+
+	double parsed = sign * (result + frac / base);
+	return Result<double, Error>::Ok(parsed);
 }
 
 // ============================================================================

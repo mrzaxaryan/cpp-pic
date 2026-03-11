@@ -28,7 +28,6 @@
 
 #include "core/types/primitives.h"
 #include "core/types/span.h"
-#include "core/types/double.h"
 #include "core/types/error.h"
 #include "core/types/result.h"
 
@@ -304,8 +303,8 @@ public:
 	 */
 	template <TCHAR TChar>
 	static constexpr USIZE Concat(Span<TChar> buffer,
-						Span<const TChar> s1,
-						Span<const TChar> s2) noexcept;
+								  Span<const TChar> s1,
+								  Span<const TChar> s2) noexcept;
 
 	/// @}
 	/// @name Number Conversion
@@ -352,13 +351,13 @@ public:
 	static constexpr USIZE WriteHex(Span<CHAR> buffer, UINT32 num, BOOL uppercase = false) noexcept;
 
 	/**
-	 * @brief Convert DOUBLE to string
+	 * @brief Convert double to string
 	 * @param value Floating-point value to convert
 	 * @param buffer Destination buffer span
 	 * @param precision Number of decimal places (default 6)
 	 * @return Number of characters written (excluding null terminator)
 	 */
-	static USIZE FloatToStr(DOUBLE value, Span<CHAR> buffer, UINT8 precision = 6) noexcept;
+	static USIZE FloatToStr(double value, Span<CHAR> buffer, UINT8 precision = 6) noexcept;
 
 	/**
 	 * @brief Parse string to INT64 (with explicit length)
@@ -375,11 +374,11 @@ public:
 	[[nodiscard]] static constexpr Result<INT64, Error> ParseInt64(PCCHAR str) noexcept;
 
 	/**
-	 * @brief Convert string to DOUBLE
+	 * @brief Convert string to double
 	 * @param str String span to parse
-	 * @return Result containing parsed DOUBLE value, or Error::String_ParseFloatFailed
+	 * @return Result containing parsed double value, or Error::String_ParseFloatFailed
 	 */
-	[[nodiscard]] static Result<DOUBLE, Error> StrToFloat(Span<const CHAR> str) noexcept;
+	[[nodiscard]] static Result<double, Error> StrToFloat(Span<const CHAR> str) noexcept;
 
 	/// @}
 	/// @name UTF Conversion
@@ -432,12 +431,12 @@ public:
 template <TCHAR TChar>
 constexpr FORCE_INLINE BOOL StringUtils::IsSpace(TChar c) noexcept
 {
-	return (c == (TChar)' ' ||  // space
+	return (c == (TChar)' ' ||	// space
 			c == (TChar)'\t' || // horizontal tab
 			c == (TChar)'\n' || // newline
 			c == (TChar)'\v' || // vertical tab
 			c == (TChar)'\f' || // form feed
-			c == (TChar)'\r');  // carriage return
+			c == (TChar)'\r');	// carriage return
 }
 
 template <TCHAR TChar>
@@ -725,8 +724,8 @@ constexpr Span<const TChar> StringUtils::Trim(Span<const TChar> str) noexcept
 
 template <TCHAR TChar>
 constexpr USIZE StringUtils::Concat(Span<TChar> buffer,
-					 Span<const TChar> s1,
-					 Span<const TChar> s2) noexcept
+									Span<const TChar> s1,
+									Span<const TChar> s2) noexcept
 {
 	if (!buffer.Data() || buffer.Size() == 0)
 		return 0;

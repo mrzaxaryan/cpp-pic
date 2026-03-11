@@ -10,7 +10,7 @@
  * - %d, %D - Signed integer (INT32)
  * - %u, %U - Unsigned integer (UINT32)
  * - %x, %X - Hexadecimal (lowercase/uppercase)
- * - %f, %F - Floating-point (DOUBLE)
+ * - %f, %F - Floating-point (double)
  * - %s, %S - String (CHAR*)
  * - %ws, %ls - Wide string (WCHAR*)
  * - %p, %P - Pointer
@@ -113,7 +113,7 @@ public:
 			UINT32 U32;        ///< Unsigned 32-bit integer
 			INT64 I64;         ///< Signed 64-bit integer
 			UINT64 U64;        ///< Unsigned 64-bit integer
-			DOUBLE Dbl;        ///< Floating-point value
+			double Dbl;        ///< Floating-point value
 			const CHAR *Cstr;  ///< Narrow string pointer
 			const WCHAR *Wstr; ///< Wide string pointer
 			PVOID Ptr;         ///< Generic pointer
@@ -125,9 +125,8 @@ public:
 		Argument() : Kind(Type::INT32), I32(0) {}
 		Argument(INT32 v) : Kind(Type::INT32), I32(v) {}
 		Argument(UINT32 v) : Kind(Type::UINT32), U32(v) {}
-		Argument(DOUBLE v) : Kind(Type::DOUBLE), Dbl(v) {}
-		Argument(double v) : Kind(Type::DOUBLE), Dbl(DOUBLE(v)) {}
-		Argument(float v) : Kind(Type::DOUBLE), Dbl(DOUBLE(static_cast<double>(v))) {}
+		Argument(double v) : Kind(Type::DOUBLE), Dbl(v) {}
+		Argument(float v) : Kind(Type::DOUBLE), Dbl(static_cast<double>(v)) {}
 		Argument(const CHAR *v) : Kind(Type::CSTR), Cstr(v) {}
 		Argument(CHAR *v) : Kind(Type::CSTR), Cstr(v) {}
 		Argument(const WCHAR *v) : Kind(Type::WSTR), Wstr(v) {}
@@ -161,7 +160,7 @@ private:
 	template <TCHAR TChar>
 	static INT32 FormatUInt64AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT64 num, INT32 fieldWidth = 0, INT32 uppercase = 0, INT32 zeroPad = 0, BOOL addPrefix = false);
 	template <TCHAR TChar>
-	static INT32 FormatDouble(BOOL (*writer)(PVOID, TChar), PVOID context, DOUBLE num, INT32 precision = 6, INT32 width = 0, INT32 zeroPad = 0);
+	static INT32 FormatDouble(BOOL (*writer)(PVOID, TChar), PVOID context, double num, INT32 precision = 6, INT32 width = 0, INT32 zeroPad = 0);
 	template <TCHAR TChar>
 	static INT32 FormatPointerAsHex(BOOL (*writer)(PVOID, TChar), PVOID context, PVOID ptr);
 	template <TCHAR TChar>
@@ -500,12 +499,11 @@ template <TCHAR TChar>
 INT32 StringFormatter::FormatDouble(
 	BOOL (*writer)(PVOID, TChar),
 	PVOID context,
-	DOUBLE num,
+	double num,
 	INT32 precision,
 	INT32 width,
 	INT32 zeroPad)
 {
-	DOUBLE d0_5 = 0.5;
 	// Clamp precision to something safe for a small stack buffer
 	if (precision < 0)
 		precision = 0;
@@ -539,7 +537,7 @@ INT32 StringFormatter::FormatDouble(
 
 	// Sign check
 	BOOL isNegative = false;
-	if (num < 0)
+	if (num < 0.0)
 	{
 		isNegative = true;
 		num = -num;
@@ -548,15 +546,15 @@ INT32 StringFormatter::FormatDouble(
 	// Rounding: num += 0.5 / 10^precision
 	if (precision > 0)
 	{
-		DOUBLE scale = 1.0;
+		double scale = 1.0;
 		for (INT32 i = 0; i < precision; ++i)
-			scale *= (DOUBLE)10.0;
-		num += (d0_5 / scale);
+			scale *= 10.0;
+		num += (0.5 / scale);
 	}
 	else
 	{
 		// precision == 0 => round to integer
-		num += d0_5;
+		num += 0.5;
 	}
 
 	// Build into a small local buffer, then emit through writer()
@@ -569,7 +567,7 @@ INT32 StringFormatter::FormatDouble(
 
 	// Integer part
 	UINT64 intPart = (UINT64)num;
-	DOUBLE fracPart = num - intPart;
+	double fracPart = num - (double)intPart;
 
 	// Convert integer to reversed digits
 	TChar intRev[32];
@@ -599,14 +597,14 @@ INT32 StringFormatter::FormatDouble(
 		tmp[len++] = (TChar)'.';
 		for (INT32 i = 0; i < precision; ++i)
 		{
-			fracPart *= (DOUBLE)10.0;
+			fracPart *= 10.0;
 			INT32 d = (INT32)fracPart;
 			if (d < 0)
 				d = 0;
 			if (d > 9)
 				d = 9;
 			tmp[len++] = (TChar)((TChar)'0' + (TChar)d);
-			fracPart -= d;
+			fracPart -= (double)d;
 		}
 	}
 
@@ -789,7 +787,7 @@ INT32 StringFormatter::FormatWithArgs(BOOL (*writer)(PVOID, TChar), PVOID contex
 					i++;
 					continue;
 				}
-				DOUBLE num = args[currentArg++].Dbl;
+				double num = args[currentArg++].Dbl;
 				j += StringFormatter::FormatDouble(writer, context, num, precision, fieldWidth, zeroPad);
 				i++; // Skip 'f'
 				continue;

@@ -129,7 +129,7 @@ src/                        # Source layers
     memory/                 # Memory operations (Copy, Set, Compare, Zero)
     math/                   # Math utilities, bit operations, byte order
     binary/                 # Binary reader/writer
-    types/                  # Primitives, Span, Result, Error, Double, IP address
+    types/                  # Primitives, Span, Result, Error, IP address
     string/                 # String utilities and formatting
     algorithms/             # DJB2 hashing, Base64
     encoding/               # UTF-16
@@ -270,7 +270,7 @@ Platform-specific OS API wrappers must include `@see` links to the official Micr
 
 | Kind | Convention | Examples |
 |------|-----------|----------|
-| Primitive typedefs | `UPPER_CASE` | `UINT32`, `INT64`, `WCHAR`, `PVOID`, `BOOL`, `DOUBLE` |
+| Primitive typedefs | `UPPER_CASE` | `UINT32`, `INT64`, `WCHAR`, `PVOID`, `BOOL`, `DOUBLE` (typedef for native `double`) |
 | Pointer typedefs | `P` prefix (`PP` double, `PC` const) | `PCHAR`, `PWCHAR`, `PPVOID`, `PCCHAR` |
 | Classes | `PascalCase`; all-caps for acronym names | `Socket`, `HttpClient`, `TlsBuffer`, `NTDLL`, `ECC`, `DNS` |
 | Structs (Windows-style) | `_NAME` with typedef | `typedef struct _OBJECT_ATTRIBUTES { ... } OBJECT_ATTRIBUTES;` |
@@ -406,13 +406,7 @@ Delete heap allocation operators (`operator new`/`operator delete = delete`).
 
 ### Data Section Elimination (pic-transform)
 
-The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts string literals, float constants, const arrays, and function pointer references into position-independent code during compilation. No special syntax or macros are needed -- write standard C++.
-
-What still requires manual handling:
-
-| Type | Syntax | Result |
-|------|--------|--------|
-| `DOUBLE` arithmetic | `DOUBLE` class | IEEE-754 via integer math (no FPU dependency) |
+The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts string literals, float/double constants, const arrays, and function pointer references into position-independent code during compilation. No special syntax or macros are needed -- write standard C++ with native `double`.
 
 ### Traits-Based Dispatch
 

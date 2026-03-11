@@ -12,7 +12,7 @@ public:
 
 		LOG_INFO("Running Size Report Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestPrintSortedSizes), "Object sizes sorted large to small");
+		RunTest(allPassed, &TestPrintSortedSizes, "Object sizes sorted large to small");
 
 		if (allPassed) LOG_INFO("All Size Report tests passed!");
 		else LOG_ERROR("Some Size Report tests failed!");

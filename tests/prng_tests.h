@@ -12,13 +12,13 @@ public:
 
 		LOG_INFO("Running Prng Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestDeterministicSequence), "Deterministic sequence with known seed");
-		RunTest(allPassed, EMBED_FUNC(TestDifferentSeeds), "Different seeds produce different sequences");
-		RunTest(allPassed, EMBED_FUNC(TestValueRange), "Values within [0, MAX)");
-		RunTest(allPassed, EMBED_FUNC(TestGetArray), "GetArray fills buffer");
-		RunTest(allPassed, EMBED_FUNC(TestGetChar), "GetChar produces lowercase a-z");
-		RunTest(allPassed, EMBED_FUNC(TestGetString), "GetString fills and null-terminates");
-		RunTest(allPassed, EMBED_FUNC(TestIsSeeded), "IsSeeded and Seed");
+		RunTest(allPassed, &TestDeterministicSequence, "Deterministic sequence with known seed");
+		RunTest(allPassed, &TestDifferentSeeds, "Different seeds produce different sequences");
+		RunTest(allPassed, &TestValueRange, "Values within [0, MAX)");
+		RunTest(allPassed, &TestGetArray, "GetArray fills buffer");
+		RunTest(allPassed, &TestGetChar, "GetChar produces lowercase a-z");
+		RunTest(allPassed, &TestGetString, "GetString fills and null-terminates");
+		RunTest(allPassed, &TestIsSeeded, "IsSeeded and Seed");
 
 		if (allPassed)
 			LOG_INFO("All Prng tests passed!");

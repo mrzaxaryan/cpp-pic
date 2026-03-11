@@ -176,17 +176,17 @@ public:
 
 		LOG_INFO("Running UUID Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestNilUuid), "nil UUID default constructor");
-		RunTest(allPassed, EMBED_FUNC(TestFromBytes), "UUID construction from bytes");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringLowercase), "FromString lowercase hex");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringUppercase), "FromString uppercase hex");
-		RunTest(allPassed, EMBED_FUNC(TestToStringRoundTrip), "ToString round-trip");
-		RunTest(allPassed, EMBED_FUNC(TestNilUuidToString), "nil UUID ToString");
-		RunTest(allPassed, EMBED_FUNC(TestToStringBufferTooSmall), "ToString rejects buffer < 37 bytes");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringInvalidChar), "FromString rejects invalid hex char");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringTooShort), "FromString rejects too few hex digits");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringTooLong), "FromString rejects too many hex digits");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringNoDashes), "FromString accepts no-dash format");
+		RunTest(allPassed, &TestNilUuid, "nil UUID default constructor");
+		RunTest(allPassed, &TestFromBytes, "UUID construction from bytes");
+		RunTest(allPassed, &TestFromStringLowercase, "FromString lowercase hex");
+		RunTest(allPassed, &TestFromStringUppercase, "FromString uppercase hex");
+		RunTest(allPassed, &TestToStringRoundTrip, "ToString round-trip");
+		RunTest(allPassed, &TestNilUuidToString, "nil UUID ToString");
+		RunTest(allPassed, &TestToStringBufferTooSmall, "ToString rejects buffer < 37 bytes");
+		RunTest(allPassed, &TestFromStringInvalidChar, "FromString rejects invalid hex char");
+		RunTest(allPassed, &TestFromStringTooShort, "FromString rejects too few hex digits");
+		RunTest(allPassed, &TestFromStringTooLong, "FromString rejects too many hex digits");
+		RunTest(allPassed, &TestFromStringNoDashes, "FromString accepts no-dash format");
 
 		if (allPassed)
 			LOG_INFO("All UUID tests passed!");

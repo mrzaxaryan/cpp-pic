@@ -382,12 +382,12 @@ public:
 		LOG_INFO("Running WebSocket Tests...");
 		LOG_INFO("  Test Server: echo.websocket.org (wss://)");
 
-		RunTest(allPassed, EMBED_FUNC(TestSecureWebSocketConnection), "Secure WebSocket connection (wss://)");
-		RunTest(allPassed, EMBED_FUNC(TestWebSocketTextEcho), "WebSocket text echo");
-		RunTest(allPassed, EMBED_FUNC(TestWebSocketBinaryEcho), "WebSocket binary echo");
-		RunTest(allPassed, EMBED_FUNC(TestMultipleMessages), "Multiple messages");
-		RunTest(allPassed, EMBED_FUNC(TestLargeMessage), "Large message");
-		RunTest(allPassed, EMBED_FUNC(TestWebSocketClose), "WebSocket close");
+		RunTest(allPassed, &TestSecureWebSocketConnection, "Secure WebSocket connection (wss://)");
+		RunTest(allPassed, &TestWebSocketTextEcho, "WebSocket text echo");
+		RunTest(allPassed, &TestWebSocketBinaryEcho, "WebSocket binary echo");
+		RunTest(allPassed, &TestMultipleMessages, "Multiple messages");
+		RunTest(allPassed, &TestLargeMessage, "Large message");
+		RunTest(allPassed, &TestWebSocketClose, "WebSocket close");
 
 		if (allPassed)
 			LOG_INFO("All WebSocket tests passed!");

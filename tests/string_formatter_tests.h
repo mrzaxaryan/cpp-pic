@@ -12,15 +12,15 @@ public:
 
 		LOG_INFO("Running StringFormatter Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestIntegerFormat), "Integer format");
-		RunTest(allPassed, EMBED_FUNC(TestUnsignedFormat), "Unsigned format");
-		RunTest(allPassed, EMBED_FUNC(TestHexFormat), "Hex format");
-		RunTest(allPassed, EMBED_FUNC(TestStringFormat), "String format");
-		RunTest(allPassed, EMBED_FUNC(TestCharFormat), "Char format");
-		RunTest(allPassed, EMBED_FUNC(TestWidthPadding), "Width and padding");
-		RunTest(allPassed, EMBED_FUNC(TestFloatFormat), "Float format");
-		RunTest(allPassed, EMBED_FUNC(TestPercentLiteral), "Percent literal");
-		RunTest(allPassed, EMBED_FUNC(TestErrorFormat), "Error format");
+		RunTest(allPassed, &TestIntegerFormat, "Integer format");
+		RunTest(allPassed, &TestUnsignedFormat, "Unsigned format");
+		RunTest(allPassed, &TestHexFormat, "Hex format");
+		RunTest(allPassed, &TestStringFormat, "String format");
+		RunTest(allPassed, &TestCharFormat, "Char format");
+		RunTest(allPassed, &TestWidthPadding, "Width and padding");
+		RunTest(allPassed, &TestFloatFormat, "Float format");
+		RunTest(allPassed, &TestPercentLiteral, "Percent literal");
+		RunTest(allPassed, &TestErrorFormat, "Error format");
 		// RunTest(allPassed, TestSizeFormat, L"Size format");
 
 		if (allPassed)
@@ -59,7 +59,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_d = "%d";
 		// Positive integer
 		Memory::Zero(buffer, 64);
@@ -104,7 +104,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_u = "%u";
 
 		// Simple unsigned
@@ -140,7 +140,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_x = "%x";
 		auto fmt_X = "%X";
 		auto fmt_hash_x = "%#x";
@@ -199,7 +199,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_s = "%s";
 		auto fmt_ss = "%s%s";
 		auto testStr = "Hello";
@@ -238,7 +238,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_c = "%c";
 		auto fmt_ccc = "%c%c%c";
 
@@ -274,7 +274,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_5d = "%5d";
 		auto fmt_05d = "%05d";
 		auto fmt_m5d = "%-5d";
@@ -337,7 +337,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_2f = "%.2f";
 		auto fmt_0f = "%.0f";
 		auto fmt_1f = "%.1f";
@@ -388,7 +388,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 64;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt = "100%%";
 
 		// Double percent becomes single percent
@@ -413,7 +413,7 @@ private:
 		ctx.buffer = buffer;
 		ctx.index = 0;
 		ctx.maxSize = 128;
-		auto fixed = EMBED_FUNC(CharWriter);
+		auto fixed = &CharWriter;
 		auto fmt_e = "%e";
 
 		// Test 1: Single runtime error -> "1"
@@ -498,7 +498,7 @@ private:
 	// 	ctx.buffer = buffer;
 	// 	ctx.index = 0;
 	// 	ctx.maxSize = 64;
-	// 	auto fixed = EMBED_FUNC(CharWriter);
+	// 	auto fixed = &CharWriter;
 	// 	auto fmt_zu = "%zu";
 	// 	auto fmt_zd = "%zd";
 

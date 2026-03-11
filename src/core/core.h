@@ -60,12 +60,6 @@
 #include "core/types/double.h"
 /// @}
 
-/// @name Embedded Types
-/// @brief Types for position-independent storage (function pointers)
-/// @{
-#include "core/types/embedded/embedded_function_pointer.h"
-/// @}
-
 /// @name String Utilities
 /// @{
 #include "core/string/string.h"

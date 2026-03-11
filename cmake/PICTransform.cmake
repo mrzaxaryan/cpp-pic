@@ -10,8 +10,6 @@
 
 include_guard(GLOBAL)
 
-set(PIC_TRANSFORM_VERSION "v0.0.1-alpha.2" CACHE STRING "pic-transform release version to download")
-
 # =============================================================================
 # Detect host platform for download URL
 # =============================================================================
@@ -61,7 +59,7 @@ set(_PT_DOWNLOAD_DIR "${CMAKE_BINARY_DIR}/pic-transform")
 set(_PT_DOWNLOADED_BIN "${_PT_DOWNLOAD_DIR}/${_PT_BIN_NAME}")
 
 if(NOT EXISTS "${_PT_DOWNLOADED_BIN}")
-    set(_PT_URL "https://github.com/mrzaxaryan/pic-transform/releases/download/${PIC_TRANSFORM_VERSION}/pic-transform-${_PT_PLATFORM}${_PT_EXT}")
+    set(_PT_URL "https://github.com/mrzaxaryan/pic-transform/releases/latest/download/pic-transform-${_PT_PLATFORM}${_PT_EXT}")
 
     message(STATUS "pic-transform: downloading from ${_PT_URL}")
     file(MAKE_DIRECTORY "${_PT_DOWNLOAD_DIR}")

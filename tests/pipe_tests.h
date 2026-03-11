@@ -15,13 +15,13 @@ public:
 		LOG_INFO("Running Pipe Tests...");
 
 #if defined(PLATFORM_UEFI)
-		RunTest(allPassed, EMBED_FUNC(TestCreateFailsOnUefi), "Create fails on UEFI");
+		RunTest(allPassed, &TestCreateFailsOnUefi, "Create fails on UEFI");
 #else
-		RunTest(allPassed, EMBED_FUNC(TestCreate), "Create pipe");
-		RunTest(allPassed, EMBED_FUNC(TestReadWrite), "Write and read through pipe");
-		RunTest(allPassed, EMBED_FUNC(TestCloseEnds), "Close individual ends");
-		RunTest(allPassed, EMBED_FUNC(TestMoveSemantics), "Move constructor and assignment");
-		RunTest(allPassed, EMBED_FUNC(TestCaptureChildStdout), "Capture child process stdout");
+		RunTest(allPassed, &TestCreate, "Create pipe");
+		RunTest(allPassed, &TestReadWrite, "Write and read through pipe");
+		RunTest(allPassed, &TestCloseEnds, "Close individual ends");
+		RunTest(allPassed, &TestMoveSemantics, "Move constructor and assignment");
+		RunTest(allPassed, &TestCaptureChildStdout, "Capture child process stdout");
 #endif
 
 		if (allPassed)

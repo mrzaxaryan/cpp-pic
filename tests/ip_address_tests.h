@@ -247,16 +247,16 @@ public:
 
 		LOG_INFO("Running IPAddress Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestConstexprIPv4), "constexpr IPv4 construction");
-		RunTest(allPassed, EMBED_FUNC(TestConstexprIPv6), "constexpr IPv6 construction");
-		RunTest(allPassed, EMBED_FUNC(TestConstexprLocalHost), "constexpr LocalHost");
-		RunTest(allPassed, EMBED_FUNC(TestConstexprEquality), "constexpr equality operators");
-		RunTest(allPassed, EMBED_FUNC(TestConstexprCopy), "constexpr copy constructor");
-		RunTest(allPassed, EMBED_FUNC(TestConstexprInvalid), "constexpr Invalid factory");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringIPv4), "FromString IPv4 + ToString round-trip");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringIPv6), "FromString IPv6");
-		RunTest(allPassed, EMBED_FUNC(TestFromStringInvalid), "FromString rejects invalid input");
-		RunTest(allPassed, EMBED_FUNC(TestIPv6Equality), "IPv6 equality comparison");
+		RunTest(allPassed, &TestConstexprIPv4, "constexpr IPv4 construction");
+		RunTest(allPassed, &TestConstexprIPv6, "constexpr IPv6 construction");
+		RunTest(allPassed, &TestConstexprLocalHost, "constexpr LocalHost");
+		RunTest(allPassed, &TestConstexprEquality, "constexpr equality operators");
+		RunTest(allPassed, &TestConstexprCopy, "constexpr copy constructor");
+		RunTest(allPassed, &TestConstexprInvalid, "constexpr Invalid factory");
+		RunTest(allPassed, &TestFromStringIPv4, "FromString IPv4 + ToString round-trip");
+		RunTest(allPassed, &TestFromStringIPv6, "FromString IPv6");
+		RunTest(allPassed, &TestFromStringInvalid, "FromString rejects invalid input");
+		RunTest(allPassed, &TestIPv6Equality, "IPv6 equality comparison");
 
 		if (allPassed)
 			LOG_INFO("All IPAddress tests passed!");

@@ -142,11 +142,11 @@ public:
 		LOG_INFO("Running DNS Tests...");
 		LOG_INFO("  Testing DNS resolution via DoH (binary wireformat)");
 
-		RunTest(allPassed, EMBED_FUNC(TestLocalhostResolution), "Localhost resolution");
-		RunTest(allPassed, EMBED_FUNC(TestCloudflareResolve), "Cloudflare DNS resolution");
-		RunTest(allPassed, EMBED_FUNC(TestGoogleResolve), "Google DNS resolution");
-		RunTest(allPassed, EMBED_FUNC(TestMainResolve), "Main DNS resolve function");
-		RunTest(allPassed, EMBED_FUNC(TestKnownIpResolution), "Known IP resolution");
+		RunTest(allPassed, &TestLocalhostResolution, "Localhost resolution");
+		RunTest(allPassed, &TestCloudflareResolve, "Cloudflare DNS resolution");
+		RunTest(allPassed, &TestGoogleResolve, "Google DNS resolution");
+		RunTest(allPassed, &TestMainResolve, "Main DNS resolve function");
+		RunTest(allPassed, &TestKnownIpResolution, "Known IP resolution");
 
 		if (allPassed)
 			LOG_INFO("All DNS tests passed!");

@@ -376,7 +376,7 @@ For arithmetic operations on floating-point values without FPU dependency, PIR p
 
 Function pointer addresses are resolved by the loader. Without the loader, indirect calls reference invalid addresses.
 
-**PIR Solution:** The `EMBED_FUNC` macro uses inline assembly to compute pure PC-relative offsets, eliminating relocation dependencies entirely. See [embedded_function_pointer.h](src/core/types/embedded/embedded_function_pointer.h).
+**PIR Solution:** The [pic-transform](tools/pic-transform) LLVM pass automatically detects function pointer values (where a function is used as a callback or stored, rather than called directly) and replaces them with PC-relative inline assembly, eliminating relocation dependencies entirely.
 
 ### Problem 4: CRT and Runtime Dependencies
 

@@ -388,13 +388,13 @@ public:
 		LOG_INFO("Running Socket Tests...");
 		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1 / 2606:4700:4700::1111)");
 
-		RunTest(allPassed, EMBED_FUNC(TestSocketCreation), "Socket creation");
-		RunTest(allPassed, EMBED_FUNC(TestSocketConnection), "Socket connection (HTTP:80)");
-		RunTest(allPassed, EMBED_FUNC(TestHttpRequest), "HTTP GET request");
-		RunTest(allPassed, EMBED_FUNC(TestMultipleConnections), "Multiple sequential connections");
-		RunTest(allPassed, EMBED_FUNC(TestIpConversion), "IP address conversion");
-		RunTest(allPassed, EMBED_FUNC(TestIPv6Connection), "IPv6 connection");
-		RunTest(allPassed, EMBED_FUNC(TestHttpBin), "HTTP GET request to httpbin.org");
+		RunTest(allPassed, &TestSocketCreation, "Socket creation");
+		RunTest(allPassed, &TestSocketConnection, "Socket connection (HTTP:80)");
+		RunTest(allPassed, &TestHttpRequest, "HTTP GET request");
+		RunTest(allPassed, &TestMultipleConnections, "Multiple sequential connections");
+		RunTest(allPassed, &TestIpConversion, "IP address conversion");
+		RunTest(allPassed, &TestIPv6Connection, "IPv6 connection");
+		RunTest(allPassed, &TestHttpBin, "HTTP GET request to httpbin.org");
 
 		if (allPassed)
 			LOG_INFO("All Socket tests passed!");

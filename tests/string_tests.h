@@ -12,13 +12,13 @@ public:
 
 		LOG_INFO("Running String Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestLengthNarrow), "Narrow string length");
-		RunTest(allPassed, EMBED_FUNC(TestLengthWide), "Wide string length");
-		RunTest(allPassed, EMBED_FUNC(TestLengthEmpty), "Empty string length");
-		RunTest(allPassed, EMBED_FUNC(TestToLowerCaseAscii), "ToLowerCase ASCII");
-		RunTest(allPassed, EMBED_FUNC(TestToLowerCasePreserves), "ToLowerCase preserves non-uppercase");
-		RunTest(allPassed, EMBED_FUNC(TestUTF16ToUTF8BasicAscii), "UTF16::ToUTF8 basic ASCII");
-		RunTest(allPassed, EMBED_FUNC(TestUTF16ToUTF8Empty), "UTF16::ToUTF8 empty string");
+		RunTest(allPassed, &TestLengthNarrow, "Narrow string length");
+		RunTest(allPassed, &TestLengthWide, "Wide string length");
+		RunTest(allPassed, &TestLengthEmpty, "Empty string length");
+		RunTest(allPassed, &TestToLowerCaseAscii, "ToLowerCase ASCII");
+		RunTest(allPassed, &TestToLowerCasePreserves, "ToLowerCase preserves non-uppercase");
+		RunTest(allPassed, &TestUTF16ToUTF8BasicAscii, "UTF16::ToUTF8 basic ASCII");
+		RunTest(allPassed, &TestUTF16ToUTF8Empty, "UTF16::ToUTF8 empty string");
 
 		if (allPassed)
 			LOG_INFO("All String tests passed!");

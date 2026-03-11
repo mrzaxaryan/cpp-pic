@@ -12,15 +12,15 @@ public:
 
 		LOG_INFO("Running DOUBLE Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestConstruction), "Construction");
-		RunTest(allPassed, EMBED_FUNC(TestIntToDouble), "Integer to DOUBLE");
-		RunTest(allPassed, EMBED_FUNC(TestDoubleToInt), "DOUBLE to integer");
-		RunTest(allPassed, EMBED_FUNC(TestArithmetic), "Arithmetic");
-		RunTest(allPassed, EMBED_FUNC(TestComparisons), "Comparisons");
-		RunTest(allPassed, EMBED_FUNC(TestNegation), "Negation");
-		RunTest(allPassed, EMBED_FUNC(TestEmbeddedLiterals), "Embedded literals");
-		RunTest(allPassed, EMBED_FUNC(TestEdgeCases), "Edge cases");
-		RunTest(allPassed, EMBED_FUNC(TestArrayFormatting), "Array formatting");
+		RunTest(allPassed, &TestConstruction, "Construction");
+		RunTest(allPassed, &TestIntToDouble, "Integer to DOUBLE");
+		RunTest(allPassed, &TestDoubleToInt, "DOUBLE to integer");
+		RunTest(allPassed, &TestArithmetic, "Arithmetic");
+		RunTest(allPassed, &TestComparisons, "Comparisons");
+		RunTest(allPassed, &TestNegation, "Negation");
+		RunTest(allPassed, &TestEmbeddedLiterals, "Embedded literals");
+		RunTest(allPassed, &TestEdgeCases, "Edge cases");
+		RunTest(allPassed, &TestArrayFormatting, "Array formatting");
 
 		if (allPassed)
 			LOG_INFO("All DOUBLE tests passed!");

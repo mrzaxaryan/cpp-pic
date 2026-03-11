@@ -18,8 +18,6 @@
 
 #include "core/core.h"
 
-// EMBEDDED_FUNCTION_POINTER is now available for position-independent function pointers
-
 /**
  * Console - Static class providing console I/O operations
  *
@@ -46,8 +44,8 @@ private:
 	 *   TChar - Character type (CHAR or WCHAR) determined at compile-time
 	 *
 	 * POSITION-INDEPENDENT NOTE:
-	 *   The function pointer is wrapped with EMBEDDED_FUNCTION_POINTER
-	 *   to work correctly in position-independent code.
+	 *   Function pointer references are automatically transformed to
+	 *   PC-relative asm by the pic-transform LLVM pass.
 	 */
 	template <TCHAR TChar>
 	static BOOL FormatterCallback(PVOID context, TChar ch);
@@ -198,19 +196,8 @@ BOOL Console::FormatterCallback([[maybe_unused]] PVOID context, TChar ch)
  * This function uses C++11 variadic templates for type-safe formatting.
  * No more VA_LIST or VA_ARG - everything is type-safe at compile time!
  *
- * POSITION-INDEPENDENT CALLBACK USING EMBEDDED_FUNCTION_POINTER:
- *
- * The challenge: FormatterCallback is a template function, so its address
- * depends on the template parameter TChar. We need to pass this address
- * to StringFormatter in a position-independent way.
- *
- * The solution using EMBEDDED_FUNCTION_POINTER:
- *   1. Template instantiation: FormatterCallback<TChar>
- *   2. PC-relative wrapper: EMBEDDED_FUNCTION_POINTER<BOOL (*)(PVOID, TChar), FormatterCallback<TChar>>
- *   3. Get position-independent pointer: ::Get()
- *   4. Pass to formatter: StringFormatter::Format(callback, ...)
- *
- * This works correctly in both PIC blob and normal EXE modes without runtime checks.
+ * Function pointer references (e.g. &FormatterCallback<TChar>) are automatically
+ * transformed to PC-relative asm by the pic-transform LLVM pass.
  *
  * BENEFITS OVER VA_LIST:
  *   - Type-safe: compiler knows exact types at compile time
@@ -221,15 +208,5 @@ BOOL Console::FormatterCallback([[maybe_unused]] PVOID context, TChar ch)
 template <TCHAR TChar, typename... Args>
 UINT32 Console::WriteFormatted(const TChar *format, Args &&...args)
 {
-	// Get position-independent function pointer using EMBED_FUNC
-	// This works correctly regardless of where the code is loaded (PIC or normal EXE)
-	auto fixed = EMBED_FUNC(FormatterCallback<TChar>);
-
-	// Delegate to StringFormatter which handles all format specifier parsing
-	// Parameters:
-	//   fixed  - Position-independent callback function
-	//   nullptr   - Context (unused, could be used for buffering)
-	//   format - Format string (embedded, not in .rdata)
-	//   args   - Variadic template arguments (perfectly forwarded)
-	return StringFormatter::Format(fixed, nullptr, format, static_cast<Args &&>(args)...);
+	return StringFormatter::Format(&FormatterCallback<TChar>, nullptr, format, static_cast<Args &&>(args)...);
 }

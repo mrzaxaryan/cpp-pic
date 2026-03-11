@@ -13,15 +13,15 @@ public:
 
 		LOG_INFO("Running Process Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestCreateInvalidPath), "Create with null path returns error");
-		RunTest(allPassed, EMBED_FUNC(TestCreateInvalidArgs), "Create with null args returns error");
-		RunTest(allPassed, EMBED_FUNC(TestInvalidProcessState), "Invalid process state");
+		RunTest(allPassed, &TestCreateInvalidPath, "Create with null path returns error");
+		RunTest(allPassed, &TestCreateInvalidArgs, "Create with null args returns error");
+		RunTest(allPassed, &TestInvalidProcessState, "Invalid process state");
 #if !defined(PLATFORM_UEFI)
-		RunTest(allPassed, EMBED_FUNC(TestCreateAndWait), "Create process and wait for exit");
-		RunTest(allPassed, EMBED_FUNC(TestTerminate), "Create and terminate process");
-		RunTest(allPassed, EMBED_FUNC(TestIsRunning), "IsRunning on active process");
-		RunTest(allPassed, EMBED_FUNC(TestMoveSemantics), "Move constructor and assignment");
-		RunTest(allPassed, EMBED_FUNC(TestCreateWithIO), "Create process with I/O redirection");
+		RunTest(allPassed, &TestCreateAndWait, "Create process and wait for exit");
+		RunTest(allPassed, &TestTerminate, "Create and terminate process");
+		RunTest(allPassed, &TestIsRunning, "IsRunning on active process");
+		RunTest(allPassed, &TestMoveSemantics, "Move constructor and assignment");
+		RunTest(allPassed, &TestCreateWithIO, "Create process with I/O redirection");
 #endif
 
 		if (allPassed)

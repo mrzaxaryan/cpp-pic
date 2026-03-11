@@ -74,9 +74,8 @@ private:
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();
 
-		auto consoleA = EMBED_FUNC(ConsoleCallbackA);
-		StringFormatter::Format<CHAR>(consoleA, nullptr, "[%s] ", (const CHAR *)timeStr);
-		StringFormatter::FormatWithArgs<CHAR>(consoleA, nullptr, format, args);
+		StringFormatter::Format<CHAR>(&ConsoleCallbackA, nullptr, "[%s] ", (const CHAR *)timeStr);
+		StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, args);
 		Console::Write<CHAR>("\033[0m\n");
 	}
 

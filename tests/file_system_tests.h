@@ -13,12 +13,12 @@ public:
 
 		LOG_INFO("Running FileSystem Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestCreateNestedDirectories), "Create nested directories");
-		RunTest(allPassed, EMBED_FUNC(TestCreateFilesInDirectories), "Create files in directories");
-		RunTest(allPassed, EMBED_FUNC(TestWriteReadContent), "Write and read file content");
-		RunTest(allPassed, EMBED_FUNC(TestFileExistence), "File existence checks");
-		RunTest(allPassed, EMBED_FUNC(TestDirectoryIteration), "Directory iteration");
-		RunTest(allPassed, EMBED_FUNC(TestCleanup), "Cleanup files and directories");
+		RunTest(allPassed, &TestCreateNestedDirectories, "Create nested directories");
+		RunTest(allPassed, &TestCreateFilesInDirectories, "Create files in directories");
+		RunTest(allPassed, &TestWriteReadContent, "Write and read file content");
+		RunTest(allPassed, &TestFileExistence, "File existence checks");
+		RunTest(allPassed, &TestDirectoryIteration, "Directory iteration");
+		RunTest(allPassed, &TestCleanup, "Cleanup files and directories");
 
 		if (allPassed)
 			LOG_INFO("All FileSystem tests passed!");

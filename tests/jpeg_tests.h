@@ -13,22 +13,22 @@ public:
 		LOG_INFO("Running JPEG Encoder Tests...");
 
 		// Validation tests
-		RunTest(allPassed, EMBED_FUNC(TestInvalidComponents_Returns_Error), "JPEG reject invalid component count");
-		RunTest(allPassed, EMBED_FUNC(TestZeroWidth_Returns_Error), "JPEG reject zero width");
-		RunTest(allPassed, EMBED_FUNC(TestZeroHeight_Returns_Error), "JPEG reject zero height");
-		RunTest(allPassed, EMBED_FUNC(TestNegativeWidth_Returns_Error), "JPEG reject negative width");
-		RunTest(allPassed, EMBED_FUNC(TestNegativeHeight_Returns_Error), "JPEG reject negative height");
-		RunTest(allPassed, EMBED_FUNC(TestOversizedWidth_Returns_Error), "JPEG reject oversized width");
-		RunTest(allPassed, EMBED_FUNC(TestOversizedHeight_Returns_Error), "JPEG reject oversized height");
+		RunTest(allPassed, &TestInvalidComponents_Returns_Error, "JPEG reject invalid component count");
+		RunTest(allPassed, &TestZeroWidth_Returns_Error, "JPEG reject zero width");
+		RunTest(allPassed, &TestZeroHeight_Returns_Error, "JPEG reject zero height");
+		RunTest(allPassed, &TestNegativeWidth_Returns_Error, "JPEG reject negative width");
+		RunTest(allPassed, &TestNegativeHeight_Returns_Error, "JPEG reject negative height");
+		RunTest(allPassed, &TestOversizedWidth_Returns_Error, "JPEG reject oversized width");
+		RunTest(allPassed, &TestOversizedHeight_Returns_Error, "JPEG reject oversized height");
 
 		// Encoding tests
-		RunTest(allPassed, EMBED_FUNC(TestEncode1x1_RGB), "JPEG encode 1x1 RGB");
-		RunTest(allPassed, EMBED_FUNC(TestEncode1x1_RGBA), "JPEG encode 1x1 RGBA");
-		RunTest(allPassed, EMBED_FUNC(TestEncode8x8_RGB), "JPEG encode 8x8 RGB");
-		RunTest(allPassed, EMBED_FUNC(TestEncodeNonMultipleOf8), "JPEG encode non-multiple-of-8 dimensions");
-		RunTest(allPassed, EMBED_FUNC(TestEncodeQualityBounds), "JPEG encode with clamped quality");
-		RunTest(allPassed, EMBED_FUNC(TestEncodeAllBlack), "JPEG encode all-black image");
-		RunTest(allPassed, EMBED_FUNC(TestEncodeAllWhite), "JPEG encode all-white image");
+		RunTest(allPassed, &TestEncode1x1_RGB, "JPEG encode 1x1 RGB");
+		RunTest(allPassed, &TestEncode1x1_RGBA, "JPEG encode 1x1 RGBA");
+		RunTest(allPassed, &TestEncode8x8_RGB, "JPEG encode 8x8 RGB");
+		RunTest(allPassed, &TestEncodeNonMultipleOf8, "JPEG encode non-multiple-of-8 dimensions");
+		RunTest(allPassed, &TestEncodeQualityBounds, "JPEG encode with clamped quality");
+		RunTest(allPassed, &TestEncodeAllBlack, "JPEG encode all-black image");
+		RunTest(allPassed, &TestEncodeAllWhite, "JPEG encode all-white image");
 
 		if (allPassed)
 			LOG_INFO("All JPEG tests passed!");
@@ -88,14 +88,14 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r2 = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 1, 1, 2, Span<const UINT8>(pixel, 3));
+		auto r2 = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 1, 1, 2, Span<const UINT8>(pixel, 3));
 		if (r2)
 		{
 			LOG_ERROR("numComponents=2 should fail");
 			return false;
 		}
 
-		auto r5 = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 1, 1, 5, Span<const UINT8>(pixel, 3));
+		auto r5 = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 1, 1, 5, Span<const UINT8>(pixel, 3));
 		if (r5)
 		{
 			LOG_ERROR("numComponents=5 should fail");
@@ -113,7 +113,7 @@ private:
 		pixel[2] = 0; // R
 		CaptureBuffer buf;
 		buf.size = 0;
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 0, 1, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 0, 1, 3, Span<const UINT8>(pixel, 3));
 		return !r;
 	}
 
@@ -125,7 +125,7 @@ private:
 		pixel[2] = 0; // R
 		CaptureBuffer buf;
 		buf.size = 0;
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 1, 0, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 1, 0, 3, Span<const UINT8>(pixel, 3));
 		return !r;
 	}
 
@@ -137,7 +137,7 @@ private:
 		pixel[2] = 0; // R
 		CaptureBuffer buf;
 		buf.size = 0;
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, -1, 1, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, -1, 1, 3, Span<const UINT8>(pixel, 3));
 		return !r;
 	}
 
@@ -149,7 +149,7 @@ private:
 		pixel[2] = 0; // R
 		CaptureBuffer buf;
 		buf.size = 0;
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 1, -1, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 1, -1, 3, Span<const UINT8>(pixel, 3));
 		return !r;
 	}
 
@@ -161,7 +161,7 @@ private:
 		pixel[2] = 0; // R
 		CaptureBuffer buf;
 		buf.size = 0;
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 0x10000, 1, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 0x10000, 1, 3, Span<const UINT8>(pixel, 3));
 		return !r;
 	}
 
@@ -173,7 +173,7 @@ private:
 		pixel[2] = 0; // R
 		CaptureBuffer buf;
 		buf.size = 0;
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, 1, 0x10000, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, 1, 0x10000, 3, Span<const UINT8>(pixel, 3));
 		return !r;
 	}
 
@@ -188,7 +188,7 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 75, 1, 1, 3, Span<const UINT8>(pixel, 3));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 75, 1, 1, 3, Span<const UINT8>(pixel, 3));
 		if (!r)
 		{
 			LOG_ERROR("Encode 1x1 RGB failed: %e", r.Error());
@@ -207,7 +207,7 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 75, 1, 1, 4, Span<const UINT8>(pixel, 4));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 75, 1, 1, 4, Span<const UINT8>(pixel, 4));
 		if (!r)
 		{
 			LOG_ERROR("Encode 1x1 RGBA failed: %e", r.Error());
@@ -234,7 +234,7 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 90, 8, 8, 3, Span<const UINT8>(pixels, sizeof(pixels)));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 90, 8, 8, 3, Span<const UINT8>(pixels, sizeof(pixels)));
 		if (!r)
 		{
 			LOG_ERROR("Encode 8x8 RGB failed: %e", r.Error());
@@ -255,7 +255,7 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 50, w, h, 3, Span<const UINT8>(pixels, sizeof(pixels)));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 50, w, h, 3, Span<const UINT8>(pixels, sizeof(pixels)));
 		if (!r)
 		{
 			LOG_ERROR("Encode 3x5 failed: %e", r.Error());
@@ -274,7 +274,7 @@ private:
 
 		// Quality 0 (clamped to 1)
 		buf.size = 0;
-		auto r1 = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 0, 1, 1, 3, Span<const UINT8>(pixel, 3));
+		auto r1 = JpegEncoder::Encode(&CaptureCallback, &buf, 0, 1, 1, 3, Span<const UINT8>(pixel, 3));
 		if (!r1)
 		{
 			LOG_ERROR("Quality 0 failed: %e", r1.Error());
@@ -285,7 +285,7 @@ private:
 
 		// Quality 200 (clamped to 100)
 		buf.size = 0;
-		auto r2 = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 200, 1, 1, 3, Span<const UINT8>(pixel, 3));
+		auto r2 = JpegEncoder::Encode(&CaptureCallback, &buf, 200, 1, 1, 3, Span<const UINT8>(pixel, 3));
 		if (!r2)
 		{
 			LOG_ERROR("Quality 200 failed: %e", r2.Error());
@@ -305,7 +305,7 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 75, 8, 8, 3, Span<const UINT8>(pixels, sizeof(pixels)));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 75, 8, 8, 3, Span<const UINT8>(pixels, sizeof(pixels)));
 		if (!r)
 		{
 			LOG_ERROR("Encode all-black failed: %e", r.Error());
@@ -322,7 +322,7 @@ private:
 		CaptureBuffer buf;
 		buf.size = 0;
 
-		auto r = JpegEncoder::Encode(EMBED_FUNC(CaptureCallback), &buf, 75, 8, 8, 3, Span<const UINT8>(pixels, sizeof(pixels)));
+		auto r = JpegEncoder::Encode(&CaptureCallback, &buf, 75, 8, 8, 3, Span<const UINT8>(pixels, sizeof(pixels)));
 		if (!r)
 		{
 			LOG_ERROR("Encode all-white failed: %e", r.Error());

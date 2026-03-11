@@ -13,52 +13,52 @@ public:
 		LOG_INFO("Running Result Tests...");
 
 		// Construction
-		RunTest(allPassed, EMBED_FUNC(TestOkConstruction), "Ok construction");
-		RunTest(allPassed, EMBED_FUNC(TestErrConstruction), "Err construction");
-		RunTest(allPassed, EMBED_FUNC(TestVoidOk), "Void Ok construction");
-		RunTest(allPassed, EMBED_FUNC(TestVoidErr), "Void Err construction");
+		RunTest(allPassed, &TestOkConstruction, "Ok construction");
+		RunTest(allPassed, &TestErrConstruction, "Err construction");
+		RunTest(allPassed, &TestVoidOk, "Void Ok construction");
+		RunTest(allPassed, &TestVoidErr, "Void Err construction");
 
 		// Queries
-		RunTest(allPassed, EMBED_FUNC(TestIsOkIsErr), "IsOk/IsErr mutual exclusivity");
-		RunTest(allPassed, EMBED_FUNC(TestOperatorBool), "operator BOOL");
+		RunTest(allPassed, &TestIsOkIsErr, "IsOk/IsErr mutual exclusivity");
+		RunTest(allPassed, &TestOperatorBool, "operator BOOL");
 
 		// Value access
-		RunTest(allPassed, EMBED_FUNC(TestValueAccess), "Value access");
-		RunTest(allPassed, EMBED_FUNC(TestValueMutation), "Value mutation");
+		RunTest(allPassed, &TestValueAccess, "Value access");
+		RunTest(allPassed, &TestValueMutation, "Value mutation");
 
 		// Move semantics
-		RunTest(allPassed, EMBED_FUNC(TestMoveConstruction), "Move construction");
-		RunTest(allPassed, EMBED_FUNC(TestMoveAssignment), "Move assignment");
-		RunTest(allPassed, EMBED_FUNC(TestVoidMoveConstruction), "Void move construction");
+		RunTest(allPassed, &TestMoveConstruction, "Move construction");
+		RunTest(allPassed, &TestMoveAssignment, "Move assignment");
+		RunTest(allPassed, &TestVoidMoveConstruction, "Void move construction");
 
 		// Non-trivial destructor
-		RunTest(allPassed, EMBED_FUNC(TestNonTrivialDestructor), "Non-trivial destructor");
-		RunTest(allPassed, EMBED_FUNC(TestMoveTransfersOwnership), "Move transfers ownership");
+		RunTest(allPassed, &TestNonTrivialDestructor, "Non-trivial destructor");
+		RunTest(allPassed, &TestMoveTransfersOwnership, "Move transfers ownership");
 
 		// Error chaining (E = Error)
-		RunTest(allPassed, EMBED_FUNC(TestSingleError), "Single error storage");
-		RunTest(allPassed, EMBED_FUNC(TestTwoArgErrChaining), "Two-arg Err chaining");
-		RunTest(allPassed, EMBED_FUNC(TestPropagationErrChaining), "Propagation Err chaining");
-		RunTest(allPassed, EMBED_FUNC(TestMultiLevelChaining), "Multi-level error chaining");
+		RunTest(allPassed, &TestSingleError, "Single error storage");
+		RunTest(allPassed, &TestTwoArgErrChaining, "Two-arg Err chaining");
+		RunTest(allPassed, &TestPropagationErrChaining, "Propagation Err chaining");
+		RunTest(allPassed, &TestMultiLevelChaining, "Multi-level error chaining");
 
 		// Non-chainable E
-		RunTest(allPassed, EMBED_FUNC(TestNonChainableErr), "Non-chainable E type");
+		RunTest(allPassed, &TestNonChainableErr, "Non-chainable E type");
 
 		// Type aliases
-		RunTest(allPassed, EMBED_FUNC(TestTypeAliases), "Type aliases");
+		RunTest(allPassed, &TestTypeAliases, "Type aliases");
 
 		// Compact specialization (Result<void, Error>)
-		RunTest(allPassed, EMBED_FUNC(TestCompactSize), "Compact specialization size");
-		RunTest(allPassed, EMBED_FUNC(TestCompactOk), "Compact void Ok");
-		RunTest(allPassed, EMBED_FUNC(TestCompactErr), "Compact void Err");
-		RunTest(allPassed, EMBED_FUNC(TestCompactPropagation), "Compact void propagation Err");
-		RunTest(allPassed, EMBED_FUNC(TestCompactTwoArgErr), "Compact void two-arg Err");
-		RunTest(allPassed, EMBED_FUNC(TestCompactErrorOnOk), "Compact Error() on Ok is well-defined");
-		RunTest(allPassed, EMBED_FUNC(TestCompactMoveConstruction), "Compact void move construction");
+		RunTest(allPassed, &TestCompactSize, "Compact specialization size");
+		RunTest(allPassed, &TestCompactOk, "Compact void Ok");
+		RunTest(allPassed, &TestCompactErr, "Compact void Err");
+		RunTest(allPassed, &TestCompactPropagation, "Compact void propagation Err");
+		RunTest(allPassed, &TestCompactTwoArgErr, "Compact void two-arg Err");
+		RunTest(allPassed, &TestCompactErrorOnOk, "Compact Error() on Ok is well-defined");
+		RunTest(allPassed, &TestCompactMoveConstruction, "Compact void move construction");
 
 		// Error chain accessors
-		RunTest(allPassed, EMBED_FUNC(TestErrorRootCause), "Error root cause accessors");
-		RunTest(allPassed, EMBED_FUNC(TestErrorChainOverflow), "Error chain overflow truncation");
+		RunTest(allPassed, &TestErrorRootCause, "Error root cause accessors");
+		RunTest(allPassed, &TestErrorChainOverflow, "Error chain overflow truncation");
 
 		if (allPassed)
 			LOG_INFO("All Result tests passed!");

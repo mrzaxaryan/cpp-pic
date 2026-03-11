@@ -236,9 +236,9 @@ public:
 		LOG_INFO("Running TLS Tests...");
 		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1:443)");
 
-		RunTest(allPassed, EMBED_FUNC(TestTlsHandshake), "TLS handshake");
-		RunTest(allPassed, EMBED_FUNC(TestTlsEchoSingle), "TLS echo - single message");
-		RunTest(allPassed, EMBED_FUNC(TestTlsEchoMultiple), "TLS echo - multiple messages");
+		RunTest(allPassed, &TestTlsHandshake, "TLS handshake");
+		RunTest(allPassed, &TestTlsEchoSingle, "TLS echo - single message");
+		RunTest(allPassed, &TestTlsEchoMultiple, "TLS echo - multiple messages");
 
 		if (allPassed)
 			LOG_INFO("All TLS tests passed!");

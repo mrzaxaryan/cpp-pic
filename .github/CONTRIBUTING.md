@@ -139,7 +139,6 @@ src/                        # Source layers
     math/                   # Math utilities, bit operations, byte order
     binary/                 # Binary reader/writer
     types/                  # Primitives, Span, Result, Error, Double, IP address
-      embedded/             # EMBEDDED_FUNCTION_POINTER
     string/                 # String utilities and formatting
     algorithms/             # DJB2 hashing, Base64
     encoding/               # UTF-16
@@ -200,7 +199,6 @@ The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass runs 
 
 | Forbidden | Use Instead |
 |-----------|-------------|
-| `&MyFunc` function pointers | `EMBED_FUNC(MyFunc)` |
 | Global/static variables | Stack-local variables |
 | STL containers/algorithms | Custom PIR implementations |
 | Exceptions (`throw`/`try`/`catch`) | `Result<T, Error>` |
@@ -296,7 +294,7 @@ Platform-specific OS API wrappers must include `@see` links to the official Micr
 | Struct fields (public) | `PascalCase` | `Error::Code`, `Error::Platform` |
 | Local variables | `camelCase` | `allPassed`, `fileHandle`, `bufferSize` |
 | Function parameters | `camelCase` | `ipAddress`, `maxSize`, `errnoVal` |
-| `#define` macros | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `ENTRYPOINT`, `EMBED_FUNC` |
+| `#define` macros | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `ENTRYPOINT` |
 | `constexpr` free constants | `UPPER_CASE` | `DYNAMIC_EXTENT` |
 | `static constexpr` class members | `PascalCase` | `Count`, `SizeBytes`, `WordCount`, `Seed` |
 | Concepts | `UPPER_CASE` | `TCHAR` |
@@ -417,13 +415,12 @@ Delete heap allocation operators (`operator new`/`operator delete = delete`).
 
 ### Data Section Elimination (pic-transform)
 
-The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts string literals, float constants, and const arrays into stack-local immediate stores during compilation. No special syntax or macros are needed for these -- write standard C++.
+The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts string literals, float constants, const arrays, and function pointer references into position-independent code during compilation. No special syntax or macros are needed -- write standard C++.
 
 What still requires manual handling:
 
 | Type | Syntax | Result |
 |------|--------|--------|
-| `EMBEDDED_FUNCTION_POINTER` | `EMBED_FUNC(Fn)` | PC-relative offset, no relocation |
 | `DOUBLE` arithmetic | `DOUBLE` class | IEEE-754 via integer math (no FPU dependency) |
 
 ### Traits-Based Dispatch
@@ -478,7 +475,7 @@ Two strategies: **conditional compilation** (`#if defined(PLATFORM_*)`) for smal
 ## Writing Tests
 
 - Each test suite is a class in `tests/<name>_tests.h`
-- The class has a `static BOOL RunAll()` method that calls `RunTest(allPassed, EMBED_FUNC(TestName), L"description")` for each test
+- The class has a `static BOOL RunAll()` method that calls `RunTest(allPassed, &TestName, "description")` for each test
 - Individual test methods are `static BOOL` functions returning `true` for pass, `false` for fail
 - Register by adding `#include "my_feature_tests.h"` and `RunTestSuite<MyFeatureTests>(allPassed);` in `tests/pir_tests.h` under the appropriate layer comment (CORE, PLATFORM, or RUNTIME)
 - See existing test files for reference

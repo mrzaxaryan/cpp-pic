@@ -6,7 +6,7 @@ include_guard(GLOBAL)
 
 # Validate: iOS only supports aarch64
 if(NOT PIR_ARCH STREQUAL "aarch64")
-    message(FATAL_ERROR "iOS only supports aarch64 (got: ${PIR_ARCH})")
+    message(FATAL_ERROR "[pir:ios] Unsupported architecture '${PIR_ARCH}'. Valid: aarch64")
 endif()
 
 pir_get_target_info()

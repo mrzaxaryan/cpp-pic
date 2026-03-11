@@ -7,7 +7,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED INPUT_FILE OR NOT DEFINED OUTPUT_DIR)
-    message(FATAL_ERROR "INPUT_FILE and OUTPUT_DIR must be defined")
+    message(FATAL_ERROR "[pir:extract] INPUT_FILE and OUTPUT_DIR must be defined")
 endif()
 
 get_filename_component(_name "${INPUT_FILE}" NAME_WE)
@@ -57,7 +57,7 @@ if(NOT _is_macho)
     )
     file(REMOVE "${_objcopy_temp}")
     if(NOT _res EQUAL 0)
-        message(FATAL_ERROR "llvm-objcopy failed: ${_err}")
+        message(FATAL_ERROR "[pir:extract] llvm-objcopy failed: ${_err}")
     endif()
 endif()
 
@@ -78,7 +78,7 @@ execute_process(
     RESULT_VARIABLE _res
 )
 if(NOT _res EQUAL 0)
-    message(FATAL_ERROR "llvm-objdump failed: ${_err}")
+    message(FATAL_ERROR "[pir:extract] llvm-objdump failed: ${_err}")
 endif()
 
 # =============================================================================
@@ -91,5 +91,5 @@ execute_process(
     RESULT_VARIABLE _res
 )
 if(NOT _res EQUAL 0)
-    message(FATAL_ERROR "llvm-strings failed: ${_err}")
+    message(FATAL_ERROR "[pir:extract] llvm-strings failed: ${_err}")
 endif()

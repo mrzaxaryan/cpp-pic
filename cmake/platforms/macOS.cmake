@@ -6,7 +6,7 @@ include_guard(GLOBAL)
 
 # Validate: macOS only supports x86_64 and aarch64
 if(NOT PIR_ARCH MATCHES "^(x86_64|aarch64)$")
-    message(FATAL_ERROR "macOS only supports x86_64 and aarch64 (got: ${PIR_ARCH})")
+    message(FATAL_ERROR "[pir:macos] Unsupported architecture '${PIR_ARCH}'. Valid: x86_64, aarch64")
 endif()
 
 pir_get_target_info()

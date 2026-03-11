@@ -10,6 +10,7 @@ include_guard(GLOBAL)
 # Auto-discover PIR root from this file's location (cmake/Common.cmake)
 get_filename_component(PIR_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 
+include(${PIR_ROOT_DIR}/cmake/Logging.cmake)
 include(${PIR_ROOT_DIR}/cmake/Options.cmake)
 include(${PIR_ROOT_DIR}/cmake/Triples.cmake)
 include(${PIR_ROOT_DIR}/cmake/CompilerFlags.cmake)

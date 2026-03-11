@@ -23,7 +23,7 @@ function(pir_add_postbuild target_name)
 
     add_custom_command(TARGET ${target_name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${PIR_OUTPUT_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E echo "Build complete: ${_out}${PIR_EXT}"
+        COMMAND ${CMAKE_COMMAND} -E echo "[pir] Build complete: ${_out}${PIR_EXT}"
         ${_osabi_cmd}
         COMMAND ${CMAKE_COMMAND}
             -DINPUT_FILE="${_out}${PIR_EXT}"
@@ -36,6 +36,6 @@ function(pir_add_postbuild target_name)
         COMMAND ${CMAKE_COMMAND}
             -DMAP_FILE="${PIR_MAP_FILE}"
             -P "${PIR_ROOT_DIR}/cmake/scripts/VerifyPICMode.cmake"
-        COMMENT "Generating PIC artifacts..."
+        COMMENT "[pir] Generating PIC artifacts..."
     )
 endfunction()

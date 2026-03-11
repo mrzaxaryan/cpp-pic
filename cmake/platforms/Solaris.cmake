@@ -6,7 +6,7 @@ include_guard(GLOBAL)
 
 # Validate: Solaris supports i386, x86_64, and aarch64
 if(NOT PIR_ARCH MATCHES "^(i386|x86_64|aarch64)$")
-    message(FATAL_ERROR "Solaris only supports i386, x86_64, and aarch64 (got: ${PIR_ARCH})")
+    message(FATAL_ERROR "[pir:solaris] Unsupported architecture '${PIR_ARCH}'. Valid: i386, x86_64, aarch64")
 endif()
 
 pir_get_target_info()

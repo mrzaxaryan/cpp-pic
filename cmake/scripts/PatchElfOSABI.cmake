@@ -12,13 +12,13 @@
 cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED ELF_FILE)
-    message(FATAL_ERROR "ELF_FILE is required")
+    message(FATAL_ERROR "[pir:osabi] ELF_FILE is required")
 endif()
 if(NOT DEFINED OSABI_VALUE)
-    message(FATAL_ERROR "OSABI_VALUE is required")
+    message(FATAL_ERROR "[pir:osabi] OSABI_VALUE is required")
 endif()
 if(NOT EXISTS "${ELF_FILE}")
-    message(FATAL_ERROR "ELF file not found: ${ELF_FILE}")
+    message(FATAL_ERROR "[pir:osabi] ELF file not found: ${ELF_FILE}")
 endif()
 
 # EI_OSABI is byte 7 of the ELF header (offset 7, zero-indexed).
@@ -45,7 +45,7 @@ else()
 endif()
 
 if(NOT _result EQUAL 0)
-    message(FATAL_ERROR "Failed to patch ELF OSABI in: ${ELF_FILE}")
+    message(FATAL_ERROR "[pir:osabi] Failed to patch ELF OSABI in: ${ELF_FILE}")
 endif()
 
-message(STATUS "Patched ELF EI_OSABI to ${OSABI_VALUE} in: ${ELF_FILE}")
+message(STATUS "[pir:osabi] Patched EI_OSABI to ${OSABI_VALUE} in ${ELF_FILE}")

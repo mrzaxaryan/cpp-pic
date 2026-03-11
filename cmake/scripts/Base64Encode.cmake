@@ -8,12 +8,12 @@ cmake_minimum_required(VERSION 3.20)
 
 foreach(_var PIC_FILE BASE64_FILE)
     if(NOT DEFINED ${_var})
-        message(FATAL_ERROR "${_var} is required")
+        message(FATAL_ERROR "[pir:base64] ${_var} is required")
     endif()
 endforeach()
 
 if(NOT EXISTS "${PIC_FILE}")
-    message(FATAL_ERROR "Input file not found: ${PIC_FILE}")
+    message(FATAL_ERROR "[pir:base64] Input file not found: ${PIC_FILE}")
 endif()
 
 if(WIN32)
@@ -42,5 +42,5 @@ else()
 endif()
 
 if(NOT _result EQUAL 0)
-    message(WARNING "Base64 encoding failed with code: ${_result}")
+    message(WARNING "[pir:base64] Encoding failed with code: ${_result}")
 endif()

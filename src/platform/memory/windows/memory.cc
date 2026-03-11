@@ -9,6 +9,7 @@
 #include "platform/kernel/windows/ntdll.h"
 #include "platform/kernel/windows/windows_types.h"
 
+// Memory allocator using ZwAllocateVirtualMemory 
 PVOID Allocator::AllocateMemory(USIZE len)
 {
 	if (len == 0)
@@ -20,6 +21,7 @@ PVOID Allocator::AllocateMemory(USIZE len)
 	return result ? base : nullptr;
 }
 
+// Release memory allocated by AllocateMemory
 VOID Allocator::ReleaseMemory(PVOID ptr, USIZE)
 {
 	if (ptr == nullptr)

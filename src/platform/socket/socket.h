@@ -348,7 +348,7 @@ class Socket
 private:
 	IPAddress ip;      ///< Remote IP address for this connection
 	UINT16 port;       ///< Remote port number in host byte order
-	PVOID handle;    ///< Platform-specific socket handle (fd on POSIX, HANDLE on Windows, UefiSocketContext* on UEFI)
+	PVOID handle;      ///< Platform-specific socket handle (fd on POSIX, HANDLE on Windows, UefiSocketContext* on UEFI)
 
 	/**
 	 * @brief Binds the socket to a local address

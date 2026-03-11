@@ -20,9 +20,20 @@ Result<Pipe, Error> Pipe::Create() noexcept
 	PVOID readHandle = nullptr;
 	PVOID writeHandle = nullptr;
 
+	auto bufferSize = (32 * 1024 * 1024);
+
 	auto result = Kernel32::CreatePipe(&readHandle, &writeHandle, nullptr, 0);
 	if (result.IsErr())
 	{
+		return Result<Pipe, Error>::Err(result, Error::Pipe_CreateFailed);
+	}
+
+	result = Kernel32::SetHandleInformation(readHandle, HANDLE_FLAG_INHERIT, bufferSize);
+
+	if (result.IsErr())
+	{
+		(void)NTDLL::ZwClose(readHandle);
+		(void)NTDLL::ZwClose(writeHandle);
 		return Result<Pipe, Error>::Err(result, Error::Pipe_CreateFailed);
 	}
 
@@ -37,6 +48,17 @@ Result<USIZE, Error> Pipe::Read(Span<UINT8> buffer) noexcept
 {
 	if (readFd == INVALID_FD)
 		return Result<USIZE, Error>::Err(Error::Pipe_ReadFailed);
+
+	UINT32 bytesAvailable = 0;
+
+	// Check if there is data without "consuming" it
+	if (Kernel32::PeekNamedPipe(readFd, nullptr, 0, nullptr, &bytesAvailable, nullptr))
+	{
+		if (bytesAvailable == 0)
+		{
+			return Result<USIZE, Error>::Ok(0);
+		}
+	}
 
 	IO_STATUS_BLOCK iosb;
 	Memory::Zero(&iosb, sizeof(IO_STATUS_BLOCK));

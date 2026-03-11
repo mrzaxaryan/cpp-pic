@@ -212,7 +212,7 @@ INT32 StringFormatter::FormatUInt64(BOOL (*writer)(PVOID, TChar), PVOID context,
 		rev[len++] = (TChar)((num % 10) + (UINT64)(UINT32)'0');
 		num /= 10;
 	} while (num);
-
+ 
 	INT32 signWidth = signChar ? 1 : 0;
 	INT32 paddingSpaces = width - len - signWidth;
 	INT32 paddingZeros = 0;
@@ -279,7 +279,7 @@ INT32 StringFormatter::FormatUInt64(BOOL (*writer)(PVOID, TChar), PVOID context,
 template <TCHAR TChar>
 INT32 StringFormatter::FormatUInt64AsHex(BOOL (*writer)(PVOID, TChar), PVOID context, UINT64 num, INT32 fieldWidth, INT32 uppercase, INT32 zeroPad, BOOL addPrefix)
 {
-	TChar buffer[16]; // max 16 hex digits for UINT64
+	TChar buffer[16]; // Max 16 hex digits for UINT64
 	INT32 buffIndex = 0;
 	INT32 index = 0;
 	INT32 startIdx = index;
@@ -517,6 +517,7 @@ INT32 StringFormatter::FormatDouble(
 	{
 		INT32 written = 0;
 		INT32 pad = (width > 3) ? (width - 3) : 0;
+
 		// Right-align: pad before "nan"
 		for (INT32 i = 0; i < pad; ++i)
 		{
@@ -536,6 +537,7 @@ INT32 StringFormatter::FormatDouble(
 		return written;
 	}
 
+	// Sign check
 	BOOL isNegative = false;
 	if (num < 0)
 	{

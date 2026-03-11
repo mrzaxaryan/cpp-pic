@@ -19,5 +19,6 @@ struct Point
 	INT32 Col;
 };
 
+// Pointer types for Point
 using PPoint = Point *;
 using PPPoint = Point **;

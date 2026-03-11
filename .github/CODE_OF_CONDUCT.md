@@ -2,7 +2,7 @@
 
 ## Our Pledge
 
-We as members, contributors, and maintainers pledge to make participation in Position-Independent Runtime a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+We, as members, contributors, and maintainers, pledge to make participation in **Position-Independent Runtime (PIR)** a harassment-free experience for everyone interested in the project. 
 
 ## Our Standards
 
@@ -33,7 +33,7 @@ This project is designed for **legitimate security research, authorized penetrat
 
 ## Scope
 
-This Code of Conduct applies within all project spaces -- including the GitHub repository, issue tracker, pull requests, and any related communication channels. It also applies when an individual is representing the project in public spaces.
+This Code of Conduct applies within all project spaces - including the GitHub repository, issue tracker, pull requests, and any related communication channels. It also applies when an individual is representing the project in public spaces.
 
 ## Enforcement
 

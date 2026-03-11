@@ -74,6 +74,10 @@ private:
 	USIZE m_size;
 
 public:
+	//=============================================================================
+	// Constructors
+	//=============================================================================
+
 	constexpr FORCE_INLINE Span() : m_data(nullptr), m_size(0) {}
 
 	constexpr FORCE_INLINE Span(T *data, USIZE size) : m_data(data), m_size(size) {}
@@ -203,6 +207,9 @@ private:
 	T *m_data;
 
 public:
+	//=============================================================================
+	// Constructors
+	//=============================================================================
 	constexpr FORCE_INLINE Span() : m_data(nullptr) {}
 
 	constexpr FORCE_INLINE Span(T (&arr)[Extent]) : m_data(arr) {}

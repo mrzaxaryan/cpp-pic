@@ -100,8 +100,10 @@ PVOID Allocator::AllocateMemory(USIZE size)
 	return (PVOID)(base + sizeof(USIZE));
 }
 
+// Release memory allocated by AllocateMemory
 VOID Allocator::ReleaseMemory(PVOID address, USIZE)
-{
+{	
+	// Validate address
 	if (address == nullptr)
 		return;
 

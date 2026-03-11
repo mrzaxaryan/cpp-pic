@@ -102,7 +102,7 @@ Result<DOUBLE, Error> StringUtils::StrToFloat(Span<const CHAR> str) noexcept
 // UTF CONVERSION IMPLEMENTATIONS
 // ============================================================================
 
-// Converts a UTF-8 string to wide string (UTF-16)
+// Converts a UTF-8 string to wide string (UTF-16 on Windows, UCS-4 on Linux)
 // Returns the number of wide characters written (excluding null terminator)
 USIZE StringUtils::Utf8ToWide(Span<const CHAR> utf8, Span<WCHAR> wide)
 {
@@ -149,12 +149,20 @@ USIZE StringUtils::Utf8ToWide(Span<const CHAR> utf8, Span<WCHAR> wide)
 			if (i < utf8.Size() && utf8[i] != '\0')
 				ch |= (utf8[i++] & 0x3F);
 
-			// Encode as surrogate pair for characters > 0xFFFF
 			if (ch >= 0x10000)
 			{
-				ch -= 0x10000;
-				wide[wideLen++] = (WCHAR)(0xD800 + (ch >> 10));
-				wide[wideLen++] = (WCHAR)(0xDC00 + (ch & 0x3FF));
+				if constexpr (sizeof(WCHAR) >= 4)
+				{
+					// UCS-4: store full codepoint directly
+					wide[wideLen++] = (WCHAR)ch;
+				}
+				else
+				{
+					// UTF-16: encode as surrogate pair
+					ch -= 0x10000;
+					wide[wideLen++] = (WCHAR)(0xD800 + (ch >> 10));
+					wide[wideLen++] = (WCHAR)(0xDC00 + (ch & 0x3FF));
+				}
 				continue;
 			}
 		}

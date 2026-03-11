@@ -230,3 +230,12 @@ Result<NTSTATUS, Error> NTDLL::LdrLoadDll(PWCHAR SearchPath, UINT32 *DllCharacte
 	NTSTATUS status = ((NTSTATUS(STDCALL *)(PWCHAR SearchPath, UINT32 *DllCharacteristics, PUNICODE_STRING DllName, PPVOID BaseAddress))ResolveNtdllExportAddress("LdrLoadDll"))(SearchPath, DllCharacteristics, DllName, BaseAddress);
 	return result::FromNTSTATUS<NTSTATUS>(status);
 }
+
+Result<NTSTATUS, Error> NTDLL::ZwQuerySystemInformation(UINT32 SystemInformationClass, PVOID SystemInformation, UINT32 SystemInformationLength, PUINT32 ReturnLength)
+{
+	SYSCALL_ENTRY entry = ResolveSyscall("ZwQuerySystemInformation");
+	NTSTATUS status = entry.Ssn != SYSCALL_SSN_INVALID
+						  ? System::Call(entry, (USIZE)SystemInformationClass, (USIZE)SystemInformation, (USIZE)SystemInformationLength, (USIZE)ReturnLength)
+						  : CALL_FUNCTION("ZwQuerySystemInformation", UINT32 SystemInformationClass, PVOID SystemInformation, UINT32 SystemInformationLength, PUINT32 ReturnLength);
+	return result::FromNTSTATUS<NTSTATUS>(status);
+}

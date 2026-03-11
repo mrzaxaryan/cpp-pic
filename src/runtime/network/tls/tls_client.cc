@@ -62,7 +62,6 @@ static FORCE_INLINE VOID AppendU16BE(TlsBuffer &buf, UINT16 val)
 /// @param ver Version of TLS to use for the packet
 /// @param buf The buffer containing the packet data to send
 /// @return Result indicating success or Tls_SendPacketFailed error
-
 Result<void, Error> TlsClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer &buf)
 {
 	if (packetType == CONTENT_HANDSHAKE && buf.GetSize() > 0)
@@ -72,6 +71,7 @@ Result<void, Error> TlsClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer
 	}
 	LOG_DEBUG("Sending packet with type: %d, version: %d, size: %d bytes", packetType, ver, buf.GetSize());
 
+	// Initialize a temporary buffer to construct the TLS record
 	TlsBuffer tempBuffer;
 	tempBuffer.Append<CHAR>(packetType);
 	tempBuffer.Append<INT16>(ver);
@@ -86,9 +86,11 @@ Result<void, Error> TlsClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer
 	}
 	LOG_DEBUG("Encoding buffer with size: %d bytes, keepOriginal: %d", buf.GetSize(), keepOriginal);
 	crypto.Encode(tempBuffer, Span<const CHAR>(buf.GetBuffer(), buf.GetSize()), keepOriginal);
-
+	// Swap the body size to big-endian and write it to the temporary buffer
 	UINT16 bodySize = ByteOrder::Swap16(tempBuffer.GetSize() - bodySizeIndex - 2);
 	Memory::Copy(tempBuffer.GetBuffer() + bodySizeIndex, &bodySize, sizeof(UINT16));
+
+	// Write it in context and validate it 
 	auto writeResult = context.Write(Span<const CHAR>(tempBuffer.GetBuffer(), tempBuffer.GetSize()));
 	if (!writeResult)
 	{
@@ -102,16 +104,15 @@ Result<void, Error> TlsClient::SendPacket(INT32 packetType, INT32 ver, TlsBuffer
 /// @brief Sent a ClientHello message to initiate the TLS handshake with the server
 /// @param host The hostname of the server to connect to
 /// @return Result indicating success or Tls_ClientHelloFailed error
-
 Result<void, Error> TlsClient::SendClientHello(const CHAR *host)
 {
-
 	LOG_DEBUG("Sending ClientHello for client: %p, host: %s", this, host);
 
 	sendBuffer.Clear();
 
 	BOOL hastls13 = false;
 
+	// Construct the ClientHello message according to TLS specifications
 	sendBuffer.Append<CHAR>(MSG_CLIENT_HELLO);
 	INT32 handshakeSizeIndex = sendBuffer.AppendSize(3); // tls handshake body size
 	LOG_DEBUG("Appending ClientHello with handshake size index: %d", handshakeSizeIndex);
@@ -220,7 +221,6 @@ Result<void, Error> TlsClient::SendClientHello(const CHAR *host)
 
 /// @brief Send a Client Finished message to complete the TLS handshake
 /// @return Result indicating success or Tls_ClientFinishedFailed error
-
 Result<void, Error> TlsClient::SendClientFinished()
 {
 	TlsBuffer verify;
@@ -229,6 +229,7 @@ Result<void, Error> TlsClient::SendClientFinished()
 	auto verifyResult = crypto.ComputeVerify(verify, CIPHER_HASH_SIZE, 0);
 	if (!verifyResult)
 		return Result<void, Error>::Err(verifyResult, Error::Tls_ClientFinishedFailed);
+
 	LOG_DEBUG("Computed verify data for Client Finished, size: %d bytes", verify.GetSize());
 	sendBuffer.Append<CHAR>(MSG_FINISHED);
 	sendBuffer.Append<CHAR>(0);
@@ -243,7 +244,6 @@ Result<void, Error> TlsClient::SendClientFinished()
 
 /// @brief Send a Client Key Exchange message to the server during the TLS handshake
 /// @return Result indicating success or Tls_ClientExchangeFailed error
-
 Result<void, Error> TlsClient::SendClientExchange()
 {
 	sendBuffer.Clear();
@@ -262,7 +262,6 @@ Result<void, Error> TlsClient::SendClientExchange()
 
 /// @brief Send a Change Cipher Spec message to the server to indicate that subsequent messages will be encrypted
 /// @return Result indicating success or Tls_ChangeCipherSpecFailed error
-
 Result<void, Error> TlsClient::SendChangeCipherSpec()
 {
 	sendBuffer.Clear();
@@ -276,7 +275,6 @@ Result<void, Error> TlsClient::SendChangeCipherSpec()
 /// @brief Process the ServerHello message from the server and advances the TLS handshake state
 /// @param reader Buffer containing the ServerHello message data
 /// @return Result indicating success or Tls_ServerHelloFailed error
-
 Result<void, Error> TlsClient::OnServerHello(TlsBuffer &reader)
 {
 	CHAR serverRand[RAND_SIZE];
@@ -365,7 +363,6 @@ Result<void, Error> TlsClient::OnServerHello(TlsBuffer &reader)
 
 /// @brief Process the ServerHelloDone message from the server and advances the TLS handshake state
 /// @return Result indicating success or Tls_ServerHelloDoneFailed error
-
 Result<void, Error> TlsClient::OnServerHelloDone()
 {
 	auto r = SendClientExchange();
@@ -397,7 +394,6 @@ Result<void, Error> TlsClient::OnServerHelloDone()
 /// @brief Verify the Finished message from the server by comparing the verify data with the expected value computed from the handshake messages
 /// @param reader Buffer containing the Finished message data from the server
 /// @return Result indicating success or Tls_VerifyFinishedFailed error
-
 Result<void, Error> TlsClient::VerifyFinished(TlsBuffer &reader)
 {
 	INT32 server_finished_size = reader.ReadU24BE();
@@ -421,7 +417,6 @@ Result<void, Error> TlsClient::VerifyFinished(TlsBuffer &reader)
 
 /// @brief Finished message from the server has been received, process it and advance the TLS handshake state to complete the handshake
 /// @return Result indicating success or Tls_ServerFinishedFailed error
-
 Result<void, Error> TlsClient::OnServerFinished()
 {
 	LOG_DEBUG("Processing Server Finished for client: %p", this);
@@ -459,7 +454,6 @@ Result<void, Error> TlsClient::OnServerFinished()
 /// @param version Version of TLS used in the packet
 /// @param TlsReader Buffer containing the packet data to process
 /// @return Result indicating success or Tls_OnPacketFailed error
-
 Result<void, Error> TlsClient::OnPacket(INT32 packetType, INT32 version, TlsBuffer &TlsReader)
 {
 	if (packetType != CONTENT_CHANGECIPHERSPEC && packetType != CONTENT_ALERT)
@@ -610,7 +604,6 @@ Result<void, Error> TlsClient::OnPacket(INT32 packetType, INT32 version, TlsBuff
 
 /// @brief Packet processing - read data from the socket, parse TLS packets
 /// @return Result indicating success or Tls_ProcessReceiveFailed error
-
 Result<void, Error> TlsClient::ProcessReceive()
 {
 	LOG_DEBUG("Processing received data for client: %p, current state index: %d", this, stateIndex);
@@ -675,7 +668,6 @@ Result<void, Error> TlsClient::ProcessReceive()
 /// @brief Read data from channel buffer
 /// @param output Span wrapping the output buffer
 /// @return Ok(bytes read) on success, or Err when channel is empty
-
 Result<INT32, Error> TlsClient::ReadChannel(Span<CHAR> output)
 {
 	INT32 movesize = Math::Min((INT32)output.Size(), channelBuffer.GetSize() - channelBytesRead);
@@ -703,7 +695,6 @@ Result<INT32, Error> TlsClient::ReadChannel(Span<CHAR> output)
 
 /// @brief Open a TLS connection to the server, perform the TLS handshake by sending the ClientHello message and processing the server's responses
 /// @return Result indicating whether the TLS connection was opened and the handshake completed successfully
-
 Result<void, Error> TlsClient::Open()
 {
 	LOG_DEBUG("Connecting to host: %s for client: %p, secure: %d", host, this, secure);
@@ -747,7 +738,6 @@ Result<void, Error> TlsClient::Open()
 
 /// @brief Close connection to the server, clean up buffers and cryptographic context
 /// @return Result indicating whether the connection was closed successfully
-
 Result<void, Error> TlsClient::Close()
 {
 	stateIndex = 0;
@@ -771,10 +761,8 @@ Result<void, Error> TlsClient::Close()
 }
 
 /// @brief Write data to the TLS channel, encrypting it if the handshake is complete and the encoding is enabled
-/// @param buffer Pointer to the input buffer containing the data to be sent to the server
-/// @param bufferLength Length of the input buffer in bytes
+/// @param buffer Span containing the data to write to the TLS channel
 /// @return Result with the number of bytes written, or an error
-
 Result<UINT32, Error> TlsClient::Write(Span<const CHAR> buffer)
 {
 	UINT32 bufferLength = (UINT32)buffer.Size();
@@ -819,10 +807,8 @@ Result<UINT32, Error> TlsClient::Write(Span<const CHAR> buffer)
 }
 
 /// @brief Read from the TLS channel, decrypting data if the handshake is complete and the encoding is enabled, and store it in the provided buffer
-/// @param buffer Buffer where the read data will be stored
-/// @param bufferLength Length of the buffer in bytes, indicating the maximum number of bytes to read from the TLS channel
+/// @param buffer Span where the read data will be stored
 /// @return Result with the number of bytes read, or an error
-
 Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)
 {
 	if (!secure)
@@ -863,7 +849,6 @@ Result<SSIZE, Error> TlsClient::Read(Span<CHAR> buffer)
 /// @param port The port number of the server to connect to
 /// @param secure Whether to use TLS handshake or plain TCP
 /// @return Ok(TlsClient) on success, or Err with Tls_CreateFailed on failure
-
 Result<TlsClient, Error> TlsClient::Create(PCCHAR host, const IPAddress &ipAddress, UINT16 port, BOOL secure)
 {
 	auto socketResult = Socket::Create(ipAddress, port);

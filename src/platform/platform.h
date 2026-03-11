@@ -47,6 +47,7 @@ NO_RETURN VOID ExitProcess(USIZE code);
 /// @{
 #include "platform/system/date_time.h"
 #include "platform/system/random.h"
+#include "platform/system/machine_id.h"
 /// @}
 
 /// @name I/O Services

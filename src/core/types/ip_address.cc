@@ -2,7 +2,6 @@
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 
-// Convert string span to IPAddress (supports both IPv4 and IPv6)
 Result<IPAddress, Error> IPAddress::FromString(Span<const CHAR> ipString)
 {
 	if (ipString.Size() == 0)
@@ -211,7 +210,6 @@ Result<IPAddress, Error> IPAddress::FromString(Span<const CHAR> ipString)
 	}
 }
 
-// Convert null-terminated string to IPAddress (convenience overload)
 Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 {
 	if (ipString == nullptr)
@@ -221,7 +219,7 @@ Result<IPAddress, Error> IPAddress::FromString(PCCHAR ipString)
 	return FromString(Span<const CHAR>(ipString, StringUtils::Length(ipString)));
 }
 
-// Convert IP address to string
+
 Result<void, Error> IPAddress::ToString(Span<CHAR> buffer) const
 {
 	if (buffer.Size() == 0)

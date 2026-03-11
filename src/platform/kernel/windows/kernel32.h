@@ -41,24 +41,24 @@
  */
 typedef struct _STARTUPINFOW
 {
-	UINT32 cb;              ///< Size of this structure in bytes
-	PWCHAR lpReserved;      ///< Reserved; must be NULL
-	PWCHAR lpDesktop;       ///< Name of the desktop, or NULL for the default desktop
-	PWCHAR lpTitle;         ///< Title displayed in the title bar for console processes
-	UINT32 dwX;             ///< X offset of the upper-left corner of a window (in pixels)
-	UINT32 dwY;             ///< Y offset of the upper-left corner of a window (in pixels)
-	UINT32 dwXSize;         ///< Width of the window (in pixels)
-	UINT32 dwYSize;         ///< Height of the window (in pixels)
-	UINT32 dwXCountChars;   ///< Screen buffer width (in character columns) for console processes
-	UINT32 dwYCountChars;   ///< Screen buffer height (in character rows) for console processes
+	UINT32 cb;				///< Size of this structure in bytes
+	PWCHAR lpReserved;		///< Reserved; must be NULL
+	PWCHAR lpDesktop;		///< Name of the desktop, or NULL for the default desktop
+	PWCHAR lpTitle;			///< Title displayed in the title bar for console processes
+	UINT32 dwX;				///< X offset of the upper-left corner of a window (in pixels)
+	UINT32 dwY;				///< Y offset of the upper-left corner of a window (in pixels)
+	UINT32 dwXSize;			///< Width of the window (in pixels)
+	UINT32 dwYSize;			///< Height of the window (in pixels)
+	UINT32 dwXCountChars;	///< Screen buffer width (in character columns) for console processes
+	UINT32 dwYCountChars;	///< Screen buffer height (in character rows) for console processes
 	UINT32 dwFillAttribute; ///< Initial text and background colors for a console window
-	UINT32 dwFlags;         ///< Bitmask controlling which STARTUPINFOW members are used (STARTF_*)
-	UINT16 wShowWindow;     ///< Window show state (SW_*) if STARTF_USESHOWWINDOW is set
-	UINT16 cbReserved2;     ///< Reserved; must be zero
-	PCHAR lpReserved2;      ///< Reserved; must be NULL
-	PVOID hStdInput;        ///< Standard input handle if STARTF_USESTDHANDLES is set
-	PVOID hStdOutput;       ///< Standard output handle if STARTF_USESTDHANDLES is set
-	PVOID hStdError;        ///< Standard error handle if STARTF_USESTDHANDLES is set
+	UINT32 dwFlags;			///< Bitmask controlling which STARTUPINFOW members are used (STARTF_*)
+	UINT16 wShowWindow;		///< Window show state (SW_*) if STARTF_USESHOWWINDOW is set
+	UINT16 cbReserved2;		///< Reserved; must be zero
+	PCHAR lpReserved2;		///< Reserved; must be NULL
+	PVOID hStdInput;		///< Standard input handle if STARTF_USESTDHANDLES is set
+	PVOID hStdOutput;		///< Standard output handle if STARTF_USESTDHANDLES is set
+	PVOID hStdError;		///< Standard error handle if STARTF_USESTDHANDLES is set
 } STARTUPINFOW, *LPSTARTUPINFOW;
 
 /**
@@ -74,10 +74,10 @@ typedef struct _STARTUPINFOW
  */
 typedef struct _PROCESS_INFORMATION
 {
-	PVOID hProcess;      ///< Handle to the newly created process
-	PVOID hThread;       ///< Handle to the primary thread of the new process
-	UINT32 dwProcessId;  ///< System-wide unique identifier for the new process
-	UINT32 dwThreadId;   ///< System-wide unique identifier for the primary thread
+	PVOID hProcess;		///< Handle to the newly created process
+	PVOID hThread;		///< Handle to the primary thread of the new process
+	UINT32 dwProcessId; ///< System-wide unique identifier for the new process
+	UINT32 dwThreadId;	///< System-wide unique identifier for the primary thread
 } PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 
 /**
@@ -167,4 +167,30 @@ public:
 	 *      https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-createpipe
 	 */
 	[[nodiscard]] static Result<void, Error> CreatePipe(PPVOID hReadPipe, PPVOID hWritePipe, PVOID lpPipeAttributes, UINT32 nSize);
+
+	/**
+	 * @brief Copies data from a pipe into a buffer without removing it from the pipe.
+	 *
+	 * @details Checks for available data in the pipe and returns information about
+	 * the pipe's state. Unlike ReadFile, this function is non-blocking and does not
+	 * consume the data. It is commonly used to implement timeouts or to check if
+	 * a read operation will block.
+	 *
+	 * @param hNamedPipe Handle to the pipe (can be an anonymous pipe handle).
+	 * @param lpBuffer Pointer to a buffer that receives data (can be NULL).
+	 * @param nBufferSize Size of the buffer, in bytes.
+	 * @param lpBytesRead Pointer to receive the number of bytes read (can be NULL).
+	 * @param lpTotalBytesAvail Pointer to receive total bytes available (can be NULL).
+	 * @param lpBytesLeftThisMessage Pointer to bytes remaining in this message (can be NULL).
+	 *
+	 * @return Result<void, Error> Ok() on success, Err(Kernel32_PeekNamedPipeFailed) on failure.
+	 *
+	 * @par Requirements
+	 * Minimum supported client: Windows 2000 Professional [desktop apps | UWP apps]
+	 * Minimum supported server: Windows 2000 Server
+	 *
+	 * @see Microsoft Learn -- PeekNamedPipe function
+	 * https://learn.microsoft.com/en-us/windows/win32/api/namedpipeapi/nf-namedpipeapi-peeknamedpipe
+	 */
+	[[nodiscard]] static Result<void, Error> PeekNamedPipe(SSIZE hNamedPipe, PVOID lpBuffer, UINT32 nBufferSize, PUINT32 lpBytesRead, PUINT32 lpTotalBytesAvail, PUINT32 lpBytesLeftThisMessage);
 };

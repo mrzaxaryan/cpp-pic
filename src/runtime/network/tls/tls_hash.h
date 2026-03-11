@@ -9,6 +9,7 @@ class TlsHash
 private:
 	TlsBuffer cache;
 public:
+	// Default constructor and destructor
 	TlsHash() = default;
 	~TlsHash() = default;
 

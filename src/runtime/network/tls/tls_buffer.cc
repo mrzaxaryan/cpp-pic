@@ -3,8 +3,7 @@
 #include "platform/console/logger.h"
 
 /// @brief Append data to the TLS buffer
-/// @param data Pointer to the data to append
-/// @param size Size of the data to append
+/// @param data The span of data to append to the buffer
 /// @return The offset at which the data was appended
 
 INT32 TlsBuffer::Append(Span<const CHAR> data)
@@ -17,15 +16,9 @@ INT32 TlsBuffer::Append(Span<const CHAR> data)
 	return size - (INT32)data.Size();
 }
 
-/// @brief Append a single character to the TLS buffer
-/// @param data Character to append
-/// @return The offset at which the character was appended
-
-
-/// @brief Append a 32-bit integer to the TLS buffer
-/// @param size The 32-bit integer to append
-/// @return The offset at which the 32-bit integer was appended
-
+/// @brief Append a value of any type to the TLS buffer
+/// @param count The number of bytes to append
+/// @return The offset at which the bytes were appended
 INT32 TlsBuffer::AppendSize(INT32 count)
 {
 	auto r = CheckSize(count);
@@ -37,8 +30,7 @@ INT32 TlsBuffer::AppendSize(INT32 count)
 
 /// @brief Set the size of the TLS buffer
 /// @param size The new size of the buffer
-/// @return void
-
+/// @return Result indicating success or failure
 Result<void, Error> TlsBuffer::SetSize(INT32 newSize)
 {
 	size = 0;
@@ -51,7 +43,6 @@ Result<void, Error> TlsBuffer::SetSize(INT32 newSize)
 
 /// @brief Clean up the TLS buffer by freeing memory if owned and resetting size and capacity
 /// @return void
-
 VOID TlsBuffer::Clear()
 {
 	if (buffer && ownsMemory)
@@ -66,10 +57,10 @@ VOID TlsBuffer::Clear()
 
 /// @brief Ensure there is enough capacity in the TLS buffer to append additional data
 /// @param appendSize The size of the data to be appended
-/// @return void
-
+/// @return Result indicating success or failure
 Result<void, Error> TlsBuffer::CheckSize(INT32 appendSize)
 {
+	// Capacity check
 	if (size + appendSize <= capacity)
 	{
 		LOG_DEBUG("Buffer size is sufficient: %d + %d <= %d", size, appendSize, capacity);
@@ -83,7 +74,9 @@ Result<void, Error> TlsBuffer::CheckSize(INT32 appendSize)
 		newLen = 256;
 	}
 
+	// Allocate new buffer and copy existing data if necessary
 	PCHAR newBuffer = (PCHAR) new CHAR[newLen];
+	// Validate allocation
 	if (!newBuffer)
 	{
 		return Result<void, Error>::Err(Error::TlsBuffer_AllocationFailed);
@@ -93,6 +86,8 @@ Result<void, Error> TlsBuffer::CheckSize(INT32 appendSize)
 		LOG_DEBUG("Resizing buffer from %d to %d bytes", capacity, newLen);
 		Memory::Copy(newBuffer, oldBuffer, size);
 	}
+
+	// Clean up old buffer if owned memory
 	if (oldBuffer && ownsMemory)
 	{
 		delete[] oldBuffer;
@@ -106,7 +101,7 @@ Result<void, Error> TlsBuffer::CheckSize(INT32 appendSize)
 
 /// @brief Remove consumed bytes from the front and shift remaining data down
 /// @param bytes Number of bytes to consume from the front of the buffer
-
+/// @return void
 VOID TlsBuffer::Consume(INT32 bytes)
 {
 	if (bytes <= 0)
@@ -123,14 +118,13 @@ VOID TlsBuffer::Consume(INT32 bytes)
 }
 
 /// @brief Read a block of data from the TLS buffer
-/// @param buf The buffer to store the read data
-/// @param size The number of bytes to read
+/// @param buf The span to receive the data read from the buffer
 /// @return void
-
 VOID TlsBuffer::Read(Span<CHAR> buf)
 {
 	INT32 available = size - readPos;
 	INT32 count = (INT32)buf.Size();
+	// Adjust count if it exceeds available data
 	if (count > available)
 		count = available;
 	if (count > 0)
@@ -140,9 +134,9 @@ VOID TlsBuffer::Read(Span<CHAR> buf)
 
 /// @brief Read a 24-bit big-endian unsigned integer from the TLS buffer
 /// @return The 24-bit value read from the buffer
-
 UINT32 TlsBuffer::ReadU24BE()
 {
+	// Ensure there are at least 3 bytes available to read (24 bits)
 	if (readPos + 3 > size)
 	{
 		readPos = size;

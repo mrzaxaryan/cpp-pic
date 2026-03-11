@@ -11,7 +11,7 @@
 
 include_guard(GLOBAL)
 
-set(PIC_TRANSFORM_VERSION "v0.1.0" CACHE STRING "pic-transform release version to download")
+set(PIC_TRANSFORM_VERSION "v0.1.1" CACHE STRING "pic-transform release version to download")
 set(PIC_TRANSFORM_DIR "${PIR_ROOT_DIR}/pic-transform")
 
 # =============================================================================

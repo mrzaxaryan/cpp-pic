@@ -10,7 +10,7 @@
 
 include_guard(GLOBAL)
 
-set(PIC_TRANSFORM_VERSION "v0.0.1-alpha.1" CACHE STRING "pic-transform release version to download")
+set(PIC_TRANSFORM_VERSION "v0.0.1-alpha.2" CACHE STRING "pic-transform release version to download")
 
 # =============================================================================
 # Detect host platform for download URL

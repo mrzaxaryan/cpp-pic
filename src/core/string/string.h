@@ -29,7 +29,6 @@
 #include "core/types/primitives.h"
 #include "core/types/span.h"
 #include "core/types/double.h"
-#include "core/types/embedded/embedded_string.h"
 #include "core/types/error.h"
 #include "core/types/result.h"
 
@@ -254,17 +253,6 @@ public:
 	 */
 	template <USIZE MaxLen, TCHAR TChar>
 	static constexpr FORCE_INLINE USIZE Copy(TChar (&dest)[MaxLen], Span<const TChar> src) noexcept;
-
-	/**
-	 * @brief Copy embedded string to buffer
-	 * @tparam T Embedded string type
-	 * @param src Source embedded string
-	 * @param buffer Destination buffer
-	 * @param bufSize Size of destination buffer
-	 * @return Number of characters copied (excluding null terminator)
-	 */
-	template <typename T>
-	static constexpr USIZE CopyEmbed(const T &src, Span<CHAR> buffer) noexcept;
 
 	/// @}
 	/// @name String Manipulation
@@ -668,23 +656,6 @@ template <USIZE MaxLen, TCHAR TChar>
 constexpr FORCE_INLINE USIZE StringUtils::Copy(TChar (&dest)[MaxLen], Span<const TChar> src) noexcept
 {
 	return Copy(Span<TChar>(dest), src);
-}
-
-template <typename T>
-constexpr USIZE StringUtils::CopyEmbed(const T &src, Span<CHAR> buffer) noexcept
-{
-	if (buffer.Size() == 0)
-		return 0;
-
-	USIZE len = 0;
-	const CHAR *s = src;
-	while (s[len] != '\0' && len < buffer.Size() - 1)
-	{
-		buffer[len] = s[len];
-		len++;
-	}
-	buffer[len] = '\0';
-	return len;
 }
 
 // ============================================================================

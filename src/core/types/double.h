@@ -3,13 +3,13 @@
  * @brief Position-Independent Double Precision Floating-Point Type
  *
  * @details Provides a position-independent IEEE-754 double precision floating-point
- * type that stores values as UINT64 bit patterns. Uses the `_embed` suffix for
- * compile-time literal embedding to avoid .rdata section references.
+ * type that stores values as UINT64 bit patterns. The pic-transform LLVM pass
+ * handles .rdata elimination automatically.
  *
  * Key Features:
  * - IEEE-754 compliant double precision (64-bit)
  * - Stored as raw bit pattern (UINT64) for position independence
- * - Compile-time literal embedding via `_embed` suffix
+ * - Compile-time construction via constexpr
  * - Full arithmetic operator support (+, -, *, /)
  * - Comparison operators (==, !=, <, <=, >, >=)
  * - Conversion to/from integer types
@@ -59,7 +59,7 @@
  * @brief Position-independent IEEE-754 double precision floating-point
  *
  * @details Stores the IEEE-754 bit pattern as UINT64 for position independence.
- * Use `_embed` suffix for compile-time literals to prevent .rdata generation.
+ * Data section elimination handled by the pic-transform LLVM pass.
  *
  * @par IEEE-754 Double-Precision Format (64 bits):
  * - Sign: 1 bit (bit 63)
@@ -121,19 +121,6 @@ public:
 	/// @}
 
 private:
-	// Private consteval constructor for _embed literals (prevents .rdata)
-	struct CompileTimeLiteral
-	{
-	};
-	consteval DOUBLE(double val, CompileTimeLiteral) noexcept
-	{
-		UINT64 ull = __builtin_bit_cast(UINT64, val);
-		bits = ull;
-	}
-
-	friend consteval DOUBLE operator""_embed(long double v);
-	friend consteval DOUBLE operator""_embed(UINT64 value);
-
 	// Comparison operation enum for shared helper
 	enum CmpOp
 	{
@@ -603,34 +590,6 @@ public:
 // =============================================================================
 // COMPILE-TIME LITERAL OPERATORS
 // =============================================================================
-
-/**
- * @brief User-defined literal for compile-time DOUBLE embedding (long double)
- * @param v Floating-point value
- * @return DOUBLE with IEEE-754 bit pattern embedded as immediate value
- *
- * @details The consteval keyword ensures this is evaluated at compile time,
- * preventing the compiler from placing the value in .rdata.
- *
- * @par Usage:
- * @code
- * DOUBLE pi = 3.14159_embed;
- * @endcode
- */
-consteval DOUBLE operator""_embed(long double v)
-{
-	return DOUBLE(static_cast<double>(v), DOUBLE::CompileTimeLiteral{});
-}
-
-/**
- * @brief User-defined literal for compile-time DOUBLE embedding (integer)
- * @param value Integer value to convert to DOUBLE
- * @return DOUBLE with IEEE-754 bit pattern embedded as immediate value
- */
-consteval DOUBLE operator""_embed(UINT64 value)
-{
-	return DOUBLE(static_cast<double>(value), DOUBLE::CompileTimeLiteral{});
-}
 
 /** @brief Pointer to DOUBLE */
 typedef DOUBLE *PDOUBLE;

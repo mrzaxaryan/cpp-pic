@@ -2,35 +2,21 @@
 # PICTransform.cmake - Build and use the pic-transform LLVM pass
 # =============================================================================
 # Builds pic-transform as a host tool (separate from the freestanding PIR build)
-# and provides a function to run it on bitcode files.
+# and integrates it into the compile pipeline via -fpass-plugin= or as a
+# standalone bitcode transformer.
 #
 # The pass eliminates .rodata/.rdata/.data/.bss sections by transforming global
-# constants into stack-local immediate values -- the same transformation that
-# PIR's _embed infrastructure does, but applied automatically by the compiler.
-#
-# Usage in the build pipeline:
-#   1. Compile .cpp -> .bc (emit LLVM bitcode instead of object files)
-#   2. Run pic-transform on each .bc file
-#   3. Compile transformed .bc -> .o (normal object files)
-#   4. Link .o files into final binary
+# constants into stack-local immediate values automatically during compilation.
 
 include_guard(GLOBAL)
 
 set(PIC_TRANSFORM_DIR "${PIR_ROOT_DIR}/pic-transform")
 
-# Skip if submodule not checked out
+# Require the submodule
 if(NOT EXISTS "${PIC_TRANSFORM_DIR}/CMakeLists.txt")
-    message(STATUS "pic-transform submodule not found -- skipping")
-    return()
-endif()
-
-# =============================================================================
-# Option to enable/disable pic-transform
-# =============================================================================
-option(PIR_USE_PIC_TRANSFORM "Use pic-transform pass to auto-eliminate data sections" OFF)
-
-if(NOT PIR_USE_PIC_TRANSFORM)
-    return()
+    message(FATAL_ERROR
+        "pic-transform submodule not found.\n"
+        "Run: git submodule update --init pic-transform")
 endif()
 
 # =============================================================================
@@ -73,11 +59,13 @@ if(NOT PIC_TRANSFORM_EXECUTABLE)
     endif()
 
     if(NOT _HOST_LLVM_DIR)
-        message(WARNING "pic-transform: Cannot find LLVM development files for host build. "
-                        "Install llvm-dev or set LLVM_DIR. Disabling pic-transform.")
-        set(PIR_USE_PIC_TRANSFORM OFF)
-        return()
+        message(FATAL_ERROR
+            "pic-transform: Cannot find LLVM development files.\n"
+            "Install llvm-dev (e.g. apt install llvm-22-dev) or set PIC_TRANSFORM_LLVM_DIR.")
     endif()
+
+    # Allow override via cache variable
+    set(PIC_TRANSFORM_LLVM_DIR "${_HOST_LLVM_DIR}" CACHE PATH "LLVM cmake dir for pic-transform build")
 
     set(_PIC_TRANSFORM_BUILD_DIR "${CMAKE_BINARY_DIR}/pic-transform-build")
     set(_PIC_TRANSFORM_BIN "${_PIC_TRANSFORM_BUILD_DIR}/pic-transform")
@@ -90,7 +78,7 @@ if(NOT PIC_TRANSFORM_EXECUTABLE)
         SOURCE_DIR "${PIC_TRANSFORM_DIR}"
         BINARY_DIR "${_PIC_TRANSFORM_BUILD_DIR}"
         CMAKE_ARGS
-            -DLLVM_DIR=${_HOST_LLVM_DIR}
+            -DLLVM_DIR=${PIC_TRANSFORM_LLVM_DIR}
             -DCMAKE_BUILD_TYPE=Release
             -DCMAKE_CXX_COMPILER=${_HOST_CXX}
             -DCMAKE_C_COMPILER=${_HOST_CC}
@@ -99,16 +87,9 @@ if(NOT PIC_TRANSFORM_EXECUTABLE)
         BUILD_BYPRODUCTS "${_PIC_TRANSFORM_BIN}"
     )
 
-    # The executable path (standalone tool or plugin .so)
-    if(EXISTS "${_PIC_TRANSFORM_BIN}")
-        set(PIC_TRANSFORM_EXECUTABLE "${_PIC_TRANSFORM_BIN}")
-    else()
-        # Will be available after build
-        set(PIC_TRANSFORM_EXECUTABLE "${_PIC_TRANSFORM_BIN}")
-    endif()
-
+    set(PIC_TRANSFORM_EXECUTABLE "${_PIC_TRANSFORM_BIN}")
     set(PIC_TRANSFORM_TARGET pic-transform-build)
-    message(STATUS "pic-transform: building from submodule (LLVM_DIR=${_HOST_LLVM_DIR})")
+    message(STATUS "pic-transform: building from submodule (LLVM_DIR=${PIC_TRANSFORM_LLVM_DIR})")
 else()
     message(STATUS "pic-transform: using system binary (${PIC_TRANSFORM_EXECUTABLE})")
     set(PIC_TRANSFORM_TARGET "")

@@ -41,13 +41,11 @@
  *
  * DESIGN NOTE: The colour prefix is written by each public method BEFORE
  * calling TimestampedLogOutput, not inside the NOINLINE helper. This is
- * required because the EMBEDDED_STRING holding the prefix must be constructed
- * and consumed (written via Console::Write) within the SAME inline scope.
- * Passing the prefix as a const CHAR* to a NOINLINE function fails on
- * FreeBSD x86_64 at -O1+ with LTO: the pointer-laundering asm barrier in
- * EMBEDDED_STRING::operator const TChar*() breaks the alias chain between
- * the stack data and the escaped pointer, allowing the compiler to reuse
- * the stack slot before the callee reads through the pointer.
+ * required because the string literal holding the prefix must be consumed
+ * (written via Console::Write) within the SAME inline scope. Passing the
+ * prefix as a const CHAR* to a NOINLINE function can fail on FreeBSD
+ * x86_64 at -O1+ with LTO due to alias chain breakage between the stack
+ * data and the escaped pointer.
  */
 class Logger
 {

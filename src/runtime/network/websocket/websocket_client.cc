@@ -5,7 +5,6 @@
 #include "platform/console/logger.h"
 #include "runtime/network/dns/dns_client.h"
 #include "runtime/network/http/http_client.h"
-#include "core/types/embedded/embedded_string.h"
 
 /**
  * @brief Performs the WebSocket opening handshake (RFC 6455 Section 4)

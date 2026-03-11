@@ -3,7 +3,7 @@
  * @brief FIPS 180-2 SHA-256/384 and HMAC Implementation
  *
  * @details PIC-safe cryptographic hash functions for position-independent code.
- * Uses EMBEDDED_ARRAY to avoid .rdata section dependencies.
+ * Constants are embedded in code to avoid .rdata section dependencies.
  *
  * Supported algorithms:
  * - SHA-256: 256-bit hash with 64 rounds

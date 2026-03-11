@@ -5,7 +5,6 @@
 #include "core/memory/memory.h"
 #include "core/string/string.h"
 #include "runtime/network/tls/tls_client.h"
-#include "core/types/embedded/embedded_string.h"
 
 /**
  * @brief DNS message header — fixed 12-byte structure at the start of every DNS message

@@ -17,7 +17,6 @@
 #include "core/types/span.h"
 #include "core/types/error.h"
 #include "core/types/result.h"
-#include "core/types/embedded/embedded_string.h"
 #include "core/string/string.h"
 
 /**

@@ -50,26 +50,19 @@ target_compile_options(${PIR_TRIPLE} PRIVATE ${PIR_BASE_FLAGS})
 target_link_options(${PIR_TRIPLE} PRIVATE ${PIR_BASE_LINK_FLAGS})
 
 # ── pic-transform integration ────────────────────────────────────────────────
-# When enabled, use -fpass-plugin= (if plugin available) or run the standalone
-# tool as a post-compile step. The plugin approach is simpler as it integrates
-# into the normal compile pipeline without needing a separate bitcode step.
-if(PIR_USE_PIC_TRANSFORM)
-    if(PIC_TRANSFORM_PLUGIN)
-        # Plugin mode: add -fpass-plugin= to compile flags
-        target_compile_options(${PIR_TRIPLE} PRIVATE
-            "SHELL:-fpass-plugin=${PIC_TRANSFORM_PLUGIN}")
-        message(STATUS "pic-transform: using plugin ${PIC_TRANSFORM_PLUGIN}")
-    elseif(PIC_TRANSFORM_EXECUTABLE)
-        # Standalone mode: the tool is available but must be used manually
-        # or integrated via a custom bitcode pipeline (future work).
-        message(STATUS "pic-transform: standalone tool available at ${PIC_TRANSFORM_EXECUTABLE}")
-        message(STATUS "  Use: pic-transform <input.bc> -o <output.bc>")
-    endif()
+# Use -fpass-plugin= (if plugin available) or the standalone tool to eliminate
+# data sections automatically during compilation.
+if(PIC_TRANSFORM_PLUGIN)
+    target_compile_options(${PIR_TRIPLE} PRIVATE
+        "SHELL:-fpass-plugin=${PIC_TRANSFORM_PLUGIN}")
+    message(STATUS "pic-transform: using plugin ${PIC_TRANSFORM_PLUGIN}")
+elseif(PIC_TRANSFORM_EXECUTABLE)
+    message(STATUS "pic-transform: standalone tool at ${PIC_TRANSFORM_EXECUTABLE}")
+endif()
 
-    # Ensure pic-transform is built before the main target
-    if(PIC_TRANSFORM_TARGET)
-        add_dependencies(${PIR_TRIPLE} ${PIC_TRANSFORM_TARGET})
-    endif()
+# Ensure pic-transform is built before the main target
+if(PIC_TRANSFORM_TARGET)
+    add_dependencies(${PIR_TRIPLE} ${PIC_TRANSFORM_TARGET})
 endif()
 
 # =============================================================================

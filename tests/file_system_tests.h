@@ -31,7 +31,7 @@ public:
 private:
 	// ── Path building helpers ──────────────────────────────────────────
 	// Embeds "test_io_root" once and combines with suffix at runtime,
-	// avoiding ~50 unique full-path EMBEDDED_STRING instantiations.
+	// avoiding ~50 unique full-path string instantiations.
 
 	static NOINLINE USIZE BuildTestPath(PCWCHAR suffix, Span<WCHAR> out)
 	{

@@ -159,10 +159,10 @@ if(_found)
         "CRITICAL: Data sections break position-independence!\n"
         "Found: ${_list}\n\n"
         "Common causes:\n"
-        "  - Static/global variables (use stack or EMBEDDED_* types)\n"
-        "  - String literals (use EMBEDDED_STRING)\n"
-        "  - Floating-point constants (use EMBEDDED_DOUBLE)\n"
-        "  - Array literals (use EMBEDDED_ARRAY)\n\n"
+        "  - Static/global variables (use stack-local variables)\n"
+        "  - String literals (use auto str = \"...\" on the stack)\n"
+        "  - Floating-point constants (use DOUBLE with _embed suffix)\n"
+        "  - Array literals (use stack-local arrays)\n\n"
         "Map file: ${MAP_FILE}"
     )
 endif()

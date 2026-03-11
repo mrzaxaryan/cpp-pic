@@ -75,6 +75,18 @@ typedef wchar_t WCHAR, *PWCHAR, **PPWCHAR;
 typedef const WCHAR *PCWCHAR;
 
 // =============================================================================
+// CHARACTER TYPE CONSTRAINT
+// =============================================================================
+
+/**
+ * @brief Concept constraining character types to CHAR or WCHAR
+ * @tparam TChar Type to check
+ * @details Ensures template functions only work with supported character types.
+ */
+template <typename TChar>
+concept TCHAR = __is_same_as(TChar, CHAR) || __is_same_as(TChar, WCHAR);
+
+// =============================================================================
 // BOOLEAN TYPE
 // =============================================================================
 

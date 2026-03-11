@@ -10,7 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef PIC_TRANSFORM_STANDALONE
 #define PIC_TRANSFORM_STANDALONE
+#endif
 
 #include "PICTransformPass.h"
 

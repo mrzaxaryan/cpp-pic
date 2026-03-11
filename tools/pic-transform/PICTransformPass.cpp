@@ -597,7 +597,7 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
   bool Changed = false;
 
   errs() << "pic-transform: running on module '" << M.getName() << "'\n";
-  errs() << "pic-transform: target triple: " << M.getTargetTriple() << "\n";
+  errs() << "pic-transform: target triple: " << TT.str() << "\n";
   errs() << "pic-transform: pointer size: " << DL.getPointerSizeInBits()
          << " bits\n";
 

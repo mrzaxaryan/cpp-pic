@@ -325,7 +325,7 @@ CHAR *relocatedString = string + (SSIZE)startAddress;
 
 **PIR Solution: Automatic Data Section Elimination via LLVM Pass**
 
-PIR integrates [pic-transform](https://github.com/mrzaxaryan/pic-transform), a custom LLVM pass that automatically eliminates all `.rdata`/`.rodata`/`.data`/`.bss` sections during compilation. The pass converts global constants (strings, floats, arrays) into stack-local immediate stores -- the same transformation that was previously done manually with `_embed` helpers, but now fully automated.
+PIR integrates [pic-transform](tools/pic-transform), a custom LLVM pass that automatically eliminates all `.rdata`/`.rodata`/`.data`/`.bss` sections during compilation. The pass converts global constants (strings, floats, arrays) into stack-local immediate stores -- the same transformation that was previously done manually with `_embed` helpers, but now fully automated.
 
 Developers write standard C++:
 
@@ -370,7 +370,7 @@ double pi = 3.14159; // Normal literal -- transformed automatically
 movabsq $0x400921f9f01b866e, %rax ; Pi as 64-bit immediate
 ```
 
-The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts floating-point literals from `.rdata` into stack-local immediate stores, so native `double` can be used directly.
+The [pic-transform](tools/pic-transform) LLVM pass automatically converts floating-point literals from `.rdata` into stack-local immediate stores, so native `double` can be used directly.
 
 ### Problem 3: Function Pointers
 
@@ -390,7 +390,7 @@ Standard programs depend on the CRT for initialization, memory management, and h
 
 PIR uses a two-stage approach to guarantee position-independence:
 
-**1. LLVM Pass (pic-transform):** The [pic-transform](https://github.com/mrzaxaryan/pic-transform) tool runs as part of the build pipeline, transforming LLVM bitcode to eliminate all data sections. It converts global constants, string literals, and floating-point values into stack-local immediate stores. The tool is automatically downloaded from GitHub releases during the CMake configure step.
+**1. LLVM Pass (pic-transform):** The [pic-transform](tools/pic-transform) tool runs as part of the build pipeline, transforming LLVM bitcode to eliminate all data sections. It converts global constants, string literals, and floating-point values into stack-local immediate stores. The tool is built from in-tree source during the CMake configure step if LLVM dev files are available, or downloaded from GitHub releases as a fallback.
 
 **2. Critical Compiler Flags:**
 

@@ -35,17 +35,17 @@
  * Logger - Static logging utility class
  *
  * Public methods are variadic templates that type-erase arguments into
- * StringFormatter::Argument arrays, then forward to a single non-templated
- * TimestampedLogOutput. This eliminates per-argument-type template
- * instantiations that previously bloated the binary.
+ * StringFormatter::Argument arrays, then format the message in the caller's
+ * inline scope.
  *
- * DESIGN NOTE: The colour prefix is written by each public method BEFORE
- * calling TimestampedLogOutput, not inside the NOINLINE helper. This is
- * required because the string literal holding the prefix must be consumed
- * (written via Console::Write) within the SAME inline scope. Passing the
- * prefix as a const CHAR* to a NOINLINE function can fail on FreeBSD
- * x86_64 at -O1+ with LTO due to alias chain breakage between the stack
- * data and the escaped pointer.
+ * DESIGN NOTE: All PIC string literals (colour prefix, format string, reset
+ * sequence) and any pointers captured inside the Argument array MUST be
+ * consumed within the SAME inline scope that materialised them.  Passing
+ * a PIC-stack pointer as const CHAR* to a NOINLINE function can fail under
+ * -Oz (machine outliner / aggressive stack-slot reuse) because the compiler
+ * loses the alias chain between the stack data and the escaped pointer.
+ * Only the timestamp is computed inside the NOINLINE helper (WriteTimestamp),
+ * since DateTime::Now / ToTimeOnlyString use no caller-provided PIC data.
  */
 class Logger
 {
@@ -60,23 +60,19 @@ private:
 	}
 
 	/**
-	 * TimestampedLogOutput - Single non-templated helper for all log levels.
+	 * WriteTimestamp - NOINLINE helper that emits [HH:MM:SS].
 	 *
-	 * The colour prefix has already been written by the caller; this function
-	 * emits the [HH:MM:SS] timestamp, the formatted message, and the ANSI
-	 * reset sequence.
-	 *
-	 * @param format - Format string with embedded specifiers
-	 * @param args   - Pre-erased argument array
+	 * Kept NOINLINE so that DateTime::Now / ToTimeOnlyString are not
+	 * duplicated into every template instantiation.  This function uses
+	 * NO caller-provided PIC pointers, so it is safe across the NOINLINE
+	 * boundary.
 	 */
-	static NOINLINE VOID TimestampedLogOutput(const CHAR *format, Span<const StringFormatter::Argument> args)
+	static NOINLINE VOID WriteTimestamp()
 	{
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();
 
 		StringFormatter::Format<CHAR>(&ConsoleCallbackA, nullptr, "[%s] ", (const CHAR *)timeStr);
-		StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, args);
-		Console::Write<CHAR>("\033[0m\n");
 	}
 
 public:
@@ -84,51 +80,59 @@ public:
 	static VOID Info(const TChar *format, Args... args)
 	{
 		Console::Write(Span<const CHAR>("\033[0;32m[INF] "));
+		WriteTimestamp();
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>(argArray));
 		}
+		Console::Write(Span<const CHAR>("\033[0m\n"));
 	}
 
 	template <TCHAR TChar, typename... Args>
 	static VOID Error(const TChar *format, Args... args)
 	{
 		Console::Write(Span<const CHAR>("\033[0;31m[ERR] "));
+		WriteTimestamp();
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>(argArray));
 		}
+		Console::Write(Span<const CHAR>("\033[0m\n"));
 	}
 
 	template <TCHAR TChar, typename... Args>
 	static VOID Warning(const TChar *format, Args... args)
 	{
 		Console::Write(Span<const CHAR>("\033[0;33m[WRN] "));
+		WriteTimestamp();
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>(argArray));
 		}
+		Console::Write(Span<const CHAR>("\033[0m\n"));
 	}
 
 	template <TCHAR TChar, typename... Args>
 	static VOID Debug(const TChar *format, Args... args)
 	{
 		Console::Write(Span<const CHAR>("\033[0;33m[DBG] "));
+		WriteTimestamp();
 		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>());
 		else
 		{
 			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>(argArray));
 		}
+		Console::Write(Span<const CHAR>("\033[0m\n"));
 	}
 };

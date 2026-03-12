@@ -3,16 +3,55 @@
 #include "runtime/runtime.h"
 #include "tests.h"
 
+// =============================================================================
+// TLS Tests - TLS 1.3 Implementation Validation
+// Server: one.one.one.one (1.1.1.1:443)
+//
+// Tests are consolidated to use a single TLS connection to reduce handshake overhead.
+// =============================================================================
+
 class TlsTests
 {
 private:
 #define TEST_SERVER_IP 0x01010101
 #define TLS_PORT 443
 
-	// Test 1: TLS handshake and connection
-	static BOOL TestTlsHandshake()
+	// Helper: send HTTP request and verify response
+	static BOOL SendAndVerifyHttp(TlsClient &tls, Span<const CHAR> request, PCCHAR label)
 	{
-		LOG_INFO("Test: TLS Handshake (ip: %x, port %d)", TEST_SERVER_IP, TLS_PORT);
+		auto writeResult = tls.Write(request);
+		if (!writeResult)
+		{
+			LOG_ERROR("Failed to send %s (error: %e)", label, writeResult.Error());
+			return false;
+		}
+		if (writeResult.Value() != request.Size())
+		{
+			LOG_ERROR("Incomplete send for %s (%d/%d bytes)", label, writeResult.Value(), request.Size());
+			return false;
+		}
+
+		CHAR buffer[128];
+		Memory::Zero(buffer, sizeof(buffer));
+		auto readResult = tls.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
+		if (!readResult)
+		{
+			LOG_ERROR("Failed to receive response for %s (error: %e)", label, readResult.Error());
+			return false;
+		}
+		if (readResult.Value() <= 0)
+		{
+			LOG_ERROR("Received zero bytes for %s", label);
+			return false;
+		}
+
+		return true;
+	}
+
+	// Single connection: handshake + single message + multiple sequential messages
+	static BOOL TestTlsSuite()
+	{
+		LOG_INFO("Connecting to one.one.one.one:443 (TLS 1.3)...");
 
 		auto createResult = TlsClient::Create("one.one.one.one", IPAddress::FromIPv4(TEST_SERVER_IP), TLS_PORT);
 		if (!createResult)
@@ -20,211 +59,60 @@ private:
 			LOG_ERROR("TLS client creation failed (error: %e)", createResult.Error());
 			return false;
 		}
-		TlsClient &tlsClient = createResult.Value();
+		TlsClient &tls = createResult.Value();
 
-		auto openResult = tlsClient.Open();
+		auto openResult = tls.Open();
 		if (!openResult)
 		{
 			LOG_ERROR("TLS handshake failed (error: %e)", openResult.Error());
 			return false;
 		}
+		LOG_INFO("  PASSED: TLS handshake");
 
-		LOG_INFO("TLS handshake completed successfully");
-		(void)tlsClient.Close();
-		return true;
-	}
+		BOOL allPassed = true;
 
-	// Test 3: TLS echo test - single message
-	static BOOL TestTlsEchoSingle()
-	{
-		LOG_INFO("Test: TLS Echo - Single Message (ip: %x, port %d)", TEST_SERVER_IP, TLS_PORT);
-
-		auto createResult = TlsClient::Create("www.one.one.one.one", IPAddress::FromIPv4(TEST_SERVER_IP), TLS_PORT);
-		if (!createResult)
+		// --- Single message echo ---
 		{
-			LOG_ERROR("TLS client creation failed (error: %e)", createResult.Error());
-			return false;
-		}
-		TlsClient &tlsClient = createResult.Value();
-
-		auto openResult = tlsClient.Open();
-		if (!openResult)
-		{
-			LOG_ERROR("TLS handshake failed (error: %e)", openResult.Error());
-			return false;
+			const CHAR msg[] = "GET / HTTP/1.1\r\n"
+						"Host: one.one.one.one\r\n"
+						"\r\n";
+			if (SendAndVerifyHttp(tls, Span<const CHAR>(msg, sizeof(msg) - 1), "single message"))
+				LOG_INFO("  PASSED: TLS echo - single message");
+			else
+			{
+				LOG_ERROR("  FAILED: TLS echo - single message");
+				allPassed = false;
+			}
 		}
 
-		// Send test message
-		const CHAR message[] = "GET / HTTP/1.1\r\n"
-					   "Host: one.one.one.one\r\n"
-					   "Connection: close\r\n"
-					   "\r\n";
-		auto writeResult = tlsClient.Write(Span<const CHAR>(message, sizeof(message) - 1));
+		// --- Multiple sequential messages on same connection ---
+		{
+			const CHAR msg2[] = "GET / HTTP/1.1\r\n"
+						 "Host: one.one.one.one\r\n"
+						 "\r\n";
+			if (SendAndVerifyHttp(tls, Span<const CHAR>(msg2, sizeof(msg2) - 1), "message 2"))
+				LOG_INFO("  PASSED: TLS echo - message 2");
+			else
+			{
+				LOG_ERROR("  FAILED: TLS echo - message 2");
+				allPassed = false;
+			}
 
-		if (!writeResult)
-		{
-			LOG_ERROR("Failed to send message (error: %e)", writeResult.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (writeResult.Value() != sizeof(message) - 1)
-		{
-			LOG_ERROR("Incomplete send (sent %d/%d bytes)", writeResult.Value(), sizeof(message) - 1);
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		// Receive echo response
-		CHAR buffer[128];
-		Memory::Zero(buffer, sizeof(buffer));
-		auto readResult = tlsClient.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
-
-		if (!readResult)
-		{
-			LOG_ERROR("Failed to receive echo response (error: %e)", readResult.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (readResult.Value() <= 0)
-		{
-			LOG_ERROR("Received zero bytes in echo response");
-			(void)tlsClient.Close();
-			return false;
+			const CHAR msg3[] = "GET / HTTP/1.1\r\n"
+						 "Host: one.one.one.one\r\n"
+						 "Connection: close\r\n"
+						 "\r\n";
+			if (SendAndVerifyHttp(tls, Span<const CHAR>(msg3, sizeof(msg3) - 1), "message 3"))
+				LOG_INFO("  PASSED: TLS echo - message 3");
+			else
+			{
+				LOG_ERROR("  FAILED: TLS echo - message 3");
+				allPassed = false;
+			}
 		}
 
-		LOG_INFO("TLS echo test passed");
-		(void)tlsClient.Close();
-		return true;
-	}
-
-	// Test 4: TLS echo test - multiple messages
-	static BOOL TestTlsEchoMultiple()
-	{
-		LOG_INFO("Test: TLS Echo - Multiple Messages (port %d)", TLS_PORT);
-
-		auto createResult = TlsClient::Create("www.one.one.one.one", IPAddress::FromIPv4(TEST_SERVER_IP), TLS_PORT);
-		if (!createResult)
-		{
-			LOG_ERROR("TLS client creation failed (error: %e)", createResult.Error());
-			return false;
-		}
-		TlsClient &tlsClient = createResult.Value();
-
-		auto openResult = tlsClient.Open();
-		if (!openResult)
-		{
-			LOG_ERROR("TLS handshake failed (error: %e)", openResult.Error());
-			return false;
-		}
-
-		// Test messages
-		const CHAR msg1[] = "GET / HTTP/1.1\r\n"
-					"Host: one.one.one.one\r\n"
-					"\r\n";
-		const CHAR msg2[] = "GET / HTTP/1.1\r\n"
-					"Host: one.one.one.one\r\n"
-					"\r\n";
-		const CHAR msg3[] = "GET / HTTP/1.1\r\n"
-					"Host: one.one.one.one\r\n"
-					"Connection: close\r\n"
-					"\r\n";
-
-		// Send and receive message 1
-		auto send1 = tlsClient.Write(Span<const CHAR>(msg1, sizeof(msg1) - 1));
-		if (!send1)
-		{
-			LOG_ERROR("Failed to send message 1 (error: %e)", send1.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (send1.Value() != sizeof(msg1) - 1)
-		{
-			LOG_ERROR("Incomplete send for message 1 (%d/%d bytes)", send1.Value(), sizeof(msg1) - 1);
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		CHAR buffer1[128];
-		Memory::Zero(buffer1, sizeof(buffer1));
-		auto recv1 = tlsClient.Read(Span<CHAR>(buffer1, sizeof(buffer1) - 1));
-		if (!recv1)
-		{
-			LOG_ERROR("Failed to receive echo response for message 1 (error: %e)", recv1.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (recv1.Value() <= 0)
-		{
-			LOG_ERROR("Received zero bytes for message 1");
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		// Send and receive message 2
-		auto send2 = tlsClient.Write(Span<const CHAR>(msg2, sizeof(msg2) - 1));
-		if (!send2)
-		{
-			LOG_ERROR("Failed to send message 2 (error: %e)", send2.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (send2.Value() != sizeof(msg2) - 1)
-		{
-			LOG_ERROR("Incomplete send for message 2 (%d/%d bytes)", send2.Value(), sizeof(msg2) - 1);
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		CHAR buffer2[128];
-		Memory::Zero(buffer2, sizeof(buffer2));
-		auto recv2 = tlsClient.Read(Span<CHAR>(buffer2, sizeof(buffer2) - 1));
-		if (!recv2)
-		{
-			LOG_ERROR("Failed to receive echo response for message 2 (error: %e)", recv2.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (recv2.Value() <= 0)
-		{
-			LOG_ERROR("Received zero bytes for message 2");
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		// Send and receive message 3
-		auto send3 = tlsClient.Write(Span<const CHAR>(msg3, sizeof(msg3) - 1));
-		if (!send3)
-		{
-			LOG_ERROR("Failed to send message 3 (error: %e)", send3.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (send3.Value() != sizeof(msg3) - 1)
-		{
-			LOG_ERROR("Incomplete send for message 3 (%d/%d bytes)", send3.Value(), sizeof(msg3) - 1);
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		CHAR buffer3[128];
-		Memory::Zero(buffer3, sizeof(buffer3));
-		auto recv3 = tlsClient.Read(Span<CHAR>(buffer3, sizeof(buffer3) - 1));
-		if (!recv3)
-		{
-			LOG_ERROR("Failed to receive echo response for message 3 (error: %e)", recv3.Error());
-			(void)tlsClient.Close();
-			return false;
-		}
-		if (recv3.Value() <= 0)
-		{
-			LOG_ERROR("Received zero bytes for message 3");
-			(void)tlsClient.Close();
-			return false;
-		}
-
-		LOG_INFO("Multiple message echo test passed");
-		(void)tlsClient.Close();
-		return true;
+		(void)tls.Close();
+		return allPassed;
 	}
 
 public:
@@ -236,9 +124,8 @@ public:
 		LOG_INFO("Running TLS Tests...");
 		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1:443)");
 
-		RunTest(allPassed, &TestTlsHandshake, "TLS handshake");
-		RunTest(allPassed, &TestTlsEchoSingle, "TLS echo - single message");
-		RunTest(allPassed, &TestTlsEchoMultiple, "TLS echo - multiple messages");
+		if (!TestTlsSuite())
+			allPassed = false;
 
 		if (allPassed)
 			LOG_INFO("All TLS tests passed!");

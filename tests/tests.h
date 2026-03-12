@@ -27,16 +27,20 @@
  */
 #if defined(ENABLE_LOGGING)
 template <typename TestFunc>
-inline BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc, PCCHAR description)
+NOINLINE BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc, PCCHAR description)
 {
-	if (!testFunc())
+	BOOL passed = testFunc();
+	if (!passed)
 	{
 		allPassedVar = false;
 		LOG_ERROR("  FAILED: %s", description);
-		return false;
 	}
-	LOG_INFO("  PASSED: %s", description);
-	return true;
+	else
+	{
+		LOG_INFO("  PASSED: %s", description);
+	}
+	asm volatile("" ::: "memory");
+	return passed;
 }
 #else
 template <typename TestFunc>

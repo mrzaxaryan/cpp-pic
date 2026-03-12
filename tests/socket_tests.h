@@ -6,6 +6,8 @@
 // =============================================================================
 // Socket Tests - AFD Socket Implementation Validation
 // Server: one.one.one.one (1.1.1.1) - Cloudflare Public DNS
+//
+// Tests are consolidated to use minimal connections to reduce network overhead.
 // =============================================================================
 
 class SocketTests
@@ -14,11 +16,12 @@ private:
 // Test server IP address: 1.1.1.1 (one.one.one.one)
 #define TEST_SERVER_IP 0x01010101
 
-	// Test 1: Socket creation
-	static BOOL TestSocketCreation()
+	// Connection 1+2: All IPv4 socket tests on minimal connections
+	static BOOL TestIPv4Suite()
 	{
-		LOG_INFO("Test: Socket Creation");
+		LOG_INFO("Connecting to one.one.one.one:80 (IPv4)...");
 
+		// --- Creation + connection + HTTP GET on a single connection ---
 		auto createResult = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
 		if (!createResult)
 		{
@@ -26,24 +29,7 @@ private:
 			return false;
 		}
 		Socket &sock = createResult.Value();
-
-		LOG_INFO("Socket created successfully");
-		(void)sock.Close();
-		return true;
-	}
-
-	// Test 2: Socket connection to HTTP port
-	static BOOL TestSocketConnection()
-	{
-		LOG_INFO("Test: Socket Connection (HTTP:80)");
-
-		auto createResult = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
-		if (!createResult)
-		{
-			LOG_ERROR("Socket creation failed (error: %e)", createResult.Error());
-			return false;
-		}
-		Socket &sock = createResult.Value();
+		LOG_INFO("  PASSED: Socket creation");
 
 		auto openResult = sock.Open();
 		if (!openResult)
@@ -52,31 +38,7 @@ private:
 			(void)sock.Close();
 			return false;
 		}
-
-		LOG_INFO("Socket connected successfully to one.one.one.one:80");
-		(void)sock.Close();
-		return true;
-	}
-
-	// Test 3: HTTP GET request (port 80)
-	static BOOL TestHttpRequest()
-	{
-		LOG_INFO("Test: HTTP GET Request (port 80)");
-
-		auto createResult = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
-		if (!createResult)
-		{
-			LOG_ERROR("Socket creation failed (error: %e)", createResult.Error());
-			return false;
-		}
-		Socket &sock = createResult.Value();
-
-		auto openResult = sock.Open();
-		if (!openResult)
-		{
-			LOG_ERROR("Socket initialization or connection failed (error: %e)", openResult.Error());
-			return false;
-		}
+		LOG_INFO("  PASSED: Socket connection (HTTP:80)");
 
 		const CHAR request[] = "GET / HTTP/1.1\r\nHost: one.one.one.one\r\nConnection: close\r\n\r\n";
 		constexpr USIZE requestLen = sizeof(request) - 1;
@@ -108,75 +70,66 @@ private:
 			(void)sock.Close();
 			return false;
 		}
+		LOG_INFO("  PASSED: HTTP GET request");
 
 		(void)sock.Close();
-		return true;
-	}
 
-	// Test 4: Multiple sequential connections
-	static BOOL TestMultipleConnections()
-	{
-		LOG_INFO("Test: Multiple Sequential Connections");
-
-		for (UINT32 i = 0; i < 3; i++)
+		// --- Sequential reconnection test (verifies create-connect-send cycle works repeatedly) ---
 		{
-			auto createResult = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
-			if (!createResult)
+			auto createResult2 = Socket::Create(IPAddress::FromIPv4(TEST_SERVER_IP), 80);
+			if (!createResult2)
 			{
-				LOG_ERROR("Connection %d: socket creation failed (error: %e)", i + 1, createResult.Error());
+				LOG_ERROR("Sequential connection: socket creation failed (error: %e)", createResult2.Error());
 				return false;
 			}
-			Socket &sock = createResult.Value();
+			Socket &sock2 = createResult2.Value();
 
-			auto openResult = sock.Open();
-			if (!openResult)
+			auto openResult2 = sock2.Open();
+			if (!openResult2)
 			{
-				LOG_ERROR("Connection %d failed (error: %e)", i + 1, openResult.Error());
-				return false;
-			}
-
-			const CHAR request[] = "GET / HTTP/1.0\r\n\r\n";
-			constexpr USIZE requestLen = sizeof(request) - 1;
-			auto writeResult = sock.Write(Span<const CHAR>(request, requestLen));
-
-			if (!writeResult)
-			{
-				LOG_ERROR("Connection %d: failed to send request (error: %e)", i + 1, writeResult.Error());
-				(void)sock.Close();
-				return false;
-			}
-			if (writeResult.Value() != requestLen)
-			{
-				LOG_ERROR("Connection %d: incomplete send (%d/%d bytes)", i + 1, writeResult.Value(), requestLen);
-				(void)sock.Close();
+				LOG_ERROR("Sequential connection failed (error: %e)", openResult2.Error());
 				return false;
 			}
 
-			CHAR buffer[128];
-			Memory::Zero(buffer, sizeof(buffer));
-			auto readResult = sock.Read(Span<CHAR>(buffer, sizeof(buffer) - 1));
+			const CHAR request2[] = "GET / HTTP/1.0\r\n\r\n";
+			constexpr USIZE requestLen2 = sizeof(request2) - 1;
+			auto writeResult2 = sock2.Write(Span<const CHAR>(request2, requestLen2));
 
-			if (!readResult)
+			if (!writeResult2)
 			{
-				LOG_ERROR("Connection %d: failed to receive response (error: %e)", i + 1, readResult.Error());
-				(void)sock.Close();
+				LOG_ERROR("Sequential connection: failed to send request (error: %e)", writeResult2.Error());
+				(void)sock2.Close();
 				return false;
 			}
-			if (readResult.Value() <= 0)
+			if (writeResult2.Value() != requestLen2)
 			{
-				LOG_ERROR("Connection %d: received zero bytes", i + 1);
-				(void)sock.Close();
+				LOG_ERROR("Sequential connection: incomplete send (%d/%d bytes)", writeResult2.Value(), requestLen2);
+				(void)sock2.Close();
 				return false;
 			}
 
-			(void)sock.Close();
+			CHAR buffer2[128];
+			Memory::Zero(buffer2, sizeof(buffer2));
+			auto readResult2 = sock2.Read(Span<CHAR>(buffer2, sizeof(buffer2) - 1));
+
+			if (!readResult2 || readResult2.Value() <= 0)
+			{
+				if (!readResult2)
+					LOG_ERROR("Sequential connection: failed to receive response (error: %e)", readResult2.Error());
+				else
+					LOG_ERROR("Sequential connection: received zero bytes");
+				(void)sock2.Close();
+				return false;
+			}
+
+			(void)sock2.Close();
 		}
+		LOG_INFO("  PASSED: Sequential reconnection");
 
-		LOG_INFO("All sequential connections successful");
 		return true;
 	}
 
-	// Test 5: IP address conversion
+	// IP address conversion (no network)
 	static BOOL TestIpConversion()
 	{
 		LOG_INFO("Test: IP Address Conversion");
@@ -249,7 +202,7 @@ private:
 		return true;
 	}
 
-	// Test 6: IPv6 Socket connection
+	// Connection 3: IPv6 socket connection
 	static BOOL TestIPv6Connection()
 	{
 		LOG_INFO("Test: IPv6 Socket Connection (HTTP:80)");
@@ -320,7 +273,7 @@ private:
 		return true;
 	}
 
-	// Test 7: HTTP GET request to httpbin.org
+	// Connection 4: HTTP GET request to httpbin.org (requires DNS)
 	static BOOL TestHttpBin()
 	{
 		auto dnsResult = DnsClient::Resolve("httpbin.org", DnsRecordType::A);
@@ -388,10 +341,7 @@ public:
 		LOG_INFO("Running Socket Tests...");
 		LOG_INFO("  Test Server: one.one.one.one (1.1.1.1 / 2606:4700:4700::1111)");
 
-		RunTest(allPassed, &TestSocketCreation, "Socket creation");
-		RunTest(allPassed, &TestSocketConnection, "Socket connection (HTTP:80)");
-		RunTest(allPassed, &TestHttpRequest, "HTTP GET request");
-		RunTest(allPassed, &TestMultipleConnections, "Multiple sequential connections");
+		RunTest(allPassed, &TestIPv4Suite, "IPv4 socket suite (create, connect, HTTP GET, reconnect)");
 		RunTest(allPassed, &TestIpConversion, "IP address conversion");
 		RunTest(allPassed, &TestIPv6Connection, "IPv6 connection");
 		RunTest(allPassed, &TestHttpBin, "HTTP GET request to httpbin.org");

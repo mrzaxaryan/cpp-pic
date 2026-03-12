@@ -12,11 +12,7 @@ public:
 
 		LOG_INFO("Running DOUBLE Tests...");
 
-		RunTest(allPassed, &TestBasicArithmetic, "Basic arithmetic");
-		RunTest(allPassed, &TestComparisons, "Comparisons");
-		RunTest(allPassed, &TestLiterals, "Literals");
-		RunTest(allPassed, &TestConversions, "Conversions");
-		RunTest(allPassed, &TestTypedef, "Typedef");
+		RunTest(allPassed, &TestDoubleSuite, "DOUBLE suite");
 
 		if (allPassed)
 			LOG_INFO("All DOUBLE tests passed!");
@@ -27,134 +23,178 @@ public:
 	}
 
 private:
-	static BOOL TestBasicArithmetic()
+	static BOOL TestDoubleSuite()
 	{
-		double a = 2.0;
-		double b = 3.0;
+		BOOL allPassed = true;
 
-		if (a + b != 5.0)
+		// --- Basic arithmetic ---
 		{
-			LOG_ERROR("2.0 + 3.0 != 5.0");
-			return false;
-		}
-		if (b - a != 1.0)
-		{
-			LOG_ERROR("3.0 - 2.0 != 1.0");
-			return false;
-		}
-		if (a * b != 6.0)
-		{
-			LOG_ERROR("2.0 * 3.0 != 6.0");
-			return false;
-		}
-		if (6.0 / a != 3.0)
-		{
-			LOG_ERROR("6.0 / 2.0 != 3.0");
-			return false;
-		}
+			double a = 2.0;
+			double b = 3.0;
 
-		return true;
-	}
+			if (a + b != 5.0)
+			{
+				LOG_ERROR("2.0 + 3.0 != 5.0");
+				allPassed = false;
+			}
+			else if (b - a != 1.0)
+			{
+				LOG_ERROR("3.0 - 2.0 != 1.0");
+				allPassed = false;
+			}
+			else if (a * b != 6.0)
+			{
+				LOG_ERROR("2.0 * 3.0 != 6.0");
+				allPassed = false;
+			}
+			else if (6.0 / a != 3.0)
+			{
+				LOG_ERROR("6.0 / 2.0 != 3.0");
+				allPassed = false;
+			}
 
-	static BOOL TestComparisons()
-	{
-		double a = 1.0;
-		double b = 2.0;
-
-		if (!(a < b))
-		{
-			LOG_ERROR("1.0 < 2.0 failed");
-			return false;
-		}
-		if (!(a <= b))
-		{
-			LOG_ERROR("1.0 <= 2.0 failed");
-			return false;
-		}
-		if (!(b > a))
-		{
-			LOG_ERROR("2.0 > 1.0 failed");
-			return false;
-		}
-		if (!(a == 1.0))
-		{
-			LOG_ERROR("1.0 == 1.0 failed");
-			return false;
-		}
-		if (a == b)
-		{
-			LOG_ERROR("1.0 != 2.0 failed");
-			return false;
+			if (allPassed)
+				LOG_INFO("  PASSED: Basic arithmetic");
+			else
+				LOG_ERROR("  FAILED: Basic arithmetic");
 		}
 
-		return true;
-	}
-
-	static BOOL TestLiterals()
-	{
-		double pi = 3.14159;
-		if (pi < 3.14158 || pi > 3.14160)
+		// --- Comparisons ---
 		{
-			LOG_ERROR("3.14159 out of tolerance");
-			return false;
+			BOOL passed = true;
+			double a = 1.0;
+			double b = 2.0;
+
+			if (!(a < b))
+			{
+				LOG_ERROR("1.0 < 2.0 failed");
+				passed = false;
+			}
+			else if (!(a <= b))
+			{
+				LOG_ERROR("1.0 <= 2.0 failed");
+				passed = false;
+			}
+			else if (!(b > a))
+			{
+				LOG_ERROR("2.0 > 1.0 failed");
+				passed = false;
+			}
+			else if (!(a == 1.0))
+			{
+				LOG_ERROR("1.0 == 1.0 failed");
+				passed = false;
+			}
+			else if (a == b)
+			{
+				LOG_ERROR("1.0 != 2.0 failed");
+				passed = false;
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Comparisons");
+			else
+			{
+				LOG_ERROR("  FAILED: Comparisons");
+				allPassed = false;
+			}
 		}
 
-		double half = 0.5;
-		if (half != 0.5)
+		// --- Literals ---
 		{
-			LOG_ERROR("0.5 roundtrip failed");
-			return false;
+			BOOL passed = true;
+
+			double pi = 3.14159;
+			if (pi < 3.14158 || pi > 3.14160)
+			{
+				LOG_ERROR("3.14159 out of tolerance");
+				passed = false;
+			}
+
+			double half = 0.5;
+			if (passed && half != 0.5)
+			{
+				LOG_ERROR("0.5 roundtrip failed");
+				passed = false;
+			}
+
+			double neg = -2.5;
+			if (passed && neg != -2.5)
+			{
+				LOG_ERROR("-2.5 roundtrip failed");
+				passed = false;
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Literals");
+			else
+			{
+				LOG_ERROR("  FAILED: Literals");
+				allPassed = false;
+			}
 		}
 
-		double neg = -2.5;
-		if (neg != -2.5)
+		// --- Conversions ---
 		{
-			LOG_ERROR("-2.5 roundtrip failed");
-			return false;
+			BOOL passed = true;
+
+			double val = 100.5;
+			INT32 intVal = (INT32)val;
+			if (intVal != 100)
+			{
+				LOG_ERROR("(INT32)100.5 expected 100, got %d", intVal);
+				passed = false;
+			}
+
+			double fromInt = (double)42;
+			if (passed && fromInt != 42.0)
+			{
+				LOG_ERROR("(double)42 != 42.0");
+				passed = false;
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Conversions");
+			else
+			{
+				LOG_ERROR("  FAILED: Conversions");
+				allPassed = false;
+			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestConversions()
-	{
-		double val = 100.5;
-		INT32 intVal = (INT32)val;
-		if (intVal != 100)
+		// --- Typedef ---
 		{
-			LOG_ERROR("(INT32)100.5 expected 100, got %d", intVal);
-			return false;
+			BOOL passed = true;
+
+			// Verify DOUBLE typedef works as native double
+			DOUBLE a = 3.14;
+			double b = 3.14;
+			if (a != b)
+			{
+				LOG_ERROR("DOUBLE typedef mismatch with native double");
+				passed = false;
+			}
+
+			if (passed)
+			{
+				PDOUBLE ptr = &a;
+				*ptr = 2.71;
+				if (a != 2.71)
+				{
+					LOG_ERROR("PDOUBLE pointer access failed");
+					passed = false;
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Typedef");
+			else
+			{
+				LOG_ERROR("  FAILED: Typedef");
+				allPassed = false;
+			}
 		}
 
-		double fromInt = (double)42;
-		if (fromInt != 42.0)
-		{
-			LOG_ERROR("(double)42 != 42.0");
-			return false;
-		}
-
-		return true;
-	}
-
-	static BOOL TestTypedef()
-	{
-		// Verify DOUBLE typedef works as native double
-		DOUBLE a = 3.14;
-		double b = 3.14;
-		if (a != b)
-		{
-			LOG_ERROR("DOUBLE typedef mismatch with native double");
-			return false;
-		}
-
-		PDOUBLE ptr = &a;
-		*ptr = 2.71;
-		if (a != 2.71)
-		{
-			LOG_ERROR("PDOUBLE pointer access failed");
-			return false;
-		}
-
-		return true;
+		return allPassed;
 	}
 };

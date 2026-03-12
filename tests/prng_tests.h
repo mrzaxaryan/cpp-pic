@@ -12,13 +12,8 @@ public:
 
 		LOG_INFO("Running Prng Tests...");
 
-		RunTest(allPassed, &TestDeterministicSequence, "Deterministic sequence with known seed");
-		RunTest(allPassed, &TestDifferentSeeds, "Different seeds produce different sequences");
-		RunTest(allPassed, &TestValueRange, "Values within [0, MAX)");
-		RunTest(allPassed, &TestGetArray, "GetArray fills buffer");
-		RunTest(allPassed, &TestGetChar, "GetChar produces lowercase a-z");
-		RunTest(allPassed, &TestGetString, "GetString fills and null-terminates");
-		RunTest(allPassed, &TestIsSeeded, "IsSeeded and Seed");
+		RunTest(allPassed, &TestDeterministicSuite, "Deterministic suite");
+		RunTest(allPassed, &TestOutputSuite, "Output suite");
 
 		if (allPassed)
 			LOG_INFO("All Prng tests passed!");
@@ -29,171 +24,240 @@ public:
 	}
 
 private:
-	static BOOL TestDeterministicSequence()
+	static BOOL TestDeterministicSuite()
 	{
-		Prng prng(1);
+		BOOL allPassed = true;
 
-		// Expected xorshift64 output for seed=1
-		const INT32 expected[] = {1082269761, 201397313, 1854285353, 1432191013, 274305637};
-
-		for (INT32 i = 0; i < 5; i++)
+		// --- Deterministic sequence ---
 		{
-			INT32 val = prng.Get();
-			if (val != expected[i])
+			Prng prng(1);
+			BOOL passed = true;
+
+			// Expected xorshift64 output for seed=1
+			const INT32 expected[] = {1082269761, 201397313, 1854285353, 1432191013, 274305637};
+
+			for (INT32 i = 0; i < 5; i++)
 			{
-				LOG_ERROR("Seed 1, index %d: expected %d, got %d", i, expected[i], val);
-				return false;
+				INT32 val = prng.Get();
+				if (val != expected[i])
+				{
+					LOG_ERROR("Seed 1, index %d: expected %d, got %d", i, expected[i], val);
+					passed = false;
+					break;
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Deterministic sequence with known seed");
+			else
+			{
+				LOG_ERROR("  FAILED: Deterministic sequence with known seed");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestDifferentSeeds()
-	{
-		Prng a(1);
-		Prng b(42);
-
-		// First values from different seeds must differ
-		INT32 va = a.Get();
-		INT32 vb = b.Get();
-
-		if (va == vb)
+		// --- Different seeds ---
 		{
-			LOG_ERROR("Seeds 1 and 42 produced same first value: %d", va);
-			return false;
-		}
+			Prng a(1);
+			Prng b(42);
 
-		return true;
-	}
+			// First values from different seeds must differ
+			INT32 va = a.Get();
+			INT32 vb = b.Get();
 
-	static BOOL TestValueRange()
-	{
-		Prng prng(12345);
-
-		for (INT32 i = 0; i < 1000; i++)
-		{
-			INT32 val = prng.Get();
-			if (val < 0 || val >= Prng::Max)
+			if (va != vb)
+				LOG_INFO("  PASSED: Different seeds produce different sequences");
+			else
 			{
-				LOG_ERROR("Value out of range: %d (max: %d)", val, Prng::Max);
-				return false;
+				LOG_ERROR("Seeds 1 and 42 produced same first value: %d", va);
+				LOG_ERROR("  FAILED: Different seeds produce different sequences");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestGetArray()
-	{
-		Prng prng(99);
-		UINT8 buffer[32];
-		Memory::Zero(buffer, sizeof(buffer));
-
-		prng.GetArray(Span<UINT8>(buffer, 32));
-
-		// At least some bytes should be non-zero
-		BOOL foundNonZero = false;
-		for (USIZE i = 0; i < 32; i++)
+		// --- Value range ---
 		{
-			if (buffer[i] != 0)
+			Prng prng(12345);
+			BOOL passed = true;
+
+			for (INT32 i = 0; i < 1000; i++)
 			{
-				foundNonZero = true;
-				break;
+				INT32 val = prng.Get();
+				if (val < 0 || val >= Prng::Max)
+				{
+					LOG_ERROR("Value out of range: %d (max: %d)", val, Prng::Max);
+					passed = false;
+					break;
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Values within [0, MAX)");
+			else
+			{
+				LOG_ERROR("  FAILED: Values within [0, MAX)");
+				allPassed = false;
 			}
 		}
 
-		if (!foundNonZero)
+		// --- IsSeeded ---
 		{
-			LOG_ERROR("All 32 bytes are zero after GetArray");
-			return false;
-		}
+			Prng prng;
+			BOOL passed = true;
 
-		return true;
-	}
-
-	static BOOL TestGetChar()
-	{
-		Prng prng(777);
-
-		for (INT32 i = 0; i < 100; i++)
-		{
-			CHAR c = prng.GetChar<CHAR>();
-			if (c < 'a' || c > 'z')
+			if (prng.IsSeeded())
 			{
-				LOG_ERROR("Char out of range: 0x%02X", (UINT32)(UINT8)c);
-				return false;
+				LOG_ERROR("Default-constructed Prng reports seeded");
+				passed = false;
+			}
+
+			if (passed)
+			{
+				prng.Seed(42);
+				if (!prng.IsSeeded())
+				{
+					LOG_ERROR("Prng reports unseeded after Seed(42)");
+					passed = false;
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: IsSeeded and Seed");
+			else
+			{
+				LOG_ERROR("  FAILED: IsSeeded and Seed");
+				allPassed = false;
 			}
 		}
 
-		for (INT32 i = 0; i < 100; i++)
+		return allPassed;
+	}
+
+	static BOOL TestOutputSuite()
+	{
+		BOOL allPassed = true;
+
+		// --- GetArray ---
 		{
-			WCHAR c = prng.GetChar<WCHAR>();
-			if (c < L'a' || c > L'z')
+			Prng prng(99);
+			UINT8 buffer[32];
+			Memory::Zero(buffer, sizeof(buffer));
+
+			prng.GetArray(Span<UINT8>(buffer, 32));
+
+			// At least some bytes should be non-zero
+			BOOL foundNonZero = false;
+			for (USIZE i = 0; i < 32; i++)
 			{
-				LOG_ERROR("Wide char out of range: 0x%04X", (UINT32)c);
-				return false;
+				if (buffer[i] != 0)
+				{
+					foundNonZero = true;
+					break;
+				}
+			}
+
+			if (foundNonZero)
+				LOG_INFO("  PASSED: GetArray fills buffer");
+			else
+			{
+				LOG_ERROR("All 32 bytes are zero after GetArray");
+				LOG_ERROR("  FAILED: GetArray fills buffer");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestGetString()
-	{
-		Prng prng(555);
-		CHAR buffer[16];
-
-		UINT32 len = prng.GetString<CHAR>(Span<CHAR>(buffer, 11));
-		if (len != 10)
+		// --- GetChar ---
 		{
-			LOG_ERROR("String length: expected 10, got %u", len);
-			return false;
-		}
+			Prng prng(777);
+			BOOL passed = true;
 
-		if (buffer[10] != '\0')
-		{
-			LOG_ERROR("String not null-terminated at position 10");
-			return false;
-		}
-
-		for (UINT32 i = 0; i < len; i++)
-		{
-			if (buffer[i] < 'a' || buffer[i] > 'z')
+			for (INT32 i = 0; i < 100; i++)
 			{
-				LOG_ERROR("String char[%u] out of range: 0x%02X", i, (UINT32)(UINT8)buffer[i]);
-				return false;
+				CHAR c = prng.GetChar<CHAR>();
+				if (c < 'a' || c > 'z')
+				{
+					LOG_ERROR("Char out of range: 0x%02X", (UINT32)(UINT8)c);
+					passed = false;
+					break;
+				}
+			}
+
+			if (passed)
+			{
+				for (INT32 i = 0; i < 100; i++)
+				{
+					WCHAR c = prng.GetChar<WCHAR>();
+					if (c < L'a' || c > L'z')
+					{
+						LOG_ERROR("Wide char out of range: 0x%04X", (UINT32)c);
+						passed = false;
+						break;
+					}
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: GetChar produces lowercase a-z");
+			else
+			{
+				LOG_ERROR("  FAILED: GetChar produces lowercase a-z");
+				allPassed = false;
 			}
 		}
 
-		// Empty string
-		CHAR empty[4];
-		UINT32 emptyLen = prng.GetString<CHAR>(Span<CHAR>(empty, 1));
-		if (emptyLen != 0 || empty[0] != '\0')
+		// --- GetString ---
 		{
-			LOG_ERROR("Empty string: expected len=0 and null terminator");
-			return false;
+			Prng prng(555);
+			CHAR buffer[16];
+			BOOL passed = true;
+
+			UINT32 len = prng.GetString<CHAR>(Span<CHAR>(buffer, 11));
+			if (len != 10)
+			{
+				LOG_ERROR("String length: expected 10, got %u", len);
+				passed = false;
+			}
+
+			if (passed && buffer[10] != '\0')
+			{
+				LOG_ERROR("String not null-terminated at position 10");
+				passed = false;
+			}
+
+			if (passed)
+			{
+				for (UINT32 i = 0; i < len; i++)
+				{
+					if (buffer[i] < 'a' || buffer[i] > 'z')
+					{
+						LOG_ERROR("String char[%u] out of range: 0x%02X", i, (UINT32)(UINT8)buffer[i]);
+						passed = false;
+						break;
+					}
+				}
+			}
+
+			// Empty string
+			if (passed)
+			{
+				CHAR empty[4];
+				UINT32 emptyLen = prng.GetString<CHAR>(Span<CHAR>(empty, 1));
+				if (emptyLen != 0 || empty[0] != '\0')
+				{
+					LOG_ERROR("Empty string: expected len=0 and null terminator");
+					passed = false;
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: GetString fills and null-terminates");
+			else
+			{
+				LOG_ERROR("  FAILED: GetString fills and null-terminates");
+				allPassed = false;
+			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestIsSeeded()
-	{
-		Prng prng;
-		if (prng.IsSeeded())
-		{
-			LOG_ERROR("Default-constructed Prng reports seeded");
-			return false;
-		}
-
-		prng.Seed(42);
-		if (!prng.IsSeeded())
-		{
-			LOG_ERROR("Prng reports unseeded after Seed(42)");
-			return false;
-		}
-
-		return true;
+		return allPassed;
 	}
 };

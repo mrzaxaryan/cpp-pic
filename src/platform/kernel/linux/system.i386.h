@@ -111,6 +111,9 @@ public:
 	// Syscall with 6 arguments
 	// Cannot use register __asm__("ebp") for arg6 — it conflicts with the
 	// frame pointer at -O1+ under LTO. Save/restore EBP manually instead.
+	// Use "rm" (not "r") for arg6: at -O0 with -fno-omit-frame-pointer, all 6
+	// GPRs (eax-edi) are already tied to other operands, leaving no register
+	// for arg6. "rm" lets the compiler use a memory operand (stack slot).
 	static NOINLINE SSIZE Call(USIZE number, USIZE arg1, USIZE arg2, USIZE arg3, USIZE arg4, USIZE arg5, USIZE arg6)
 	{
 		SSIZE ret;
@@ -125,7 +128,7 @@ public:
 			"int $0x80\n"
 			"popl %%ebp\n"
 			: "=a"(ret)
-			: "a"(number), "r"(r_ebx), "r"(r_ecx), "r"(r_edx), "r"(r_esi), "r"(r_edi), [a6] "r"(arg6)
+			: "a"(number), "r"(r_ebx), "r"(r_ecx), "r"(r_edx), "r"(r_esi), "r"(r_edi), [a6] "rm"(arg6)
 			: "memory"
 		);
 		return ret;

@@ -42,18 +42,27 @@ pir_add_link_flags(
     -Map,${PIR_MAP_FILE}
 )
 
-# x86 requires --pie: with -flto=full the LTO code generator runs at link time
-# and selects its relocation model based on the output type. A non-PIE
-# executable causes the x86 backend to emit absolute addressing (movl
+# x86 requires --pie: the x86 backend emits absolute addressing (movl
 # $0xNNNNNN, %reg) instead of RIP-relative (leaq offset(%rip), %reg) for
-# references to data embedded in .text. These absolute addresses are resolved at
-# the link-time VMA and break when the PIC binary is loaded at a different
-# address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
-# backend to generate position-independent code. AArch64 and RISC-V are
-# unaffected because those ISAs always use PC-relative addressing.
+# references to data embedded in .text unless the output is a PIE. These
+# absolute addresses are resolved at the link-time VMA and break when the PIC
+# binary is loaded at a different address. --pie produces a PIE (ET_DYN)
+# executable, which forces position-independent code generation. AArch64 and
+# RISC-V are unaffected because those ISAs always use PC-relative addressing.
+#
+# Release builds use -flto=full, so the LTO backend sees --pie and selects the
+# PIE relocation model at link time. Debug builds do not use LTO, so the object
+# files must be compiled with -fpie to generate PIC-compatible relocations;
+# without it, R_X86_64_32 relocations against function symbols (from
+# pic-transform's inline asm) are incompatible with --pie linking.
 if(PIR_ARCH MATCHES "^(i386|x86_64)$")
     pir_add_link_flags(--pie)
-    pir_log_debug_at("freebsd" "x86: --pie for LTO position-independent codegen")
+    if(PIR_BUILD_TYPE STREQUAL "debug")
+        list(APPEND PIR_BASE_FLAGS -fpie)
+        pir_log_debug_at("freebsd" "x86 debug: -fpie + --pie for PIC-compatible objects")
+    else()
+        pir_log_debug_at("freebsd" "x86 release: --pie (LTO handles PIC codegen)")
+    endif()
 endif()
 
 if(PIR_BUILD_TYPE STREQUAL "release")

@@ -330,7 +330,7 @@ PIR integrates [pic-transform](tools/pic-transform), a custom LLVM pass that aut
 Developers write standard C++:
 
 ```cpp
-const char *msg = "Hello, World!"; // Normal string literal -- no special syntax needed
+const char *msg = "Hello, World!"; // Normal string literal - no special syntax needed
 ```
 
 The LLVM pass transforms this during compilation so that string characters are packed into 64-bit words and written as immediate values in the instruction stream:
@@ -339,7 +339,7 @@ movabsq $0x57202C6F6C6C6548, (%rsp)   ; "Hello, W" packed into a single immediat
 movabsq $0x00000021646C726F, 8(%rsp)   ; "orld!\0"
 ```
 
-The same applies to constant arrays and floating-point constants -- no special macros or suffixes required.
+The same applies to constant arrays and floating-point constants - no special macros or suffixes required.
 
 ### Problem 2: Floating-Point Constants
 
@@ -363,7 +363,7 @@ This avoids embedding float literals but increases code size and complexity.
 The pic-transform LLVM pass handles floating-point constants automatically. Developers write standard C++ float/double literals, and the pass converts them into immediate operands during compilation:
 
 ```cpp
-double pi = 3.14159; // Normal literal -- transformed automatically
+double pi = 3.14159; // Normal literal - transformed automatically
 ```
 
 ```asm

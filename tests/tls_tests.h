@@ -17,7 +17,7 @@ private:
 #define TLS_PORT 443
 
 	// Helper: send HTTP request and verify response
-	static BOOL SendAndVerifyHttp(TlsClient &tls, Span<const CHAR> request, PCCHAR label)
+	static BOOL SendAndVerifyHttp(TlsClient &tls, Span<const CHAR> request, [[maybe_unused]] PCCHAR label)
 	{
 		auto writeResult = tls.Write(request);
 		if (!writeResult)

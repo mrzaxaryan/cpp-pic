@@ -80,6 +80,18 @@ typedef unsigned short CHAR16, *PCHAR16, **PPCHAR16;
 typedef const CHAR16 *PCCHAR16;
 
 // =============================================================================
+// CHARACTER TYPE CONSTRAINT
+// =============================================================================
+
+/**
+ * @brief Concept constraining character types to CHAR or WCHAR
+ * @tparam TChar Type to check
+ * @details Ensures template functions only work with supported character types.
+ */
+template <typename TChar>
+concept TCHAR = __is_same_as(TChar, CHAR) || __is_same_as(TChar, WCHAR);
+
+// =============================================================================
 // BOOLEAN TYPE
 // =============================================================================
 
@@ -161,5 +173,12 @@ typedef __builtin_va_list VA_LIST;
 #else
 #define STDCALL // Default: no special calling convention
 #endif
+
+// =============================================================================
+// FLOATING-POINT TYPES
+// =============================================================================
+
+/** @brief Double-precision floating-point (64-bit IEEE-754) */
+typedef double DOUBLE, *PDOUBLE;
 
 /** @} */ // end of primitives group

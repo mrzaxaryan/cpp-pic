@@ -27,7 +27,6 @@ ENTRYPOINT INT32 entry_point(VOID)
 	// Disable watchdog timer (default is 5 minutes)
 	SystemTable->BootServices->SetWatchdogTimer(0, 0, 0, nullptr);
 #endif
-
 	// Run runtime and unit tests
 	BOOL allPassed = start();
 	ExitProcess(allPassed ? 0 : 1);

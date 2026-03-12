@@ -6,7 +6,7 @@ include_guard(GLOBAL)
 
 # Validate: FreeBSD supports i386, x86_64, aarch64, and riscv64
 if(NOT PIR_ARCH MATCHES "^(i386|x86_64|aarch64|riscv64)$")
-    message(FATAL_ERROR "FreeBSD only supports i386, x86_64, aarch64, and riscv64 (got: ${PIR_ARCH})")
+    message(FATAL_ERROR "[pir:freebsd] Unsupported architecture '${PIR_ARCH}'. Valid: i386, x86_64, aarch64, riscv64")
 endif()
 
 pir_get_target_info()
@@ -19,16 +19,8 @@ list(APPEND PIR_INCLUDE_PATHS
 if(PIR_ARCH STREQUAL "x86_64")
     # Disable the red zone for x86_64 (same rationale as Linux/macOS/Solaris)
     list(APPEND PIR_BASE_FLAGS -mno-red-zone)
+    pir_log_debug_at("freebsd" "x86_64: -mno-red-zone")
 endif()
-
-# Prevent GOT indirection. Clang's FreeBSD target defaults to PIC, producing
-# GOT-relative relocations for data that require a loader-initialized GOT.
-# Instead of disabling PIC entirely (which causes LTO code generation issues at
-# -O1+), use -fdirect-access-external-data to force direct PC-relative access
-# for all data symbols while keeping PIC enabled for code. This matches the
-# approach used on macOS. Combined with -fvisibility=hidden (which prevents
-# GOT/PLT entries for all internal symbols), the binary has zero GOT references.
-list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data)
 
 # Force hidden visibility in all build types (release already gets this from
 # CompilerFlags.cmake; debug builds need it explicitly). Hidden visibility
@@ -50,17 +42,27 @@ pir_add_link_flags(
     -Map,${PIR_MAP_FILE}
 )
 
-# x86 requires --pie: with -flto=full the LTO code generator runs at link time
-# and selects its relocation model based on the output type. A non-PIE
-# executable causes the x86 backend to emit absolute addressing (movl
+# x86 requires --pie: the x86 backend emits absolute addressing (movl
 # $0xNNNNNN, %reg) instead of RIP-relative (leaq offset(%rip), %reg) for
-# references to data embedded in .text. These absolute addresses are resolved at
-# the link-time VMA and break when the PIC binary is loaded at a different
-# address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
-# backend to generate position-independent code. AArch64 and RISC-V are
-# unaffected because those ISAs always use PC-relative addressing.
+# references to data embedded in .text unless the output is a PIE. These
+# absolute addresses are resolved at the link-time VMA and break when the PIC
+# binary is loaded at a different address. --pie produces a PIE (ET_DYN)
+# executable, which forces position-independent code generation. AArch64 and
+# RISC-V are unaffected because those ISAs always use PC-relative addressing.
+#
+# Release builds use -flto=full, so the LTO backend sees --pie and selects the
+# PIE relocation model at link time. Debug builds do not use LTO, so the object
+# files must be compiled with -fpie to generate PIC-compatible relocations;
+# without it, R_X86_64_32 relocations against function symbols (from
+# pic-transform's inline asm) are incompatible with --pie linking.
 if(PIR_ARCH MATCHES "^(i386|x86_64)$")
     pir_add_link_flags(--pie)
+    if(PIR_BUILD_TYPE STREQUAL "debug")
+        list(APPEND PIR_BASE_FLAGS -fpie)
+        pir_log_debug_at("freebsd" "x86 debug: -fpie + --pie for PIC-compatible objects")
+    else()
+        pir_log_debug_at("freebsd" "x86 release: --pie (LTO handles PIC codegen)")
+    endif()
 endif()
 
 if(PIR_BUILD_TYPE STREQUAL "release")
@@ -78,6 +80,7 @@ endif()
 if(PIR_ARCH STREQUAL "riscv64")
     list(APPEND PIR_BASE_FLAGS -mno-relax)
     pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.freebsd.riscv64.ld --no-relax)
+    pir_log_debug_at("freebsd" "riscv64: custom linker script + no-relax")
 endif()
 
 list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
@@ -85,3 +88,5 @@ list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
 # ELFOSABI patch — LLD produces ELFOSABI_NONE; FreeBSD requires
 # ELFOSABI_FREEBSD (9). PostBuild.cmake patches this after linking.
 set(PIR_ELF_OSABI 9)
+
+pir_log_verbose_at("freebsd" "ELFOSABI patch: ${PIR_ELF_OSABI} (ELFOSABI_FREEBSD)")

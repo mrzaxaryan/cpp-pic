@@ -13,6 +13,7 @@ list(APPEND PIR_INCLUDE_PATHS
 # Debug-specific
 if(PIR_BUILD_TYPE STREQUAL "debug")
     list(APPEND PIR_BASE_FLAGS -gcodeview)
+    pir_log_debug_at("windows" "Debug: -gcodeview (PDB)")
 
     # Remap WSL paths in PDB to Windows paths so cppvsdbg can match source files.
     # /mnt/d/Foo -> D:/Foo
@@ -20,6 +21,7 @@ if(PIR_BUILD_TYPE STREQUAL "debug")
         string(TOUPPER "${CMAKE_MATCH_1}" _drive)
         list(APPEND PIR_BASE_FLAGS
             "-fdebug-prefix-map=/mnt/${CMAKE_MATCH_1}/=${_drive}:/")
+        pir_log_debug_at("windows" "WSL path remap: /mnt/${CMAKE_MATCH_1}/ -> ${_drive}:/")
     endif()
 endif()
 

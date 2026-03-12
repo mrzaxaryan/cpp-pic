@@ -10,7 +10,6 @@ include_guard(GLOBAL)
 set(PIR_BASE_FLAGS
     -std=c++23
     -Werror -Wall -Wextra
-    -Wno-gnu-string-literal-operator-template
     -nostdlib
     -fno-ident
     -fno-exceptions
@@ -19,7 +18,6 @@ set(PIR_BASE_FLAGS
     -fno-stack-check
     -fno-jump-tables
     -ffunction-sections
-    -fdata-sections
 )
 
 # Architecture-specific
@@ -33,28 +31,34 @@ endif()
 # MIPS64: disable PIC/GOT-based addressing (MIPS defaults to -mabicalls which
 # generates GOT-relative code via $gp). -mno-abicalls + -fno-pic produces
 # direct addressing without GOT/PLT sections.
+# -G0 disables the small data section (.sdata/.sbss): at -O0 the binary is
+# large enough that GP-relative offsets overflow the 16-bit R_MIPS_GPREL16 range.
 if(PIR_ARCH STREQUAL "mips64")
-    list(APPEND PIR_BASE_FLAGS -mno-abicalls -fno-pic)
+    list(APPEND PIR_BASE_FLAGS -mno-abicalls -fno-pic -G0)
+    pir_log_debug("MIPS64: -mno-abicalls -fno-pic -G0 (disable GOT-relative addressing and small data)")
 endif()
 
 # Build-type-specific
 if(PIR_BUILD_TYPE STREQUAL "debug")
     list(APPEND PIR_BASE_FLAGS
         -fno-omit-frame-pointer
+        -fno-asynchronous-unwind-tables
+        -fno-unwind-tables
         -g3 -ferror-limit=200 -${PIR_OPT_LEVEL}
     )
+    pir_log_debug("Debug flags: -g3 -fno-omit-frame-pointer -${PIR_OPT_LEVEL}")
 else()
     list(APPEND PIR_BASE_FLAGS
         -fomit-frame-pointer
         -fno-asynchronous-unwind-tables
         -fno-unwind-tables
-        -flto=full
         -fvisibility=hidden
         -fno-threadsafe-statics
-        -fmerge-all-constants
         -fno-math-errno
         -${PIR_OPT_LEVEL}
+        -flto=full
     )
+    pir_log_debug("Release flags: -${PIR_OPT_LEVEL} -flto=full -fvisibility=hidden")
 endif()
 
 # =============================================================================
@@ -71,7 +75,7 @@ set(PIR_BASE_LINK_FLAGS -nostdlib -fno-jump-tables)
 # it the LTO backend attempts PIC code generation which fatally conflicts with
 # -mno-abicalls ("position-independent code requires '-mabicalls'").
 if(PIR_ARCH STREQUAL "mips64")
-    list(APPEND PIR_BASE_LINK_FLAGS -mno-abicalls -fno-pic -no-pie)
+    list(APPEND PIR_BASE_LINK_FLAGS -mno-abicalls -fno-pic -no-pie -G0)
 endif()
 
 # =============================================================================
@@ -82,3 +86,7 @@ macro(pir_add_link_flags)
         list(APPEND PIR_BASE_LINK_FLAGS "SHELL:-Wl,${_flag}")
     endforeach()
 endmacro()
+
+# Log assembled flags at verbose level
+pir_log_verbose("Base compile flags: ${PIR_BASE_FLAGS}")
+pir_log_verbose("Base link flags: ${PIR_BASE_LINK_FLAGS}")

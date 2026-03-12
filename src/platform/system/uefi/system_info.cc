@@ -16,20 +16,17 @@ VOID GetSystemInfo(SystemInfo *info)
 		LOG_ERROR("Failed to retrieve machine UUID");
 
 	// UEFI has no hostname concept
-	auto fallback = "unknown"_embed;
-	StringUtils::CopyEmbed(fallback, Span<CHAR>(info->Hostname, 255));
+	StringUtils::Copy(Span<CHAR>(info->Hostname, 255), Span<const CHAR>("unknown"));
 
 	// CPU architecture (compile-time)
 #if defined(ARCHITECTURE_X86_64)
-	auto arch = "x86_64"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("x86_64"));
 #elif defined(ARCHITECTURE_AARCH64)
-	auto arch = "aarch64"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("aarch64"));
 #else
-	auto arch = "unknown"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("unknown"));
 #endif
-	StringUtils::CopyEmbed(arch, Span<CHAR>(info->Architecture, 31));
 
 	// OS platform (compile-time)
-	auto platform = "uefi"_embed;
-	StringUtils::CopyEmbed(platform, Span<CHAR>(info->Platform, 31));
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("uefi"));
 }

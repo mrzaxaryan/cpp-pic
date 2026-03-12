@@ -11,6 +11,7 @@ option(BUILD_DOCS "Build documentation only (no compiler required)" OFF)
 # =============================================================================
 if(BUILD_DOCS)
     project(pir-docs LANGUAGES NONE)
+    include(${CMAKE_SOURCE_DIR}/cmake/Logging.cmake)
 
     find_program(DOXYGEN_EXECUTABLE doxygen REQUIRED)
 
@@ -21,14 +22,10 @@ if(BUILD_DOCS)
         VERBATIM
     )
 
-    message(STATUS "")
-    message(STATUS "┌─────────────────────────────────────┐")
-    message(STATUS "│      Documentation Build            │")
-    message(STATUS "├─────────────────────────────────────┤")
-    message(STATUS "│ Doxygen:      ${DOXYGEN_EXECUTABLE}")
-    message(STATUS "│ Output:       docs/html/")
-    message(STATUS "└─────────────────────────────────────┘")
-    message(STATUS "")
+    pir_log_header("Documentation Build")
+    pir_log_kv("Doxygen" "${DOXYGEN_EXECUTABLE}")
+    pir_log_kv("Output" "docs/html/")
+    pir_log_footer()
 
     return()
 endif()

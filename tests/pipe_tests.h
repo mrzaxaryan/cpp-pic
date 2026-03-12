@@ -15,13 +15,13 @@ public:
 		LOG_INFO("Running Pipe Tests...");
 
 #if defined(PLATFORM_UEFI)
-		RunTest(allPassed, EMBED_FUNC(TestCreateFailsOnUefi), "Create fails on UEFI"_embed);
+		RunTest(allPassed, &TestCreateFailsOnUefi, "Create fails on UEFI");
 #else
-		RunTest(allPassed, EMBED_FUNC(TestCreate), "Create pipe"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReadWrite), "Write and read through pipe"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCloseEnds), "Close individual ends"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestMoveSemantics), "Move constructor and assignment"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCaptureChildStdout), "Capture child process stdout"_embed);
+		RunTest(allPassed, &TestCreate, "Create pipe");
+		RunTest(allPassed, &TestReadWrite, "Write and read through pipe");
+		RunTest(allPassed, &TestCloseEnds, "Close individual ends");
+		RunTest(allPassed, &TestMoveSemantics, "Move constructor and assignment");
+		RunTest(allPassed, &TestCaptureChildStdout, "Capture child process stdout");
 #endif
 
 		if (allPassed)
@@ -82,7 +82,7 @@ private:
 		auto &pipe = result.Value();
 
 		// Write data
-		auto msg = "hello pipe"_embed;
+		auto msg = "hello pipe";
 		USIZE msgLen = StringUtils::Length((const CHAR *)msg);
 		auto writeResult = pipe.Write(Span<const UINT8>((const UINT8 *)(const CHAR *)msg, msgLen));
 		if (!writeResult)
@@ -203,15 +203,15 @@ private:
 
 		// Spawn child that writes to stdout
 #if defined(PLATFORM_WINDOWS)
-		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		auto a1 = "/c"_embed;
-		auto a2 = "echo"_embed;
-		auto a3 = "hello"_embed;
+		auto cmd = "C:\\Windows\\System32\\cmd.exe";
+		auto a1 = "/c";
+		auto a2 = "echo";
+		auto a3 = "hello";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
-		auto cmd = "/bin/sh"_embed;
-		auto a1 = "-c"_embed;
-		auto a2 = "echo hello"_embed;
+		auto cmd = "/bin/sh";
+		auto a1 = "-c";
+		auto a2 = "echo hello";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
@@ -256,7 +256,7 @@ private:
 		}
 
 		// Verify the output contains "hello"
-		auto expected = "hello"_embed;
+		auto expected = "hello";
 		BOOL found = false;
 		USIZE expectedLen = StringUtils::Length((const CHAR *)expected);
 		for (USIZE i = 0; i + expectedLen <= bytesRead; ++i)

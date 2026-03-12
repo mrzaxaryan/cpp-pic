@@ -47,13 +47,12 @@ static Result<UUID, Error> ReadMachineIdFromFile(const WCHAR *path, bool hasDash
 	return UUID::FromString(Span<const CHAR>(uuidStr, 36));
 }
 
-/// @brief Getting the Machine UUID 
+/// @brief Getting the Machine UUID
 /// @return UUID on success, or an error if it cannot be retrieved
 Result<UUID, Error> GetMachineUUID()
 {
 	// Try /etc/machine-id first (systemd, 32-char hex, constant across reboots)
-	auto result = ReadMachineIdFromFile(
-		(const WCHAR *)L"/etc/machine-id"_embed, false);
+	auto result = ReadMachineIdFromFile(L"/etc/machine-id", false);
 	if (result)
 		return result;
 
@@ -61,8 +60,7 @@ Result<UUID, Error> GetMachineUUID()
 	// Android doesn't have /etc/machine-id.
 	// Fall back to /proc/sys/kernel/random/boot_id (UUID format with dashes).
 	// Note: boot_id changes on each reboot.
-	result = ReadMachineIdFromFile(
-		(const WCHAR *)L"/proc/sys/kernel/random/boot_id"_embed, true);
+	result = ReadMachineIdFromFile(L"/proc/sys/kernel/random/boot_id", true);
 	if (result)
 		return result;
 #endif

@@ -12,14 +12,14 @@ public:
 
 		LOG_INFO("Running Memory Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestCopyBasic), "Memory copy basic"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCopyNonOverlapping), "Memory copy non-overlapping"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestZero), "Memory zero"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSet), "Memory set"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCompareEqual), "Memory compare equal"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCompareLessThan), "Memory compare less than"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCompareGreaterThan), "Memory compare greater than"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestZeroSize), "Memory zero size operations"_embed);
+		RunTest(allPassed, &TestCopyBasic, "Memory copy basic");
+		RunTest(allPassed, &TestCopyNonOverlapping, "Memory copy non-overlapping");
+		RunTest(allPassed, &TestZero, "Memory zero");
+		RunTest(allPassed, &TestSet, "Memory set");
+		RunTest(allPassed, &TestCompareEqual, "Memory compare equal");
+		RunTest(allPassed, &TestCompareLessThan, "Memory compare less than");
+		RunTest(allPassed, &TestCompareGreaterThan, "Memory compare greater than");
+		RunTest(allPassed, &TestZeroSize, "Memory zero size operations");
 
 		if (allPassed)
 			LOG_INFO("All Memory tests passed!");
@@ -32,7 +32,7 @@ public:
 private:
 	static BOOL TestCopyBasic()
 	{
-		auto src = "Hello, World!"_embed;
+		auto src = "Hello, World!";
 		CHAR dest[16];
 
 		Memory::Copy(dest, (const CHAR *)src, 14); // Include null terminator
@@ -141,8 +141,8 @@ private:
 
 	static BOOL TestCompareEqual()
 	{
-		auto str1 = "Hello"_embed;
-		auto str2 = "Hello"_embed;
+		auto str1 = "Hello";
+		auto str2 = "Hello";
 
 		INT32 result = Memory::Compare((const CHAR *)str1, (const CHAR *)str2, 5);
 		if (result != 0)
@@ -155,8 +155,8 @@ private:
 
 	static BOOL TestCompareLessThan()
 	{
-		auto str1 = "Apple"_embed;
-		auto str2 = "Banana"_embed;
+		auto str1 = "Apple";
+		auto str2 = "Banana";
 
 		INT32 result = Memory::Compare((const CHAR *)str1, (const CHAR *)str2, 5);
 		if (result >= 0)
@@ -169,8 +169,8 @@ private:
 
 	static BOOL TestCompareGreaterThan()
 	{
-		auto str1 = "Zebra"_embed;
-		auto str2 = "Apple"_embed;
+		auto str1 = "Zebra";
+		auto str2 = "Apple";
 
 		INT32 result = Memory::Compare((const CHAR *)str1, (const CHAR *)str2, 5);
 		if (result <= 0)

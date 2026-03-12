@@ -14,9 +14,17 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "APP_DIR": "tests"
+        "APP_DIR": "tests",
+        "ENABLE_LOGGING": "ON",
+        "PIR_LOG_LEVEL": "STATUS"
       }
     },
+
+    { "name": "logging-on",      "hidden": true, "cacheVariables": { "ENABLE_LOGGING": "ON" } },
+    { "name": "logging-off",     "hidden": true, "cacheVariables": { "ENABLE_LOGGING": "OFF" } },
+    { "name": "log-quiet",       "hidden": true, "cacheVariables": { "PIR_LOG_LEVEL": "QUIET" } },
+    { "name": "log-verbose",     "hidden": true, "cacheVariables": { "PIR_LOG_LEVEL": "VERBOSE" } },
+    { "name": "log-debug",       "hidden": true, "cacheVariables": { "PIR_LOG_LEVEL": "DEBUG" } },
 
     { "name": "platform-windows", "hidden": true, "cacheVariables": { "PLATFORM": "windows" } },
     { "name": "platform-linux",   "hidden": true, "cacheVariables": { "PLATFORM": "linux" } },

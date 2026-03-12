@@ -12,13 +12,13 @@ public:
 
 		LOG_INFO("Running Prng Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestDeterministicSequence), "Deterministic sequence with known seed"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestDifferentSeeds), "Different seeds produce different sequences"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestValueRange), "Values within [0, MAX)"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestGetArray), "GetArray fills buffer"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestGetChar), "GetChar produces lowercase a-z"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestGetString), "GetString fills and null-terminates"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestIsSeeded), "IsSeeded and Seed"_embed);
+		RunTest(allPassed, &TestDeterministicSequence, "Deterministic sequence with known seed");
+		RunTest(allPassed, &TestDifferentSeeds, "Different seeds produce different sequences");
+		RunTest(allPassed, &TestValueRange, "Values within [0, MAX)");
+		RunTest(allPassed, &TestGetArray, "GetArray fills buffer");
+		RunTest(allPassed, &TestGetChar, "GetChar produces lowercase a-z");
+		RunTest(allPassed, &TestGetString, "GetString fills and null-terminates");
+		RunTest(allPassed, &TestIsSeeded, "IsSeeded and Seed");
 
 		if (allPassed)
 			LOG_INFO("All Prng tests passed!");
@@ -34,14 +34,14 @@ private:
 		Prng prng(1);
 
 		// Expected xorshift64 output for seed=1
-		auto expected = MakeEmbedArray<INT32>(1082269761, 201397313, 1854285353, 1432191013, 274305637);
+		const INT32 expected[] = {1082269761, 201397313, 1854285353, 1432191013, 274305637};
 
 		for (INT32 i = 0; i < 5; i++)
 		{
 			INT32 val = prng.Get();
-			if (val != expected[(USIZE)i])
+			if (val != expected[i])
 			{
-				LOG_ERROR("Seed 1, index %d: expected %d, got %d", i, expected[(USIZE)i], val);
+				LOG_ERROR("Seed 1, index %d: expected %d, got %d", i, expected[i], val);
 				return false;
 			}
 		}

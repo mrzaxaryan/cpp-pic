@@ -13,10 +13,10 @@
 /// @return The total length of the created HKDF label
 INT32 TlsHKDF::Label(Span<const CHAR> label, Span<const UCHAR> data, PUCHAR hkdflabel, UINT16 length)
 {
-	auto prefix = "tls13 "_embed;
+	const CHAR prefix[] = "tls13 ";
 	UCHAR labelLen = (UCHAR)label.Size();
 	UCHAR dataLen = (UCHAR)data.Size();
-	INT32 prefixLen = prefix.Length();
+	INT32 prefixLen = sizeof(prefix) - 1;
 
 	LOG_DEBUG("Creating HKDF label with label_len: %d, data_len: %d, length: %d", labelLen, dataLen, length);
 

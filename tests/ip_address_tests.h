@@ -91,10 +91,7 @@ private:
 
 	static BOOL TestConstexprIPv6()
 	{
-		auto addrEmbed = MakeEmbedArray<UINT8>(0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
-		UINT8 addr[16];
-		for (USIZE i = 0; i < 16; i++)
-			addr[i] = addrEmbed[i];
+		const UINT8 addr[] = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
 		IPAddress ip = IPAddress::FromIPv6(addr);
 		if (!ip.IsIPv6())
 			return false;
@@ -166,7 +163,7 @@ private:
 
 	static BOOL TestFromStringIPv4()
 	{
-		auto ipStr = "192.168.1.1"_embed;
+		auto ipStr = "192.168.1.1";
 		auto result = IPAddress::FromString((PCCHAR)ipStr);
 		if (!result)
 			return false;
@@ -181,7 +178,7 @@ private:
 			return false;
 
 		// Verify the string matches
-		auto expected = "192.168.1.1"_embed;
+		auto expected = "192.168.1.1";
 		if (!StringUtils::Equals((PCCHAR)buffer, (PCCHAR)expected))
 		{
 			LOG_ERROR("ToString mismatch: got '%s', expected '%s'", buffer, (PCCHAR)expected);
@@ -192,7 +189,7 @@ private:
 
 	static BOOL TestFromStringIPv6()
 	{
-		auto ipStr = "2001:db8::1"_embed;
+		auto ipStr = "2001:db8::1";
 		auto result = IPAddress::FromString((PCCHAR)ipStr);
 		if (!result)
 			return false;
@@ -206,15 +203,15 @@ private:
 
 	static BOOL TestFromStringInvalid()
 	{
-		auto inv1 = "256.1.1.1"_embed;
+		auto inv1 = "256.1.1.1";
 		if (IPAddress::FromString((PCCHAR)inv1))
 			return false;
 
-		auto inv2 = "192.168.1"_embed;
+		auto inv2 = "192.168.1";
 		if (IPAddress::FromString((PCCHAR)inv2))
 			return false;
 
-		auto inv3 = "abc.def.ghi.jkl"_embed;
+		auto inv3 = "abc.def.ghi.jkl";
 		if (IPAddress::FromString((PCCHAR)inv3))
 			return false;
 
@@ -226,9 +223,9 @@ private:
 
 	static BOOL TestIPv6Equality()
 	{
-		auto str1 = "2001:db8::1"_embed;
-		auto str2 = "2001:db8::1"_embed;
-		auto str3 = "2001:db8::2"_embed;
+		auto str1 = "2001:db8::1";
+		auto str2 = "2001:db8::1";
+		auto str3 = "2001:db8::2";
 
 		auto r1 = IPAddress::FromString((PCCHAR)str1);
 		auto r2 = IPAddress::FromString((PCCHAR)str2);
@@ -250,16 +247,16 @@ public:
 
 		LOG_INFO("Running IPAddress Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestConstexprIPv4), "constexpr IPv4 construction"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestConstexprIPv6), "constexpr IPv6 construction"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestConstexprLocalHost), "constexpr LocalHost"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestConstexprEquality), "constexpr equality operators"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestConstexprCopy), "constexpr copy constructor"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestConstexprInvalid), "constexpr Invalid factory"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFromStringIPv4), "FromString IPv4 + ToString round-trip"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFromStringIPv6), "FromString IPv6"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFromStringInvalid), "FromString rejects invalid input"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestIPv6Equality), "IPv6 equality comparison"_embed);
+		RunTest(allPassed, &TestConstexprIPv4, "constexpr IPv4 construction");
+		RunTest(allPassed, &TestConstexprIPv6, "constexpr IPv6 construction");
+		RunTest(allPassed, &TestConstexprLocalHost, "constexpr LocalHost");
+		RunTest(allPassed, &TestConstexprEquality, "constexpr equality operators");
+		RunTest(allPassed, &TestConstexprCopy, "constexpr copy constructor");
+		RunTest(allPassed, &TestConstexprInvalid, "constexpr Invalid factory");
+		RunTest(allPassed, &TestFromStringIPv4, "FromString IPv4 + ToString round-trip");
+		RunTest(allPassed, &TestFromStringIPv6, "FromString IPv6");
+		RunTest(allPassed, &TestFromStringInvalid, "FromString rejects invalid input");
+		RunTest(allPassed, &TestIPv6Equality, "IPv6 equality comparison");
 
 		if (allPassed)
 			LOG_INFO("All IPAddress tests passed!");

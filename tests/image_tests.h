@@ -13,21 +13,21 @@ public:
 		LOG_INFO("Running Image Processing Tests...");
 
 		// BiDifference tests
-		RunTest(allPassed, EMBED_FUNC(TestBiDiff_IdenticalImages), "BiDiff identical images all zero"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestBiDiff_CompletelyDifferent), "BiDiff completely different images all one"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestBiDiff_PartialDifference), "BiDiff partial difference"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestBiDiff_SingleChannelDifference), "BiDiff single channel difference detected"_embed);
+		RunTest(allPassed, &TestBiDiff_IdenticalImages, "BiDiff identical images all zero");
+		RunTest(allPassed, &TestBiDiff_CompletelyDifferent, "BiDiff completely different images all one");
+		RunTest(allPassed, &TestBiDiff_PartialDifference, "BiDiff partial difference");
+		RunTest(allPassed, &TestBiDiff_SingleChannelDifference, "BiDiff single channel difference detected");
 
 		// RemoveNoise tests
-		RunTest(allPassed, EMBED_FUNC(TestRemoveNoise_AllZero), "RemoveNoise all-zero stays zero"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestRemoveNoise_AllOne), "RemoveNoise all-one stays one"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestRemoveNoise_SinglePixel), "RemoveNoise single pixel fills block"_embed);
+		RunTest(allPassed, &TestRemoveNoise_AllZero, "RemoveNoise all-zero stays zero");
+		RunTest(allPassed, &TestRemoveNoise_AllOne, "RemoveNoise all-one stays one");
+		RunTest(allPassed, &TestRemoveNoise_SinglePixel, "RemoveNoise single pixel fills block");
 
 		// FindContours tests
-		RunTest(allPassed, EMBED_FUNC(TestFindContours_EmptyImage), "FindContours empty image"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFindContours_SinglePixel), "FindContours single pixel"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFindContours_Rectangle), "FindContours rectangle"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFindContours_TwoObjects), "FindContours two separate objects"_embed);
+		RunTest(allPassed, &TestFindContours_EmptyImage, "FindContours empty image");
+		RunTest(allPassed, &TestFindContours_SinglePixel, "FindContours single pixel");
+		RunTest(allPassed, &TestFindContours_Rectangle, "FindContours rectangle");
+		RunTest(allPassed, &TestFindContours_TwoObjects, "FindContours two separate objects");
 
 		if (allPassed)
 			LOG_INFO("All Image Processing tests passed!");

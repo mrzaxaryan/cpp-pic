@@ -163,8 +163,8 @@ static PVOID FindSymbolInMachO(const MachHeader64 *header, const CHAR *symbolNam
 	const SegmentCommand64 *linkeditSeg = nullptr;
 	const SymtabCommand *symtab = nullptr;
 
-	auto textName = "__TEXT"_embed;
-	auto linkeditName = "__LINKEDIT"_embed;
+	auto textName = "__TEXT";
+	auto linkeditName = "__LINKEDIT";
 
 	for (UINT32 i = 0; i < header->NCmds; i++)
 	{
@@ -258,8 +258,8 @@ static BOOL ResolveDyldFunctions(DyldFunctions &fns)
 	if (dyldHeader == nullptr)
 		return false;
 
-	auto dlOpenName = "_dlopen"_embed;
-	auto dlSymName = "_dlsym"_embed;
+	auto dlOpenName = "_dlopen";
+	auto dlSymName = "_dlsym";
 
 	fns.DlOpen = (DlOpenFn)FindSymbolInMachO(dyldHeader, (const CHAR *)dlOpenName);
 	fns.DlSym = (DlSymFn)FindSymbolInMachO(dyldHeader, (const CHAR *)dlSymName);

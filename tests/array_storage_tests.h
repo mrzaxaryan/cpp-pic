@@ -12,12 +12,12 @@ public:
 
 		LOG_INFO("Running ArrayStorage Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestWideCharArrayStorage), "Wide char array storage"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestUInt32ArrayStorage), "UINT32 array storage"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestUInt64ArrayStorage), "UINT64 array storage"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestArrayIndexing), "Array indexing"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestPointerConversionAndCopy), "Pointer conversion and copy"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCompileTimeConstants), "Compile-time constants"_embed);
+		RunTest(allPassed, &TestWideCharArrayStorage, "Wide char array storage");
+		RunTest(allPassed, &TestUInt32ArrayStorage, "UINT32 array storage");
+		RunTest(allPassed, &TestUInt64ArrayStorage, "UINT64 array storage");
+		RunTest(allPassed, &TestArrayIndexing, "Array indexing");
+		RunTest(allPassed, &TestPointerConversionAndCopy, "Pointer conversion and copy");
+		RunTest(allPassed, &TestCompileTimeConstants, "Compile-time constants");
 
 		if (allPassed)
 			LOG_INFO("All ArrayStorage tests passed!");
@@ -30,13 +30,13 @@ public:
 private:
 	static BOOL TestWideCharArrayStorage()
 	{
-		// Use string literal directly - no named array
-		auto storage = MakeEmbedArray(L"Test");
+		const WCHAR storage[] = L"Test";
 
 		// Verify size
-		if (storage.Count != 5) // "Test" + null terminator
+		constexpr USIZE count = 5; // "Test" + null terminator
+		if (sizeof(storage) / sizeof(WCHAR) != count)
 		{
-			LOG_ERROR("Wide char Count: expected 5, got %u", (UINT32)storage.Count);
+			LOG_ERROR("Wide char Count: expected 5, got %u", (UINT32)(sizeof(storage) / sizeof(WCHAR)));
 			return false;
 		}
 
@@ -53,13 +53,12 @@ private:
 
 	static BOOL TestUInt32ArrayStorage()
 	{
-		// Use compound literal directly - no named array
-		auto storage = MakeEmbedArray((const UINT32[]){1, 2, 3, 4});
+		const UINT32 storage[] = {1, 2, 3, 4};
 
 		// Verify size
-		if (storage.Count != 4)
+		if (sizeof(storage) / sizeof(UINT32) != 4)
 		{
-			LOG_ERROR("UINT32 Count: expected 4, got %u", (UINT32)storage.Count);
+			LOG_ERROR("UINT32 Count: expected 4, got %u", (UINT32)(sizeof(storage) / sizeof(UINT32)));
 			return false;
 		}
 
@@ -82,16 +81,15 @@ private:
 
 	static BOOL TestUInt64ArrayStorage()
 	{
-		// Use compound literal directly - no named array
-		auto storage = MakeEmbedArray((const UINT64[]){
+		const UINT64 storage[] = {
 			UINT64(0x123456789ABCDEF0ULL),
 			UINT64(0xFEDCBA9876543210ULL),
-			UINT64(0x0011223344556677ULL)});
+			UINT64(0x0011223344556677ULL)};
 
 		// Verify size
-		if (storage.Count != 3)
+		if (sizeof(storage) / sizeof(UINT64) != 3)
 		{
-			LOG_ERROR("UINT64 Count: expected 3, got %u", (UINT32)storage.Count);
+			LOG_ERROR("UINT64 Count: expected 3, got %u", (UINT32)(sizeof(storage) / sizeof(UINT64)));
 			return false;
 		}
 
@@ -109,8 +107,7 @@ private:
 
 	static BOOL TestArrayIndexing()
 	{
-		// Use compound literal directly - no named array
-		auto storage = MakeEmbedArray((const UINT32[]){100, 200, 300, 400, 500});
+		const UINT32 storage[] = {100, 200, 300, 400, 500};
 
 		// Test indexing operator
 		if (storage[0] != 100 || storage[1] != 200 || storage[2] != 300 ||
@@ -125,8 +122,7 @@ private:
 
 	static BOOL TestPointerConversionAndCopy()
 	{
-		// Use compound literal directly - no named array
-		auto storage = MakeEmbedArray((const UINT32[]){0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC});
+		const UINT32 storage[] = {0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC};
 
 		// Test pointer conversion and Memory::Copy
 		UINT32 dest[3];
@@ -143,23 +139,21 @@ private:
 
 	static BOOL TestCompileTimeConstants()
 	{
-		// Use string literal directly - no named array, no constexpr on storage
-		auto storage = MakeEmbedArray("CompileTime");
+		const CHAR storage[] = "CompileTime";
 
-		// Verify compile-time properties via type traits
-		using StorageType = decltype(MakeEmbedArray("CompileTime"));
-		static_assert(StorageType::Count == 12, "Count should be 12");
-		static_assert(StorageType::SizeBytes == 12, "SizeBytes should be 12");
+		// Verify size properties
+		constexpr USIZE expectedCount = 12; // "CompileTime" + null terminator
+		constexpr USIZE expectedSizeBytes = 12;
 
 		// Verify runtime behavior matches compile-time expectations
-		if (storage.Count != 12)
+		if (sizeof(storage) != expectedCount)
 		{
-			LOG_ERROR("Runtime Count: expected 12, got %u", (UINT32)storage.Count);
+			LOG_ERROR("Runtime Count: expected 12, got %u", (UINT32)sizeof(storage));
 			return false;
 		}
-		if (storage.SizeBytes != 12)
+		if (sizeof(storage) != expectedSizeBytes)
 		{
-			LOG_ERROR("Runtime SizeBytes: expected 12, got %u", (UINT32)storage.SizeBytes);
+			LOG_ERROR("Runtime SizeBytes: expected 12, got %u", (UINT32)sizeof(storage));
 			return false;
 		}
 

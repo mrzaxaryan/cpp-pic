@@ -23,10 +23,10 @@
 <tr>
 <td align="center">1</td>
 <td>Windows</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-windows-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-windows-i386.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-windows-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-windows-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-windows-armv7a.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-windows-armv7a.yml?branch=main&label=%E2%80%8B&labelColor=orange&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-windows-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-windows-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=orange&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
@@ -35,9 +35,9 @@
 <td align="center">2</td>
 <td>macOS</td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-macos-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-macos-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-macos-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-macos-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
@@ -45,21 +45,21 @@
 <tr>
 <td align="center">3</td>
 <td>Linux</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-i386.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-armv7a.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-armv7a.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-riscv32.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-riscv32.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-riscv64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-riscv64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-linux-mips64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-linux-mips64.yml?branch=main&label=%E2%80%8B&labelColor=orange&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=orange&style=for-the-badge" alt="Build" height="28"></a></td>
 </tr>
 <tr>
 <td align="center">4</td>
 <td>Solaris</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-i386.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-solaris-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-solaris-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=orange&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=orange&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
@@ -67,21 +67,21 @@
 <tr>
 <td align="center">5</td>
 <td>FreeBSD</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-i386.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-i386.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-freebsd-riscv64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-freebsd-riscv64.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 </tr>
 <tr>
 <td align="center">6</td>
 <td>UEFI</td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-uefi-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-uefi-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-uefi-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-uefi-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=yellow&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
@@ -90,9 +90,9 @@
 <td align="center">7</td>
 <td>Android</td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-android-x86_64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-android-x86_64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-android-armv7a.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-android-armv7a.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-android-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-android-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
@@ -103,7 +103,7 @@
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
-<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build-ios-aarch64.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build-ios-aarch64.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
+<td align="center"><a href="https://github.com/mrzaxaryan/Position-Independent-Runtime/actions/workflows/build.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/mrzaxaryan/Position-Independent-Runtime/build.yml?branch=main&label=%E2%80%8B&labelColor=brightgreen&style=for-the-badge" alt="Build" height="28"></a></td>
 <td align="center">-</td>
 <td align="center">-</td>
 <td align="center">-</td>
@@ -271,8 +271,7 @@ PIR is built on a clean three-layer abstraction that separates concerns and enab
 
 **CORE** provides:
 - Platform-independent primitives
-- Embedded types (`EMBEDDED_STRING`, `EMBEDDED_DOUBLE`, `EMBEDDED_ARRAY`)
-- Numeric types (`UINT64`, `INT64`, `DOUBLE`)
+- Numeric types (`UINT64`, `INT64`, `double`)
 - Memory operations, string utilities, and formatting
 - Algorithms (DJB2 hashing, Base64, random number generation)
 
@@ -324,26 +323,23 @@ CHAR *relocatedString = string + (SSIZE)startAddress;
 **Why they fail:** Modern compilers are sophisticated enough to recognize stack string patterns; with optimizations enabled, the compiler may consolidate individual character assignments, place the string data in `.rdata`, and replace the code with a `memcpy` call. This defeats the technique and reintroduces the `.rdata` dependency. Manual relocation approaches are fragile, increase binary size, and rely on compiler-specific behavior.
 </details>
 
-**PIR Solution: Compile-Time Embedding**
+**PIR Solution: Automatic Data Section Elimination via LLVM Pass**
 
-By eliminating all `.rdata` dependencies through compile-time embedding, PIR produces code that requires no relocations. String characters are packed into 64-bit words at compile time and written as immediate values in the instruction stream:
+PIR integrates [pic-transform](tools/pic-transform), a custom LLVM pass that automatically eliminates all `.rdata`/`.rodata`/`.data`/`.bss` sections during compilation. The pass converts global constants (strings, floats, arrays) into stack-local immediate stores -- the same transformation that was previously done manually with `_embed` helpers, but now fully automated.
+
+Developers write standard C++:
 
 ```cpp
-auto msg = "Hello, World!"_embed; // Embedded in code, not .rdata
+const char *msg = "Hello, World!"; // Normal string literal -- no special syntax needed
 ```
 
-Assembly output:
+The LLVM pass transforms this during compilation so that string characters are packed into 64-bit words and written as immediate values in the instruction stream:
 ```asm
 movabsq $0x57202C6F6C6C6548, (%rsp)   ; "Hello, W" packed into a single immediate
 movabsq $0x00000021646C726F, 8(%rsp)   ; "orld!\0"
 ```
 
-The same technique applies to constant arrays via `MakeEmbedArray<T>(vals...)`:
-
-```cpp
-auto embedded = MakeEmbedArray<UINT32>(0x12345678, 0xABCDEF00);
-UINT32 value = embedded[0]; // Unpacked at runtime
-```
+The same applies to constant arrays and floating-point constants -- no special macros or suffixes required.
 
 ### Problem 2: Floating-Point Constants
 
@@ -362,23 +358,25 @@ double d = *((double*)&f);
 This avoids embedding float literals but increases code size and complexity.
 </details>
 
-**PIR Solution: Floating-Point Constant Embedding**
+**PIR Solution: Automatic Floating-Point Transformation**
 
-Values are converted at compile time into IEEE-754 bit patterns and injected as immediate operands:
+The pic-transform LLVM pass handles floating-point constants automatically. Developers write standard C++ float/double literals, and the pass converts them into immediate operands during compilation:
 
 ```cpp
-auto pi = 3.14159_embed; // IEEE-754 as immediate value
+double pi = 3.14159; // Normal literal -- transformed automatically
 ```
 
 ```asm
 movabsq $0x400921f9f01b866e, %rax ; Pi as 64-bit immediate
 ```
 
+The [pic-transform](tools/pic-transform) LLVM pass automatically converts floating-point literals from `.rdata` into stack-local immediate stores, so native `double` can be used directly.
+
 ### Problem 3: Function Pointers
 
 Function pointer addresses are resolved by the loader. Without the loader, indirect calls reference invalid addresses.
 
-**PIR Solution:** The `EMBED_FUNC` macro uses inline assembly to compute pure PC-relative offsets, eliminating relocation dependencies entirely. See [embedded_function_pointer.h](src/core/types/embedded/embedded_function_pointer.h).
+**PIR Solution:** The [pic-transform](tools/pic-transform) LLVM pass automatically detects function pointer values (where a function is used as a callback or stored, rather than called directly) and replaces them with PC-relative inline assembly, eliminating relocation dependencies entirely.
 
 ### Problem 4: CRT and Runtime Dependencies
 
@@ -386,27 +384,15 @@ Standard programs depend on the CRT for initialization, memory management, and h
 
 **PIR Solution:** Complete independence from the CRT by providing custom implementations for memory management, string manipulation, formatted output, and runtime initialization. A custom entry point eliminates loader-managed startup. On Windows, the PEB is traversed to locate modules and PE export tables are parsed using hash-based lookup - no import tables, no `GetProcAddress`.
 
-### Problem 5: Type Conversions
-
-Integer-to-float conversions can cause the compiler to emit hidden constants or helper routines.
-
-**PIR Solution:** All conversions use explicit bitwise and integer operations, preventing hidden constant generation:
-
-```cpp
-INT64 d_to_i64(const DOUBLE& d)
-{
-    UINT64 bits = d.bits;
-    int exponent = ((bits >> 52) & 0x7FF) - 1023;
-    UINT64 mantissa = (bits & 0xFFFFFFFFFFFFF) | 0x10000000000000;
-    // ... bit shifting logic ...
-}
-```
-
 ---
 
-### Critical Compiler Flags
+### Build Pipeline
 
-Achieving true position-independence requires specific compiler flags:
+PIR uses a two-stage approach to guarantee position-independence:
+
+**1. LLVM Pass (pic-transform):** The [pic-transform](tools/pic-transform) tool runs as part of the build pipeline, transforming LLVM bitcode to eliminate all data sections. It converts global constants, string literals, and floating-point values into stack-local immediate stores. The tool is built from in-tree source during the CMake configure step if LLVM dev files are available, or downloaded from GitHub releases as a fallback.
+
+**2. Critical Compiler Flags:**
 
 ```bash
 -fno-jump-tables      # Prevents switch statement jump tables in .rdata
@@ -420,9 +406,7 @@ Achieving true position-independence requires specific compiler flags:
 
 The `-fno-jump-tables` flag is particularly critical - without it, `switch` statements generate jump tables stored in `.rdata`, breaking position-independence.
 
-### Post-Build Verification
-
-The build system automatically verifies that the final binary contains no data sections (`.rdata`, `.rodata`, `.data`, `.bss`, `.got`, `.plt`). This check runs after every build via `cmake/VerifyPICMode.cmake`.
+**3. Post-Build Verification:** The build system automatically verifies that the final binary contains no data sections (`.rdata`, `.rodata`, `.data`, `.bss`, `.got`, `.plt`). This check runs after every build via `cmake/VerifyPICMode.cmake`.
 
 ---
 ## Platform Implementations

@@ -14,20 +14,20 @@ public:
 		LOG_INFO("Running SHA Tests...");
 
 		// SHA-256 Tests
-		RunTest(allPassed, EMBED_FUNC(TestSHA256_Empty), "SHA-256 empty string"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSHA256_ABC), "SHA-256 'abc'"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSHA256_Long), "SHA-256 long message"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSHA256_Incremental), "SHA-256 incremental update"_embed);
+		RunTest(allPassed, &TestSHA256_Empty, "SHA-256 empty string");
+		RunTest(allPassed, &TestSHA256_ABC, "SHA-256 'abc'");
+		RunTest(allPassed, &TestSHA256_Long, "SHA-256 long message");
+		RunTest(allPassed, &TestSHA256_Incremental, "SHA-256 incremental update");
 
 		// SHA-384 Tests
-		RunTest(allPassed, EMBED_FUNC(TestSHA384_Empty), "SHA-384 empty string"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSHA384_ABC), "SHA-384 'abc'"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSHA384_Long), "SHA-384 long message"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestSHA384_Incremental), "SHA-384 incremental update"_embed);
+		RunTest(allPassed, &TestSHA384_Empty, "SHA-384 empty string");
+		RunTest(allPassed, &TestSHA384_ABC, "SHA-384 'abc'");
+		RunTest(allPassed, &TestSHA384_Long, "SHA-384 long message");
+		RunTest(allPassed, &TestSHA384_Incremental, "SHA-384 incremental update");
 
 		// HMAC Tests
-		RunTest(allPassed, EMBED_FUNC(TestHMAC_SHA256), "HMAC-SHA256"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestHMAC_SHA384), "HMAC-SHA384"_embed);
+		RunTest(allPassed, &TestHMAC_SHA256, "HMAC-SHA256");
+		RunTest(allPassed, &TestHMAC_SHA384, "HMAC-SHA384");
 
 		if (allPassed)
 			LOG_INFO("All SHA tests passed!");
@@ -43,15 +43,15 @@ private:
 	static BOOL TestSHA256_Empty()
 	{
 		UINT8 digest[SHA256_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14,
 			0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24,
 			0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c,
-			0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55});
+			0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
 
-		auto message = ""_embed;
+		auto message = "";
 		SHA256::Hash(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(message)), 0), digest);
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA256_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA256_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-256 empty string digest mismatch");
 			return false;
@@ -64,15 +64,15 @@ private:
 	static BOOL TestSHA256_ABC()
 	{
 		UINT8 digest[SHA256_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
 			0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
 			0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c,
-			0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad});
+			0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad};
 
-		auto message = "abc"_embed;
+		auto message = "abc";
 		SHA256::Hash(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(message)), 3), digest);
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA256_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA256_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-256 'abc' digest mismatch");
 			return false;
@@ -85,15 +85,15 @@ private:
 	static BOOL TestSHA256_Long()
 	{
 		UINT8 digest[SHA256_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0x24, 0x8d, 0x6a, 0x61, 0xd2, 0x06, 0x38, 0xb8,
 			0xe5, 0xc0, 0x26, 0x93, 0x0c, 0x3e, 0x60, 0x39,
 			0xa3, 0x3c, 0xe4, 0x59, 0x64, 0xff, 0x21, 0x67,
-			0xf6, 0xec, 0xed, 0xd4, 0x19, 0xdb, 0x06, 0xc1});
+			0xf6, 0xec, 0xed, 0xd4, 0x19, 0xdb, 0x06, 0xc1};
 
-		auto message = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"_embed;
+		auto message = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 		SHA256::Hash(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(message)), 56), digest);
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA256_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA256_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-256 long message digest mismatch");
 			return false;
@@ -105,20 +105,20 @@ private:
 	static BOOL TestSHA256_Incremental()
 	{
 		UINT8 digest[SHA256_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
 			0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
 			0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c,
-			0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad});
+			0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad};
 
 		SHA256 ctx;
-		auto msg1 = "ab"_embed;
-		auto msg2 = "c"_embed;
+		auto msg1 = "ab";
+		auto msg2 = "c";
 		ctx.Update(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(msg1)), 2));
 		ctx.Update(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(msg2)), 1));
 		ctx.Final(digest);
 
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA256_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA256_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-256 incremental digest mismatch");
 			return false;
@@ -131,17 +131,17 @@ private:
 	static BOOL TestSHA384_Empty()
 	{
 		UINT8 digest[SHA384_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0x38, 0xb0, 0x60, 0xa7, 0x51, 0xac, 0x96, 0x38,
 			0x4c, 0xd9, 0x32, 0x7e, 0xb1, 0xb1, 0xe3, 0x6a,
 			0x21, 0xfd, 0xb7, 0x11, 0x14, 0xbe, 0x07, 0x43,
 			0x4c, 0x0c, 0xc7, 0xbf, 0x63, 0xf6, 0xe1, 0xda,
 			0x27, 0x4e, 0xde, 0xbf, 0xe7, 0x6f, 0x65, 0xfb,
-			0xd5, 0x1a, 0xd2, 0xf1, 0x48, 0x98, 0xb9, 0x5b});
+			0xd5, 0x1a, 0xd2, 0xf1, 0x48, 0x98, 0xb9, 0x5b};
 
-		auto message = ""_embed;
+		auto message = "";
 		SHA384::Hash(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(message)), 0), digest);
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA384_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA384_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-384 empty string digest mismatch");
 			return false;
@@ -154,17 +154,17 @@ private:
 	static BOOL TestSHA384_ABC()
 	{
 		UINT8 digest[SHA384_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0xcb, 0x00, 0x75, 0x3f, 0x45, 0xa3, 0x5e, 0x8b,
 			0xb5, 0xa0, 0x3d, 0x69, 0x9a, 0xc6, 0x50, 0x07,
 			0x27, 0x2c, 0x32, 0xab, 0x0e, 0xde, 0xd1, 0x63,
 			0x1a, 0x8b, 0x60, 0x5a, 0x43, 0xff, 0x5b, 0xed,
 			0x80, 0x86, 0x07, 0x2b, 0xa1, 0xe7, 0xcc, 0x23,
-			0x58, 0xba, 0xec, 0xa1, 0x34, 0xc8, 0x25, 0xa7});
+			0x58, 0xba, 0xec, 0xa1, 0x34, 0xc8, 0x25, 0xa7};
 
-		auto message = "abc"_embed;
+		auto message = "abc";
 		SHA384::Hash(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(message)), 3), digest);
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA384_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA384_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-384 'abc' digest mismatch");
 			return false;
@@ -177,17 +177,17 @@ private:
 	static BOOL TestSHA384_Long()
 	{
 		UINT8 digest[SHA384_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0x09, 0x33, 0x0c, 0x33, 0xf7, 0x11, 0x47, 0xe8,
 			0x3d, 0x19, 0x2f, 0xc7, 0x82, 0xcd, 0x1b, 0x47,
 			0x53, 0x11, 0x1b, 0x17, 0x3b, 0x3b, 0x05, 0xd2,
 			0x2f, 0xa0, 0x80, 0x86, 0xe3, 0xb0, 0xf7, 0x12,
 			0xfc, 0xc7, 0xc7, 0x1a, 0x55, 0x7e, 0x2d, 0xb9,
-			0x66, 0xc3, 0xe9, 0xfa, 0x91, 0x74, 0x60, 0x39});
+			0x66, 0xc3, 0xe9, 0xfa, 0x91, 0x74, 0x60, 0x39};
 
-		auto message = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"_embed;
+		auto message = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
 		SHA384::Hash(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(message)), 112), digest);
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA384_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA384_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-384 long message digest mismatch");
 			return false;
@@ -199,22 +199,22 @@ private:
 	static BOOL TestSHA384_Incremental()
 	{
 		UINT8 digest[SHA384_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0xcb, 0x00, 0x75, 0x3f, 0x45, 0xa3, 0x5e, 0x8b,
 			0xb5, 0xa0, 0x3d, 0x69, 0x9a, 0xc6, 0x50, 0x07,
 			0x27, 0x2c, 0x32, 0xab, 0x0e, 0xde, 0xd1, 0x63,
 			0x1a, 0x8b, 0x60, 0x5a, 0x43, 0xff, 0x5b, 0xed,
 			0x80, 0x86, 0x07, 0x2b, 0xa1, 0xe7, 0xcc, 0x23,
-			0x58, 0xba, 0xec, 0xa1, 0x34, 0xc8, 0x25, 0xa7});
+			0x58, 0xba, 0xec, 0xa1, 0x34, 0xc8, 0x25, 0xa7};
 
 		SHA384 ctx;
-		auto msg1 = "ab"_embed;
-		auto msg2 = "c"_embed;
+		auto msg1 = "ab";
+		auto msg2 = "c";
 		ctx.Update(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(msg1)), 2));
 		ctx.Update(Span<const UINT8>(reinterpret_cast<const UINT8 *>(static_cast<PCCHAR>(msg2)), 1));
 		ctx.Final(digest);
 
-		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA384_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(digest), Span<const UINT8>(expected, SHA384_DIGEST_SIZE)))
 		{
 			LOG_ERROR("SHA-384 incremental digest mismatch");
 			return false;
@@ -229,18 +229,18 @@ private:
 	static BOOL TestHMAC_SHA256()
 	{
 		UINT8 mac[SHA256_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0x5b, 0xdc, 0xc1, 0x46, 0xbf, 0x60, 0x75, 0x4e,
 			0x6a, 0x04, 0x24, 0x26, 0x08, 0x95, 0x75, 0xc7,
 			0x5a, 0x00, 0x3f, 0x08, 0x9d, 0x27, 0x39, 0x83,
-			0x9d, 0xec, 0x58, 0xb9, 0x64, 0xec, 0x38, 0x43});
+			0x9d, 0xec, 0x58, 0xb9, 0x64, 0xec, 0x38, 0x43};
 
-		auto key = "Jefe"_embed;
-		auto message = "what do ya want for nothing?"_embed;
+		auto key = "Jefe";
+		auto message = "what do ya want for nothing?";
 
 		HMAC_SHA256::Compute(Span<const UCHAR>(reinterpret_cast<const UCHAR *>(static_cast<PCCHAR>(key)), 4), Span<const UCHAR>(reinterpret_cast<const UCHAR *>(static_cast<PCCHAR>(message)), 28), Span<UCHAR>(mac));
 
-		if (!CompareBytes(Span<const UINT8>(mac), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA256_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(mac), Span<const UINT8>(expected, SHA256_DIGEST_SIZE)))
 		{
 			LOG_ERROR("HMAC-SHA256 MAC mismatch");
 			return false;
@@ -255,20 +255,20 @@ private:
 	static BOOL TestHMAC_SHA384()
 	{
 		UINT8 mac[SHA384_DIGEST_SIZE];
-		auto expected = MakeEmbedArray((const UINT8[]){
+		const UINT8 expected[] = {
 			0xaf, 0x45, 0xd2, 0xe3, 0x76, 0x48, 0x40, 0x31,
 			0x61, 0x7f, 0x78, 0xd2, 0xb5, 0x8a, 0x6b, 0x1b,
 			0x9c, 0x7e, 0xf4, 0x64, 0xf5, 0xa0, 0x1b, 0x47,
 			0xe4, 0x2e, 0xc3, 0x73, 0x63, 0x22, 0x44, 0x5e,
 			0x8e, 0x22, 0x40, 0xca, 0x5e, 0x69, 0xe2, 0xc7,
-			0x8b, 0x32, 0x39, 0xec, 0xfa, 0xb2, 0x16, 0x49});
+			0x8b, 0x32, 0x39, 0xec, 0xfa, 0xb2, 0x16, 0x49};
 
-		auto key = "Jefe"_embed;
-		auto message = "what do ya want for nothing?"_embed;
+		auto key = "Jefe";
+		auto message = "what do ya want for nothing?";
 
 		HMAC_SHA384::Compute(Span<const UCHAR>(reinterpret_cast<const UCHAR *>(static_cast<PCCHAR>(key)), 4), Span<const UCHAR>(reinterpret_cast<const UCHAR *>(static_cast<PCCHAR>(message)), 28), Span<UCHAR>(mac));
 
-		if (!CompareBytes(Span<const UINT8>(mac), Span<const UINT8>(static_cast<const UINT8 *>(static_cast<const VOID *>(expected)), SHA384_DIGEST_SIZE)))
+		if (!CompareBytes(Span<const UINT8>(mac), Span<const UINT8>(expected, SHA384_DIGEST_SIZE)))
 		{
 			LOG_ERROR("HMAC-SHA384 MAC mismatch");
 			return false;

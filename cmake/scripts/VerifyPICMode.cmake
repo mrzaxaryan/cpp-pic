@@ -7,11 +7,11 @@
 cmake_minimum_required(VERSION 3.20)
 
 if(NOT DEFINED MAP_FILE)
-    message(FATAL_ERROR "MAP_FILE is required")
+    message(FATAL_ERROR "[pir:verify] MAP_FILE is required")
 endif()
 
 if(NOT EXISTS "${MAP_FILE}")
-    message(STATUS "Map file not found (expected for debug builds): ${MAP_FILE}")
+    message(STATUS "[pir:verify] Map file not found (expected for debug builds): ${MAP_FILE}")
     return()
 endif()
 
@@ -43,9 +43,9 @@ endif()
 
 if(NOT entry_point_first)
     message(FATAL_ERROR
-        "CRITICAL: entry_point is not the first function in .text section!\n\n"
+        "[pir:verify] entry_point is not the first function in .text!\n\n"
         "The entry point must be at the beginning of the code section.\n"
-        "Check that cmake/function.order (or function.order.macos) contains 'entry_point' and is being used.\n\n"
+        "Check that cmake/function.order contains 'entry_point' and is being used.\n\n"
         "Map file: ${MAP_FILE}"
     )
 endif()
@@ -77,7 +77,7 @@ if(_content MATCHES "# Symbols:")
 
     if(_text_start AND _first_sym_addr AND NOT _text_start STREQUAL _first_sym_addr)
         message(FATAL_ERROR
-            "CRITICAL: _entry_point is not at offset 0 of __TEXT,__text!\n\n"
+            "[pir:verify] _entry_point is not at offset 0 of __TEXT,__text!\n\n"
             "__text section start: ${_text_start}\n"
             "First symbol address: ${_first_sym_addr}\n\n"
             "Unnamed constant-pool data or an LTO-generated helper was placed\n"
@@ -156,15 +156,15 @@ endforeach()
 if(_found)
     list(JOIN _found ", " _list)
     message(FATAL_ERROR
-        "CRITICAL: Data sections break position-independence!\n"
+        "[pir:verify] Forbidden data sections break position-independence!\n"
         "Found: ${_list}\n\n"
         "Common causes:\n"
-        "  - Static/global variables (use stack or EMBEDDED_* types)\n"
-        "  - String literals (use EMBEDDED_STRING)\n"
-        "  - Floating-point constants (use EMBEDDED_DOUBLE)\n"
-        "  - Array literals (use EMBEDDED_ARRAY)\n\n"
+        "  - Static/global variables (use stack-local variables)\n"
+        "  - String literals (use auto str = \"...\" on the stack)\n"
+        "  - Floating-point constants (pic-transform should handle these automatically)\n"
+        "  - Array literals (use stack-local arrays)\n\n"
         "Map file: ${MAP_FILE}"
     )
 endif()
 
-message(STATUS "Position-Independent verification tests passed.")
+message(STATUS "[pir:verify] Position-independent verification passed")

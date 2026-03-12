@@ -12,12 +12,12 @@ public:
 
 		LOG_INFO("Running DJB2 Hash Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestBasicHashConsistency), "Basic hash consistency"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCaseInsensitivity), "Case insensitivity"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestEmptyString), "Empty string"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCompileTimeMatchesRuntime), "Compile-time matches runtime"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestDifferentStringsProduceDifferentHashes), "Different strings produce different hashes"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWideCharSupport), "Wide character support"_embed);
+		RunTest(allPassed, &TestBasicHashConsistency, "Basic hash consistency");
+		RunTest(allPassed, &TestCaseInsensitivity, "Case insensitivity");
+		RunTest(allPassed, &TestEmptyString, "Empty string");
+		RunTest(allPassed, &TestCompileTimeMatchesRuntime, "Compile-time matches runtime");
+		RunTest(allPassed, &TestDifferentStringsProduceDifferentHashes, "Different strings produce different hashes");
+		RunTest(allPassed, &TestWideCharSupport, "Wide character support");
 
 		if (allPassed)
 			LOG_INFO("All DJB2 tests passed!");
@@ -31,7 +31,7 @@ private:
 	static BOOL TestBasicHashConsistency()
 	{
 		// Same input should always produce same hash
-		auto testStr = "hello"_embed;
+		auto testStr = "hello";
 		UINT64 hash1 = Djb2::Hash((const CHAR *)testStr);
 		UINT64 hash2 = Djb2::Hash((const CHAR *)testStr);
 		if (hash1 != hash2)
@@ -44,9 +44,9 @@ private:
 
 	static BOOL TestCaseInsensitivity()
 	{
-		auto lower = "hello"_embed;
-		auto upper = "HELLO"_embed;
-		auto mixed = "HeLLo"_embed;
+		auto lower = "hello";
+		auto upper = "HELLO";
+		auto mixed = "HeLLo";
 
 		// Hash should be case-insensitive
 		UINT64 hashLower = Djb2::Hash((const CHAR *)lower);
@@ -68,7 +68,7 @@ private:
 
 	static BOOL TestEmptyString()
 	{
-		auto empty = ""_embed;
+		auto empty = "";
 
 		// Empty string should return the seed value
 		UINT64 hash = Djb2::Hash((const CHAR *)empty);
@@ -85,7 +85,7 @@ private:
 	{
 		// Compile-time hash should match runtime hash for same input
 		constexpr UINT64 compileTimeHash = Djb2::HashCompileTime("test");
-		auto runtimeStr = "test"_embed;
+		auto runtimeStr = "test";
 		UINT64 runtimeHash = Djb2::Hash((const CHAR *)runtimeStr);
 		if (compileTimeHash != runtimeHash)
 		{
@@ -97,9 +97,9 @@ private:
 
 	static BOOL TestDifferentStringsProduceDifferentHashes()
 	{
-		auto str1 = "hello"_embed;
-		auto str2 = "world"_embed;
-		auto str3 = "test"_embed;
+		auto str1 = "hello";
+		auto str2 = "world";
+		auto str3 = "test";
 
 		// Different strings should (almost always) produce different hashes
 		UINT64 hash1 = Djb2::Hash((const CHAR *)str1);
@@ -126,7 +126,7 @@ private:
 
 	static BOOL TestWideCharSupport()
 	{
-		auto wideStr = L"hello"_embed;
+		auto wideStr = L"hello";
 
 		// Wide character strings should hash correctly
 		UINT64 hash1 = Djb2::Hash((const WCHAR *)wideStr);
@@ -139,8 +139,8 @@ private:
 			return false;
 		}
 
-		auto wideLower = L"hello"_embed;
-		auto wideUpper = L"HELLO"_embed;
+		auto wideLower = L"hello";
+		auto wideUpper = L"HELLO";
 
 		// Case insensitivity for wide chars
 		UINT64 hashLower = Djb2::Hash((const WCHAR *)wideLower);

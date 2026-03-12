@@ -264,13 +264,17 @@
 	}
 
 	// Indirect syscall with 12 arguments
+	//
+	// Split into two asm blocks to reduce per-block register pressure.
+	// At -O0 with -fno-omit-frame-pointer, ARM32 has only 12 allocatable
+	// GPRs (r0-r10, r12; r11=fp). A single block with 5 output + 8 input
+	// operands needs 13 — exceeding the limit. The first block stores
+	// overflow args (8 "r" inputs, 0 outputs = 8 regs needed); the second
+	// does the BLX call (5 "+r" outputs, 0 inputs = 5 regs needed).
+	// At -O0 all variable access is fp-relative, so sp modification in the
+	// first block does not affect operand addressing in the second.
 	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12)
 	{
-		register USIZE r0 __asm__("r0") = a1;
-		register USIZE r1 __asm__("r1") = a2;
-		register USIZE r2 __asm__("r2") = a3;
-		register USIZE r3 __asm__("r3") = a4;
-		register USIZE stub __asm__("r12") = (USIZE)entry.SyscallAddress;
 		__asm__ volatile(
 			"sub sp, sp, #32\n"
 			"str %[a5], [sp]\n"
@@ -281,22 +285,26 @@
 			"str %[a10], [sp, #20]\n"
 			"str %[a11], [sp, #24]\n"
 			"str %[a12], [sp, #28]\n"
-			"blx %[stub]\n"
-			"add sp, sp, #32\n"
-			: "+r"(r0), "+r"(r1), "+r"(r2), "+r"(r3), [stub] "+r"(stub)
+			:
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8), [a9] "r"(a9), [a10] "r"(a10), [a11] "r"(a11), [a12] "r"(a12)
-			: "lr", "memory", "cc");
-		return (NTSTATUS)r0;
-	}
-
-	// Indirect syscall with 13 arguments
-	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13)
-	{
+			: "memory");
 		register USIZE r0 __asm__("r0") = a1;
 		register USIZE r1 __asm__("r1") = a2;
 		register USIZE r2 __asm__("r2") = a3;
 		register USIZE r3 __asm__("r3") = a4;
 		register USIZE stub __asm__("r12") = (USIZE)entry.SyscallAddress;
+		__asm__ volatile(
+			"blx %[stub]\n"
+			"add sp, sp, #32\n"
+			: "+r"(r0), "+r"(r1), "+r"(r2), "+r"(r3), [stub] "+r"(stub)
+			:
+			: "lr", "memory", "cc");
+		return (NTSTATUS)r0;
+	}
+
+	// Indirect syscall with 13 arguments (two-stage asm, see 12-arg comment)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13)
+	{
 		__asm__ volatile(
 			"sub sp, sp, #40\n"
 			"str %[a5], [sp]\n"
@@ -308,22 +316,26 @@
 			"str %[a11], [sp, #24]\n"
 			"str %[a12], [sp, #28]\n"
 			"str %[a13], [sp, #32]\n"
-			"blx %[stub]\n"
-			"add sp, sp, #40\n"
-			: "+r"(r0), "+r"(r1), "+r"(r2), "+r"(r3), [stub] "+r"(stub)
+			:
 			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8), [a9] "r"(a9), [a10] "r"(a10), [a11] "r"(a11), [a12] "r"(a12), [a13] "r"(a13)
-			: "lr", "memory", "cc");
-		return (NTSTATUS)r0;
-	}
-
-	// Indirect syscall with 14 arguments
-	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13, USIZE a14)
-	{
+			: "memory");
 		register USIZE r0 __asm__("r0") = a1;
 		register USIZE r1 __asm__("r1") = a2;
 		register USIZE r2 __asm__("r2") = a3;
 		register USIZE r3 __asm__("r3") = a4;
 		register USIZE stub __asm__("r12") = (USIZE)entry.SyscallAddress;
+		__asm__ volatile(
+			"blx %[stub]\n"
+			"add sp, sp, #40\n"
+			: "+r"(r0), "+r"(r1), "+r"(r2), "+r"(r3), [stub] "+r"(stub)
+			:
+			: "lr", "memory", "cc");
+		return (NTSTATUS)r0;
+	}
+
+	// Indirect syscall with 14 arguments (two-stage asm, see 12-arg comment)
+	static NOINLINE NTSTATUS Call(SYSCALL_ENTRY entry, USIZE a1, USIZE a2, USIZE a3, USIZE a4, USIZE a5, USIZE a6, USIZE a7, USIZE a8, USIZE a9, USIZE a10, USIZE a11, USIZE a12, USIZE a13, USIZE a14)
+	{
 		__asm__ volatile(
 			"sub sp, sp, #40\n"
 			"str %[a5], [sp]\n"
@@ -336,10 +348,19 @@
 			"str %[a12], [sp, #28]\n"
 			"str %[a13], [sp, #32]\n"
 			"str %[a14], [sp, #36]\n"
+			:
+			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8), [a9] "r"(a9), [a10] "r"(a10), [a11] "r"(a11), [a12] "r"(a12), [a13] "r"(a13), [a14] "r"(a14)
+			: "memory");
+		register USIZE r0 __asm__("r0") = a1;
+		register USIZE r1 __asm__("r1") = a2;
+		register USIZE r2 __asm__("r2") = a3;
+		register USIZE r3 __asm__("r3") = a4;
+		register USIZE stub __asm__("r12") = (USIZE)entry.SyscallAddress;
+		__asm__ volatile(
 			"blx %[stub]\n"
 			"add sp, sp, #40\n"
 			: "+r"(r0), "+r"(r1), "+r"(r2), "+r"(r3), [stub] "+r"(stub)
-			: [a5] "r"(a5), [a6] "r"(a6), [a7] "r"(a7), [a8] "r"(a8), [a9] "r"(a9), [a10] "r"(a10), [a11] "r"(a11), [a12] "r"(a12), [a13] "r"(a13), [a14] "r"(a14)
+			:
 			: "lr", "memory", "cc");
 		return (NTSTATUS)r0;
 	}

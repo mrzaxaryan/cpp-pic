@@ -5,7 +5,6 @@
 #include "platform/console/logger.h"
 #include "runtime/network/dns/dns_client.h"
 #include "runtime/network/http/http_client.h"
-#include "core/types/embedded/embedded_string.h"
 
 /**
  * @brief Performs the WebSocket opening handshake (RFC 6455 Section 4)
@@ -17,7 +16,7 @@
 Result<void, Error> WebSocketClient::Open(PCCHAR path)
 {
 	BOOL isSecure = tlsContext.IsSecure();
-	LOG_DEBUG("Opening WebSocket client to %s:%u%s (secure: %s)", hostName, port, path, isSecure ? "true"_embed : "false"_embed);
+	LOG_DEBUG("Opening WebSocket client to %s:%u%s (secure: %s)", hostName, port, path, isSecure ? "true" : "false");
 
 	auto openResult = tlsContext.Open();
 
@@ -67,16 +66,16 @@ Result<void, Error> WebSocketClient::Open(PCCHAR path)
 		return r && r.Value() == len;
 	};
 
-	if (!writeStr("GET "_embed) ||
+	if (!writeStr("GET ") ||
 		!writeStr(path) ||
-		!writeStr(" HTTP/1.1\r\nHost: "_embed) ||
+		!writeStr(" HTTP/1.1\r\nHost: ") ||
 		!writeStr(hostName) ||
-		!writeStr("\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: "_embed) ||
+		!writeStr("\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ") ||
 		!writeStr(secureKey) ||
-		!writeStr("\r\nSec-WebSocket-Version: 13\r\nOrigin: "_embed) ||
-		!writeStr(isSecure ? "https://"_embed : "http://"_embed) ||
+		!writeStr("\r\nSec-WebSocket-Version: 13\r\nOrigin: ") ||
+		!writeStr(isSecure ? "https://" : "http://") ||
 		!writeStr(hostName) ||
-		!writeStr("\r\n\r\n"_embed))
+		!writeStr("\r\n\r\n"))
 	{
 		(void)Close();
 		return Result<void, Error>::Err(Error::Ws_WriteFailed);

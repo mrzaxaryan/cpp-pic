@@ -13,12 +13,12 @@ public:
 
 		LOG_INFO("Running FileSystem Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestCreateNestedDirectories), "Create nested directories"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCreateFilesInDirectories), "Create files in directories"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWriteReadContent), "Write and read file content"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestFileExistence), "File existence checks"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestDirectoryIteration), "Directory iteration"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCleanup), "Cleanup files and directories"_embed);
+		RunTest(allPassed, &TestCreateNestedDirectories, "Create nested directories");
+		RunTest(allPassed, &TestCreateFilesInDirectories, "Create files in directories");
+		RunTest(allPassed, &TestWriteReadContent, "Write and read file content");
+		RunTest(allPassed, &TestFileExistence, "File existence checks");
+		RunTest(allPassed, &TestDirectoryIteration, "Directory iteration");
+		RunTest(allPassed, &TestCleanup, "Cleanup files and directories");
 
 		if (allPassed)
 			LOG_INFO("All FileSystem tests passed!");
@@ -31,21 +31,22 @@ public:
 private:
 	// ── Path building helpers ──────────────────────────────────────────
 	// Embeds "test_io_root" once and combines with suffix at runtime,
-	// avoiding ~50 unique full-path EMBEDDED_STRING instantiations.
+	// avoiding ~50 unique full-path string instantiations.
 
 	static NOINLINE USIZE BuildTestPath(PCWCHAR suffix, Span<WCHAR> out)
 	{
-		auto root = L"test_io_root"_embed;
+		const WCHAR root[] = L"test_io_root";
+		constexpr USIZE rootLen = sizeof(root) / sizeof(WCHAR) - 1;
 
 		if (suffix == nullptr || suffix[0] == L'\0')
 		{
-			StringUtils::Copy(out, (Span<const WCHAR>)root);
-			return StringUtils::Length((PCWCHAR)root);
+			StringUtils::Copy(out, Span<const WCHAR>(root, rootLen));
+			return rootLen;
 		}
 
 		USIZE suffixLen = StringUtils::Length(suffix);
 		return Path::Combine(
-			(Span<const WCHAR>)root,
+			Span<const WCHAR>(root, rootLen),
 			Span<const WCHAR>(suffix, suffixLen),
 			out);
 	}
@@ -110,44 +111,44 @@ private:
 		}
 
 		// Create first level directories
-		if (!MkDir(L"level1_dir1"_embed))
+		if (!MkDir(L"level1_dir1"))
 		{
 			LOG_ERROR("Failed to create level1_dir1");
 			return false;
 		}
-		if (!MkDir(L"level1_dir2"_embed))
+		if (!MkDir(L"level1_dir2"))
 		{
 			LOG_ERROR("Failed to create level1_dir2");
 			return false;
 		}
-		if (!MkDir(L"level1_dir3"_embed))
+		if (!MkDir(L"level1_dir3"))
 		{
 			LOG_ERROR("Failed to create level1_dir3");
 			return false;
 		}
 
 		// Create second level directories
-		if (!MkDir(L"level1_dir1\\level2_dir1"_embed))
+		if (!MkDir(L"level1_dir1\\level2_dir1"))
 		{
 			LOG_ERROR("Failed to create level2_dir1");
 			return false;
 		}
-		if (!MkDir(L"level1_dir1\\level2_dir2"_embed))
+		if (!MkDir(L"level1_dir1\\level2_dir2"))
 		{
 			LOG_ERROR("Failed to create level2_dir2");
 			return false;
 		}
-		if (!MkDir(L"level1_dir2\\level2_dir3"_embed))
+		if (!MkDir(L"level1_dir2\\level2_dir3"))
 		{
 			LOG_ERROR("Failed to create level2_dir3");
 			return false;
 		}
-		if (!MkDir(L"level1_dir2\\level2_dir4"_embed))
+		if (!MkDir(L"level1_dir2\\level2_dir4"))
 		{
 			LOG_ERROR("Failed to create level2_dir4");
 			return false;
 		}
-		if (!MkDir(L"level1_dir3\\level2_dir5"_embed))
+		if (!MkDir(L"level1_dir3\\level2_dir5"))
 		{
 			LOG_ERROR("Failed to create level2_dir5");
 			return false;
@@ -159,42 +160,42 @@ private:
 			LOG_ERROR("test_io_root does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir1"_embed))
+		if (!PathExists(L"level1_dir1"))
 		{
 			LOG_ERROR("level1_dir1 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir2"_embed))
+		if (!PathExists(L"level1_dir2"))
 		{
 			LOG_ERROR("level1_dir2 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir3"_embed))
+		if (!PathExists(L"level1_dir3"))
 		{
 			LOG_ERROR("level1_dir3 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir1\\level2_dir1"_embed))
+		if (!PathExists(L"level1_dir1\\level2_dir1"))
 		{
 			LOG_ERROR("level2_dir1 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir1\\level2_dir2"_embed))
+		if (!PathExists(L"level1_dir1\\level2_dir2"))
 		{
 			LOG_ERROR("level2_dir2 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir2\\level2_dir3"_embed))
+		if (!PathExists(L"level1_dir2\\level2_dir3"))
 		{
 			LOG_ERROR("level2_dir3 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir2\\level2_dir4"_embed))
+		if (!PathExists(L"level1_dir2\\level2_dir4"))
 		{
 			LOG_ERROR("level2_dir4 does not exist after creation");
 			return false;
 		}
-		if (!PathExists(L"level1_dir3\\level2_dir5"_embed))
+		if (!PathExists(L"level1_dir3\\level2_dir5"))
 		{
 			LOG_ERROR("level2_dir5 does not exist after creation");
 			return false;
@@ -205,57 +206,57 @@ private:
 
 	static BOOL TestCreateFilesInDirectories()
 	{
-		if (!CreateEmptyFile(L"root_file.txt"_embed))
+		if (!CreateEmptyFile(L"root_file.txt"))
 		{
 			LOG_ERROR("Failed to create root_file.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir1\\file1.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir1\\file1.txt"))
 		{
 			LOG_ERROR("Failed to create file1.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir2\\file2.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir2\\file2.txt"))
 		{
 			LOG_ERROR("Failed to create file2.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir3\\file3.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir3\\file3.txt"))
 		{
 			LOG_ERROR("Failed to create file3.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir1\\level2_dir1\\deep_file1.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir1\\level2_dir1\\deep_file1.txt"))
 		{
 			LOG_ERROR("Failed to create deep_file1.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir1\\level2_dir2\\deep_file2.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir1\\level2_dir2\\deep_file2.txt"))
 		{
 			LOG_ERROR("Failed to create deep_file2.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir2\\level2_dir3\\deep_file3.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir2\\level2_dir3\\deep_file3.txt"))
 		{
 			LOG_ERROR("Failed to create deep_file3.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir2\\level2_dir4\\deep_file4.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir2\\level2_dir4\\deep_file4.txt"))
 		{
 			LOG_ERROR("Failed to create deep_file4.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir3\\level2_dir5\\deep_file5.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir3\\level2_dir5\\deep_file5.txt"))
 		{
 			LOG_ERROR("Failed to create deep_file5.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir1\\extra1.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir1\\extra1.txt"))
 		{
 			LOG_ERROR("Failed to create extra1.txt");
 			return false;
 		}
-		if (!CreateEmptyFile(L"level1_dir1\\extra2.txt"_embed))
+		if (!CreateEmptyFile(L"level1_dir1\\extra2.txt"))
 		{
 			LOG_ERROR("Failed to create extra2.txt");
 			return false;
@@ -268,7 +269,7 @@ private:
 	{
 		// Test 1: Simple text
 		{
-			auto openResult = OpenTestFile(L"test_write_read.txt"_embed,
+			auto openResult = OpenTestFile(L"test_write_read.txt",
 											File::ModeCreate | File::ModeWrite | File::ModeTruncate);
 			if (!openResult)
 			{
@@ -277,7 +278,7 @@ private:
 			}
 			File &file = openResult.Value();
 
-			auto testData = "Hello, File System!"_embed;
+			auto testData = "Hello, File System!";
 			auto writeResult = file.Write(Span<const UINT8>((const UINT8 *)(const CHAR *)testData, 20));
 			if (!writeResult)
 			{
@@ -293,7 +294,7 @@ private:
 			file.Close();
 
 			// Read it back
-			auto readOpenResult = OpenTestFile(L"test_write_read.txt"_embed, File::ModeRead);
+			auto readOpenResult = OpenTestFile(L"test_write_read.txt", File::ModeRead);
 			if (!readOpenResult)
 			{
 				LOG_ERROR("Failed to open test_write_read.txt for reading");
@@ -330,7 +331,7 @@ private:
 
 		// Test 2: Binary data
 		{
-			auto openResult = OpenTestFile(L"level1_dir1\\binary_test.dat"_embed,
+			auto openResult = OpenTestFile(L"level1_dir1\\binary_test.dat",
 											File::ModeCreate | File::ModeWrite | File::ModeTruncate);
 			if (!openResult)
 			{
@@ -360,7 +361,7 @@ private:
 			file.Close();
 
 			// Read it back
-			auto readOpenResult = OpenTestFile(L"level1_dir1\\binary_test.dat"_embed, File::ModeRead);
+			auto readOpenResult = OpenTestFile(L"level1_dir1\\binary_test.dat", File::ModeRead);
 			if (!readOpenResult)
 			{
 				LOG_ERROR("Failed to open binary_test.dat for reading");
@@ -397,7 +398,7 @@ private:
 
 		// Test 3: File offset operations
 		{
-			auto openResult = OpenTestFile(L"level1_dir2\\offset_test.dat"_embed,
+			auto openResult = OpenTestFile(L"level1_dir2\\offset_test.dat",
 											File::ModeCreate | File::ModeWrite | File::ModeTruncate);
 			if (!openResult)
 			{
@@ -406,7 +407,7 @@ private:
 			}
 			File &file = openResult.Value();
 
-			auto data = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"_embed;
+			auto data = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			auto writeResult = file.Write(Span<const UINT8>((const UINT8 *)(const CHAR *)data, 26));
 			if (!writeResult)
 			{
@@ -465,29 +466,29 @@ private:
 	static BOOL TestFileExistence()
 	{
 		// Test existing files
-		if (!PathExists(L"root_file.txt"_embed))
+		if (!PathExists(L"root_file.txt"))
 		{
 			LOG_ERROR("root_file.txt should exist");
 			return false;
 		}
-		if (!PathExists(L"level1_dir1\\file1.txt"_embed))
+		if (!PathExists(L"level1_dir1\\file1.txt"))
 		{
 			LOG_ERROR("file1.txt should exist");
 			return false;
 		}
-		if (!PathExists(L"level1_dir1\\level2_dir1\\deep_file1.txt"_embed))
+		if (!PathExists(L"level1_dir1\\level2_dir1\\deep_file1.txt"))
 		{
 			LOG_ERROR("deep_file1.txt should exist");
 			return false;
 		}
 
 		// Test non-existing files
-		if (PathExists(L"nonexistent.txt"_embed))
+		if (PathExists(L"nonexistent.txt"))
 		{
 			LOG_ERROR("nonexistent.txt should not exist");
 			return false;
 		}
-		if (PathExists(L"level1_dir1\\missing.txt"_embed))
+		if (PathExists(L"level1_dir1\\missing.txt"))
 		{
 			LOG_ERROR("missing.txt should not exist");
 			return false;
@@ -498,7 +499,7 @@ private:
 
 	static BOOL TestDirectoryIteration()
 	{
-		auto rootResult = DirectoryIterator::Create(L""_embed);
+		auto rootResult = DirectoryIterator::Create(L"");
 		if (!rootResult)
 		{
 			LOG_ERROR("Failed to create DirectoryIterator for root");
@@ -507,7 +508,7 @@ private:
 
 		// Test iterating through a directory with multiple files
 		WCHAR iterPath[128];
-		BuildTestPath(L"level1_dir1"_embed, Span<WCHAR>(iterPath));
+		BuildTestPath(L"level1_dir1", Span<WCHAR>(iterPath));
 		auto iterResult = DirectoryIterator::Create(iterPath);
 		if (!iterResult)
 		{
@@ -563,76 +564,76 @@ private:
 		// Delete files first (from deepest to shallowest)
 
 		// Second level files
-		if (!RmFile(L"level1_dir1\\level2_dir1\\deep_file1.txt"_embed))
+		if (!RmFile(L"level1_dir1\\level2_dir1\\deep_file1.txt"))
 		{
 			LOG_ERROR("Failed to delete deep_file1.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir1\\level2_dir2\\deep_file2.txt"_embed))
+		if (!RmFile(L"level1_dir1\\level2_dir2\\deep_file2.txt"))
 		{
 			LOG_ERROR("Failed to delete deep_file2.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir2\\level2_dir3\\deep_file3.txt"_embed))
+		if (!RmFile(L"level1_dir2\\level2_dir3\\deep_file3.txt"))
 		{
 			LOG_ERROR("Failed to delete deep_file3.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir2\\level2_dir4\\deep_file4.txt"_embed))
+		if (!RmFile(L"level1_dir2\\level2_dir4\\deep_file4.txt"))
 		{
 			LOG_ERROR("Failed to delete deep_file4.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir3\\level2_dir5\\deep_file5.txt"_embed))
+		if (!RmFile(L"level1_dir3\\level2_dir5\\deep_file5.txt"))
 		{
 			LOG_ERROR("Failed to delete deep_file5.txt");
 			return false;
 		}
 
 		// First level files
-		if (!RmFile(L"level1_dir1\\file1.txt"_embed))
+		if (!RmFile(L"level1_dir1\\file1.txt"))
 		{
 			LOG_ERROR("Failed to delete file1.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir1\\extra1.txt"_embed))
+		if (!RmFile(L"level1_dir1\\extra1.txt"))
 		{
 			LOG_ERROR("Failed to delete extra1.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir1\\extra2.txt"_embed))
+		if (!RmFile(L"level1_dir1\\extra2.txt"))
 		{
 			LOG_ERROR("Failed to delete extra2.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir1\\binary_test.dat"_embed))
+		if (!RmFile(L"level1_dir1\\binary_test.dat"))
 		{
 			LOG_ERROR("Failed to delete binary_test.dat");
 			return false;
 		}
-		if (!RmFile(L"level1_dir2\\file2.txt"_embed))
+		if (!RmFile(L"level1_dir2\\file2.txt"))
 		{
 			LOG_ERROR("Failed to delete file2.txt");
 			return false;
 		}
-		if (!RmFile(L"level1_dir2\\offset_test.dat"_embed))
+		if (!RmFile(L"level1_dir2\\offset_test.dat"))
 		{
 			LOG_ERROR("Failed to delete offset_test.dat");
 			return false;
 		}
-		if (!RmFile(L"level1_dir3\\file3.txt"_embed))
+		if (!RmFile(L"level1_dir3\\file3.txt"))
 		{
 			LOG_ERROR("Failed to delete file3.txt");
 			return false;
 		}
 
 		// Root level files
-		if (!RmFile(L"root_file.txt"_embed))
+		if (!RmFile(L"root_file.txt"))
 		{
 			LOG_ERROR("Failed to delete root_file.txt");
 			return false;
 		}
-		if (!RmFile(L"test_write_read.txt"_embed))
+		if (!RmFile(L"test_write_read.txt"))
 		{
 			LOG_ERROR("Failed to delete test_write_read.txt");
 			return false;
@@ -641,44 +642,44 @@ private:
 		// Delete directories (from deepest to shallowest)
 
 		// Second level directories
-		if (!RmDir(L"level1_dir1\\level2_dir1"_embed))
+		if (!RmDir(L"level1_dir1\\level2_dir1"))
 		{
 			LOG_ERROR("Failed to delete level2_dir1");
 			return false;
 		}
-		if (!RmDir(L"level1_dir1\\level2_dir2"_embed))
+		if (!RmDir(L"level1_dir1\\level2_dir2"))
 		{
 			LOG_ERROR("Failed to delete level2_dir2");
 			return false;
 		}
-		if (!RmDir(L"level1_dir2\\level2_dir3"_embed))
+		if (!RmDir(L"level1_dir2\\level2_dir3"))
 		{
 			LOG_ERROR("Failed to delete level2_dir3");
 			return false;
 		}
-		if (!RmDir(L"level1_dir2\\level2_dir4"_embed))
+		if (!RmDir(L"level1_dir2\\level2_dir4"))
 		{
 			LOG_ERROR("Failed to delete level2_dir4");
 			return false;
 		}
-		if (!RmDir(L"level1_dir3\\level2_dir5"_embed))
+		if (!RmDir(L"level1_dir3\\level2_dir5"))
 		{
 			LOG_ERROR("Failed to delete level2_dir5");
 			return false;
 		}
 
 		// First level directories
-		if (!RmDir(L"level1_dir1"_embed))
+		if (!RmDir(L"level1_dir1"))
 		{
 			LOG_ERROR("Failed to delete level1_dir1");
 			return false;
 		}
-		if (!RmDir(L"level1_dir2"_embed))
+		if (!RmDir(L"level1_dir2"))
 		{
 			LOG_ERROR("Failed to delete level1_dir2");
 			return false;
 		}
-		if (!RmDir(L"level1_dir3"_embed))
+		if (!RmDir(L"level1_dir3"))
 		{
 			LOG_ERROR("Failed to delete level1_dir3");
 			return false;

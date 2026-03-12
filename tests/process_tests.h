@@ -13,15 +13,15 @@ public:
 
 		LOG_INFO("Running Process Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestCreateInvalidPath), "Create with null path returns error"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCreateInvalidArgs), "Create with null args returns error"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestInvalidProcessState), "Invalid process state"_embed);
+		RunTest(allPassed, &TestCreateInvalidPath, "Create with null path returns error");
+		RunTest(allPassed, &TestCreateInvalidArgs, "Create with null args returns error");
+		RunTest(allPassed, &TestInvalidProcessState, "Invalid process state");
 #if !defined(PLATFORM_UEFI)
-		RunTest(allPassed, EMBED_FUNC(TestCreateAndWait), "Create process and wait for exit"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestTerminate), "Create and terminate process"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestIsRunning), "IsRunning on active process"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestMoveSemantics), "Move constructor and assignment"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCreateWithIO), "Create process with I/O redirection"_embed);
+		RunTest(allPassed, &TestCreateAndWait, "Create process and wait for exit");
+		RunTest(allPassed, &TestTerminate, "Create and terminate process");
+		RunTest(allPassed, &TestIsRunning, "IsRunning on active process");
+		RunTest(allPassed, &TestMoveSemantics, "Move constructor and assignment");
+		RunTest(allPassed, &TestCreateWithIO, "Create process with I/O redirection");
 #endif
 
 		if (allPassed)
@@ -46,7 +46,7 @@ private:
 
 	static BOOL TestCreateInvalidArgs()
 	{
-		auto path = "/nonexistent"_embed;
+		auto path = "/nonexistent";
 		auto result = Process::Create((const CHAR *)path, nullptr);
 		if (result)
 		{
@@ -80,15 +80,15 @@ private:
 	static BOOL TestCreateAndWait()
 	{
 #if defined(PLATFORM_WINDOWS)
-		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		auto a1 = "/c"_embed;
-		auto a2 = "exit"_embed;
-		auto a3 = "0"_embed;
+		auto cmd = "C:\\Windows\\System32\\cmd.exe";
+		auto a1 = "/c";
+		auto a2 = "exit";
+		auto a3 = "0";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
-		auto cmd = "/bin/sh"_embed;
-		auto a1 = "-c"_embed;
-		auto a2 = "exit 0"_embed;
+		auto cmd = "/bin/sh";
+		auto a1 = "-c";
+		auto a2 = "exit 0";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
@@ -126,17 +126,17 @@ private:
 	static BOOL TestTerminate()
 	{
 #if defined(PLATFORM_WINDOWS)
-		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		auto a1 = "/c"_embed;
-		auto a2 = "ping"_embed;
-		auto a3 = "-n"_embed;
-		auto a4 = "60"_embed;
-		auto a5 = "127.0.0.1"_embed;
+		auto cmd = "C:\\Windows\\System32\\cmd.exe";
+		auto a1 = "/c";
+		auto a2 = "ping";
+		auto a3 = "-n";
+		auto a4 = "60";
+		auto a5 = "127.0.0.1";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, (const CHAR *)a4, (const CHAR *)a5, nullptr};
 #else
-		auto cmd = "/bin/sh"_embed;
-		auto a1 = "-c"_embed;
-		auto a2 = "sleep 60"_embed;
+		auto cmd = "/bin/sh";
+		auto a1 = "-c";
+		auto a2 = "sleep 60";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
@@ -170,17 +170,17 @@ private:
 	static BOOL TestIsRunning()
 	{
 #if defined(PLATFORM_WINDOWS)
-		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		auto a1 = "/c"_embed;
-		auto a2 = "ping"_embed;
-		auto a3 = "-n"_embed;
-		auto a4 = "60"_embed;
-		auto a5 = "127.0.0.1"_embed;
+		auto cmd = "C:\\Windows\\System32\\cmd.exe";
+		auto a1 = "/c";
+		auto a2 = "ping";
+		auto a3 = "-n";
+		auto a4 = "60";
+		auto a5 = "127.0.0.1";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, (const CHAR *)a4, (const CHAR *)a5, nullptr};
 #else
-		auto cmd = "/bin/sh"_embed;
-		auto a1 = "-c"_embed;
-		auto a2 = "sleep 60"_embed;
+		auto cmd = "/bin/sh";
+		auto a1 = "-c";
+		auto a2 = "sleep 60";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
@@ -209,15 +209,15 @@ private:
 	static BOOL TestMoveSemantics()
 	{
 #if defined(PLATFORM_WINDOWS)
-		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		auto a1 = "/c"_embed;
-		auto a2 = "exit"_embed;
-		auto a3 = "0"_embed;
+		auto cmd = "C:\\Windows\\System32\\cmd.exe";
+		auto a1 = "/c";
+		auto a2 = "exit";
+		auto a3 = "0";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
-		auto cmd = "/bin/sh"_embed;
-		auto a1 = "-c"_embed;
-		auto a2 = "exit 0"_embed;
+		auto cmd = "/bin/sh";
+		auto a1 = "-c";
+		auto a2 = "exit 0";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 
@@ -252,15 +252,15 @@ private:
 	static BOOL TestCreateWithIO()
 	{
 #if defined(PLATFORM_WINDOWS)
-		auto cmd = "C:\\Windows\\System32\\cmd.exe"_embed;
-		auto a1 = "/c"_embed;
-		auto a2 = "exit"_embed;
-		auto a3 = "0"_embed;
+		auto cmd = "C:\\Windows\\System32\\cmd.exe";
+		auto a1 = "/c";
+		auto a2 = "exit";
+		auto a3 = "0";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, (const CHAR *)a3, nullptr};
 #else
-		auto cmd = "/bin/sh"_embed;
-		auto a1 = "-c"_embed;
-		auto a2 = "exit 0"_embed;
+		auto cmd = "/bin/sh";
+		auto a1 = "-c";
+		auto a2 = "exit 0";
 		const CHAR *args[] = {(const CHAR *)cmd, (const CHAR *)a1, (const CHAR *)a2, nullptr};
 #endif
 

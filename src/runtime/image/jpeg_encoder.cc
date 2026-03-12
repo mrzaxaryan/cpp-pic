@@ -169,7 +169,7 @@ enum HuffmanTableClass : INT32
 /// @brief Initialize the zig-zag reordering table on the stack
 static VOID InitZigZag(UINT8 zz[64])
 {
-	auto embedded = MakeEmbedArray<UINT8>(
+	const UINT8 embedded[] = {
 		0, 1, 5, 6, 14, 15, 27, 28,
 		2, 4, 7, 13, 16, 26, 29, 42,
 		3, 8, 12, 17, 25, 30, 41, 43,
@@ -177,8 +177,8 @@ static VOID InitZigZag(UINT8 zz[64])
 		10, 19, 23, 32, 39, 45, 52, 54,
 		20, 22, 33, 38, 46, 51, 55, 60,
 		21, 34, 37, 47, 50, 56, 59, 61,
-		35, 36, 48, 49, 57, 58, 62, 63);
-	Memory::Copy(zz, (PCVOID)embedded, 64);
+		35, 36, 48, 49, 57, 58, 62, 63};
+	Memory::Copy(zz, embedded, 64);
 }
 
 // ============================================================
@@ -694,8 +694,8 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 		header.APP0 = ByteOrder::Swap16(0xFFE0);
 		UINT16 jfifLen = sizeof(JFIFHeader) - 4; // exclude SOI & APP0 markers
 		header.jfifLen = ByteOrder::Swap16(jfifLen);
-		auto jfifId = "JFIF\0"_embed;
-		Memory::Copy(header.jfifId, (PCVOID)jfifId, jfifId.Length() + 1);
+		const CHAR jfifId[] = "JFIF\0";
+		Memory::Copy(header.jfifId, (PCVOID)jfifId, sizeof(jfifId));
 		header.version = ByteOrder::Swap16(0x0102);
 		header.units = 0x01;						// dots-per-inch
 		UINT16 density = ByteOrder::Swap16(0x0060); // 96 DPI
@@ -883,7 +883,7 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 	// Standard luminance quantization table (ITU-T T.81 Annex K.1)
 	UINT8 defaultQtLuma[64];
 	{
-		auto embedded = MakeEmbedArray<UINT8>(
+		const UINT8 embedded[] = {
 			16, 11, 10, 16, 24, 40, 51, 61,
 			12, 12, 14, 19, 26, 58, 60, 55,
 			14, 13, 16, 24, 40, 57, 69, 56,
@@ -891,14 +891,14 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 			18, 22, 37, 56, 68, 109, 103, 77,
 			24, 35, 55, 64, 81, 104, 113, 92,
 			49, 64, 78, 87, 103, 121, 120, 101,
-			72, 92, 95, 98, 112, 100, 103, 99);
-		Memory::Copy(defaultQtLuma, (PCVOID)embedded, 64);
+			72, 92, 95, 98, 112, 100, 103, 99};
+		Memory::Copy(defaultQtLuma, embedded, 64);
 	}
 
 	// Standard chrominance quantization table (ITU-T T.81 Annex K.1)
 	UINT8 defaultQtChroma[64];
 	{
-		auto embedded = MakeEmbedArray<UINT8>(
+		const UINT8 embedded[] = {
 			16, 18, 24, 47, 99, 99, 99, 99,
 			18, 21, 26, 66, 99, 99, 99, 99,
 			24, 26, 56, 99, 99, 99, 99, 99,
@@ -906,8 +906,8 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 			99, 99, 99, 99, 99, 99, 99, 99,
 			99, 99, 99, 99, 99, 99, 99, 99,
 			99, 99, 99, 99, 99, 99, 99, 99,
-			99, 99, 99, 99, 99, 99, 99, 99);
-		Memory::Copy(defaultQtChroma, (PCVOID)embedded, 64);
+			99, 99, 99, 99, 99, 99, 99, 99};
+		Memory::Copy(defaultQtChroma, embedded, 64);
 	}
 
 	EncoderState state;
@@ -942,7 +942,7 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 	// Standard Huffman tables (ITU-T T.81 Annex K.3)
 
 	// Chrominance AC values (K.3.3.2, Table K.6)
-	auto htChromaAcVals = MakeEmbedArray<UINT8>(
+	const UINT8 htChromaAcVals[] = {
 		0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21, 0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
 		0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91, 0xA1, 0xB1, 0xC1, 0x09, 0x23, 0x33, 0x52, 0xF0,
 		0x15, 0x62, 0x72, 0xD1, 0x0A, 0x16, 0x24, 0x34, 0xE1, 0x25, 0xF1, 0x17, 0x18, 0x19, 0x1A, 0x26,
@@ -953,36 +953,36 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 		0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3,
 		0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA,
 		0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
-		0xF9, 0xFA);
+		0xF9, 0xFA};
 
 	// Standard Huffman BITS tables (ITU-T T.81 Annex K.3)
 
 	// Luminance DC BITS (K.3.3.1, Table K.3)
 	UINT8 lumaDcBits[16];
 	{
-		auto e = MakeEmbedArray<UINT8>(0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0);
-		Memory::Copy(lumaDcBits, (PCVOID)e, 16);
+		const UINT8 e[] = {0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0};
+		Memory::Copy(lumaDcBits, e, 16);
 	}
 
 	// Luminance AC BITS (K.3.3.2, Table K.5)
 	UINT8 lumaAcBits[16];
 	{
-		auto e = MakeEmbedArray<UINT8>(0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7D);
-		Memory::Copy(lumaAcBits, (PCVOID)e, 16);
+		const UINT8 e[] = {0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7D};
+		Memory::Copy(lumaAcBits, e, 16);
 	}
 
 	// Chrominance DC BITS (K.3.3.1, Table K.4)
 	UINT8 chromaDcBits[16];
 	{
-		auto e = MakeEmbedArray<UINT8>(0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0);
-		Memory::Copy(chromaDcBits, (PCVOID)e, 16);
+		const UINT8 e[] = {0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
+		Memory::Copy(chromaDcBits, e, 16);
 	}
 
 	// Chrominance AC BITS (K.3.3.2, Table K.6)
 	UINT8 chromaAcBits[16];
 	{
-		auto e = MakeEmbedArray<UINT8>(0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77);
-		Memory::Copy(chromaAcBits, (PCVOID)e, 16);
+		const UINT8 e[] = {0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77};
+		Memory::Copy(chromaAcBits, e, 16);
 	}
 
 	state.htBits[LumaDC] = lumaDcBits;
@@ -995,14 +995,14 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 	// DC values (K.3.3.1, Tables K.3 & K.4)
 	UINT8 dcVals[12];
 	{
-		auto e = MakeEmbedArray<UINT8>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
-		Memory::Copy(dcVals, (PCVOID)e, 12);
+		const UINT8 e[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+		Memory::Copy(dcVals, e, 12);
 	}
 
 	// Luminance AC values (K.3.3.2, Table K.5)
 	UINT8 lumaAcVals[162];
 	{
-		auto e = MakeEmbedArray<UINT8>(
+		const UINT8 e[] = {
 			0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
 			0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08, 0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
 			0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28,
@@ -1013,13 +1013,13 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 			0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5,
 			0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
 			0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
-			0xF9, 0xFA);
-		Memory::Copy(lumaAcVals, (PCVOID)e, 162);
+			0xF9, 0xFA};
+		Memory::Copy(lumaAcVals, e, 162);
 	}
 
 	// Chrominance AC values (K.3.3.2, Table K.6)
 	UINT8 chromaAcVals[162];
-	Memory::Copy(chromaAcVals, (PCVOID)htChromaAcVals, 162);
+	Memory::Copy(chromaAcVals, htChromaAcVals, 162);
 
 	state.htVals[LumaDC] = dcVals;
 	state.htVals[LumaAC] = lumaAcVals;

@@ -65,7 +65,7 @@
  *
  * @par Example Usage:
  * @code
- * auto msg = "Hello, World!"_embed;
+ * auto msg = "Hello, World!";
  * CHAR encoded[64];
  * Base64::Encode(Span(msg.Data(), msg.Length()), Span(encoded));
  * // encoded = "SGVsbG8sIFdvcmxkIQ=="

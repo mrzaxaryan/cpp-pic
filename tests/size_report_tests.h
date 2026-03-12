@@ -12,7 +12,7 @@ public:
 
 		LOG_INFO("Running Size Report Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestPrintSortedSizes), "Object sizes sorted large to small"_embed);
+		RunTest(allPassed, &TestPrintSortedSizes, "Object sizes sorted large to small");
 
 		if (allPassed) LOG_INFO("All Size Report tests passed!");
 		else LOG_ERROR("Some Size Report tests failed!");
@@ -49,50 +49,50 @@ private:
 		INT32 count = 0;
 
 		// ── CORE layer ──
-		{ auto n = "Error"_embed;           CopyName(entries[count++], (PCCHAR)n, sizeof(Error)); }
-		{ auto n = "DOUBLE"_embed;          CopyName(entries[count++], (PCCHAR)n, sizeof(DOUBLE)); }
-		{ auto n = "IPAddress"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(IPAddress)); }
-		{ auto n = "Prng"_embed;            CopyName(entries[count++], (PCCHAR)n, sizeof(Prng)); }
-		{ auto n = "BinaryReader"_embed;    CopyName(entries[count++], (PCCHAR)n, sizeof(BinaryReader)); }
-		{ auto n = "BinaryWriter"_embed;    CopyName(entries[count++], (PCCHAR)n, sizeof(BinaryWriter)); }
-		{ auto n = "StringFormatter::Arg"_embed; CopyName(entries[count++], (PCCHAR)n, sizeof(StringFormatter::Argument)); }
+		{ auto n = "Error";           CopyName(entries[count++], (PCCHAR)n, sizeof(Error)); }
+		{ auto n = "double";          CopyName(entries[count++], (PCCHAR)n, sizeof(double)); }
+		{ auto n = "IPAddress";       CopyName(entries[count++], (PCCHAR)n, sizeof(IPAddress)); }
+		{ auto n = "Prng";            CopyName(entries[count++], (PCCHAR)n, sizeof(Prng)); }
+		{ auto n = "BinaryReader";    CopyName(entries[count++], (PCCHAR)n, sizeof(BinaryReader)); }
+		{ auto n = "BinaryWriter";    CopyName(entries[count++], (PCCHAR)n, sizeof(BinaryWriter)); }
+		{ auto n = "StringFormatter::Arg"; CopyName(entries[count++], (PCCHAR)n, sizeof(StringFormatter::Argument)); }
 
 		// ── PLATFORM layer ──
-		{ auto n = "SockAddr"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(SockAddr)); }
-		{ auto n = "SockAddr6"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(SockAddr6)); }
-		{ auto n = "Socket"_embed;          CopyName(entries[count++], (PCCHAR)n, sizeof(Socket)); }
-		{ auto n = "File"_embed;            CopyName(entries[count++], (PCCHAR)n, sizeof(File)); }
-		{ auto n = "DirectoryEntry"_embed;  CopyName(entries[count++], (PCCHAR)n, sizeof(DirectoryEntry)); }
-		{ auto n = "DirectoryIterator"_embed; CopyName(entries[count++], (PCCHAR)n, sizeof(DirectoryIterator)); }
-		{ auto n = "DateTime"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(DateTime)); }
-		{ auto n = "Random"_embed;          CopyName(entries[count++], (PCCHAR)n, sizeof(Random)); }
+		{ auto n = "SockAddr";        CopyName(entries[count++], (PCCHAR)n, sizeof(SockAddr)); }
+		{ auto n = "SockAddr6";       CopyName(entries[count++], (PCCHAR)n, sizeof(SockAddr6)); }
+		{ auto n = "Socket";          CopyName(entries[count++], (PCCHAR)n, sizeof(Socket)); }
+		{ auto n = "File";            CopyName(entries[count++], (PCCHAR)n, sizeof(File)); }
+		{ auto n = "DirectoryEntry";  CopyName(entries[count++], (PCCHAR)n, sizeof(DirectoryEntry)); }
+		{ auto n = "DirectoryIterator"; CopyName(entries[count++], (PCCHAR)n, sizeof(DirectoryIterator)); }
+		{ auto n = "DateTime";        CopyName(entries[count++], (PCCHAR)n, sizeof(DateTime)); }
+		{ auto n = "Random";          CopyName(entries[count++], (PCCHAR)n, sizeof(Random)); }
 
 		// ── RUNTIME crypto ──
-		{ auto n = "UInt128"_embed;         CopyName(entries[count++], (PCCHAR)n, sizeof(UInt128)); }
-		{ auto n = "ECCPoint"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(ECCPoint)); }
-		{ auto n = "Poly1305"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(Poly1305)); }
-		{ auto n = "ChaCha20Poly1305"_embed; CopyName(entries[count++], (PCCHAR)n, sizeof(ChaCha20Poly1305)); }
-		{ auto n = "ChaCha20Encoder"_embed; CopyName(entries[count++], (PCCHAR)n, sizeof(ChaCha20Encoder)); }
-		{ auto n = "ECC"_embed;             CopyName(entries[count++], (PCCHAR)n, sizeof(ECC)); }
-		{ auto n = "SHA256"_embed;          CopyName(entries[count++], (PCCHAR)n, sizeof(SHA256)); }
-		{ auto n = "SHA384"_embed;          CopyName(entries[count++], (PCCHAR)n, sizeof(SHA384)); }
-		{ auto n = "HMAC_SHA256"_embed;     CopyName(entries[count++], (PCCHAR)n, sizeof(HMAC_SHA256)); }
-		{ auto n = "HMAC_SHA384"_embed;     CopyName(entries[count++], (PCCHAR)n, sizeof(HMAC_SHA384)); }
+		{ auto n = "UInt128";         CopyName(entries[count++], (PCCHAR)n, sizeof(UInt128)); }
+		{ auto n = "ECCPoint";        CopyName(entries[count++], (PCCHAR)n, sizeof(ECCPoint)); }
+		{ auto n = "Poly1305";        CopyName(entries[count++], (PCCHAR)n, sizeof(Poly1305)); }
+		{ auto n = "ChaCha20Poly1305"; CopyName(entries[count++], (PCCHAR)n, sizeof(ChaCha20Poly1305)); }
+		{ auto n = "ChaCha20Encoder"; CopyName(entries[count++], (PCCHAR)n, sizeof(ChaCha20Encoder)); }
+		{ auto n = "ECC";             CopyName(entries[count++], (PCCHAR)n, sizeof(ECC)); }
+		{ auto n = "SHA256";          CopyName(entries[count++], (PCCHAR)n, sizeof(SHA256)); }
+		{ auto n = "SHA384";          CopyName(entries[count++], (PCCHAR)n, sizeof(SHA384)); }
+		{ auto n = "HMAC_SHA256";     CopyName(entries[count++], (PCCHAR)n, sizeof(HMAC_SHA256)); }
+		{ auto n = "HMAC_SHA384";     CopyName(entries[count++], (PCCHAR)n, sizeof(HMAC_SHA384)); }
 
 		// ── RUNTIME network / TLS ──
-		{ auto n = "TlsBuffer"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(TlsBuffer)); }
-		{ auto n = "TlsHash"_embed;         CopyName(entries[count++], (PCCHAR)n, sizeof(TlsHash)); }
-		{ auto n = "TlsState"_embed;        CopyName(entries[count++], (PCCHAR)n, sizeof(TlsState)); }
-		{ auto n = "TlsCipher"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(TlsCipher)); }
-		{ auto n = "TlsClient"_embed;       CopyName(entries[count++], (PCCHAR)n, sizeof(TlsClient)); }
-		{ auto n = "WebSocketFrame"_embed;  CopyName(entries[count++], (PCCHAR)n, sizeof(WebSocketFrame)); }
-		{ auto n = "WebSocketMessage"_embed; CopyName(entries[count++], (PCCHAR)n, sizeof(WebSocketMessage)); }
-		{ auto n = "WebSocketClient"_embed; CopyName(entries[count++], (PCCHAR)n, sizeof(WebSocketClient)); }
-		{ auto n = "HttpClient"_embed;      CopyName(entries[count++], (PCCHAR)n, sizeof(HttpClient)); }
+		{ auto n = "TlsBuffer";       CopyName(entries[count++], (PCCHAR)n, sizeof(TlsBuffer)); }
+		{ auto n = "TlsHash";         CopyName(entries[count++], (PCCHAR)n, sizeof(TlsHash)); }
+		{ auto n = "TlsState";        CopyName(entries[count++], (PCCHAR)n, sizeof(TlsState)); }
+		{ auto n = "TlsCipher";       CopyName(entries[count++], (PCCHAR)n, sizeof(TlsCipher)); }
+		{ auto n = "TlsClient";       CopyName(entries[count++], (PCCHAR)n, sizeof(TlsClient)); }
+		{ auto n = "WebSocketFrame";  CopyName(entries[count++], (PCCHAR)n, sizeof(WebSocketFrame)); }
+		{ auto n = "WebSocketMessage"; CopyName(entries[count++], (PCCHAR)n, sizeof(WebSocketMessage)); }
+		{ auto n = "WebSocketClient"; CopyName(entries[count++], (PCCHAR)n, sizeof(WebSocketClient)); }
+		{ auto n = "HttpClient";      CopyName(entries[count++], (PCCHAR)n, sizeof(HttpClient)); }
 
 		// ── Common template instantiations ──
-		{ auto n = "Span<UINT8>"_embed;                CopyName(entries[count++], (PCCHAR)n, sizeof(Span<UINT8>)); }
-		{ auto n = "Result<void,Error>"_embed;         CopyName(entries[count++], (PCCHAR)n, sizeof(Result<void, Error>)); }
+		{ auto n = "Span<UINT8>";                CopyName(entries[count++], (PCCHAR)n, sizeof(Span<UINT8>)); }
+		{ auto n = "Result<void,Error>";         CopyName(entries[count++], (PCCHAR)n, sizeof(Result<void, Error>)); }
 
 		// Bubble sort descending by size
 		for (INT32 i = 0; i < count - 1; i++)
@@ -111,8 +111,8 @@ private:
 
 		// Print header
 		LOG_INFO("");
-		LOG_INFO("  #   %-27s  %s", (PCCHAR)"Type"_embed, (PCCHAR)"Size"_embed);
-		LOG_INFO("  --- %-27s  %s", (PCCHAR)"---------------------------"_embed, (PCCHAR)"--------"_embed);
+		LOG_INFO("  #   %-27s  %s", (PCCHAR)"Type", (PCCHAR)"Size");
+		LOG_INFO("  --- %-27s  %s", (PCCHAR)"---------------------------", (PCCHAR)"--------");
 
 		// Print sorted results
 		for (INT32 i = 0; i < count; i++)

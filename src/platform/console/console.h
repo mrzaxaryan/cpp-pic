@@ -18,8 +18,6 @@
 
 #include "core/core.h"
 
-// EMBEDDED_FUNCTION_POINTER is now available for position-independent function pointers
-
 /**
  * Console - Static class providing console I/O operations
  *
@@ -46,8 +44,8 @@ private:
 	 *   TChar - Character type (CHAR or WCHAR) determined at compile-time
 	 *
 	 * POSITION-INDEPENDENT NOTE:
-	 *   The function pointer is wrapped with EMBEDDED_FUNCTION_POINTER
-	 *   to work correctly in position-independent code.
+	 *   Function pointer references are automatically transformed to
+	 *   PC-relative asm by the pic-transform LLVM pass.
 	 */
 	template <TCHAR TChar>
 	static BOOL FormatterCallback(PVOID context, TChar ch);
@@ -101,8 +99,8 @@ public:
 	 * @return Number of characters written
 	 *
 	 * USAGE:
-	 *   Console::Write<WCHAR>(L"Hello"_embed);    // Wide string
-	 *   Console::Write<CHAR>("Hello"_embed);      // Narrow string
+	 *   Console::Write<WCHAR>(L"Hello");    // Wide string
+	 *   Console::Write<CHAR>("Hello");      // Narrow string
 	 *
 	 * PERFORMANCE NOTE:
 	 *   Calls StringUtils::Length() to find null terminator - O(n) operation.
@@ -120,7 +118,7 @@ public:
 	 *   %ld   - Long signed decimal integer
 	 *   %X    - Uppercase hexadecimal
 	 *   %x    - Lowercase hexadecimal
-	 *   %f    - Floating-point (default precision) - accepts DOUBLE directly!
+	 *   %f    - Floating-point (default precision)
 	 *   %.Nf  - Floating-point with N decimal places
 	 *   %c    - Single character
 	 *   %s    - Narrow string (CHAR*)
@@ -135,9 +133,9 @@ public:
 	 *
 	 * USAGE:
 	 *   Console::WriteFormatted<WCHAR>(
-	 *       L"Value: %d, Pi: %.5f\n"_embed,
+	 *       L"Value: %d, Pi: %.5f\n",
 	 *       42,
-	 *       3.14159_embed  // Pass DOUBLE directly - no casting needed!
+	 *       3.14159
 	 *   );
 	 *
 	 * POSITION-INDEPENDENT IMPLEMENTATION:
@@ -198,38 +196,17 @@ BOOL Console::FormatterCallback([[maybe_unused]] PVOID context, TChar ch)
  * This function uses C++11 variadic templates for type-safe formatting.
  * No more VA_LIST or VA_ARG - everything is type-safe at compile time!
  *
- * POSITION-INDEPENDENT CALLBACK USING EMBEDDED_FUNCTION_POINTER:
- *
- * The challenge: FormatterCallback is a template function, so its address
- * depends on the template parameter TChar. We need to pass this address
- * to StringFormatter in a position-independent way.
- *
- * The solution using EMBEDDED_FUNCTION_POINTER:
- *   1. Template instantiation: FormatterCallback<TChar>
- *   2. PC-relative wrapper: EMBEDDED_FUNCTION_POINTER<BOOL (*)(PVOID, TChar), FormatterCallback<TChar>>
- *   3. Get position-independent pointer: ::Get()
- *   4. Pass to formatter: StringFormatter::Format(callback, ...)
- *
- * This works correctly in both PIC blob and normal EXE modes without runtime checks.
+ * Function pointer references (e.g. &FormatterCallback<TChar>) are automatically
+ * transformed to PC-relative asm by the pic-transform LLVM pass.
  *
  * BENEFITS OVER VA_LIST:
  *   - Type-safe: compiler knows exact types at compile time
- *   - Supports custom types like DOUBLE without casting
+ *   - Supports custom types without casting
  *   - No POD requirement
  *   - Better optimization opportunities
  */
 template <TCHAR TChar, typename... Args>
 UINT32 Console::WriteFormatted(const TChar *format, Args &&...args)
 {
-	// Get position-independent function pointer using EMBED_FUNC
-	// This works correctly regardless of where the code is loaded (PIC or normal EXE)
-	auto fixed = EMBED_FUNC(FormatterCallback<TChar>);
-
-	// Delegate to StringFormatter which handles all format specifier parsing
-	// Parameters:
-	//   fixed  - Position-independent callback function
-	//   nullptr   - Context (unused, could be used for buffering)
-	//   format - Format string (embedded, not in .rdata)
-	//   args   - Variadic template arguments (perfectly forwarded)
-	return StringFormatter::Format(fixed, nullptr, format, static_cast<Args &&>(args)...);
+	return StringFormatter::Format(&FormatterCallback<TChar>, nullptr, format, static_cast<Args &&>(args)...);
 }

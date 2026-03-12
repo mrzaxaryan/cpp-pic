@@ -110,11 +110,11 @@ Result<void, Error> HttpClient::SendGetRequest(PCCHAR host, PCCHAR path)
 	Span<CHAR> requestSpan(request, 2000);
 	USIZE pos = 0;
 
-	pos = AppendStr(requestSpan, pos, "GET "_embed);
+	pos = AppendStr(requestSpan, pos, "GET ");
 	pos = AppendStr(requestSpan, pos, path);
-	pos = AppendStr(requestSpan, pos, " HTTP/1.1\r\nHost: "_embed);
+	pos = AppendStr(requestSpan, pos, " HTTP/1.1\r\nHost: ");
 	pos = AppendStr(requestSpan, pos, host);
-	pos = AppendStr(requestSpan, pos, "\r\nConnection: close\r\n\r\n"_embed);
+	pos = AppendStr(requestSpan, pos, "\r\nConnection: close\r\n\r\n");
 
 	request[pos] = '\0';
 
@@ -139,18 +139,18 @@ Result<void, Error> HttpClient::SendPostRequest(PCCHAR host, PCCHAR path, Span<c
 	Span<CHAR> requestSpan(request, 1900);
 	USIZE pos = 0;
 
-	pos = AppendStr(requestSpan, pos, "POST "_embed);
+	pos = AppendStr(requestSpan, pos, "POST ");
 	pos = AppendStr(requestSpan, pos, path);
-	pos = AppendStr(requestSpan, pos, " HTTP/1.1\r\nHost: "_embed);
+	pos = AppendStr(requestSpan, pos, " HTTP/1.1\r\nHost: ");
 	pos = AppendStr(requestSpan, pos, host);
-	pos = AppendStr(requestSpan, pos, "\r\nContent-Length: "_embed);
+	pos = AppendStr(requestSpan, pos, "\r\nContent-Length: ");
 
 	// Convert data.Size() to string
 	CHAR lenStr[16];
 	StringUtils::UIntToStr((UINT32)data.Size(), Span<CHAR>(lenStr));
 
 	pos = AppendStr(requestSpan, pos, lenStr);
-	pos = AppendStr(requestSpan, pos, "\r\nConnection: close\r\n\r\n"_embed);
+	pos = AppendStr(requestSpan, pos, "\r\nConnection: close\r\n\r\n");
 
 	request[pos] = '\0';
 
@@ -192,22 +192,22 @@ Result<void, Error> HttpClient::ParseUrl(Span<const CHAR> url, CHAR (&host)[254]
 	secure = false;
 
 	UINT8 schemeLength = 0;
-	if (StringUtils::StartsWith<CHAR>(url, "ws://"_embed))
+	if (StringUtils::StartsWith<CHAR>(url, "ws://"))
 	{
 		secure = false;
 		schemeLength = 5; // ws://
 	}
-	else if (StringUtils::StartsWith<CHAR>(url, "wss://"_embed))
+	else if (StringUtils::StartsWith<CHAR>(url, "wss://"))
 	{
 		secure = true;
 		schemeLength = 6; // wss://
 	}
-	else if (StringUtils::StartsWith<CHAR>(url, "http://"_embed))
+	else if (StringUtils::StartsWith<CHAR>(url, "http://"))
 	{
 		secure = false;
 		schemeLength = 7; // http://
 	}
-	else if (StringUtils::StartsWith<CHAR>(url, "https://"_embed))
+	else if (StringUtils::StartsWith<CHAR>(url, "https://"))
 	{
 		secure = true;
 		schemeLength = 8; // https://
@@ -304,7 +304,7 @@ Result<INT64, Error> HttpClient::ReadResponseHeaders(TlsClient &client, UINT16 e
 	INT64 contentLength = -1;
 
 	// Content-Length state machine
-	auto clHeader = "Content-Length: "_embed;
+	auto clHeader = "Content-Length: ";
 	UINT32 matchIndex = 0;
 	BOOL parsingValue = false;
 	BOOL atLineStart = true;

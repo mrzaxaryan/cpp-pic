@@ -439,7 +439,7 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 	EaBuffer.EaNameLength  = 0x0F1E;
 	EaBuffer.EaValueLength = 0x001E;
 
-	auto afdOpSource = "AfdOpenPacketXX"_embed;
+	auto afdOpSource = "AfdOpenPacketXX";
 	Memory::Copy(EaBuffer.AfdOperation, afdOpSource, 16);
 	EaBuffer.AfdOperation[15] = '\0';
 
@@ -448,10 +448,10 @@ Result<Socket, Error> Socket::Create(const IPAddress &ipAddress, UINT16 port)
 	EaBuffer.Protocol      = IPPROTO_TCP;
 
 	UNICODE_STRING AfdName;
-	auto afdNameSource  = L"\\Device\\Afd\\Endpoint"_embed;
-	AfdName.Buffer      = (PWCHAR)(PCWCHAR)afdNameSource;
-	AfdName.Length      = afdNameSource.Length() * sizeof(WCHAR);
-	AfdName.MaximumLength = (afdNameSource.Length() + 1) * sizeof(WCHAR);
+	const WCHAR afdNameSource[]  = L"\\Device\\Afd\\Endpoint";
+	AfdName.Buffer      = (PWCHAR)afdNameSource;
+	AfdName.Length      = (sizeof(afdNameSource) / sizeof(WCHAR) - 1) * sizeof(WCHAR);
+	AfdName.MaximumLength = sizeof(afdNameSource);
 
 	OBJECT_ATTRIBUTES   Object;
 	IO_STATUS_BLOCK     IOSB;

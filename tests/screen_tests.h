@@ -12,9 +12,9 @@ public:
 
 		LOG_INFO("Running Screen Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestGetDevices), "GetDevices returns active displays"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestGetDevices_HasPrimary), "GetDevices includes a primary display"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestCapture), "Capture produces non-zero pixel data"_embed);
+		RunTest(allPassed, &TestGetDevices, "GetDevices returns active displays");
+		RunTest(allPassed, &TestGetDevices_HasPrimary, "GetDevices includes a primary display");
+		RunTest(allPassed, &TestCapture, "Capture produces non-zero pixel data");
 
 		if (allPassed)
 			LOG_INFO("All Screen tests passed!");

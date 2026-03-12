@@ -228,6 +228,150 @@ extern "C"
 		return value << shift;
 	}
 
+	// =========================================================================
+	// RISC-V 32: Floating-Point Conversion Functions
+	// =========================================================================
+
+	/**
+	 * __floatdidf - Convert signed 64-bit integer to double
+	 *
+	 * GCC libgcc calling convention:
+	 *   Input:  value (64-bit signed integer, in a0+a1)
+	 *   Output: double (in fa0 on ilp32d, or a0+a1 on ilp32)
+	 *
+	 * Called by compiler for: (double)int64_value (on 32-bit RISC-V)
+	 *
+	 * Algorithm: Manual IEEE-754 double construction (no FPU required)
+	 */
+	COMPILER_RUNTIME double __floatdidf(INT64 val)
+	{
+		if (val == 0)
+			return __builtin_bit_cast(double, (UINT64)0ULL);
+
+		BOOL negative = val < 0;
+		UINT64 absVal;
+
+		if (val == (INT64)0x8000000000000000LL)
+			absVal = 0x8000000000000000ULL;
+		else
+			absVal = negative ? (UINT64)(-val) : (UINT64)val;
+
+		const INT32 msb = 63 - __builtin_clzll(absVal);
+		const INT32 exponent = 1023 + msb;
+
+		UINT64 mantissa = absVal;
+		if (msb >= 52)
+			mantissa = mantissa >> (msb - 52);
+		else
+			mantissa = mantissa << (52 - msb);
+
+		mantissa = mantissa & 0x000FFFFFFFFFFFFFULL;
+
+		UINT64 sign = negative ? 0x8000000000000000ULL : 0ULL;
+		UINT64 exp = (UINT64)exponent << 52;
+
+		return __builtin_bit_cast(double, sign | exp | mantissa);
+	}
+
+	/**
+	 * __floatundidf - Convert unsigned 64-bit integer to double
+	 *
+	 * Called by compiler for: (double)uint64_value (on 32-bit RISC-V)
+	 */
+	COMPILER_RUNTIME double __floatundidf(UINT64 val)
+	{
+		if (val == 0)
+			return __builtin_bit_cast(double, (UINT64)0ULL);
+
+		const INT32 msb = 63 - __builtin_clzll(val);
+		const INT32 exponent = 1023 + msb;
+
+		UINT64 mantissa = val;
+		if (msb >= 52)
+			mantissa = mantissa >> (msb - 52);
+		else
+			mantissa = mantissa << (52 - msb);
+
+		mantissa = mantissa & 0x000FFFFFFFFFFFFFULL;
+		UINT64 exp = (UINT64)exponent << 52;
+
+		return __builtin_bit_cast(double, exp | mantissa);
+	}
+
+	/**
+	 * __fixdfdi - Convert double to signed 64-bit integer (truncate toward zero)
+	 *
+	 * Called by compiler for: (int64_t)double_value (on 32-bit RISC-V)
+	 */
+	COMPILER_RUNTIME INT64 __fixdfdi(double val)
+	{
+		UINT64 bits = __builtin_bit_cast(UINT64, val);
+		UINT64 signBit = bits & 0x8000000000000000ULL;
+		UINT64 expBits = bits & 0x7FF0000000000000ULL;
+		UINT64 mantissaBits = bits & 0x000FFFFFFFFFFFFFULL;
+
+		INT32 exponent = (INT32)(expBits >> 52) - 1023;
+
+		if (exponent < 0)
+			return 0LL;
+
+		if (exponent >= 63)
+		{
+			if (signBit)
+				return 0x8000000000000000LL;
+			else
+				return 0x7FFFFFFFFFFFFFFFLL;
+		}
+
+		UINT64 mantissaWithOne = mantissaBits | 0x0010000000000000ULL;
+
+		UINT64 intValue;
+		if (exponent <= 52)
+			intValue = mantissaWithOne >> (52 - exponent);
+		else
+			intValue = mantissaWithOne << (exponent - 52);
+
+		INT64 result = (INT64)intValue;
+		if (signBit)
+			result = -result;
+
+		return result;
+	}
+
+	/**
+	 * __fixunsdfdi - Convert double to unsigned 64-bit integer (truncate toward zero)
+	 *
+	 * Called by compiler for: (uint64_t)double_value (on 32-bit RISC-V)
+	 */
+	COMPILER_RUNTIME UINT64 __fixunsdfdi(double val)
+	{
+		UINT64 bits = __builtin_bit_cast(UINT64, val);
+		UINT64 signBit = bits & 0x8000000000000000ULL;
+		UINT64 expBits = bits & 0x7FF0000000000000ULL;
+		UINT64 mantissaBits = bits & 0x000FFFFFFFFFFFFFULL;
+
+		if (signBit)
+			return 0ULL;
+
+		INT32 exponent = (INT32)(expBits >> 52) - 1023;
+
+		if (exponent < 0)
+			return 0ULL;
+
+		if (exponent >= 64)
+			return 0xFFFFFFFFFFFFFFFFULL;
+
+		UINT64 mantissaWithOne = mantissaBits | 0x0010000000000000ULL;
+
+		UINT64 intValue;
+		if (exponent <= 52)
+			intValue = mantissaWithOne >> (52 - exponent);
+		else
+			intValue = mantissaWithOne << (exponent - 52);
+
+		return intValue;
+	}
+
 } // extern "C"
 
 #endif // ARCHITECTURE_RISCV32

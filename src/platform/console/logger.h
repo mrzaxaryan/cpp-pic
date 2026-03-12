@@ -14,12 +14,12 @@
 
 #include "platform/platform.h"
 #if defined(ENABLE_LOGGING)
-// Convenience macros that automatically embed strings
-#define LOG_INFO(format, ...) Logger::Info<CHAR>(format##_embed, ##__VA_ARGS__)
-#define LOG_ERROR(format, ...) Logger::Error<CHAR>(format##_embed, ##__VA_ARGS__)
-#define LOG_WARNING(format, ...) Logger::Warning<CHAR>(format##_embed, ##__VA_ARGS__)
+// Convenience macros for logging
+#define LOG_INFO(format, ...) Logger::Info<CHAR>(format, ##__VA_ARGS__)
+#define LOG_ERROR(format, ...) Logger::Error<CHAR>(format, ##__VA_ARGS__)
+#define LOG_WARNING(format, ...) Logger::Warning<CHAR>(format, ##__VA_ARGS__)
 #if defined(ENABLE_DEBUG_LOGGING)
-#define LOG_DEBUG(format, ...) Logger::Debug<CHAR>(format##_embed, ##__VA_ARGS__)
+#define LOG_DEBUG(format, ...) Logger::Debug<CHAR>(format, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)
 #endif // ENABLE_DEBUG_LOGGING
@@ -35,19 +35,30 @@
  * Logger - Static logging utility class
  *
  * Public methods are variadic templates that type-erase arguments into
- * StringFormatter::Argument arrays, then forward to a single non-templated
- * TimestampedLogOutput. This eliminates per-argument-type template
- * instantiations that previously bloated the binary.
+ * StringFormatter::Argument arrays, then format the message in the caller's
+ * inline scope.
  *
- * DESIGN NOTE: The colour prefix is written by each public method BEFORE
- * calling TimestampedLogOutput, not inside the NOINLINE helper. This is
- * required because the EMBEDDED_STRING holding the prefix must be constructed
- * and consumed (written via Console::Write) within the SAME inline scope.
- * Passing the prefix as a const CHAR* to a NOINLINE function fails on
- * FreeBSD x86_64 at -O1+ with LTO: the pointer-laundering asm barrier in
- * EMBEDDED_STRING::operator const TChar*() breaks the alias chain between
- * the stack data and the escaped pointer, allowing the compiler to reuse
- * the stack slot before the callee reads through the pointer.
+ * DESIGN NOTE (Windows aarch64 -Oz):
+ *   Three separate code-gen hazards require care here:
+ *
+ *   1. Stack-slot colouring: LLVM can merge PIC-transformed string allocas
+ *      whose lifetimes appear non-overlapping.  Combined with instruction
+ *      reordering this makes the format-string pointer read stale
+ *      colour-prefix data.  Fix: no PIC string literals in prefix/reset;
+ *      they are assembled from register immediates inside the NOINLINE
+ *      helper.
+ *
+ *   2. Tail-call optimisation: a NOINLINE function whose last statement is
+ *      Console::Write(Span) may be tail-called.  The epilogue tears down the
+ *      frame *before* Console::Write dereferences the Span pointer, leaving
+ *      the PIC data on a freed stack slot.  Fix: the reset sequence is
+ *      written char-by-char in the inline caller, not in a NOINLINE helper.
+ *
+ *   3. PIC pointer escape: passing a PIC-stack pointer (format string) to a
+ *      NOINLINE function can fail under -Oz because the compiler may
+ *      optimise away the stack stores or reuse the slot.  Fix: FormatWithArgs
+ *      is called in the inline template scope, never across a NOINLINE
+ *      boundary.
  */
 class Logger
 {
@@ -62,76 +73,106 @@ private:
 	}
 
 	/**
-	 * TimestampedLogOutput - Single non-templated helper for all log levels.
+	 * WritePrefixAndTimestamp - NOINLINE helper that emits the coloured
+	 * level tag and [HH:MM:SS] timestamp.
 	 *
-	 * The colour prefix has already been written by the caller; this function
-	 * emits the [HH:MM:SS] timestamp, the formatted message, and the ANSI
-	 * reset sequence.
-	 *
-	 * @param format - Format string with embedded specifiers
-	 * @param args   - Pre-erased argument array
+	 * The colour prefix is assembled from individual char stores (register
+	 * immediates, not a PIC string literal) so there is no stack-slot or
+	 * tail-call hazard.  The timestamp PIC string "[%s] " is the only
+	 * string literal in this frame and is consumed before the function
+	 * returns.
 	 */
-	static NOINLINE VOID TimestampedLogOutput(const CHAR *format, Span<const StringFormatter::Argument> args)
+	static NOINLINE VOID WritePrefixAndTimestamp(CHAR colorDigit, CHAR l1, CHAR l2, CHAR l3)
 	{
+		// ── colour prefix  "\033[0;3Xm[LVL] " ──────────────────────────
+		CHAR prefix[13];
+		prefix[0]  = '\033';
+		prefix[1]  = '[';
+		prefix[2]  = '0';
+		prefix[3]  = ';';
+		prefix[4]  = '3';
+		prefix[5]  = colorDigit;
+		prefix[6]  = 'm';
+		prefix[7]  = '[';
+		prefix[8]  = l1;
+		prefix[9]  = l2;
+		prefix[10] = l3;
+		prefix[11] = ']';
+		prefix[12] = ' ';
+		Console::Write(Span<const CHAR>(prefix, 13));
+
+		// ── timestamp [HH:MM:SS] ────────────────────────────────────────
 		DateTime now = DateTime::Now();
 		TimeOnlyString<CHAR> timeStr = now.ToTimeOnlyString<CHAR>();
+		StringFormatter::Format<CHAR>(&ConsoleCallbackA, nullptr, "[%s] ", (const CHAR *)timeStr);
+	}
 
-		auto consoleA = EMBED_FUNC(ConsoleCallbackA);
-		StringFormatter::Format<CHAR>(consoleA, nullptr, "[%s] "_embed, (const CHAR *)timeStr);
-		StringFormatter::FormatWithArgs<CHAR>(consoleA, nullptr, format, args);
-		Console::Write<CHAR>("\033[0m\n"_embed);
+	/**
+	 * WriteReset - Emit ANSI reset "\033[0m\n" char-by-char.
+	 *
+	 * MUST be called in the inline caller scope, not across a NOINLINE
+	 * boundary.  A NOINLINE function whose last statement is Console::Write
+	 * may be tail-called — the epilogue tears down the frame before the
+	 * Span pointer is dereferenced.  Writing char-by-char avoids this.
+	 */
+	static VOID WriteReset()
+	{
+		ConsoleCallbackA(nullptr, '\033');
+		ConsoleCallbackA(nullptr, '[');
+		ConsoleCallbackA(nullptr, '0');
+		ConsoleCallbackA(nullptr, 'm');
+		ConsoleCallbackA(nullptr, '\n');
+	}
+
+	/**
+	 * FormatBody - Format the message body from type-erased arguments.
+	 *
+	 * MUST remain inline (no NOINLINE) — the format string is a PIC-stack
+	 * pointer that becomes invalid across a NOINLINE call boundary under
+	 * -Oz.  The if-constexpr avoids zero-length array when no args.
+	 */
+	template <TCHAR TChar, typename... Args>
+	static VOID FormatBody(const TChar *format, Args... args)
+	{
+		if constexpr (sizeof...(Args) == 0)
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>());
+		else
+		{
+			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
+			StringFormatter::FormatWithArgs<CHAR>(&ConsoleCallbackA, nullptr, format, Span<const StringFormatter::Argument>(argArray));
+		}
 	}
 
 public:
 	template <TCHAR TChar, typename... Args>
 	static VOID Info(const TChar *format, Args... args)
 	{
-		Console::Write(Span<const CHAR>("\033[0;32m[INF] "_embed));
-		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
-		else
-		{
-			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
-		}
+		WritePrefixAndTimestamp('2', 'I', 'N', 'F');
+		FormatBody(format, args...);
+		WriteReset();
 	}
 
 	template <TCHAR TChar, typename... Args>
 	static VOID Error(const TChar *format, Args... args)
 	{
-		Console::Write(Span<const CHAR>("\033[0;31m[ERR] "_embed));
-		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
-		else
-		{
-			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
-		}
+		WritePrefixAndTimestamp('1', 'E', 'R', 'R');
+		FormatBody(format, args...);
+		WriteReset();
 	}
 
 	template <TCHAR TChar, typename... Args>
 	static VOID Warning(const TChar *format, Args... args)
 	{
-		Console::Write(Span<const CHAR>("\033[0;33m[WRN] "_embed));
-		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
-		else
-		{
-			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
-		}
+		WritePrefixAndTimestamp('3', 'W', 'R', 'N');
+		FormatBody(format, args...);
+		WriteReset();
 	}
 
 	template <TCHAR TChar, typename... Args>
 	static VOID Debug(const TChar *format, Args... args)
 	{
-		Console::Write(Span<const CHAR>("\033[0;33m[DBG] "_embed));
-		if constexpr (sizeof...(Args) == 0)
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>());
-		else
-		{
-			StringFormatter::Argument argArray[] = {StringFormatter::Argument(args)...};
-			TimestampedLogOutput(format, Span<const StringFormatter::Argument>(argArray));
-		}
+		WritePrefixAndTimestamp('3', 'D', 'B', 'G');
+		FormatBody(format, args...);
+		WriteReset();
 	}
 };

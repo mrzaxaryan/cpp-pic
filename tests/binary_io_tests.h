@@ -11,18 +11,18 @@ public:
 		BOOL allPassed = true;
 		LOG_INFO("Running BinaryIO Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestReaderReadU8), "BinaryReader Read<UINT8>"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReaderReadU16BE), "BinaryReader ReadU16BE"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReaderReadU24BE), "BinaryReader ReadU24BE"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReaderReadU32BE), "BinaryReader ReadU32BE"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReaderSkipAndRemaining), "BinaryReader Skip and Remaining"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReaderSetOffset), "BinaryReader SetOffset"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestReaderBoundsCheck), "BinaryReader bounds checking"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWriterWriteU8), "BinaryWriter WriteU8"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWriterWriteU16BE), "BinaryWriter WriteU16BE"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWriterWriteU32BE), "BinaryWriter WriteU32BE"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestWriterBoundsCheck), "BinaryWriter bounds checking"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestRoundTrip), "BinaryReader/Writer round-trip"_embed);
+		RunTest(allPassed, &TestReaderReadU8, "BinaryReader Read<UINT8>");
+		RunTest(allPassed, &TestReaderReadU16BE, "BinaryReader ReadU16BE");
+		RunTest(allPassed, &TestReaderReadU24BE, "BinaryReader ReadU24BE");
+		RunTest(allPassed, &TestReaderReadU32BE, "BinaryReader ReadU32BE");
+		RunTest(allPassed, &TestReaderSkipAndRemaining, "BinaryReader Skip and Remaining");
+		RunTest(allPassed, &TestReaderSetOffset, "BinaryReader SetOffset");
+		RunTest(allPassed, &TestReaderBoundsCheck, "BinaryReader bounds checking");
+		RunTest(allPassed, &TestWriterWriteU8, "BinaryWriter WriteU8");
+		RunTest(allPassed, &TestWriterWriteU16BE, "BinaryWriter WriteU16BE");
+		RunTest(allPassed, &TestWriterWriteU32BE, "BinaryWriter WriteU32BE");
+		RunTest(allPassed, &TestWriterBoundsCheck, "BinaryWriter bounds checking");
+		RunTest(allPassed, &TestRoundTrip, "BinaryReader/Writer round-trip");
 
 		if (allPassed)
 			LOG_INFO("All BinaryIO tests passed!");

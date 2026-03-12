@@ -18,14 +18,12 @@ VOID GetSystemInfo(SystemInfo *info)
 		LOG_ERROR("Failed to retrieve machine UUID");
 
 	// Hostname from HOSTNAME environment variable
-	auto hostnameVar = "HOSTNAME"_embed;
-	USIZE len = Environment::GetVariable((PCCHAR)hostnameVar, Span<CHAR>(info->Hostname, 255));
+	USIZE len = Environment::GetVariable("HOSTNAME", Span<CHAR>(info->Hostname, 255));
 
 	// Fallback: read /etc/hostname
 	if (len == 0)
 	{
-		auto path = L"/etc/hostname"_embed;
-		auto openResult = File::Open((const WCHAR *)path, File::ModeRead);
+		auto openResult = File::Open(L"/etc/hostname", File::ModeRead);
 		if (openResult)
 		{
 			File &file = openResult.Value();
@@ -39,48 +37,45 @@ VOID GetSystemInfo(SystemInfo *info)
 			}
 		}
 	}
-	
+
 	if (info->Hostname[0] == '\0')
 	{
-		auto fallback = "unknown"_embed;
-		StringUtils::CopyEmbed(fallback, Span<CHAR>(info->Hostname, 255));
+		StringUtils::Copy(Span<CHAR>(info->Hostname, 255), Span<const CHAR>("unknown"));
 	}
 
 	// CPU architecture (compile-time)
 #if defined(ARCHITECTURE_X86_64)
-	auto arch = "x86_64"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("x86_64"));
 #elif defined(ARCHITECTURE_I386)
-	auto arch = "i386"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("i386"));
 #elif defined(ARCHITECTURE_AARCH64)
-	auto arch = "aarch64"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("aarch64"));
 #elif defined(ARCHITECTURE_ARMV7A)
-	auto arch = "armv7a"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("armv7a"));
 #elif defined(ARCHITECTURE_RISCV64)
-	auto arch = "riscv64"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("riscv64"));
 #elif defined(ARCHITECTURE_RISCV32)
-	auto arch = "riscv32"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("riscv32"));
 #elif defined(ARCHITECTURE_MIPS64)
-	auto arch = "mips64"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("mips64"));
 #else
-	auto arch = "unknown"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Architecture, 31), Span<const CHAR>("unknown"));
 #endif
-	StringUtils::CopyEmbed(arch, Span<CHAR>(info->Architecture, 31));
 
 	// OS platform (compile-time)
 #if defined(PLATFORM_LINUX)
-	auto platform = "linux"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("linux"));
 #elif defined(PLATFORM_MACOS)
-	auto platform = "macos"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("macos"));
 #elif defined(PLATFORM_ANDROID)
-	auto platform = "android"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("android"));
 #elif defined(PLATFORM_IOS)
-	auto platform = "ios"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("ios"));
 #elif defined(PLATFORM_FREEBSD)
-	auto platform = "freebsd"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("freebsd"));
 #elif defined(PLATFORM_SOLARIS)
-	auto platform = "solaris"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("solaris"));
 #else
-	auto platform = "unknown"_embed;
+	StringUtils::Copy(Span<CHAR>(info->Platform, 31), Span<const CHAR>("unknown"));
 #endif
-	StringUtils::CopyEmbed(platform, Span<CHAR>(info->Platform, 31));
 }

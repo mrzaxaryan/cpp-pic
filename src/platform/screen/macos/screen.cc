@@ -100,7 +100,7 @@ struct CGFunctions
 /// @return Function pointer, or nullptr on failure
 static PVOID ResolveCG(const CHAR *name)
 {
-	auto cgPath = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics"_embed;
+	auto cgPath = "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics";
 	return ResolveFrameworkFunction((const CHAR *)cgPath, name);
 }
 
@@ -108,7 +108,7 @@ static PVOID ResolveCG(const CHAR *name)
 /// @return Function pointer, or nullptr on failure
 static PVOID ResolveCF(const CHAR *name)
 {
-	auto cfPath = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"_embed;
+	auto cfPath = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
 	return ResolveFrameworkFunction((const CHAR *)cfPath, name);
 }
 
@@ -117,21 +117,21 @@ static PVOID ResolveCF(const CHAR *name)
 /// @return true if all functions resolved successfully
 static BOOL LoadCGFunctions(CGFunctions &cg)
 {
-	auto n0 = "CGMainDisplayID"_embed;
-	auto n1 = "CGGetActiveDisplayList"_embed;
-	auto n2 = "CGDisplayBounds"_embed;
-	auto n3 = "CGDisplayIsMain"_embed;
-	auto n4 = "CGDisplayCreateImage"_embed;
-	auto n5 = "CGImageGetWidth"_embed;
-	auto n6 = "CGImageGetHeight"_embed;
-	auto n7 = "CGImageGetBitsPerPixel"_embed;
-	auto n8 = "CGImageGetBytesPerRow"_embed;
-	auto n9 = "CGImageGetBitmapInfo"_embed;
-	auto n10 = "CGImageGetDataProvider"_embed;
-	auto n11 = "CGDataProviderCopyData"_embed;
-	auto n12 = "CFDataGetBytePtr"_embed;
-	auto n13 = "CFDataGetLength"_embed;
-	auto n14 = "CFRelease"_embed;
+	auto n0 = "CGMainDisplayID";
+	auto n1 = "CGGetActiveDisplayList";
+	auto n2 = "CGDisplayBounds";
+	auto n3 = "CGDisplayIsMain";
+	auto n4 = "CGDisplayCreateImage";
+	auto n5 = "CGImageGetWidth";
+	auto n6 = "CGImageGetHeight";
+	auto n7 = "CGImageGetBitsPerPixel";
+	auto n8 = "CGImageGetBytesPerRow";
+	auto n9 = "CGImageGetBitmapInfo";
+	auto n10 = "CGImageGetDataProvider";
+	auto n11 = "CGDataProviderCopyData";
+	auto n12 = "CFDataGetBytePtr";
+	auto n13 = "CFDataGetLength";
+	auto n14 = "CFRelease";
 
 	cg.MainDisplayID = (CGMainDisplayIDFn)ResolveCG((const CHAR *)n0);
 	cg.GetActiveDisplayList = (CGGetActiveDisplayListFn)ResolveCG((const CHAR *)n1);

@@ -18,7 +18,7 @@
  *
  * USAGE:
  *   BOOL allPassed = true;
- *   RunTest(allPassed, TestFunction, "Test description"_embed);
+ *   RunTest(allPassed, TestFunction, "Test description");
  *
  * @param allPassedVar - Boolean variable to track overall test status
  * @param testFunc     - Test function to execute (must return BOOL)
@@ -27,16 +27,20 @@
  */
 #if defined(ENABLE_LOGGING)
 template <typename TestFunc>
-inline BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc, PCCHAR description)
+NOINLINE BOOL RunTest(BOOL &allPassedVar, TestFunc testFunc, PCCHAR description)
 {
-	if (!testFunc())
+	BOOL passed = testFunc();
+	if (!passed)
 	{
 		allPassedVar = false;
 		LOG_ERROR("  FAILED: %s", description);
-		return false;
 	}
-	LOG_INFO("  PASSED: %s", description);
-	return true;
+	else
+	{
+		LOG_INFO("  PASSED: %s", description);
+	}
+	asm volatile("" ::: "memory");
+	return passed;
 }
 #else
 template <typename TestFunc>

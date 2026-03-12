@@ -6,7 +6,7 @@ include_guard(GLOBAL)
 
 # Validate: macOS only supports x86_64 and aarch64
 if(NOT PIR_ARCH MATCHES "^(x86_64|aarch64)$")
-    message(FATAL_ERROR "macOS only supports x86_64 and aarch64 (got: ${PIR_ARCH})")
+    message(FATAL_ERROR "[pir:macos] Unsupported architecture '${PIR_ARCH}'. Valid: x86_64, aarch64")
 endif()
 
 pir_get_target_info()
@@ -17,17 +17,6 @@ list(APPEND PIR_INCLUDE_PATHS
 
 # macOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
-
-# Prevent GOT indirection. macOS enforces PIC, so by default the compiler may
-# emit GOT-relative relocations instead of direct PC-relative accesses:
-#   x86_64:  mov sym@GOTPCREL(%rip), %rax  →  lea sym(%rip), %rax
-#   aarch64: adrp+ldr via GOT page          →  adrp+add direct
-# The linker materializes these into a __DATA_CONST,__got section — a synthetic
-# section that CANNOT be merged into __TEXT,__text via -rename_section. Since
-# the PIC loader only maps __TEXT,__text, any GOT reference hits unmapped memory
-# and crashes (SIGSEGV). This flag forces direct PC-relative access for all
-# data symbols on both architectures.
-list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data)
 
 # Force hidden visibility in all build types. Without hidden visibility the
 # linker treats weak symbols (e.g. template explicit instantiations like
@@ -52,8 +41,10 @@ if(PIR_ARCH STREQUAL "x86_64")
     # (where interrupts clobber the red zone) and is standard practice for
     # freestanding / position-independent code that makes direct syscalls.
     list(APPEND PIR_BASE_FLAGS -mno-red-zone)
+    pir_log_debug_at("macos" "x86_64: -mno-red-zone, static linking")
 elseif(PIR_ARCH STREQUAL "aarch64")
     list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
+    pir_log_debug_at("macos" "aarch64: -mstack-probe-size=0, dynamic (dyld required)")
 endif()
 
 # On non-macOS hosts (e.g. Linux/WSL cross-compilation), use LLD explicitly.
@@ -62,6 +53,9 @@ endif()
 # ld64.lld so -fuse-ld=lld is invalid there.
 if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
+    pir_log_verbose_at("macos" "Cross-compiling: using LLD")
+else()
+    pir_log_verbose_at("macos" "Native build: using Apple ld")
 endif()
 
 # Linker configuration (Mach-O)
@@ -113,10 +107,11 @@ endif()
 # which is inherently position-independent.
 if(PIR_BUILD_TYPE STREQUAL "release")
     set_source_files_properties(
-        "${PIR_ROOT_DIR}/src/runtime/entry_point.cc"
+        "${PIR_ROOT_DIR}/src/entry_point.cc"
         PROPERTIES
         COMPILE_FLAGS "-fno-lto"
     )
+    pir_log_debug_at("macos" "entry_point.cc: -fno-lto (entry-point ordering fix)")
 endif()
 
 # On ARM64, the linker adds dyld_stub_binder to the initial undefined symbols

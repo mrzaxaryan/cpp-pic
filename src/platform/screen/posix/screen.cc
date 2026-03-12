@@ -79,7 +79,7 @@ constexpr USIZE FBIOGTYPE = 0x4600;
 /// @return File descriptor on success, negative errno on failure
 static SSIZE OpenFramebuffer()
 {
-	auto devFb = "/dev/fb"_embed;
+	auto devFb = "/dev/fb";
 	CHAR path[8];
 	Memory::Copy(path, (const CHAR *)devFb, 8);
 
@@ -489,7 +489,7 @@ constexpr USIZE DRM_IOCTL_GEM_CLOSE         = 0x40086409;
 /// @return File descriptor on success, negative errno on failure
 static SSIZE OpenFramebuffer(UINT32 index)
 {
-	auto devFb = "/dev/fb"_embed;
+	auto devFb = "/dev/fb";
 	CHAR path[24];
 	Memory::Copy(path, (const CHAR *)devFb, 8);
 	path[7] = '0' + (CHAR)index;
@@ -506,7 +506,7 @@ static SSIZE OpenFramebuffer(UINT32 index)
 	// Android framebuffer lives at /dev/graphics/fb<N> instead of /dev/fb<N>
 	if (fd < 0)
 	{
-		auto devGfxFb = "/dev/graphics/fb"_embed;
+		auto devGfxFb = "/dev/graphics/fb";
 		Memory::Copy(path, (const CHAR *)devGfxFb, 17);
 		path[16] = '0' + (CHAR)index;
 		path[17] = '\0';
@@ -527,7 +527,7 @@ static SSIZE OpenFramebuffer(UINT32 index)
 /// @return File descriptor on success, negative errno on failure
 static SSIZE OpenDrmCard(UINT32 index)
 {
-	auto devDri = "/dev/dri/card"_embed;
+	auto devDri = "/dev/dri/card";
 	CHAR path[16];
 	Memory::Copy(path, (const CHAR *)devDri, 14);
 	path[13] = '0' + (CHAR)index;

@@ -344,9 +344,9 @@ Result<void, Error> ChaCha20Poly1305::KeySetup(Span<const UINT8> key)
 	this->state[5] = U8To32Little(k + 4);
 	this->state[6] = U8To32Little(k + 8);
 	this->state[7] = U8To32Little(k + 12);
-	// Declare _embed strings separately to avoid type deduction issues with ternary
-	auto constants32 = "expand 32-byte k"_embed;
-	auto constants16 = "expand 16-byte k"_embed;
+	// Declare strings separately to avoid type deduction issues with ternary
+	auto constants32 = "expand 32-byte k";
+	auto constants16 = "expand 16-byte k";
 	const CHAR *constants = keyBits == 256 ? (const CHAR *)constants32 : (const CHAR *)constants16;
 	if (keyBits == 256)
 	{

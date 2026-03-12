@@ -6,7 +6,7 @@ include_guard(GLOBAL)
 
 # Validate: iOS only supports aarch64
 if(NOT PIR_ARCH STREQUAL "aarch64")
-    message(FATAL_ERROR "iOS only supports aarch64 (got: ${PIR_ARCH})")
+    message(FATAL_ERROR "[pir:ios] Unsupported architecture '${PIR_ARCH}'. Valid: aarch64")
 endif()
 
 pir_get_target_info()
@@ -21,11 +21,6 @@ list(APPEND PIR_INCLUDE_PATHS
 # iOS-specific compiler flags
 list(APPEND PIR_BASE_FLAGS -fno-stack-protector)
 
-# Prevent GOT indirection. Same rationale as macOS — iOS enforces PIC and
-# the compiler may emit GOT-relative relocations. This flag forces direct
-# PC-relative access for all data symbols.
-list(APPEND PIR_BASE_FLAGS -fdirect-access-external-data)
-
 # Force hidden visibility to eliminate lazy-binding stubs and __DATA sections.
 list(APPEND PIR_BASE_FLAGS -fvisibility=hidden)
 
@@ -35,6 +30,9 @@ list(APPEND PIR_BASE_FLAGS -mstack-probe-size=0)
 # On non-Darwin hosts (e.g. Linux cross-compilation), use LLD explicitly.
 if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     list(APPEND PIR_BASE_LINK_FLAGS -fuse-ld=lld)
+    pir_log_verbose_at("ios" "Cross-compiling: using LLD")
+else()
+    pir_log_verbose_at("ios" "Native build: using Apple ld")
 endif()
 
 # Linker configuration (Mach-O)
@@ -54,10 +52,11 @@ endif()
 # as macOS ARM64 — Apple's ld places non-LTO input sections before LTO ones.
 if(PIR_BUILD_TYPE STREQUAL "release")
     set_source_files_properties(
-        "${PIR_ROOT_DIR}/src/runtime/entry_point.cc"
+        "${PIR_ROOT_DIR}/src/entry_point.cc"
         PROPERTIES
         COMPILE_FLAGS "-fno-lto"
     )
+    pir_log_debug_at("ios" "entry_point.cc: -fno-lto (entry-point ordering fix)")
 endif()
 
 # iOS ARM64 requires dyld (same as macOS ARM64). Use -undefined dynamic_lookup

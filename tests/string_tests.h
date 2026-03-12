@@ -12,13 +12,13 @@ public:
 
 		LOG_INFO("Running String Tests...");
 
-		RunTest(allPassed, EMBED_FUNC(TestLengthNarrow), "Narrow string length"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestLengthWide), "Wide string length"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestLengthEmpty), "Empty string length"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestToLowerCaseAscii), "ToLowerCase ASCII"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestToLowerCasePreserves), "ToLowerCase preserves non-uppercase"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestUTF16ToUTF8BasicAscii), "UTF16::ToUTF8 basic ASCII"_embed);
-		RunTest(allPassed, EMBED_FUNC(TestUTF16ToUTF8Empty), "UTF16::ToUTF8 empty string"_embed);
+		RunTest(allPassed, &TestLengthNarrow, "Narrow string length");
+		RunTest(allPassed, &TestLengthWide, "Wide string length");
+		RunTest(allPassed, &TestLengthEmpty, "Empty string length");
+		RunTest(allPassed, &TestToLowerCaseAscii, "ToLowerCase ASCII");
+		RunTest(allPassed, &TestToLowerCasePreserves, "ToLowerCase preserves non-uppercase");
+		RunTest(allPassed, &TestUTF16ToUTF8BasicAscii, "UTF16::ToUTF8 basic ASCII");
+		RunTest(allPassed, &TestUTF16ToUTF8Empty, "UTF16::ToUTF8 empty string");
 
 		if (allPassed)
 			LOG_INFO("All String tests passed!");
@@ -31,9 +31,9 @@ public:
 private:
 	static BOOL TestLengthNarrow()
 	{
-		auto str1 = "Hello"_embed;
-		auto str2 = "Hello, World!"_embed;
-		auto str3 = "A"_embed;
+		auto str1 = "Hello";
+		auto str2 = "Hello, World!";
+		auto str3 = "A";
 
 		if (StringUtils::Length((const CHAR *)str1) != 5)
 		{
@@ -56,9 +56,9 @@ private:
 
 	static BOOL TestLengthWide()
 	{
-		auto str1 = L"Hello"_embed;
-		auto str2 = L"Hello, World!"_embed;
-		auto str3 = L"A"_embed;
+		auto str1 = L"Hello";
+		auto str2 = L"Hello, World!";
+		auto str3 = L"A";
 
 		if (StringUtils::Length((const WCHAR *)str1) != 5)
 		{
@@ -81,8 +81,8 @@ private:
 
 	static BOOL TestLengthEmpty()
 	{
-		auto emptyNarrow = ""_embed;
-		auto emptyWide = L""_embed;
+		auto emptyNarrow = "";
+		auto emptyWide = L"";
 
 		if (StringUtils::Length((const CHAR *)emptyNarrow) != 0)
 		{
@@ -180,7 +180,7 @@ private:
 
 	static BOOL TestUTF16ToUTF8BasicAscii()
 	{
-		auto wide = L"Hello"_embed;
+		auto wide = L"Hello";
 		CHAR utf8[16];
 
 		USIZE wideLen = StringUtils::Length((const WCHAR *)wide);
@@ -195,7 +195,7 @@ private:
 		}
 
 		// Verify content
-		auto expected_hello = "Hello"_embed;
+		auto expected_hello = "Hello";
 		if (Memory::Compare(utf8, (const CHAR *)expected_hello, 6) != 0)
 		{
 			LOG_ERROR("UTF16->UTF8 content mismatch");
@@ -207,7 +207,7 @@ private:
 
 	static BOOL TestUTF16ToUTF8Empty()
 	{
-		auto wide = L""_embed;
+		auto wide = L"";
 		CHAR utf8[16];
 
 		USIZE wideLen = StringUtils::Length((const WCHAR *)wide);
@@ -222,7 +222,7 @@ private:
 		}
 
 		// Should be null terminated
-		auto expected_empty = ""_embed;
+		auto expected_empty = "";
 		if (Memory::Compare(utf8, (const CHAR *)expected_empty, 1) != 0)
 		{
 			LOG_ERROR("UTF16->UTF8 empty content mismatch");

@@ -20,6 +20,7 @@ if(PIR_ARCH STREQUAL "armv7a")
     # float ops in hardware (eliminating __aeabi_d* dependencies) while keeping
     # the soft-float calling convention required by the androideabi ABI.
     list(APPEND PIR_BASE_FLAGS -mfpu=vfpv3-d16 -mfloat-abi=softfp)
+    pir_log_debug_at("android" "armv7a: -mfpu=vfpv3-d16 -mfloat-abi=softfp (hardware FP)")
 endif()
 
 # Linker configuration (ELF)

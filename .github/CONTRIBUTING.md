@@ -25,7 +25,9 @@ Thank you for your interest in contributing to PIR! This guide covers everything
 
 ## Quick Start
 
-**Requirements:** Clang/LLVM 21+, CMake 3.20+, Ninja 1.10+, C++23. See [Toolchain Installation](#toolchain-installation) below.
+**Requirements:** Clang/LLVM 22+, CMake 3.20+, Ninja 1.10+, C++23. See [Toolchain Installation](#toolchain-installation) below.
+
+> **Windows users:** This project must be built using WSL (Windows Subsystem for Linux). Install WSL, then follow the Linux instructions below to set up the toolchain inside your WSL distribution.
 
 ```bash
 # Build
@@ -42,35 +44,24 @@ Presets: `windows|linux|macos|ios|freebsd|uefi` x `i386|x86_64|armv7a|aarch64` x
 
 ## Toolchain Installation
 
-### Windows
+### Windows (via WSL)
 
-**Prerequisites:** [winget](https://github.com/microsoft/winget-cli) (pre-installed on Windows 11 and recent Windows 10).
+This project requires LLVM 22.1.1, which is not available as a native Windows package. **You must use WSL (Windows Subsystem for Linux) to build.**
 
-```powershell
-# Install all dependencies
-winget install --id Kitware.CMake && winget install --id Ninja-build.Ninja && winget install --id LLVM.LLVM
-
-# Optional: Install Doxygen for documentation generation
-winget install -e --id DimitriVanHeesch.Doxygen
-```
-
-**Important:** After installation, restart your terminal or log out and log back in for the PATH changes to take effect.
-
-Verify:
-
-```powershell
-clang --version && clang++ --version && lld-link --version && cmake --version && ninja --version
-```
+1. Install WSL if you haven't already:
+   ```powershell
+   wsl --install
+   ```
+2. Open your WSL terminal and follow the Linux instructions below.
 
 ### Linux (Ubuntu/Debian)
 
 ```bash
-
-# Install all dependencies (LLVM 21)
-LLVM_VER=21 && sudo apt-get update && sudo apt-get install -y wget lsb-release ca-certificates gnupg cmake ninja-build && sudo mkdir -p /etc/apt/keyrings && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/apt.llvm.org.gpg >/dev/null && echo "deb [signed-by=/etc/apt/keyrings/apt.llvm.org.gpg] http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-${LLVM_VER} main" | sudo tee /etc/apt/sources.list.d/llvm.list && sudo apt-get update && sudo apt-get install -y clang-${LLVM_VER} clang++-${LLVM_VER} lld-${LLVM_VER} llvm-${LLVM_VER} lldb-${LLVM_VER} && sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/llvm-strings llvm-strings /usr/bin/llvm-strings-${LLVM_VER} 100 && sudo update-alternatives --install /usr/bin/lldb-dap lldb-dap /usr/bin/lldb-dap-${LLVM_VER} 100 && sudo update-alternatives --set clang "/usr/bin/clang-${LLVM_VER}" && sudo update-alternatives --set clang++ "/usr/bin/clang++-${LLVM_VER}" && sudo update-alternatives --set lld "/usr/bin/lld-${LLVM_VER}" && sudo update-alternatives --set llvm-objdump "/usr/bin/llvm-objdump-${LLVM_VER}" && sudo update-alternatives --set llvm-objcopy "/usr/bin/llvm-objcopy-${LLVM_VER}" && sudo update-alternatives --set llvm-strings "/usr/bin/llvm-strings-${LLVM_VER}" && sudo update-alternatives --set lldb-dap "/usr/bin/lldb-dap-${LLVM_VER}"
+# Install build tools, download LLVM 22 from GitHub releases, and add to PATH
+sudo apt-get update && sudo apt-get install -y cmake ninja-build xz-utils libstdc++-14-dev zlib1g-dev libzstd-dev && LLVM_VER=22.1.1 && LLVM_ARCH=$(uname -m | sed 's/aarch64/ARM64/;s/x86_64/X64/') && wget --show-progress -q "https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VER}/LLVM-${LLVM_VER}-Linux-${LLVM_ARCH}.tar.xz" -O /tmp/llvm.tar.xz && sudo mkdir -p /usr/local/llvm && sudo tar -xf /tmp/llvm.tar.xz -C /usr/local/llvm --strip-components=1 && rm /tmp/llvm.tar.xz && echo 'export PATH="/usr/local/llvm/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ```
 
-**Note:** To install a different LLVM version, change `LLVM_VER=21` to your desired version (e.g., `LLVM_VER=22`).
+**Note:** To install a different LLVM version, change `LLVM_VER=22.1.1` to your desired version (e.g., `LLVM_VER=23.1.0`).
 
 Verify:
 
@@ -138,8 +129,7 @@ src/                        # Source layers
     memory/                 # Memory operations (Copy, Set, Compare, Zero)
     math/                   # Math utilities, bit operations, byte order
     binary/                 # Binary reader/writer
-    types/                  # Primitives, Span, Result, Error, Double, IP address
-      embedded/             # EMBEDDED_STRING, EMBEDDED_DOUBLE, EMBEDDED_ARRAY, EMBEDDED_FUNCTION_POINTER
+    types/                  # Primitives, Span, Result, Error, IP address
     string/                 # String utilities and formatting
     algorithms/             # DJB2 hashing, Base64
     encoding/               # UTF-16
@@ -178,9 +168,9 @@ src/                        # Source layers
       solaris/              # Solaris-specific environment, platform, process
       freebsd/              # FreeBSD-specific environment, platform, process
       uefi/                 # UEFI-specific system operations
+  entry_point.cc            # Program entry point (no CRT)
   runtime/                  # RUNTIME layer (.h + .cc co-located)
     runtime.h               # Aggregate header (CORE + PLATFORM + RUNTIME)
-    entry_point.cc          # Program entry point (no CRT)
     crypto/                 # SHA2, ECC, ChaCha20
     network/                # DNS, HTTP, WebSocket
       tls/                  # TLS 1.3 implementation
@@ -196,14 +186,11 @@ Three-layer architecture (RUNTIME > PLATFORM > CORE) - upper layers depend on lo
 
 The binary must contain **only** a `.text` section. No `.rdata`, `.rodata`, `.data`, or `.bss`. Verified automatically by `cmake/VerifyPICMode.cmake`.
 
+The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass runs automatically during compilation and eliminates data sections by converting global constants (strings, floats, arrays) into stack-local immediate stores. This means you can write normal C++ string literals, float constants, and const arrays -- they are transformed automatically. The tool is acquired automatically during the CMake configure step: from PATH if already installed, or built from `tools/pic-transform` source using the LLVM dev files.
+
 | Forbidden | Use Instead |
 |-----------|-------------|
-| `"hello"` string literals | `"hello"_embed` |
-| `L"hello"` wide strings | `L"hello"_embed` |
-| `3.14` float literals | `3.14_embed` |
-| `&MyFunc` function pointers | `EMBED_FUNC(MyFunc)` |
 | Global/static variables | Stack-local variables |
-| `const`/`constexpr` arrays | `MakeEmbedArray<T>(vals...)` |
 | STL containers/algorithms | Custom PIR implementations |
 | Exceptions (`throw`/`try`/`catch`) | `Result<T, Error>` |
 | Raw `BOOL`/`NTSTATUS`/`SSIZE` for fallible returns | `Result<T, Error>` or `Result<void, Error>` |
@@ -283,11 +270,11 @@ Platform-specific OS API wrappers must include `@see` links to the official Micr
 
 | Kind | Convention | Examples |
 |------|-----------|----------|
-| Primitive typedefs | `UPPER_CASE` | `UINT32`, `INT64`, `WCHAR`, `PVOID`, `BOOL`, `DOUBLE` |
+| Primitive typedefs | `UPPER_CASE` | `UINT32`, `INT64`, `WCHAR`, `PVOID`, `BOOL`, `DOUBLE` (typedef for native `double`) |
 | Pointer typedefs | `P` prefix (`PP` double, `PC` const) | `PCHAR`, `PWCHAR`, `PPVOID`, `PCCHAR` |
 | Classes | `PascalCase`; all-caps for acronym names | `Socket`, `HttpClient`, `TlsBuffer`, `NTDLL`, `ECC`, `DNS` |
 | Structs (Windows-style) | `_NAME` with typedef | `typedef struct _OBJECT_ATTRIBUTES { ... } OBJECT_ATTRIBUTES;` |
-| Template utility types | `UPPER_CASE` | `EMBEDDED_STRING<...>`, `EMBEDDED_ARRAY<...>`, `VOID_TO_TAG<T>` |
+| Template utility types | `UPPER_CASE` | `VOID_TO_TAG<T>` |
 | Template classes | `PascalCase` | `Result<T, E>`, `Span<T>`, `SHABase<Traits>` |
 | Enum names | `PascalCase` | `ErrorCodes`, `PlatformKind`, `IPVersion`, `CmpOp` |
 | Enum values (scoped `enum class`) | `PascalCase` | `PlatformKind::Runtime`, `IPVersion::IPv4` |
@@ -298,7 +285,7 @@ Platform-specific OS API wrappers must include `@see` links to the official Micr
 | Struct fields (public) | `PascalCase` | `Error::Code`, `Error::Platform` |
 | Local variables | `camelCase` | `allPassed`, `fileHandle`, `bufferSize` |
 | Function parameters | `camelCase` | `ipAddress`, `maxSize`, `errnoVal` |
-| `#define` macros | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `ENTRYPOINT`, `EMBED_FUNC` |
+| `#define` macros | `UPPER_CASE` | `FORCE_INLINE`, `NOINLINE`, `ENTRYPOINT` |
 | `constexpr` free constants | `UPPER_CASE` | `DYNAMIC_EXTENT` |
 | `static constexpr` class members | `PascalCase` | `Count`, `SizeBytes`, `WordCount`, `Seed` |
 | Concepts | `UPPER_CASE` | `TCHAR` |
@@ -399,7 +386,6 @@ Use `%e` with `result.Error()` in log macros. Output format: runtime codes print
 - **Avoid heap** unless no alternative. Prefer stack-local variables and fixed-size buffers.
 - **`new`/`new[]`/`delete`/`delete[]` are safe** - globally overloaded to route through the custom `Allocator` (see `src/platform/allocator.cc`).
 - **Embed by value**, not by pointer: `IPAddress ipAddress;` not `IPAddress *ipAddress;`
-- **Watch stack size**: `EMBEDDED_STRING` temporaries materialize words on stack; avoid deep recursion.
 
 ### Constructor Rules
 
@@ -418,20 +404,9 @@ Delete heap allocation operators (`operator new`/`operator delete = delete`).
 
 ## Patterns
 
-### Compile-Time Embedding
+### Data Section Elimination (pic-transform)
 
-| Type | Literal | Result |
-|------|---------|--------|
-| `EMBEDDED_STRING` | `"text"_embed` / `L"text"_embed` | Characters packed into machine words |
-| `DOUBLE` | `3.14_embed` | IEEE-754 bits as `UINT64` immediate |
-| `EMBEDDED_ARRAY` | `MakeEmbedArray<T>(vals...)` | Elements packed into machine words |
-| `EMBEDDED_FUNCTION_POINTER` | `EMBED_FUNC(Fn)` | PC-relative offset, no relocation |
-
-**Variadic `MakeEmbedArray<T>(vals...)`** - Pass values directly as arguments instead of through a named `constexpr` array. Named `constexpr` arrays leak to `.rdata` at `-O0` on some compilers (e.g., Clang cross-compiling from Linux). The variadic overload constructs the array inside a `consteval` function where it cannot leak. For compound literal callers, `MakeEmbedArray((const T[]){...})` also works.
-
-A **register barrier** (`__asm__ volatile("" : "+r"(word))`) prevents the compiler from coalescing values back into `.rdata`.
-
-**LOG macros auto-embed** - `LOG_INFO`, `LOG_ERROR`, `LOG_WARNING`, and `LOG_DEBUG` automatically apply `_embed` to their format string. Write `LOG_INFO("msg")` not `LOG_INFO("msg"_embed)`.
+The [pic-transform](https://github.com/mrzaxaryan/pic-transform) LLVM pass automatically converts string literals, float/double constants, const arrays, and function pointer references into position-independent code during compilation. No special syntax or macros are needed -- write standard C++ with native `double`.
 
 ### Traits-Based Dispatch
 
@@ -485,7 +460,7 @@ Two strategies: **conditional compilation** (`#if defined(PLATFORM_*)`) for smal
 ## Writing Tests
 
 - Each test suite is a class in `tests/<name>_tests.h`
-- The class has a `static BOOL RunAll()` method that calls `RunTest(allPassed, EMBED_FUNC(TestName), L"description"_embed)` for each test
+- The class has a `static BOOL RunAll()` method that calls `RunTest(allPassed, &TestName, "description")` for each test
 - Individual test methods are `static BOOL` functions returning `true` for pass, `false` for fail
 - Register by adding `#include "my_feature_tests.h"` and `RunTestSuite<MyFeatureTests>(allPassed);` in `tests/pir_tests.h` under the appropriate layer comment (CORE, PLATFORM, or RUNTIME)
 - See existing test files for reference
@@ -496,7 +471,6 @@ Two strategies: **conditional compilation** (`#if defined(PLATFORM_*)`) for smal
 
 1. **Inline asm register clobbers** - On x86_64, declare all volatile registers (RAX, RCX, RDX, R8-R11) as outputs or clobbers
 2. **Memory operands with RSP modification** - Never use `"m"` constraints in asm blocks that modify RSP; under `-Oz` the compiler uses RSP-relative addressing
-3. **i386 `EMBEDDED_STRING` indexing** - Cast indices to `USIZE` to avoid ambiguous overload between `operator[]` and pointer decay
 
 ---
 

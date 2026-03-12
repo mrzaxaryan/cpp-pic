@@ -10,6 +10,14 @@ pir_filter_sources(windows macos uefi solaris freebsd android ios)
 list(APPEND PIR_INCLUDE_PATHS
     "${PIR_ROOT_DIR}/src/platform/kernel/linux")
 
+# Force hidden visibility in all build types. Release already gets this from
+# CompilerFlags.cmake; debug builds need it explicitly. Hidden visibility
+# prevents the linker from generating GOT/PLT entries for interposable symbols,
+# which is essential since the PIC binary has no dynamic linker to populate them.
+# Without this, -fpie on x86_64 debug generates GOT-relative relocations that
+# create a .got section, breaking position-independence.
+list(APPEND PIR_BASE_FLAGS -fvisibility=hidden)
+
 # Linker configuration (ELF)
 pir_add_link_flags(
     -e,entry_point

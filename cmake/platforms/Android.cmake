@@ -23,6 +23,11 @@ if(PIR_ARCH STREQUAL "armv7a")
     pir_log_debug_at("android" "armv7a: -mfpu=vfpv3-d16 -mfloat-abi=softfp (hardware FP)")
 endif()
 
+# Force hidden visibility in all build types. Hidden visibility prevents the
+# linker from generating GOT/PLT entries for interposable symbols, which is
+# essential since the PIC binary has no dynamic linker to populate them.
+list(APPEND PIR_BASE_FLAGS -fvisibility=hidden)
+
 # Linker configuration (ELF)
 pir_add_link_flags(
     -e,entry_point

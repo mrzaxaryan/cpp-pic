@@ -100,7 +100,11 @@ foreach(_sec ${_sections})
     if(_content MATCHES "[0-9a-fA-F]+:[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+H[ \t]+\\.${_sec}[ \t\n]")
         list(APPEND _found ".${_sec}")
     # Linux (ELF format): "VMA LMA Size Align .section"
-    elseif(_content MATCHES "[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[0-9]+[ \t]+\\.${_sec}[ \t\n]")
+    # The size field requires a non-zero first hex digit ([1-9a-fA-F]) to skip
+    # empty sections. lld creates a zero-size .got section header for x86_64
+    # ELF targets even when no GOT entries exist; this is harmless and must not
+    # trigger a false positive.
+    elseif(_content MATCHES "[ \t]+[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+[1-9a-fA-F][0-9a-fA-F]*[ \t]+[0-9]+[ \t]+\\.${_sec}[ \t\n]")
         list(APPEND _found ".${_sec}")
     endif()
 endforeach()

@@ -1,5 +1,5 @@
 /*
- * MIPS64 linker script — merge .rodata and .got into .text
+ * MIPS64 linker script — merge all sections into .text
  *
  * The MIPS64 backend emits .rodata.cst8 constant-pool entries for
  * 64-bit values that cannot be cheaply materialised as immediate
@@ -12,6 +12,12 @@
  * no $gp setup), but its presence in its own section fails the PIC
  * verification check.  Merging it into .text silences the check and
  * keeps the binary self-contained.
+ *
+ * At -O0 the MIPS backend may emit .data and .bss sections for
+ * compiler-generated structures (e.g. function-pointer tables after
+ * pic-transform, or zero-initialized common symbols).  These are
+ * harmless when merged into .text: the PIC loader maps everything
+ * with RWX permissions, and the project forbids mutable globals.
  *
  * Merging .rodata into .text keeps the constant-pool data inside the
  * extracted PIC binary.  PC-relative loads resolve correctly because
@@ -31,6 +37,8 @@ SECTIONS
     .text : {
         *(.text .text.*)
         *(.rodata .rodata.*)
+        *(.data .data.*)
+        *(.bss .bss.*)
         *(.got)
     }
 }

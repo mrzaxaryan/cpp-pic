@@ -6,33 +6,57 @@
 // =============================================================================
 // WebSocket Tests - WebSocketClient Implementation Validation
 // Test Server: echo.websocket.org - WebSocket Echo Service
+//
+// Tests are consolidated to use minimal connections to avoid server rate limits.
 // =============================================================================
 
 class WebSocketTests
 {
 private:
-	// Test 1: Secure WebSocket connection (wss://)
-	static BOOL TestSecureWebSocketConnection()
+	// Helper: verify echo response matches sent data
+	static BOOL VerifyEcho(WebSocketClient &ws, Span<const CHAR> sent, WebSocketOpcode expectedOpcode, PCCHAR label)
 	{
-		LOG_INFO("Test: Secure WebSocket Connection (wss://)");
-
-		const CHAR wssUrl[] = "wss://echo.websocket.org/";
-		auto createResult = WebSocketClient::Create(Span<const CHAR>(wssUrl, sizeof(wssUrl) - 1));
-		if (!createResult)
+		auto readResult = ws.Read();
+		if (!readResult)
 		{
-			LOG_ERROR("Secure WebSocket connection failed (error: %e)", createResult.Error());
+			LOG_ERROR("Failed to receive echo for %s (error: %e)", label, readResult.Error());
 			return false;
 		}
 
-		LOG_INFO("Secure WebSocket connection established successfully");
-		(void)createResult.Value().Close();
+		WebSocketMessage &response = readResult.Value();
+
+		if (response.Opcode != expectedOpcode)
+		{
+			LOG_ERROR("%s: unexpected opcode: expected %d, got %d", label, (UINT8)expectedOpcode, (UINT8)response.Opcode);
+			return false;
+		}
+
+		if (response.Length != sent.Size() || Memory::Compare(response.Data, sent.Data(), sent.Size()) != 0)
+		{
+			LOG_ERROR("%s: echo response does not match sent data", label);
+			return false;
+		}
+
 		return true;
 	}
 
-	// Test 2: WebSocket text message echo (WebSocketOpcode::Text)
-	static BOOL TestWebSocketTextEcho()
+	// Helper: send data and verify echo
+	static BOOL SendAndVerifyEcho(WebSocketClient &ws, Span<const CHAR> data, WebSocketOpcode opcode, PCCHAR label)
 	{
-		LOG_INFO("Test: WebSocket Text Echo");
+		auto writeResult = ws.Write(data, opcode);
+		if (!writeResult)
+		{
+			LOG_ERROR("Failed to send %s (error: %e)", label, writeResult.Error());
+			return false;
+		}
+
+		return VerifyEcho(ws, data, opcode, label);
+	}
+
+	// Connection 1: All echo-based tests on a single connection
+	static BOOL TestEchoSuite()
+	{
+		LOG_INFO("Connecting to echo.websocket.org (wss://)...");
 
 		const CHAR wssUrl[] = "wss://echo.websocket.org/";
 		auto createResult = WebSocketClient::Create(Span<const CHAR>(wssUrl, sizeof(wssUrl) - 1));
@@ -41,336 +65,110 @@ private:
 			LOG_ERROR("WebSocket connection failed (error: %e)", createResult.Error());
 			return false;
 		}
-		WebSocketClient &wsClient = createResult.Value();
+		WebSocketClient &ws = createResult.Value();
+		LOG_INFO("  PASSED: Secure WebSocket connection (wss://)");
 
-		// Note: echo.websocket.org sends an initial "Request served by..." message
-		// We need to read and discard it before sending our test data
-		auto initialMsg = wsClient.Read();
+		// Discard initial server message
+		auto initialMsg = ws.Read();
 		if (initialMsg)
 			LOG_INFO("Received initial server message (%d bytes), discarding", initialMsg.Value().Length);
 
-		// Send text message
-		const CHAR testMessage[] = "Hello, WebSocket!";
-		auto writeResult = wsClient.Write(Span<const CHAR>(testMessage, sizeof(testMessage) - 1), WebSocketOpcode::Text);
+		BOOL allPassed = true;
 
-		if (!writeResult)
+		// --- Text echo ---
 		{
-			LOG_ERROR("Failed to send message (error: %e)", writeResult.Error());
-			(void)wsClient.Close();
-			return false;
+			LOG_INFO("Test: WebSocket Text Echo");
+			const CHAR msg[] = "Hello, WebSocket!";
+			if (SendAndVerifyEcho(ws, Span<const CHAR>(msg, sizeof(msg) - 1), WebSocketOpcode::Text, "text echo"))
+				LOG_INFO("  PASSED: WebSocket text echo");
+			else
+			{
+				LOG_ERROR("  FAILED: WebSocket text echo");
+				allPassed = false;
+			}
 		}
 
-		// Receive echo response
-		auto readResult = wsClient.Read();
-
-		if (!readResult)
+		// --- Binary echo ---
 		{
-			LOG_ERROR("Failed to receive echo response (error: %e)", readResult.Error());
-			(void)wsClient.Close();
-			return false;
+			LOG_INFO("Test: WebSocket Binary Echo");
+			UINT8 binaryData[11];
+			for (UINT32 i = 0; i < 5; i++)
+				binaryData[i] = (UINT8)(i + 1);
+			for (UINT32 i = 5; i < 11; i++)
+				binaryData[i] = (UINT8)(0xAA + ((i - 5) * 0x11));
+
+			if (SendAndVerifyEcho(ws, Span<const CHAR>((PCHAR)binaryData, sizeof(binaryData)), WebSocketOpcode::Binary, "binary echo"))
+				LOG_INFO("  PASSED: WebSocket binary echo");
+			else
+			{
+				LOG_ERROR("  FAILED: WebSocket binary echo");
+				allPassed = false;
+			}
 		}
 
-		WebSocketMessage &response = readResult.Value();
-
-		if (response.Opcode != WebSocketOpcode::Text)
+		// --- Multiple sequential messages ---
 		{
-			LOG_ERROR("Unexpected opcode: expected %d (TEXT), got %d", (UINT8)WebSocketOpcode::Text, (UINT8)response.Opcode);
-			(void)wsClient.Close();
-			return false;
+			LOG_INFO("Test: Multiple Sequential Messages");
+			const CHAR msg1[] = "First message";
+			const CHAR msg2[] = "Second message";
+			const CHAR msg3[] = "Third message";
+
+			BOOL seqPassed = true;
+			seqPassed = SendAndVerifyEcho(ws, Span<const CHAR>(msg1, sizeof(msg1) - 1), WebSocketOpcode::Text, "message 1") && seqPassed;
+			seqPassed = SendAndVerifyEcho(ws, Span<const CHAR>(msg2, sizeof(msg2) - 1), WebSocketOpcode::Text, "message 2") && seqPassed;
+			seqPassed = SendAndVerifyEcho(ws, Span<const CHAR>(msg3, sizeof(msg3) - 1), WebSocketOpcode::Text, "message 3") && seqPassed;
+
+			if (seqPassed)
+				LOG_INFO("  PASSED: Multiple messages");
+			else
+			{
+				LOG_ERROR("  FAILED: Multiple messages");
+				allPassed = false;
+			}
 		}
 
-		// Verify echo matches sent message
-		BOOL matches = (response.Length == sizeof(testMessage) - 1) &&
-					   (Memory::Compare(response.Data, (PCVOID)testMessage, sizeof(testMessage) - 1) == 0);
-
-		(void)wsClient.Close();
-
-		if (!matches)
+		// --- Large message ---
 		{
-			LOG_ERROR("Echo response does not match sent message");
-			return false;
+			LOG_INFO("Test: Large Message Handling");
+			UINT32 largeMessageSize = 1024;
+			PCHAR largeMessage = new CHAR[largeMessageSize];
+			if (!largeMessage)
+			{
+				LOG_ERROR("Failed to allocate memory for large message");
+				allPassed = false;
+			}
+			else
+			{
+				for (UINT32 i = 0; i < largeMessageSize; i++)
+					largeMessage[i] = 'A' + (i % 26);
+
+				if (SendAndVerifyEcho(ws, Span<const CHAR>(largeMessage, largeMessageSize), WebSocketOpcode::Text, "large message"))
+					LOG_INFO("  PASSED: Large message");
+				else
+				{
+					LOG_ERROR("  FAILED: Large message");
+					allPassed = false;
+				}
+
+				delete[] largeMessage;
+			}
 		}
 
-		LOG_INFO("Text echo test passed");
-		return true;
-	}
-
-	// Test 3: WebSocket binary message echo (WebSocketOpcode::Binary)
-	static BOOL TestWebSocketBinaryEcho()
-	{
-		LOG_INFO("Test: WebSocket Binary Echo");
-
-		const CHAR wssUrl[] = "wss://echo.websocket.org/";
-		auto createResult = WebSocketClient::Create(Span<const CHAR>(wssUrl, sizeof(wssUrl) - 1));
-		if (!createResult)
+		// --- Close handshake ---
 		{
-			LOG_ERROR("WebSocket connection failed (error: %e)", createResult.Error());
-			return false;
-		}
-		WebSocketClient &wsClient = createResult.Value();
-
-		// Discard initial server message
-		(void)wsClient.Read();
-
-		// Send binary message - generate data at runtime to avoid .rdata
-		UINT8 binaryData[11];
-		for (UINT32 i = 0; i < 5; i++)
-		{
-			binaryData[i] = (UINT8)(i + 1);
-		}
-		for (UINT32 i = 5; i < 11; i++)
-		{
-			binaryData[i] = (UINT8)(0xAA + ((i - 5) * 0x11));
-		}
-		UINT32 dataLength = sizeof(binaryData);
-
-		auto writeResult = wsClient.Write(Span<const CHAR>((PCHAR)binaryData, dataLength), WebSocketOpcode::Binary);
-
-		if (!writeResult)
-		{
-			LOG_ERROR("Failed to send binary message (error: %e)", writeResult.Error());
-			(void)wsClient.Close();
-			return false;
+			LOG_INFO("Test: WebSocket Close Handshake");
+			auto closeResult = ws.Close();
+			if (closeResult)
+				LOG_INFO("  PASSED: WebSocket close");
+			else
+			{
+				LOG_ERROR("WebSocket close handshake failed (error: %e)", closeResult.Error());
+				LOG_ERROR("  FAILED: WebSocket close");
+				allPassed = false;
+			}
 		}
 
-		LOG_INFO("Sent binary message (%d bytes)", writeResult.Value());
-
-		// Receive echo response
-		auto readResult = wsClient.Read();
-
-		if (!readResult)
-		{
-			LOG_ERROR("Failed to receive echo response (error: %e)", readResult.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-
-		WebSocketMessage &response = readResult.Value();
-
-		if (response.Opcode != WebSocketOpcode::Binary)
-		{
-			LOG_ERROR("Unexpected opcode: expected %d (BINARY), got %d", (UINT8)WebSocketOpcode::Binary, (UINT8)response.Opcode);
-			(void)wsClient.Close();
-			return false;
-		}
-
-		LOG_INFO("Received binary echo (opcode: %d, length: %d)", (UINT8)response.Opcode, response.Length);
-
-		// Verify echo matches sent data
-		BOOL matches = (response.Length == dataLength) &&
-					   (Memory::Compare(response.Data, (PCVOID)binaryData, dataLength) == 0);
-
-		(void)wsClient.Close();
-
-		if (!matches)
-		{
-			LOG_ERROR("Binary echo response does not match sent data");
-			return false;
-		}
-
-		LOG_INFO("Binary echo test passed");
-		return true;
-	}
-
-	// Test 4: Multiple sequential messages
-	static BOOL TestMultipleMessages()
-	{
-		LOG_INFO("Test: Multiple Sequential Messages");
-
-		const CHAR wssUrl[] = "wss://echo.websocket.org/";
-		auto createResult = WebSocketClient::Create(Span<const CHAR>(wssUrl, sizeof(wssUrl) - 1));
-		if (!createResult)
-		{
-			LOG_ERROR("WebSocket connection failed (error: %e)", createResult.Error());
-			return false;
-		}
-		WebSocketClient &wsClient = createResult.Value();
-
-		// Discard initial server message
-		(void)wsClient.Read();
-
-		// Test messages
-		const CHAR msg1[] = "First message";
-		const CHAR msg2[] = "Second message";
-		const CHAR msg3[] = "Third message";
-
-		// Send and receive message 1
-		auto write1 = wsClient.Write(Span<const CHAR>(msg1, sizeof(msg1) - 1), WebSocketOpcode::Text);
-		if (!write1)
-		{
-			LOG_ERROR("Failed to send message 1 (error: %e)", write1.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-
-		auto read1 = wsClient.Read();
-		if (!read1)
-		{
-			LOG_ERROR("Failed to receive echo for message 1 (error: %e)", read1.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-		if (read1.Value().Length != sizeof(msg1) - 1)
-		{
-			LOG_ERROR("Echo length mismatch for message 1: expected %d, got %d", sizeof(msg1) - 1, read1.Value().Length);
-			(void)wsClient.Close();
-			return false;
-		}
-
-		// Send and receive message 2
-		auto write2 = wsClient.Write(Span<const CHAR>(msg2, sizeof(msg2) - 1), WebSocketOpcode::Text);
-		if (!write2)
-		{
-			LOG_ERROR("Failed to send message 2 (error: %e)", write2.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-
-		auto read2 = wsClient.Read();
-		if (!read2)
-		{
-			LOG_ERROR("Failed to receive echo for message 2 (error: %e)", read2.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-		if (read2.Value().Length != sizeof(msg2) - 1)
-		{
-			LOG_ERROR("Echo length mismatch for message 2: expected %d, got %d", sizeof(msg2) - 1, read2.Value().Length);
-			(void)wsClient.Close();
-			return false;
-		}
-
-		// Send and receive message 3
-		auto write3 = wsClient.Write(Span<const CHAR>(msg3, sizeof(msg3) - 1), WebSocketOpcode::Text);
-		if (!write3)
-		{
-			LOG_ERROR("Failed to send message 3 (error: %e)", write3.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-
-		auto read3 = wsClient.Read();
-		if (!read3)
-		{
-			LOG_ERROR("Failed to receive echo for message 3 (error: %e)", read3.Error());
-			(void)wsClient.Close();
-			return false;
-		}
-		if (read3.Value().Length != sizeof(msg3) - 1)
-		{
-			LOG_ERROR("Echo length mismatch for message 3: expected %d, got %d", sizeof(msg3) - 1, read3.Value().Length);
-			(void)wsClient.Close();
-			return false;
-		}
-
-		LOG_INFO("Multiple message test passed");
-		(void)wsClient.Close();
-		return true;
-	}
-
-	// Test 5: Large message handling
-	static BOOL TestLargeMessage()
-	{
-		LOG_INFO("Test: Large Message Handling");
-
-		const CHAR wssUrl[] = "wss://echo.websocket.org/";
-		auto createResult = WebSocketClient::Create(Span<const CHAR>(wssUrl, sizeof(wssUrl) - 1));
-		if (!createResult)
-		{
-			LOG_ERROR("WebSocket connection failed (error: %e)", createResult.Error());
-			return false;
-		}
-		WebSocketClient &wsClient = createResult.Value();
-
-		// Discard initial server message
-		(void)wsClient.Read();
-
-		// Create a large message (1KB)
-		UINT32 largeMessageSize = 1024;
-		PCHAR largeMessage = new CHAR[largeMessageSize + 1];
-		if (!largeMessage)
-		{
-			LOG_ERROR("Failed to allocate memory for large message");
-			(void)wsClient.Close();
-			return false;
-		}
-
-		// Fill with pattern
-		for (UINT32 i = 0; i < largeMessageSize; i++)
-		{
-			largeMessage[i] = 'A' + (i % 26);
-		}
-		largeMessage[largeMessageSize] = '\0';
-
-		// Send large message
-		auto writeResult = wsClient.Write(Span<const CHAR>(largeMessage, largeMessageSize), WebSocketOpcode::Text);
-
-		if (!writeResult)
-		{
-			LOG_ERROR("Failed to send large message (error: %e)", writeResult.Error());
-			delete[] largeMessage;
-			(void)wsClient.Close();
-			return false;
-		}
-
-		LOG_INFO("Sent large message (%d bytes)", writeResult.Value());
-
-		// Receive echo response
-		auto readResult = wsClient.Read();
-
-		if (!readResult)
-		{
-			LOG_ERROR("Failed to receive large echo response (error: %e)", readResult.Error());
-			delete[] largeMessage;
-			(void)wsClient.Close();
-			return false;
-		}
-
-		WebSocketMessage &response = readResult.Value();
-
-		LOG_INFO("Received large echo response (opcode: %d, length: %d)", (UINT8)response.Opcode, response.Length);
-
-		// Verify echo matches sent message
-		BOOL matches = (response.Length == largeMessageSize) &&
-					   (Memory::Compare(response.Data, (PCVOID)largeMessage, largeMessageSize) == 0);
-
-		delete[] largeMessage;
-		(void)wsClient.Close();
-
-		if (!matches)
-		{
-			LOG_ERROR("Large echo response does not match sent message");
-			return false;
-		}
-
-		LOG_INFO("Large message test passed");
-		return true;
-	}
-
-	// Test 6: WebSocket close handshake
-	static BOOL TestWebSocketClose()
-	{
-		LOG_INFO("Test: WebSocket Close Handshake");
-
-		const CHAR wssUrl[] = "wss://echo.websocket.org/";
-		auto createResult = WebSocketClient::Create(Span<const CHAR>(wssUrl, sizeof(wssUrl) - 1));
-		if (!createResult)
-		{
-			LOG_ERROR("WebSocket connection failed (error: %e)", createResult.Error());
-			return false;
-		}
-		WebSocketClient &wsClient = createResult.Value();
-
-		LOG_INFO("WebSocket connected, initiating close handshake");
-
-		if (!wsClient.Close())
-		{
-			LOG_ERROR("WebSocket close handshake failed");
-			return false;
-		}
-
-		LOG_INFO("WebSocket closed successfully");
-		return true;
+		return allPassed;
 	}
 
 public:
@@ -382,12 +180,8 @@ public:
 		LOG_INFO("Running WebSocket Tests...");
 		LOG_INFO("  Test Server: echo.websocket.org (wss://)");
 
-		RunTest(allPassed, &TestSecureWebSocketConnection, "Secure WebSocket connection (wss://)");
-		RunTest(allPassed, &TestWebSocketTextEcho, "WebSocket text echo");
-		RunTest(allPassed, &TestWebSocketBinaryEcho, "WebSocket binary echo");
-		RunTest(allPassed, &TestMultipleMessages, "Multiple messages");
-		RunTest(allPassed, &TestLargeMessage, "Large message");
-		RunTest(allPassed, &TestWebSocketClose, "WebSocket close");
+		if (!TestEchoSuite())
+			allPassed = false;
 
 		if (allPassed)
 			LOG_INFO("All WebSocket tests passed!");

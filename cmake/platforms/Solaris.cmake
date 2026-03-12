@@ -100,17 +100,27 @@ list(APPEND PIR_BASE_LINK_FLAGS
     -Map=${PIR_MAP_FILE}
 )
 
-# x86 requires --pie: with -flto=full the LTO code generator runs at link time
-# and selects its relocation model based on the output type. A non-PIE
-# executable causes the x86 backend to emit absolute addressing (movl
+# x86_64 requires --pie: the x86 backend emits absolute addressing (movl
 # $0xNNNNNN, %reg) instead of RIP-relative (leaq offset(%rip), %reg) for
-# references to data embedded in .text. These absolute addresses are resolved at
-# the link-time VMA and break when the PIC binary is loaded at a different
-# address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
-# backend to generate position-independent code. AArch64 is unaffected because
-# that ISA always uses PC-relative addressing.
+# references to data embedded in .text unless the output is a PIE. These
+# absolute addresses are resolved at the link-time VMA and break when the PIC
+# binary is loaded at a different address. --pie produces a PIE (ET_DYN)
+# executable, which forces position-independent code generation. AArch64 is
+# unaffected because that ISA always uses PC-relative addressing.
+#
+# Release builds use -flto=full, so the LTO backend sees --pie and selects the
+# PIE relocation model at link time. Debug builds do not use LTO, so the object
+# files must be compiled with -fpie to generate PIC-compatible relocations;
+# without it, R_X86_64_32 relocations against function symbols (from
+# pic-transform's inline asm) are incompatible with --pie linking.
 if(PIR_ARCH STREQUAL "x86_64")
     list(APPEND PIR_BASE_LINK_FLAGS --pie)
+    if(PIR_BUILD_TYPE STREQUAL "debug")
+        list(APPEND PIR_BASE_FLAGS -fpie)
+        pir_log_debug_at("solaris" "x86_64 debug: -fpie + --pie for PIC-compatible objects")
+    else()
+        pir_log_debug_at("solaris" "x86_64 release: --pie (LTO handles PIC codegen)")
+    endif()
 else()
     list(APPEND PIR_BASE_LINK_FLAGS --no-pie)
 endif()

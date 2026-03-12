@@ -811,9 +811,9 @@ static VOID EncodeImageData(EncoderState *state, const UINT8 *srcData,
 					if (col >= width)
 						srcIndex -= (col - width + 1) * srcNumComponents;
 
-					UINT8 b = srcData[srcIndex + 0];
+					UINT8 b = srcData[srcIndex + 2];
 					UINT8 g = srcData[srcIndex + 1];
-					UINT8 r = srcData[srcIndex + 2];
+					UINT8 r = srcData[srcIndex + 0];
 
 					float rf = (float)(INT32)r;
 					float gf = (float)(INT32)g;

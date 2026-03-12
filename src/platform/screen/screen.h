@@ -27,21 +27,23 @@
 #include "platform/platform.h"
 #include "core/types/rgb.h"
 
+#pragma pack(push, 1)
 /// @brief Information about a connected display device
 struct ScreenDevice
 {
-	INT32 Left;    ///< X position on the virtual desktop
-	INT32 Top;     ///< Y position on the virtual desktop
+	INT32 Left;	   ///< X position on the virtual desktop
+	INT32 Top;	   ///< Y position on the virtual desktop
 	UINT32 Width;  ///< Horizontal resolution in pixels
 	UINT32 Height; ///< Vertical resolution in pixels
 	BOOL Primary;  ///< Whether this is the primary display
 };
+#pragma pack(pop)
 
 /// @brief Result of Screen::GetDevices containing an array of display devices
 struct ScreenDeviceList
 {
 	ScreenDevice *Devices; ///< Array of discovered display devices
-	UINT32 Count;          ///< Number of devices in the array
+	UINT32 Count;		   ///< Number of devices in the array
 
 	/// @brief Free all allocated memory owned by this result
 	VOID Free()

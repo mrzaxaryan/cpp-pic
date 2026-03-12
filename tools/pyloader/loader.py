@@ -3,33 +3,19 @@
 PIC Shellcode Loader
 
 Cross-platform loader for position-independent code.
-Loads shellcode from a local file or downloads from GitHub Releases.
+Loads shellcode from a local file.
 
 Usage:
-    # Local file (requires --arch):
     python loader.py --arch x86_64 output.bin
-
-    # Remote (auto-detects platform):
-    python loader.py
-    python loader.py --tag v0.0.1-alpha.1
-
-    # Remote with explicit arch override:
-    python loader.py --arch aarch64 --tag v1.0.0
 """
 
 import argparse
 import ctypes
-import json
 import mmap
 import os
 import platform
-import ssl
 import struct
 import sys
-import urllib.error
-import urllib.request
-
-REPO = "mrzaxaryan/Position-Independent-Runtime"
 
 # =============================================================================
 # Architecture Definitions
@@ -58,34 +44,6 @@ _MACHINE_ALIASES = [
     (('riscv32',),                  'riscv', 32),
     (('mips64',),                   'mips',  64),
 ]
-
-# (os, family, bits) -> (platform_name, arch_name)
-_ARTIFACT_MAP = {
-    ('linux',   'x86',   64): ('linux',   'x86_64'),
-    ('linux',   'x86',   32): ('linux',   'i386'),
-    ('linux',   'arm',   64): ('linux',   'aarch64'),
-    ('linux',   'arm',   32): ('linux',   'armv7a'),
-    ('linux',   'riscv', 64): ('linux',   'riscv64'),
-    ('linux',   'riscv', 32): ('linux',   'riscv32'),
-    ('linux',   'mips',  64): ('linux',   'mips64'),
-    ('windows', 'x86',   64): ('windows', 'x86_64'),
-    ('windows', 'x86',   32): ('windows', 'i386'),
-    ('windows', 'arm',   64): ('windows', 'aarch64'),
-    ('windows', 'arm',   32): ('windows', 'armv7a'),
-    ('darwin',  'x86',   64): ('macos',   'x86_64'),
-    ('darwin',  'arm',   64): ('macos',   'aarch64'),
-    ('ios',     'arm',   64): ('ios',     'aarch64'),
-    ('freebsd', 'x86',   64): ('freebsd', 'x86_64'),
-    ('freebsd', 'x86',   32): ('freebsd', 'i386'),
-    ('freebsd', 'arm',   64): ('freebsd', 'aarch64'),
-    ('freebsd', 'riscv', 64): ('freebsd', 'riscv64'),
-    ('sunos',   'x86',   64): ('solaris', 'x86_64'),
-    ('sunos',   'x86',   32): ('solaris', 'i386'),
-    ('sunos',   'arm',   64): ('solaris', 'aarch64'),
-    ('android', 'arm',   64): ('android', 'aarch64'),
-    ('android', 'arm',   32): ('android', 'armv7a'),
-    ('android', 'x86',   64): ('android', 'x86_64'),
-}
 
 
 def _detect_os():
@@ -123,63 +81,6 @@ def get_host():
     """Returns (os_name, family, bits) for the current host."""
     family, bits = _detect_arch()
     return _detect_os(), family, bits
-
-
-# =============================================================================
-# Download from GitHub Releases
-# =============================================================================
-
-def _ssl_context():
-    """Return an SSL context, falling back to unverified if CA certs are unavailable."""
-    try:
-        ctx = ssl.create_default_context()
-        # Trigger cert loading to detect missing CA bundle early
-        if not ctx.get_ca_certs():
-            raise ssl.SSLError("no CA certs")
-        return ctx
-    except (ssl.SSLError, OSError):
-        print("[!] Warning: SSL certificate verification disabled (no CA bundle found)")
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        return ctx
-
-
-def _http_get(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "PIR-Loader/1.0"})
-    with urllib.request.urlopen(req, context=_ssl_context()) as resp:
-        return resp.read()
-
-
-def _find_latest_tag():
-    url = "https://api.github.com/repos/%s/releases?per_page=1" % REPO
-    req = urllib.request.Request(url, headers={
-        "User-Agent": "PIR-Loader/1.0",
-        "Accept": "application/vnd.github+json",
-    })
-    with urllib.request.urlopen(req, context=_ssl_context()) as resp:
-        releases = json.loads(resp.read())
-    if not releases:
-        sys.exit("[-] No releases found")
-    return releases[0]["tag_name"]
-
-
-def download(platform_name, arch, tag):
-    if not tag:
-        tag = _find_latest_tag()
-        print("[+] Latest release: %s" % tag)
-
-    asset = "%s-%s.bin" % (platform_name, arch)
-    url = "https://github.com/%s/releases/download/%s/%s" % (REPO, tag, asset)
-
-    print("[*] Downloading: %s" % asset)
-    print("[*] URL: %s" % url)
-    try:
-        return _http_get(url)
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            sys.exit("[-] Asset '%s' not found in release %s.\n    URL: %s" % (asset, tag, url))
-        raise
 
 
 # =============================================================================
@@ -421,12 +322,9 @@ def run_injected(shellcode, target_arch, cross_family=False):
 
 def main():
     parser = argparse.ArgumentParser(description='PIC Shellcode Loader')
-    parser.add_argument('--arch', choices=list(ARCH.keys()),
-                        help='Target architecture (required for local files, optional for remote)')
-    parser.add_argument('--tag', default=None,
-                        help='GitHub release tag (default: latest). Enables remote mode.')
-    parser.add_argument('shellcode', nargs='?', default=None,
-                        help='Path to shellcode .bin file (omit to download from GitHub)')
+    parser.add_argument('--arch', choices=list(ARCH.keys()), required=True,
+                        help='Target architecture')
+    parser.add_argument('shellcode', help='Path to shellcode .bin file')
     args = parser.parse_args()
 
     host_os, host_family, host_bits = get_host()
@@ -435,47 +333,20 @@ def main():
     print("[*] Host: %s/%s/%dbit" % (host_os, host_family, host_bits))
     print("[*] Python: %dbit" % python_bits)
 
-    if args.shellcode:
-        # --- Local mode: load from file ---
-        if not args.arch:
-            parser.error("--arch is required when loading from a local file")
+    target = ARCH[args.arch]
+    print("[*] Target: %s" % args.arch)
 
-        target = ARCH[args.arch]
-        print("[*] Target: %s" % args.arch)
+    with open(args.shellcode, 'rb') as f:
+        shellcode = f.read()
+    print("[+] Loaded: %d bytes" % len(shellcode))
 
-        with open(args.shellcode, 'rb') as f:
-            shellcode = f.read()
-        print("[+] Loaded: %d bytes" % len(shellcode))
-
-        if host_os == 'windows':
-            cross_family = host_family != target['family']
-            code = run_injected(shellcode, args.arch, cross_family=cross_family)
-        elif target['family'] != host_family or target['bits'] != host_bits:
-            sys.exit("[-] Cannot load %s shellcode on %s/%dbit host" % (args.arch, host_family, host_bits))
-        else:
-            code = run_mmap(shellcode)
+    if host_os == 'windows':
+        cross_family = host_family != target['family']
+        code = run_injected(shellcode, args.arch, cross_family=cross_family)
+    elif target['family'] != host_family or target['bits'] != host_bits:
+        sys.exit("[-] Cannot load %s shellcode on %s/%dbit host" % (args.arch, host_family, host_bits))
     else:
-        # --- Remote mode: download from GitHub ---
-        key = (host_os, host_family, host_bits)
-        if key not in _ARTIFACT_MAP:
-            print("[-] Unsupported host: %s/%s/%dbit" % (host_os, host_family, host_bits))
-            sys.exit(1)
-
-        plat, arch = _ARTIFACT_MAP[key]
-        if args.arch:
-            arch = args.arch
-        print("[*] Platform: %s/%s" % (plat, arch))
-        print("[*] Release: %s" % (args.tag or 'latest'))
-
-        shellcode = download(plat, arch, args.tag)
-        print("[+] Loaded: %d bytes" % len(shellcode))
-
-        if host_os == 'windows':
-            target = ARCH[arch]
-            cross_family = host_family != target['family']
-            code = run_injected(shellcode, arch, cross_family=cross_family)
-        else:
-            code = run_mmap(shellcode)
+        code = run_mmap(shellcode)
 
     print("[+] Exit: %d" % code)
     os._exit(code)

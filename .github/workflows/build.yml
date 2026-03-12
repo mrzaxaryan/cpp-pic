@@ -629,6 +629,7 @@ jobs:
   # ═════════════════════════════════════════════════════════════════════════
 
   size-build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -725,7 +726,7 @@ jobs:
           path: build/**/output*
 
   update-readme:
-    if: always()
+    if: always() && github.ref == 'refs/heads/main'
     needs: [size-build]
     runs-on: ubuntu-24.04
     permissions:

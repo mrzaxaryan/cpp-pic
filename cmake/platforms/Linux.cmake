@@ -31,6 +31,14 @@ if(PIR_BUILD_TYPE STREQUAL "release")
     pir_add_link_flags(--strip-all --gc-sections)
 endif()
 
+# i386: merge .rodata (LTO constant pools) into .text so the
+# PIC binary contains the constant-pool data that the LTO backend
+# generates at link time (after pic-transform has already run).
+if(PIR_ARCH STREQUAL "i386")
+    pir_add_link_flags(-T,${PIR_ROOT_DIR}/cmake/data/linker.i386.ld)
+    pir_log_debug_at("linux" "i386: custom linker script (rodata->text merge)")
+endif()
+
 # RISC-V 64: merge .rodata (LTO constant pools) into .text so the
 # PIC binary contains the constant-pool data that auipc+ld references.
 if(PIR_ARCH STREQUAL "riscv64")

@@ -120,8 +120,26 @@ endif()
 # =============================================================================
 # Step 5: Report file sizes
 # =============================================================================
-file(SIZE "${INPUT_FILE}" _input_size)
-file(SIZE "${_bin}" _bin_size)
+# Use stat instead of file(SIZE) to avoid 9P filesystem caching issues on WSL
+# when the source tree is on a Windows NTFS mount (/mnt/...).
+execute_process(
+    COMMAND stat -c%s "${INPUT_FILE}"
+    OUTPUT_VARIABLE _input_size
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _res
+)
+if(NOT _res EQUAL 0)
+    message(FATAL_ERROR "[pir:extract] Failed to stat ${INPUT_FILE}")
+endif()
+execute_process(
+    COMMAND stat -c%s "${_bin}"
+    OUTPUT_VARIABLE _bin_size
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _res
+)
+if(NOT _res EQUAL 0)
+    message(FATAL_ERROR "[pir:extract] Failed to stat ${_bin}")
+endif()
 
 # Human-readable size formatting
 foreach(_pair "input;${_input_size}" "bin;${_bin_size}")

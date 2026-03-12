@@ -11,17 +11,8 @@ public:
 		BOOL allPassed = true;
 		LOG_INFO("Running BinaryIO Tests...");
 
-		RunTest(allPassed, &TestReaderReadU8, "BinaryReader Read<UINT8>");
-		RunTest(allPassed, &TestReaderReadU16BE, "BinaryReader ReadU16BE");
-		RunTest(allPassed, &TestReaderReadU24BE, "BinaryReader ReadU24BE");
-		RunTest(allPassed, &TestReaderReadU32BE, "BinaryReader ReadU32BE");
-		RunTest(allPassed, &TestReaderSkipAndRemaining, "BinaryReader Skip and Remaining");
-		RunTest(allPassed, &TestReaderSetOffset, "BinaryReader SetOffset");
-		RunTest(allPassed, &TestReaderBoundsCheck, "BinaryReader bounds checking");
-		RunTest(allPassed, &TestWriterWriteU8, "BinaryWriter WriteU8");
-		RunTest(allPassed, &TestWriterWriteU16BE, "BinaryWriter WriteU16BE");
-		RunTest(allPassed, &TestWriterWriteU32BE, "BinaryWriter WriteU32BE");
-		RunTest(allPassed, &TestWriterBoundsCheck, "BinaryWriter bounds checking");
+		RunTest(allPassed, &TestReaderSuite, "BinaryReader suite");
+		RunTest(allPassed, &TestWriterSuite, "BinaryWriter suite");
 		RunTest(allPassed, &TestRoundTrip, "BinaryReader/Writer round-trip");
 
 		if (allPassed)
@@ -33,247 +24,307 @@ public:
 	}
 
 private:
-	static BOOL TestReaderReadU8()
+	static BOOL TestReaderSuite()
 	{
-		UINT8 data[3];
-		data[0] = 0x42;
-		data[1] = 0xFF;
-		data[2] = 0x00;
-		BinaryReader reader{Span<const UINT8>(data)};
+		BOOL allPassed = true;
 
-		if (reader.Read<UINT8>() != 0x42)
-			return false;
-		if (reader.Read<UINT8>() != 0xFF)
-			return false;
-		if (reader.Read<UINT8>() != 0x00)
-			return false;
-		if (reader.GetOffset() != 3)
-			return false;
+		// --- ReadU8 ---
+		{
+			UINT8 data[3];
+			data[0] = 0x42;
+			data[1] = 0xFF;
+			data[2] = 0x00;
+			BinaryReader reader{Span<const UINT8>(data)};
 
-		return true;
+			BOOL passed = reader.Read<UINT8>() == 0x42 &&
+			              reader.Read<UINT8>() == 0xFF &&
+			              reader.Read<UINT8>() == 0x00 &&
+			              reader.GetOffset() == 3;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader Read<UINT8>");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader Read<UINT8>");
+				allPassed = false;
+			}
+		}
+
+		// --- ReadU16BE ---
+		{
+			// Big-endian: 0x1234 stored as [0x12, 0x34]
+			UINT8 data[4];
+			data[0] = 0x12;
+			data[1] = 0x34;
+			data[2] = 0xAB;
+			data[3] = 0xCD;
+			BinaryReader reader{Span<const UINT8>(data)};
+
+			UINT16 val1 = reader.ReadU16BE();
+			UINT16 val2 = reader.ReadU16BE();
+			BOOL passed = val1 == 0x1234 && val2 == 0xABCD && reader.GetOffset() == 4;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader ReadU16BE");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader ReadU16BE");
+				allPassed = false;
+			}
+		}
+
+		// --- ReadU24BE ---
+		{
+			// Big-endian 24-bit: 0x123456 stored as [0x12, 0x34, 0x56]
+			UINT8 data[3];
+			data[0] = 0x12;
+			data[1] = 0x34;
+			data[2] = 0x56;
+			BinaryReader reader{Span<const UINT8>(data)};
+
+			UINT32 val = reader.ReadU24BE();
+			BOOL passed = val == 0x123456 && reader.GetOffset() == 3;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader ReadU24BE");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader ReadU24BE");
+				allPassed = false;
+			}
+		}
+
+		// --- ReadU32BE ---
+		{
+			// Big-endian: 0x12345678 stored as [0x12, 0x34, 0x56, 0x78]
+			UINT8 data[4];
+			data[0] = 0x12;
+			data[1] = 0x34;
+			data[2] = 0x56;
+			data[3] = 0x78;
+			BinaryReader reader{Span<const UINT8>(data)};
+
+			UINT32 val = reader.ReadU32BE();
+			BOOL passed = val == 0x12345678 && reader.GetOffset() == 4;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader ReadU32BE");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader ReadU32BE");
+				allPassed = false;
+			}
+		}
+
+		// --- Skip and Remaining ---
+		{
+			UINT8 data[10];
+			Memory::Zero(data, sizeof(data));
+			BinaryReader reader{Span<const UINT8>(data)};
+
+			BOOL passed = true;
+			if (reader.Remaining() != 10)
+				passed = false;
+
+			if (passed && !reader.Skip(3))
+				passed = false;
+			if (passed && (reader.Remaining() != 7 || reader.GetOffset() != 3))
+				passed = false;
+
+			if (passed && !reader.Skip(7))
+				passed = false;
+			if (passed && reader.Remaining() != 0)
+				passed = false;
+
+			// Should fail: can't skip past end
+			if (passed && reader.Skip(1))
+				passed = false;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader Skip and Remaining");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader Skip and Remaining");
+				allPassed = false;
+			}
+		}
+
+		// --- SetOffset ---
+		{
+			UINT8 data[4];
+			data[0] = 0xAA;
+			data[1] = 0xBB;
+			data[2] = 0xCC;
+			data[3] = 0xDD;
+			BinaryReader reader{Span<const UINT8>(data)};
+
+			BOOL passed = true;
+			reader.Skip(2);
+			if (reader.Read<UINT8>() != 0xCC)
+				passed = false;
+
+			// Jump back to offset 0
+			if (passed && !reader.SetOffset(0))
+				passed = false;
+			if (passed && reader.Read<UINT8>() != 0xAA)
+				passed = false;
+
+			// Jump to offset 3
+			if (passed && !reader.SetOffset(3))
+				passed = false;
+			if (passed && reader.Read<UINT8>() != 0xDD)
+				passed = false;
+
+			// Should fail: past end
+			if (passed && reader.SetOffset(5))
+				passed = false;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader SetOffset");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader SetOffset");
+				allPassed = false;
+			}
+		}
+
+		// --- Bounds check ---
+		{
+			UINT8 data[2];
+			data[0] = 0x12;
+			data[1] = 0x34;
+			BinaryReader reader{Span<const UINT8>(data)};
+
+			BOOL passed = true;
+
+			// ReadU32BE should fail (only 2 bytes)
+			UINT32 val32 = reader.ReadU32BE();
+			if (val32 != 0)
+				passed = false;
+			// Offset should not advance on failed read
+			if (passed && reader.GetOffset() != 0)
+				passed = false;
+
+			// ReadU16BE should succeed
+			if (passed)
+			{
+				UINT16 val16 = reader.ReadU16BE();
+				if (val16 != 0x1234)
+					passed = false;
+			}
+
+			// Now at end, another read should fail
+			if (passed && reader.Read<UINT8>() != 0)
+				passed = false;
+
+			if (passed)
+				LOG_INFO("  PASSED: BinaryReader bounds checking");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryReader bounds checking");
+				allPassed = false;
+			}
+		}
+
+		return allPassed;
 	}
 
-	static BOOL TestReaderReadU16BE()
+	static BOOL TestWriterSuite()
 	{
-		// Big-endian: 0x1234 stored as [0x12, 0x34]
-		UINT8 data[4];
-		data[0] = 0x12;
-		data[1] = 0x34;
-		data[2] = 0xAB;
-		data[3] = 0xCD;
-		BinaryReader reader{Span<const UINT8>(data)};
+		BOOL allPassed = true;
 
-		UINT16 val1 = reader.ReadU16BE();
-		if (val1 != 0x1234)
-			return false;
+		// --- WriteU8 ---
+		{
+			UINT8 buf[4];
+			Memory::Zero(buf, sizeof(buf));
+			BinaryWriter writer{Span<UINT8>(buf)};
 
-		UINT16 val2 = reader.ReadU16BE();
-		if (val2 != 0xABCD)
-			return false;
+			writer.WriteU8(0xAA);
+			writer.WriteU8(0xBB);
 
-		if (reader.GetOffset() != 4)
-			return false;
+			BOOL passed = buf[0] == 0xAA && buf[1] == 0xBB && writer.GetOffset() == 2;
 
-		return true;
-	}
+			if (passed)
+				LOG_INFO("  PASSED: BinaryWriter WriteU8");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryWriter WriteU8");
+				allPassed = false;
+			}
+		}
 
-	static BOOL TestReaderReadU24BE()
-	{
-		// Big-endian 24-bit: 0x123456 stored as [0x12, 0x34, 0x56]
-		UINT8 data[3];
-		data[0] = 0x12;
-		data[1] = 0x34;
-		data[2] = 0x56;
-		BinaryReader reader{Span<const UINT8>(data)};
+		// --- WriteU16BE ---
+		{
+			UINT8 buf[4];
+			Memory::Zero(buf, sizeof(buf));
+			BinaryWriter writer{Span<UINT8>(buf)};
 
-		UINT32 val = reader.ReadU24BE();
-		if (val != 0x123456)
-			return false;
+			writer.WriteU16BE(0x1234);
 
-		if (reader.GetOffset() != 3)
-			return false;
+			// Should be stored as [0x12, 0x34]
+			BOOL passed = buf[0] == 0x12 && buf[1] == 0x34 && writer.GetOffset() == 2;
 
-		return true;
-	}
+			if (passed)
+				LOG_INFO("  PASSED: BinaryWriter WriteU16BE");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryWriter WriteU16BE");
+				allPassed = false;
+			}
+		}
 
-	static BOOL TestReaderReadU32BE()
-	{
-		// Big-endian: 0x12345678 stored as [0x12, 0x34, 0x56, 0x78]
-		UINT8 data[4];
-		data[0] = 0x12;
-		data[1] = 0x34;
-		data[2] = 0x56;
-		data[3] = 0x78;
-		BinaryReader reader{Span<const UINT8>(data)};
+		// --- WriteU32BE ---
+		{
+			UINT8 buf[4];
+			Memory::Zero(buf, sizeof(buf));
+			BinaryWriter writer{Span<UINT8>(buf)};
 
-		UINT32 val = reader.ReadU32BE();
-		if (val != 0x12345678)
-			return false;
+			writer.WriteU32BE(0x12345678);
 
-		if (reader.GetOffset() != 4)
-			return false;
+			BOOL passed = buf[0] == 0x12 && buf[1] == 0x34 && buf[2] == 0x56 && buf[3] == 0x78 &&
+			              writer.GetOffset() == 4;
 
-		return true;
-	}
+			if (passed)
+				LOG_INFO("  PASSED: BinaryWriter WriteU32BE");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryWriter WriteU32BE");
+				allPassed = false;
+			}
+		}
 
-	static BOOL TestReaderSkipAndRemaining()
-	{
-		UINT8 data[10];
-		Memory::Zero(data, sizeof(data));
-		BinaryReader reader{Span<const UINT8>(data)};
+		// --- Bounds check ---
+		{
+			UINT8 buf[2];
+			Memory::Zero(buf, sizeof(buf));
+			BinaryWriter writer{Span<UINT8>(buf)};
 
-		if (reader.Remaining() != 10)
-			return false;
+			BOOL passed = true;
 
-		if (!reader.Skip(3))
-			return false;
-		if (reader.Remaining() != 7)
-			return false;
-		if (reader.GetOffset() != 3)
-			return false;
+			// WriteU32BE should fail (only 2 bytes capacity)
+			if (writer.WriteU32BE(0x12345678) != nullptr)
+				passed = false;
+			if (passed && writer.GetOffset() != 0)
+				passed = false;
 
-		if (!reader.Skip(7))
-			return false;
-		if (reader.Remaining() != 0)
-			return false;
+			// WriteU16BE should succeed
+			if (passed && writer.WriteU16BE(0xABCD) == nullptr)
+				passed = false;
 
-		// Should fail: can't skip past end
-		if (reader.Skip(1))
-			return false;
+			// Now full, another write should fail
+			if (passed && writer.WriteU8(0xFF) != nullptr)
+				passed = false;
 
-		return true;
-	}
+			if (passed)
+				LOG_INFO("  PASSED: BinaryWriter bounds checking");
+			else
+			{
+				LOG_ERROR("  FAILED: BinaryWriter bounds checking");
+				allPassed = false;
+			}
+		}
 
-	static BOOL TestReaderSetOffset()
-	{
-		UINT8 data[4];
-		data[0] = 0xAA;
-		data[1] = 0xBB;
-		data[2] = 0xCC;
-		data[3] = 0xDD;
-		BinaryReader reader{Span<const UINT8>(data)};
-
-		reader.Skip(2);
-		if (reader.Read<UINT8>() != 0xCC)
-			return false;
-
-		// Jump back to offset 0
-		if (!reader.SetOffset(0))
-			return false;
-		if (reader.Read<UINT8>() != 0xAA)
-			return false;
-
-		// Jump to offset 3
-		if (!reader.SetOffset(3))
-			return false;
-		if (reader.Read<UINT8>() != 0xDD)
-			return false;
-
-		// Should fail: past end
-		if (reader.SetOffset(5))
-			return false;
-
-		return true;
-	}
-
-	static BOOL TestReaderBoundsCheck()
-	{
-		UINT8 data[2];
-		data[0] = 0x12;
-		data[1] = 0x34;
-		BinaryReader reader{Span<const UINT8>(data)};
-
-		// ReadU32BE should fail (only 2 bytes)
-		UINT32 val32 = reader.ReadU32BE();
-		if (val32 != 0)
-			return false;
-		// Offset should not advance on failed read
-		if (reader.GetOffset() != 0)
-			return false;
-
-		// ReadU16BE should succeed
-		UINT16 val16 = reader.ReadU16BE();
-		if (val16 != 0x1234)
-			return false;
-
-		// Now at end, another read should fail
-		if (reader.Read<UINT8>() != 0)
-			return false;
-
-		return true;
-	}
-
-	static BOOL TestWriterWriteU8()
-	{
-		UINT8 buf[4];
-		Memory::Zero(buf, sizeof(buf));
-		BinaryWriter writer{Span<UINT8>(buf)};
-
-		writer.WriteU8(0xAA);
-		writer.WriteU8(0xBB);
-
-		if (buf[0] != 0xAA || buf[1] != 0xBB)
-			return false;
-		if (writer.GetOffset() != 2)
-			return false;
-
-		return true;
-	}
-
-	static BOOL TestWriterWriteU16BE()
-	{
-		UINT8 buf[4];
-		Memory::Zero(buf, sizeof(buf));
-		BinaryWriter writer{Span<UINT8>(buf)};
-
-		writer.WriteU16BE(0x1234);
-
-		// Should be stored as [0x12, 0x34]
-		if (buf[0] != 0x12 || buf[1] != 0x34)
-			return false;
-		if (writer.GetOffset() != 2)
-			return false;
-
-		return true;
-	}
-
-	static BOOL TestWriterWriteU32BE()
-	{
-		UINT8 buf[4];
-		Memory::Zero(buf, sizeof(buf));
-		BinaryWriter writer{Span<UINT8>(buf)};
-
-		writer.WriteU32BE(0x12345678);
-
-		if (buf[0] != 0x12 || buf[1] != 0x34 || buf[2] != 0x56 || buf[3] != 0x78)
-			return false;
-		if (writer.GetOffset() != 4)
-			return false;
-
-		return true;
-	}
-
-	static BOOL TestWriterBoundsCheck()
-	{
-		UINT8 buf[2];
-		Memory::Zero(buf, sizeof(buf));
-		BinaryWriter writer{Span<UINT8>(buf)};
-
-		// WriteU32BE should fail (only 2 bytes capacity)
-		if (writer.WriteU32BE(0x12345678) != nullptr)
-			return false;
-		if (writer.GetOffset() != 0)
-			return false;
-
-		// WriteU16BE should succeed
-		if (writer.WriteU16BE(0xABCD) == nullptr)
-			return false;
-
-		// Now full, another write should fail
-		if (writer.WriteU8(0xFF) != nullptr)
-			return false;
-
-		return true;
+		return allPassed;
 	}
 
 	static BOOL TestRoundTrip()

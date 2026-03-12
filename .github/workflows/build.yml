@@ -665,6 +665,76 @@ jobs:
           done
 
   # ═════════════════════════════════════════════════════════════════════════
+  # Gate — single required check for branch protection
+  # ═════════════════════════════════════════════════════════════════════════
+
+  all-tests:
+    if: always()
+    needs:
+      - build
+      - test-linux-x86_64
+      - test-linux-aarch64
+      - test-linux-i386
+      - test-linux-armv7a
+      - test-linux-riscv32
+      - test-linux-riscv64
+      - test-android-x86_64
+      - test-android-aarch64
+      - test-android-armv7a
+      - test-windows-i386
+      - test-windows-x86_64
+      - test-windows-aarch64
+      - test-macos-aarch64
+      - test-macos-x86_64
+      - test-ios-aarch64
+      - test-freebsd-x86_64
+      - test-freebsd-aarch64
+      - test-freebsd-i386
+      - test-freebsd-riscv64
+      - test-solaris-i386
+      - test-solaris-x86_64
+      - test-uefi-x86_64
+      - test-uefi-aarch64
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check all test results
+        run: |
+          echo "Build: ${{ needs.build.result }}"
+          results=(
+            "${{ needs.build.result }}"
+            "${{ needs.test-linux-x86_64.result }}"
+            "${{ needs.test-linux-aarch64.result }}"
+            "${{ needs.test-linux-i386.result }}"
+            "${{ needs.test-linux-armv7a.result }}"
+            "${{ needs.test-linux-riscv32.result }}"
+            "${{ needs.test-linux-riscv64.result }}"
+            "${{ needs.test-android-x86_64.result }}"
+            "${{ needs.test-android-aarch64.result }}"
+            "${{ needs.test-android-armv7a.result }}"
+            "${{ needs.test-windows-i386.result }}"
+            "${{ needs.test-windows-x86_64.result }}"
+            "${{ needs.test-windows-aarch64.result }}"
+            "${{ needs.test-macos-aarch64.result }}"
+            "${{ needs.test-macos-x86_64.result }}"
+            "${{ needs.test-ios-aarch64.result }}"
+            "${{ needs.test-freebsd-x86_64.result }}"
+            "${{ needs.test-freebsd-aarch64.result }}"
+            "${{ needs.test-freebsd-i386.result }}"
+            "${{ needs.test-freebsd-riscv64.result }}"
+            "${{ needs.test-solaris-i386.result }}"
+            "${{ needs.test-solaris-x86_64.result }}"
+            "${{ needs.test-uefi-x86_64.result }}"
+            "${{ needs.test-uefi-aarch64.result }}"
+          )
+          for r in "${results[@]}"; do
+            if [ "$r" != "success" ]; then
+              echo "One or more jobs failed or were cancelled"
+              exit 1
+            fi
+          done
+          echo "All tests passed"
+
+  # ═════════════════════════════════════════════════════════════════════════
   # Size Report — build -Oz (no logging) and report binary sizes
   # ═════════════════════════════════════════════════════════════════════════
 

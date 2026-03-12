@@ -109,7 +109,10 @@ list(APPEND PIR_BASE_LINK_FLAGS
 # address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
 # backend to generate position-independent code. AArch64 is unaffected because
 # that ISA always uses PC-relative addressing.
-if(PIR_ARCH STREQUAL "x86_64")
+# Only used for release builds: debug builds do not use -flto=full, so the
+# object files are already compiled with a fixed relocation model. Linking
+# non-PIC objects with --pie causes R_X86_64_32 relocation errors.
+if(PIR_BUILD_TYPE STREQUAL "release" AND PIR_ARCH STREQUAL "x86_64")
     list(APPEND PIR_BASE_LINK_FLAGS --pie)
 else()
     list(APPEND PIR_BASE_LINK_FLAGS --no-pie)

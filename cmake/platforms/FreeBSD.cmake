@@ -51,7 +51,10 @@ pir_add_link_flags(
 # address. --pie produces a PIE (ET_DYN) executable, which forces the LTO
 # backend to generate position-independent code. AArch64 and RISC-V are
 # unaffected because those ISAs always use PC-relative addressing.
-if(PIR_ARCH MATCHES "^(i386|x86_64)$")
+# Only used for release builds: debug builds do not use -flto=full, so the
+# object files are already compiled with a fixed relocation model. Linking
+# non-PIC objects with --pie causes R_X86_64_32 relocation errors.
+if(PIR_BUILD_TYPE STREQUAL "release" AND PIR_ARCH MATCHES "^(i386|x86_64)$")
     pir_add_link_flags(--pie)
     pir_log_debug_at("freebsd" "x86: --pie for LTO position-independent codegen")
 endif()

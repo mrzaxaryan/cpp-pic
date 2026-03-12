@@ -42,6 +42,8 @@ endif()
 if(PIR_BUILD_TYPE STREQUAL "debug")
     list(APPEND PIR_BASE_FLAGS
         -fno-omit-frame-pointer
+        -fno-asynchronous-unwind-tables
+        -fno-unwind-tables
         -g3 -ferror-limit=200 -${PIR_OPT_LEVEL}
     )
     pir_log_debug("Debug flags: -g3 -fno-omit-frame-pointer -${PIR_OPT_LEVEL}")

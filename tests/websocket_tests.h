@@ -14,7 +14,7 @@ class WebSocketTests
 {
 private:
 	// Helper: verify echo response matches sent data
-	static BOOL VerifyEcho(WebSocketClient &ws, Span<const CHAR> sent, WebSocketOpcode expectedOpcode, PCCHAR label)
+	static BOOL VerifyEcho(WebSocketClient &ws, Span<const CHAR> sent, WebSocketOpcode expectedOpcode, [[maybe_unused]] PCCHAR label)
 	{
 		auto readResult = ws.Read();
 		if (!readResult)

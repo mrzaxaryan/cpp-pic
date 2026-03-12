@@ -77,167 +77,221 @@ static_assert([]() constexpr
 class IPAddressTests
 {
 private:
-	static BOOL TestConstexprIPv4()
+	static BOOL TestConstexprSuite()
 	{
-		IPAddress ip = IPAddress::FromIPv4(0x0100007F);
-		if (!ip.IsIPv4())
-			return false;
-		if (ip.ToIPv4() != 0x0100007F)
-			return false;
-		if (ip.IsIPv6())
-			return false;
-		return true;
-	}
+		BOOL allPassed = true;
 
-	static BOOL TestConstexprIPv6()
-	{
-		const UINT8 addr[] = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-		IPAddress ip = IPAddress::FromIPv6(addr);
-		if (!ip.IsIPv6())
-			return false;
-		if (ip.IsIPv4())
-			return false;
-		if (!ip.IsValid())
-			return false;
-		return true;
-	}
-
-	static BOOL TestConstexprLocalHost()
-	{
-		IPAddress v4 = IPAddress::LocalHost();
-		IPAddress v6 = IPAddress::LocalHost(true);
-
-		if (!v4.IsIPv4())
-			return false;
-		if (v4.ToIPv4() != 0x0100007F)
-			return false;
-		if (!v6.IsIPv6())
-			return false;
-		return true;
-	}
-
-	static BOOL TestConstexprEquality()
-	{
-		IPAddress a = IPAddress::FromIPv4(0x01010101);
-		IPAddress b = IPAddress::FromIPv4(0x01010101);
-		IPAddress c = IPAddress::FromIPv4(0x08080808);
-
-		if (!(a == b))
-			return false;
-		if (a == c)
-			return false;
-		if (!(a != c))
-			return false;
-		return true;
-	}
-
-	static BOOL TestConstexprCopy()
-	{
-		IPAddress original = IPAddress::FromIPv4(0xC0A80001);
-		IPAddress copy(original);
-
-		if (copy.ToIPv4() != original.ToIPv4())
-			return false;
-		if (!(copy == original))
-			return false;
-		return true;
-	}
-
-	static BOOL TestConstexprInvalid()
-	{
-		IPAddress inv = IPAddress::Invalid();
-		if (inv.IsValid())
-			return false;
-		if (inv.IsIPv4())
-			return false;
-		if (inv.IsIPv6())
-			return false;
-
-		IPAddress def;
-		if (def.IsValid())
-			return false;
-		if (!(inv == def))
-			return false;
-		return true;
-	}
-
-	static BOOL TestFromStringIPv4()
-	{
-		auto ipStr = "192.168.1.1";
-		auto result = IPAddress::FromString((PCCHAR)ipStr);
-		if (!result)
-			return false;
-		auto& ip = result.Value();
-		if (!ip.IsIPv4())
-			return false;
-
-		// Verify round-trip through ToString
-		CHAR buffer[64];
-		auto toStrResult = ip.ToString(Span<CHAR>(buffer));
-		if (!toStrResult)
-			return false;
-
-		// Verify the string matches
-		auto expected = "192.168.1.1";
-		if (!StringUtils::Equals((PCCHAR)buffer, (PCCHAR)expected))
+		// --- IPv4 ---
 		{
-			LOG_ERROR("ToString mismatch: got '%s', expected '%s'", buffer, (PCCHAR)expected);
-			return false;
+			IPAddress ip = IPAddress::FromIPv4(0x0100007F);
+			BOOL passed = ip.IsIPv4() && ip.ToIPv4() == 0x0100007F && !ip.IsIPv6();
+
+			if (passed)
+				LOG_INFO("  PASSED: constexpr IPv4 construction");
+			else
+			{
+				LOG_ERROR("  FAILED: constexpr IPv4 construction");
+				allPassed = false;
+			}
 		}
-		return true;
+
+		// --- IPv6 ---
+		{
+			const UINT8 addr[] = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+			IPAddress ip = IPAddress::FromIPv6(addr);
+			BOOL passed = ip.IsIPv6() && !ip.IsIPv4() && ip.IsValid();
+
+			if (passed)
+				LOG_INFO("  PASSED: constexpr IPv6 construction");
+			else
+			{
+				LOG_ERROR("  FAILED: constexpr IPv6 construction");
+				allPassed = false;
+			}
+		}
+
+		// --- LocalHost ---
+		{
+			IPAddress v4 = IPAddress::LocalHost();
+			IPAddress v6 = IPAddress::LocalHost(true);
+			BOOL passed = v4.IsIPv4() && v4.ToIPv4() == 0x0100007F && v6.IsIPv6();
+
+			if (passed)
+				LOG_INFO("  PASSED: constexpr LocalHost");
+			else
+			{
+				LOG_ERROR("  FAILED: constexpr LocalHost");
+				allPassed = false;
+			}
+		}
+
+		// --- Equality ---
+		{
+			IPAddress a = IPAddress::FromIPv4(0x01010101);
+			IPAddress b = IPAddress::FromIPv4(0x01010101);
+			IPAddress c = IPAddress::FromIPv4(0x08080808);
+			BOOL passed = (a == b) && !(a == c) && (a != c);
+
+			if (passed)
+				LOG_INFO("  PASSED: constexpr equality operators");
+			else
+			{
+				LOG_ERROR("  FAILED: constexpr equality operators");
+				allPassed = false;
+			}
+		}
+
+		// --- Copy ---
+		{
+			IPAddress original = IPAddress::FromIPv4(0xC0A80001);
+			IPAddress copy(original);
+			BOOL passed = copy.ToIPv4() == original.ToIPv4() && copy == original;
+
+			if (passed)
+				LOG_INFO("  PASSED: constexpr copy constructor");
+			else
+			{
+				LOG_ERROR("  FAILED: constexpr copy constructor");
+				allPassed = false;
+			}
+		}
+
+		// --- Invalid ---
+		{
+			IPAddress inv = IPAddress::Invalid();
+			IPAddress def;
+			BOOL passed = !inv.IsValid() && !inv.IsIPv4() && !inv.IsIPv6() && !def.IsValid() && (inv == def);
+
+			if (passed)
+				LOG_INFO("  PASSED: constexpr Invalid factory");
+			else
+			{
+				LOG_ERROR("  FAILED: constexpr Invalid factory");
+				allPassed = false;
+			}
+		}
+
+		return allPassed;
 	}
 
-	static BOOL TestFromStringIPv6()
+	static BOOL TestFromStringSuite()
 	{
-		auto ipStr = "2001:db8::1";
-		auto result = IPAddress::FromString((PCCHAR)ipStr);
-		if (!result)
-			return false;
-		auto& ip = result.Value();
-		if (!ip.IsIPv6())
-			return false;
-		if (ip.IsIPv4())
-			return false;
-		return true;
-	}
+		BOOL allPassed = true;
 
-	static BOOL TestFromStringInvalid()
-	{
-		auto inv1 = "256.1.1.1";
-		if (IPAddress::FromString((PCCHAR)inv1))
-			return false;
+		// --- FromString IPv4 ---
+		{
+			BOOL passed = true;
+			auto ipStr = "192.168.1.1";
+			auto result = IPAddress::FromString((PCCHAR)ipStr);
+			if (!result)
+				passed = false;
 
-		auto inv2 = "192.168.1";
-		if (IPAddress::FromString((PCCHAR)inv2))
-			return false;
+			if (passed && !result.Value().IsIPv4())
+				passed = false;
 
-		auto inv3 = "abc.def.ghi.jkl";
-		if (IPAddress::FromString((PCCHAR)inv3))
-			return false;
+			if (passed)
+			{
+				// Verify round-trip through ToString
+				CHAR buffer[64];
+				auto toStrResult = result.Value().ToString(Span<CHAR>(buffer));
+				if (!toStrResult)
+					passed = false;
 
-		if (IPAddress::FromString(nullptr))
-			return false;
+				if (passed)
+				{
+					// Verify the string matches
+					auto expected = "192.168.1.1";
+					if (!StringUtils::Equals((PCCHAR)buffer, (PCCHAR)expected))
+					{
+						LOG_ERROR("ToString mismatch: got '%s', expected '%s'", buffer, (PCCHAR)expected);
+						passed = false;
+					}
+				}
+			}
 
-		return true;
-	}
+			if (passed)
+				LOG_INFO("  PASSED: FromString IPv4 + ToString round-trip");
+			else
+			{
+				LOG_ERROR("  FAILED: FromString IPv4 + ToString round-trip");
+				allPassed = false;
+			}
+		}
 
-	static BOOL TestIPv6Equality()
-	{
-		auto str1 = "2001:db8::1";
-		auto str2 = "2001:db8::1";
-		auto str3 = "2001:db8::2";
+		// --- FromString IPv6 ---
+		{
+			auto ipStr = "2001:db8::1";
+			auto result = IPAddress::FromString((PCCHAR)ipStr);
+			BOOL passed = result && result.Value().IsIPv6() && !result.Value().IsIPv4();
 
-		auto r1 = IPAddress::FromString((PCCHAR)str1);
-		auto r2 = IPAddress::FromString((PCCHAR)str2);
-		auto r3 = IPAddress::FromString((PCCHAR)str3);
-		if (!r1 || !r2 || !r3)
-			return false;
+			if (passed)
+				LOG_INFO("  PASSED: FromString IPv6");
+			else
+			{
+				LOG_ERROR("  FAILED: FromString IPv6");
+				allPassed = false;
+			}
+		}
 
-		if (!(r1.Value() == r2.Value()))
-			return false;
-		if (r1.Value() == r3.Value())
-			return false;
-		return true;
+		// --- FromString invalid ---
+		{
+			BOOL passed = true;
+
+			auto inv1 = "256.1.1.1";
+			if (IPAddress::FromString((PCCHAR)inv1))
+				passed = false;
+
+			if (passed)
+			{
+				auto inv2 = "192.168.1";
+				if (IPAddress::FromString((PCCHAR)inv2))
+					passed = false;
+			}
+
+			if (passed)
+			{
+				auto inv3 = "abc.def.ghi.jkl";
+				if (IPAddress::FromString((PCCHAR)inv3))
+					passed = false;
+			}
+
+			if (passed)
+			{
+				if (IPAddress::FromString(nullptr))
+					passed = false;
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: FromString rejects invalid input");
+			else
+			{
+				LOG_ERROR("  FAILED: FromString rejects invalid input");
+				allPassed = false;
+			}
+		}
+
+		// --- IPv6 equality ---
+		{
+			auto str1 = "2001:db8::1";
+			auto str2 = "2001:db8::1";
+			auto str3 = "2001:db8::2";
+
+			auto r1 = IPAddress::FromString((PCCHAR)str1);
+			auto r2 = IPAddress::FromString((PCCHAR)str2);
+			auto r3 = IPAddress::FromString((PCCHAR)str3);
+
+			BOOL passed = r1 && r2 && r3 && (r1.Value() == r2.Value()) && !(r1.Value() == r3.Value());
+
+			if (passed)
+				LOG_INFO("  PASSED: IPv6 equality comparison");
+			else
+			{
+				LOG_ERROR("  FAILED: IPv6 equality comparison");
+				allPassed = false;
+			}
+		}
+
+		return allPassed;
 	}
 
 public:
@@ -247,16 +301,8 @@ public:
 
 		LOG_INFO("Running IPAddress Tests...");
 
-		RunTest(allPassed, &TestConstexprIPv4, "constexpr IPv4 construction");
-		RunTest(allPassed, &TestConstexprIPv6, "constexpr IPv6 construction");
-		RunTest(allPassed, &TestConstexprLocalHost, "constexpr LocalHost");
-		RunTest(allPassed, &TestConstexprEquality, "constexpr equality operators");
-		RunTest(allPassed, &TestConstexprCopy, "constexpr copy constructor");
-		RunTest(allPassed, &TestConstexprInvalid, "constexpr Invalid factory");
-		RunTest(allPassed, &TestFromStringIPv4, "FromString IPv4 + ToString round-trip");
-		RunTest(allPassed, &TestFromStringIPv6, "FromString IPv6");
-		RunTest(allPassed, &TestFromStringInvalid, "FromString rejects invalid input");
-		RunTest(allPassed, &TestIPv6Equality, "IPv6 equality comparison");
+		RunTest(allPassed, &TestConstexprSuite, "Constexpr suite");
+		RunTest(allPassed, &TestFromStringSuite, "FromString suite");
 
 		if (allPassed)
 			LOG_INFO("All IPAddress tests passed!");

@@ -19,14 +19,8 @@ public:
 		(void)rng;
 		LOG_INFO("  Random object created!");
 
-		RunTest(allPassed, &TestBasicGeneration, "Basic random number generation");
-		RunTest(allPassed, &TestValueRange, "Random values within range");
-		RunTest(allPassed, &TestSequenceVariability, "Random sequence variability");
-		RunTest(allPassed, &TestCharGeneration, "Random character generation");
-		RunTest(allPassed, &TestStringGenerationNarrow, "Random string generation (narrow)");
-		RunTest(allPassed, &TestStringGenerationWide, "Random string generation (wide)");
-		RunTest(allPassed, &TestByteArrayGeneration, "Random byte array generation");
-		RunTest(allPassed, &TestEmptyString, "Empty string generation");
+		RunTest(allPassed, &TestGenerationSuite, "Generation suite");
+		RunTest(allPassed, &TestStringCharSuite, "String/Char suite");
 
 		if (allPassed)
 			LOG_INFO("All Random tests passed!");
@@ -37,222 +31,289 @@ public:
 	}
 
 private:
-	static BOOL TestBasicGeneration()
+	static BOOL TestGenerationSuite()
 	{
-		Random rng;
+		BOOL allPassed = true;
 
-		// Generate a few random numbers and verify they're generated
-		// We just verify the calls succeed without checking specific values
-		rng.Get();
-		rng.Get();
-		rng.Get();
-
-		// Just verify we got values (not checking for specific values due to randomness)
-		// We'll check range in another test
-		return true;
-	}
-
-	static BOOL TestValueRange()
-	{
-		Random rng;
-
-		// Test 100 random values to ensure they're all within range [0, Random::Max]
-		for (INT32 i = 0; i < 100; i++)
+		// --- Basic generation ---
 		{
-			INT32 val = rng.Get();
-			if (val < 0 || val >= Random::Max)
+			Random rng;
+
+			// Generate a few random numbers and verify they're generated
+			// We just verify the calls succeed without checking specific values
+			rng.Get();
+			rng.Get();
+			rng.Get();
+
+			// Just verify we got values (not checking for specific values due to randomness)
+			// We'll check range in another test
+			LOG_INFO("  PASSED: Basic random number generation");
+		}
+
+		// --- Value range ---
+		{
+			Random rng;
+			BOOL passed = true;
+
+			// Test 100 random values to ensure they're all within range [0, Random::Max]
+			for (INT32 i = 0; i < 100; i++)
 			{
-				LOG_ERROR("Random value out of range: %d (max: %d)", val, Random::Max);
-				return false;
+				INT32 val = rng.Get();
+				if (val < 0 || val >= Random::Max)
+				{
+					LOG_ERROR("Random value out of range: %d (max: %d)", val, Random::Max);
+					passed = false;
+					break;
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Random values within range");
+			else
+			{
+				LOG_ERROR("  FAILED: Random values within range");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestSequenceVariability()
-	{
-		Random rng;
-
-		// Generate 20 values and verify they're not all the same
-		INT32 values[20];
-		for (INT32 i = 0; i < 20; i++)
+		// --- Sequence variability ---
 		{
-			values[i] = rng.Get();
-		}
+			Random rng;
 
-		// Check that at least some values differ
-		BOOL foundDifferent = false;
-		for (INT32 i = 1; i < 20; i++)
-		{
-			if (values[i] != values[0])
+			// Generate 20 values and verify they're not all the same
+			INT32 values[20];
+			for (INT32 i = 0; i < 20; i++)
 			{
-				foundDifferent = true;
-				break;
+				values[i] = rng.Get();
+			}
+
+			// Check that at least some values differ
+			BOOL foundDifferent = false;
+			for (INT32 i = 1; i < 20; i++)
+			{
+				if (values[i] != values[0])
+				{
+					foundDifferent = true;
+					break;
+				}
+			}
+
+			if (foundDifferent)
+				LOG_INFO("  PASSED: Random sequence variability");
+			else
+			{
+				LOG_ERROR("All 20 random values are identical: %d", values[0]);
+				LOG_ERROR("  FAILED: Random sequence variability");
+				allPassed = false;
 			}
 		}
 
-		if (!foundDifferent)
+		// --- Byte array generation ---
 		{
-			LOG_ERROR("All 20 random values are identical: %d", values[0]);
-			return false;
-		}
-		return true;
-	}
+			Random rng;
+			UINT8 buffer[64];
 
-	static BOOL TestCharGeneration()
-	{
-		Random rng;
+			// Initialize buffer to known value
+			Memory::Zero(buffer, sizeof(buffer));
 
-		// Test narrow char generation
-		for (INT32 i = 0; i < 50; i++)
-		{
-			CHAR c = rng.GetChar<CHAR>();
-			// Verify character is lowercase a-z
-			if (c < 'a' || c > 'z')
+			// Fill buffer with random bytes
+			rng.GetArray(Span<UINT8>(buffer, 64));
+
+			// Verify at least some bytes are non-zero (very unlikely all would be zero)
+			BOOL foundNonZero = false;
+			for (USIZE i = 0; i < 64; i++)
 			{
-				LOG_ERROR("Narrow char out of range: 0x%02X", (UINT32)(UINT8)c);
-				return false;
+				if (buffer[i] != 0)
+				{
+					foundNonZero = true;
+					break;
+				}
+			}
+
+			if (foundNonZero)
+				LOG_INFO("  PASSED: Random byte array generation");
+			else
+			{
+				LOG_ERROR("All 64 random bytes are zero");
+				LOG_ERROR("  FAILED: Random byte array generation");
+				allPassed = false;
 			}
 		}
 
-		// Test wide char generation
-		for (INT32 i = 0; i < 50; i++)
+		return allPassed;
+	}
+
+	static BOOL TestStringCharSuite()
+	{
+		BOOL allPassed = true;
+
+		// --- Char generation ---
 		{
-			WCHAR c = rng.GetChar<WCHAR>();
-			// Verify character is lowercase a-z
-			if (c < L'a' || c > L'z')
+			Random rng;
+			BOOL passed = true;
+
+			// Test narrow char generation
+			for (INT32 i = 0; i < 50; i++)
 			{
-				LOG_ERROR("Wide char out of range: 0x%04X", (UINT32)c);
-				return false;
+				CHAR c = rng.GetChar<CHAR>();
+				// Verify character is lowercase a-z
+				if (c < 'a' || c > 'z')
+				{
+					LOG_ERROR("Narrow char out of range: 0x%02X", (UINT32)(UINT8)c);
+					passed = false;
+					break;
+				}
+			}
+
+			// Test wide char generation
+			if (passed)
+			{
+				for (INT32 i = 0; i < 50; i++)
+				{
+					WCHAR c = rng.GetChar<WCHAR>();
+					// Verify character is lowercase a-z
+					if (c < L'a' || c > L'z')
+					{
+						LOG_ERROR("Wide char out of range: 0x%04X", (UINT32)c);
+						passed = false;
+						break;
+					}
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Random character generation");
+			else
+			{
+				LOG_ERROR("  FAILED: Random character generation");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestStringGenerationNarrow()
-	{
-		Random rng;
-		CHAR buffer[32];
-
-		// Generate string of 10 random chars (span size = 11 to include null terminator)
-		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 11));
-
-		// Verify length
-		if (len != 10)
+		// --- String generation (narrow) ---
 		{
-			LOG_ERROR("Narrow string length: expected 10, got %u", len);
-			return false;
-		}
+			Random rng;
+			CHAR buffer[32];
+			BOOL passed = true;
 
-		// Verify null termination
-		if (buffer[10] != '\0')
-		{
-			LOG_ERROR("Narrow string not null-terminated at position 10");
-			return false;
-		}
+			// Generate string of 10 random chars (span size = 11 to include null terminator)
+			UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 11));
 
-		// Verify all characters are lowercase letters
-		for (UINT32 i = 0; i < len; i++)
-		{
-			if (buffer[i] < 'a' || buffer[i] > 'z')
+			// Verify length
+			if (len != 10)
 			{
-				LOG_ERROR("Narrow string char[%u] out of range: 0x%02X", i, (UINT32)(UINT8)buffer[i]);
-				return false;
+				LOG_ERROR("Narrow string length: expected 10, got %u", len);
+				passed = false;
+			}
+
+			// Verify null termination
+			if (passed && buffer[10] != '\0')
+			{
+				LOG_ERROR("Narrow string not null-terminated at position 10");
+				passed = false;
+			}
+
+			// Verify all characters are lowercase letters
+			if (passed)
+			{
+				for (UINT32 i = 0; i < len; i++)
+				{
+					if (buffer[i] < 'a' || buffer[i] > 'z')
+					{
+						LOG_ERROR("Narrow string char[%u] out of range: 0x%02X", i, (UINT32)(UINT8)buffer[i]);
+						passed = false;
+						break;
+					}
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Random string generation (narrow)");
+			else
+			{
+				LOG_ERROR("  FAILED: Random string generation (narrow)");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestStringGenerationWide()
-	{
-		Random rng;
-		WCHAR buffer[32];
-
-		// Generate string of 15 random chars (span size = 16 to include null terminator)
-		UINT32 len = rng.GetString<WCHAR>(Span<WCHAR>(buffer, 16));
-
-		// Verify length
-		if (len != 15)
+		// --- String generation (wide) ---
 		{
-			LOG_ERROR("Wide string length: expected 15, got %u", len);
-			return false;
-		}
+			Random rng;
+			WCHAR buffer[32];
+			BOOL passed = true;
 
-		// Verify null termination
-		if (buffer[15] != L'\0')
-		{
-			LOG_ERROR("Wide string not null-terminated at position 15");
-			return false;
-		}
+			// Generate string of 15 random chars (span size = 16 to include null terminator)
+			UINT32 len = rng.GetString<WCHAR>(Span<WCHAR>(buffer, 16));
 
-		// Verify all characters are lowercase letters
-		for (UINT32 i = 0; i < len; i++)
-		{
-			if (buffer[i] < L'a' || buffer[i] > L'z')
+			// Verify length
+			if (len != 15)
 			{
-				LOG_ERROR("Wide string char[%u] out of range: 0x%04X", i, (UINT32)buffer[i]);
-				return false;
+				LOG_ERROR("Wide string length: expected 15, got %u", len);
+				passed = false;
+			}
+
+			// Verify null termination
+			if (passed && buffer[15] != L'\0')
+			{
+				LOG_ERROR("Wide string not null-terminated at position 15");
+				passed = false;
+			}
+
+			// Verify all characters are lowercase letters
+			if (passed)
+			{
+				for (UINT32 i = 0; i < len; i++)
+				{
+					if (buffer[i] < L'a' || buffer[i] > L'z')
+					{
+						LOG_ERROR("Wide string char[%u] out of range: 0x%04X", i, (UINT32)buffer[i]);
+						passed = false;
+						break;
+					}
+				}
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Random string generation (wide)");
+			else
+			{
+				LOG_ERROR("  FAILED: Random string generation (wide)");
+				allPassed = false;
 			}
 		}
 
-		return true;
-	}
-
-	static BOOL TestByteArrayGeneration()
-	{
-		Random rng;
-		UINT8 buffer[64];
-
-		// Initialize buffer to known value
-		Memory::Zero(buffer, sizeof(buffer));
-
-		// Fill buffer with random bytes
-		rng.GetArray(Span<UINT8>(buffer, 64));
-
-		// Verify at least some bytes are non-zero (very unlikely all would be zero)
-		BOOL foundNonZero = false;
-		for (USIZE i = 0; i < 64; i++)
+		// --- Empty string ---
 		{
-			if (buffer[i] != 0)
+			Random rng;
+			CHAR buffer[16];
+			BOOL passed = true;
+
+			// Generate empty string (span size = 1 for null terminator only)
+			UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 1));
+
+			// Verify length is 0
+			if (len != 0)
 			{
-				foundNonZero = true;
-				break;
+				LOG_ERROR("Empty string length: expected 0, got %u", len);
+				passed = false;
+			}
+
+			// Verify null termination at position 0
+			if (passed && buffer[0] != '\0')
+			{
+				LOG_ERROR("Empty string not null-terminated at position 0");
+				passed = false;
+			}
+
+			if (passed)
+				LOG_INFO("  PASSED: Empty string generation");
+			else
+			{
+				LOG_ERROR("  FAILED: Empty string generation");
+				allPassed = false;
 			}
 		}
 
-		if (!foundNonZero)
-		{
-			LOG_ERROR("All 64 random bytes are zero");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestEmptyString()
-	{
-		Random rng;
-		CHAR buffer[16];
-
-		// Generate empty string (span size = 1 for null terminator only)
-		UINT32 len = rng.GetString<CHAR>(Span<CHAR>(buffer, 1));
-
-		// Verify length is 0
-		if (len != 0)
-		{
-			LOG_ERROR("Empty string length: expected 0, got %u", len);
-			return false;
-		}
-
-		// Verify null termination at position 0
-		if (buffer[0] != '\0')
-		{
-			LOG_ERROR("Empty string not null-terminated at position 0");
-			return false;
-		}
-
-		return true;
+		return allPassed;
 	}
 };

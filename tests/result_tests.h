@@ -12,53 +12,11 @@ public:
 
 		LOG_INFO("Running Result Tests...");
 
-		// Construction
-		RunTest(allPassed, &TestOkConstruction, "Ok construction");
-		RunTest(allPassed, &TestErrConstruction, "Err construction");
-		RunTest(allPassed, &TestVoidOk, "Void Ok construction");
-		RunTest(allPassed, &TestVoidErr, "Void Err construction");
-
-		// Queries
-		RunTest(allPassed, &TestIsOkIsErr, "IsOk/IsErr mutual exclusivity");
-		RunTest(allPassed, &TestOperatorBool, "operator BOOL");
-
-		// Value access
-		RunTest(allPassed, &TestValueAccess, "Value access");
-		RunTest(allPassed, &TestValueMutation, "Value mutation");
-
-		// Move semantics
-		RunTest(allPassed, &TestMoveConstruction, "Move construction");
-		RunTest(allPassed, &TestMoveAssignment, "Move assignment");
-		RunTest(allPassed, &TestVoidMoveConstruction, "Void move construction");
-
-		// Non-trivial destructor
-		RunTest(allPassed, &TestNonTrivialDestructor, "Non-trivial destructor");
-		RunTest(allPassed, &TestMoveTransfersOwnership, "Move transfers ownership");
-
-		// Error chaining (E = Error)
-		RunTest(allPassed, &TestSingleError, "Single error storage");
-		RunTest(allPassed, &TestTwoArgErrChaining, "Two-arg Err chaining");
-		RunTest(allPassed, &TestPropagationErrChaining, "Propagation Err chaining");
-		RunTest(allPassed, &TestMultiLevelChaining, "Multi-level error chaining");
-
-		// Non-chainable E
-		RunTest(allPassed, &TestNonChainableErr, "Non-chainable E type");
-
-		// Type aliases
-		RunTest(allPassed, &TestTypeAliases, "Type aliases");
-
-		// Compact specialization (Result<void, Error>)
-		RunTest(allPassed, &TestCompactSize, "Compact specialization size");
-		RunTest(allPassed, &TestCompactOk, "Compact void Ok");
-		RunTest(allPassed, &TestCompactErr, "Compact void Err");
-		RunTest(allPassed, &TestCompactPropagation, "Compact void propagation Err");
-		RunTest(allPassed, &TestCompactTwoArgErr, "Compact void two-arg Err");
-		RunTest(allPassed, &TestCompactErrorOnOk, "Compact Error() on Ok is well-defined");
-		RunTest(allPassed, &TestCompactMoveConstruction, "Compact void move construction");
-
-		// Error chain accessors
-		RunTest(allPassed, &TestErrorRootCause, "Error root cause accessors");
-		RunTest(allPassed, &TestErrorChainOverflow, "Error chain overflow truncation");
+		RunTest(allPassed, &TestConstructionSuite, "Construction suite");
+		RunTest(allPassed, &TestMoveSemanticsSuite, "Move semantics suite");
+		RunTest(allPassed, &TestErrorChainingSuite, "Error chaining suite");
+		RunTest(allPassed, &TestCompactSpecializationSuite, "Compact specialization suite");
+		RunTest(allPassed, &TestErrorAccessorsSuite, "Error accessors suite");
 
 		if (allPassed)
 			LOG_INFO("All Result tests passed!");
@@ -101,831 +59,916 @@ private:
 	};
 
 	// =====================================================================
-	// Construction
+	// Construction suite
 	// =====================================================================
 
-	static BOOL TestOkConstruction()
+	static BOOL TestConstructionSuite()
 	{
-		auto r = Result<UINT32, UINT32>::Ok(42);
-		if (!r.IsOk())
-		{
-			LOG_ERROR("Ok(42).IsOk() returned false");
-			return false;
-		}
-		if (r.Value() != 42)
-		{
-			LOG_ERROR("Ok(42).Value() != 42, got %u", r.Value());
-			return false;
-		}
-		return true;
-	}
+		BOOL allPassed = true;
 
-	static BOOL TestErrConstruction()
-	{
-		auto r = Result<UINT32, UINT32>::Err(99);
-		if (!r.IsErr())
+		// Ok construction
 		{
-			LOG_ERROR("Err(99).IsErr() returned false");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestVoidOk()
-	{
-		auto r = Result<void, UINT32>::Ok();
-		if (!r.IsOk())
-		{
-			LOG_ERROR("Void Ok().IsOk() returned false");
-			return false;
-		}
-		if (r.IsErr())
-		{
-			LOG_ERROR("Void Ok().IsErr() returned true");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestVoidErr()
-	{
-		auto r = Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
-		if (!r.IsErr())
-		{
-			LOG_ERROR("Void Err().IsErr() returned false");
-			return false;
-		}
-		if (r.IsOk())
-		{
-			LOG_ERROR("Void Err().IsOk() returned true");
-			return false;
-		}
-
-		const Error &err = r.Error();
-		if (err.Code != Error::Socket_CreateFailed_Open)
-		{
-			LOG_ERROR("Error code mismatch: expected Socket_CreateFailed_Open");
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("Platform mismatch: expected Runtime");
-			return false;
-		}
-		if (err.Depth != 0)
-		{
-			LOG_ERROR("Single error should have Depth == 0, got %u", (UINT32)err.Depth);
-			return false;
-		}
-		return true;
-	}
-
-	// =====================================================================
-	// Queries
-	// =====================================================================
-
-	static BOOL TestIsOkIsErr()
-	{
-		auto ok = Result<UINT32, UINT32>::Ok(1);
-		auto err = Result<UINT32, UINT32>::Err(2);
-
-		// Mutual exclusivity
-		if (!ok.IsOk() || ok.IsErr())
-		{
-			LOG_ERROR("Ok result: IsOk/IsErr not mutually exclusive");
-			return false;
-		}
-		if (!err.IsErr() || err.IsOk())
-		{
-			LOG_ERROR("Err result: IsOk/IsErr not mutually exclusive");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestOperatorBool()
-	{
-		auto ok = Result<UINT32, UINT32>::Ok(1);
-		auto err = Result<UINT32, UINT32>::Err(2);
-
-		if (!(BOOL)ok)
-		{
-			LOG_ERROR("(BOOL)ok returned false");
-			return false;
-		}
-		if ((BOOL)err)
-		{
-			LOG_ERROR("(BOOL)err returned true");
-			return false;
-		}
-
-		// Idiomatic usage
-		if (!ok)
-		{
-			LOG_ERROR("!ok evaluated to true");
-			return false;
-		}
-		if (err)
-		{
-			LOG_ERROR("err evaluated to true");
-			return false;
-		}
-		return true;
-	}
-
-	// =====================================================================
-	// Value access
-	// =====================================================================
-
-	static BOOL TestValueAccess()
-	{
-		auto r = Result<UINT32, UINT32>::Ok(123);
-		if (r.Value() != 123)
-		{
-			LOG_ERROR("Value() != 123, got %u", r.Value());
-			return false;
-		}
-
-		// Const access
-		const auto &cr = r;
-		if (cr.Value() != 123)
-		{
-			LOG_ERROR("Const Value() != 123");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestValueMutation()
-	{
-		auto r = Result<UINT32, UINT32>::Ok(100);
-		r.Value() = 200;
-		if (r.Value() != 200)
-		{
-			LOG_ERROR("After mutation, Value() != 200, got %u", r.Value());
-			return false;
-		}
-		return true;
-	}
-
-	// =====================================================================
-	// Move semantics
-	// =====================================================================
-
-	static BOOL TestMoveConstruction()
-	{
-		// Move Ok
-		auto ok1 = Result<UINT32, UINT32>::Ok(42);
-		auto ok2 = static_cast<Result<UINT32, UINT32> &&>(ok1);
-		if (!ok2.IsOk() || ok2.Value() != 42)
-		{
-			LOG_ERROR("Move Ok: value mismatch after move");
-			return false;
-		}
-
-		// Move Err
-		auto err1 = Result<UINT32, Error>::Err(Error::Socket_OpenFailed_Connect);
-		auto err2 = static_cast<Result<UINT32, Error> &&>(err1);
-		if (!err2.IsErr())
-		{
-			LOG_ERROR("Move Err: IsErr() false after move");
-			return false;
-		}
-		if (err2.Error().Code != Error::Socket_OpenFailed_Connect)
-		{
-			LOG_ERROR("Move Err: error code mismatch after move");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestMoveAssignment()
-	{
-		auto r = Result<UINT32, UINT32>::Ok(10);
-		if (!r.IsOk() || r.Value() != 10)
-		{
-			LOG_ERROR("Initial Ok(10) check failed");
-			return false;
-		}
-
-		// Reassign from Err
-		r = Result<UINT32, UINT32>::Err(20);
-		if (!r.IsErr())
-		{
-			LOG_ERROR("After reassign to Err: IsErr() false");
-			return false;
-		}
-
-		// Reassign back to Ok
-		r = Result<UINT32, UINT32>::Ok(30);
-		if (!r.IsOk() || r.Value() != 30)
-		{
-			LOG_ERROR("After reassign to Ok(30): check failed");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestVoidMoveConstruction()
-	{
-		auto ok1 = Result<void, UINT32>::Ok();
-		auto ok2 = static_cast<Result<void, UINT32> &&>(ok1);
-		if (!ok2.IsOk())
-		{
-			LOG_ERROR("Void move Ok: IsOk() false");
-			return false;
-		}
-
-		auto err1 = Result<void, UINT32>::Err(7);
-		auto err2 = static_cast<Result<void, UINT32> &&>(err1);
-		if (!err2.IsErr())
-		{
-			LOG_ERROR("Void move Err: IsErr() false");
-			return false;
-		}
-		return true;
-	}
-
-	// =====================================================================
-	// Non-trivial destructor
-	// =====================================================================
-
-	static BOOL TestNonTrivialDestructor()
-	{
-		BOOL destroyed = false;
-		{
-			auto r = Result<Tracked, UINT32>::Ok(Tracked(1, &destroyed));
-			if (destroyed)
+			auto r = Result<UINT32, UINT32>::Ok(42);
+			if (!r.IsOk())
 			{
-				LOG_ERROR("Tracked destroyed prematurely inside scope");
-				return false;
+				LOG_ERROR("  FAILED: Ok construction (Ok(42).IsOk() returned false)");
+				allPassed = false;
+			}
+			else if (r.Value() != 42)
+			{
+				LOG_ERROR("  FAILED: Ok construction (Ok(42).Value() != 42, got %u)", r.Value());
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Ok construction");
 			}
 		}
-		// Tracked destructor must fire when Result leaves scope
-		if (!destroyed)
+
+		// Err construction
 		{
-			LOG_ERROR("Tracked not destroyed after scope exit");
-			return false;
+			auto r = Result<UINT32, UINT32>::Err(99);
+			if (!r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Err construction (Err(99).IsErr() returned false)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Err construction");
+			}
 		}
-		return true;
+
+		// Void Ok construction
+		{
+			auto r = Result<void, UINT32>::Ok();
+			if (!r.IsOk())
+			{
+				LOG_ERROR("  FAILED: Void Ok construction (Ok().IsOk() returned false)");
+				allPassed = false;
+			}
+			else if (r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Void Ok construction (Ok().IsErr() returned true)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Void Ok construction");
+			}
+		}
+
+		// Void Err construction
+		{
+			auto r = Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
+			if (!r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Void Err construction (Err().IsErr() returned false)");
+				allPassed = false;
+			}
+			else if (r.IsOk())
+			{
+				LOG_ERROR("  FAILED: Void Err construction (Err().IsOk() returned true)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = r.Error();
+				if (err.Code != Error::Socket_CreateFailed_Open)
+				{
+					LOG_ERROR("  FAILED: Void Err construction (Code mismatch)");
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Void Err construction (Platform mismatch)");
+					allPassed = false;
+				}
+				else if (err.Depth != 0)
+				{
+					LOG_ERROR("  FAILED: Void Err construction (Depth != 0, got %u)", (UINT32)err.Depth);
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Void Err construction");
+				}
+			}
+		}
+
+		// IsOk/IsErr mutual exclusivity
+		{
+			auto ok = Result<UINT32, UINT32>::Ok(1);
+			auto err = Result<UINT32, UINT32>::Err(2);
+
+			if (!ok.IsOk() || ok.IsErr())
+			{
+				LOG_ERROR("  FAILED: IsOk/IsErr (Ok result not mutually exclusive)");
+				allPassed = false;
+			}
+			else if (!err.IsErr() || err.IsOk())
+			{
+				LOG_ERROR("  FAILED: IsOk/IsErr (Err result not mutually exclusive)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: IsOk/IsErr mutual exclusivity");
+			}
+		}
+
+		// operator BOOL
+		{
+			auto ok = Result<UINT32, UINT32>::Ok(1);
+			auto err = Result<UINT32, UINT32>::Err(2);
+
+			if (!(BOOL)ok)
+			{
+				LOG_ERROR("  FAILED: operator BOOL ((BOOL)ok returned false)");
+				allPassed = false;
+			}
+			else if ((BOOL)err)
+			{
+				LOG_ERROR("  FAILED: operator BOOL ((BOOL)err returned true)");
+				allPassed = false;
+			}
+			else if (!ok)
+			{
+				LOG_ERROR("  FAILED: operator BOOL (!ok evaluated to true)");
+				allPassed = false;
+			}
+			else if (err)
+			{
+				LOG_ERROR("  FAILED: operator BOOL (err evaluated to true)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: operator BOOL");
+			}
+		}
+
+		// Value access
+		{
+			auto r = Result<UINT32, UINT32>::Ok(123);
+			if (r.Value() != 123)
+			{
+				LOG_ERROR("  FAILED: Value access (Value() != 123, got %u)", r.Value());
+				allPassed = false;
+			}
+			else
+			{
+				const auto &cr = r;
+				if (cr.Value() != 123)
+				{
+					LOG_ERROR("  FAILED: Value access (const Value() != 123)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Value access");
+				}
+			}
+		}
+
+		// Value mutation
+		{
+			auto r = Result<UINT32, UINT32>::Ok(100);
+			r.Value() = 200;
+			if (r.Value() != 200)
+			{
+				LOG_ERROR("  FAILED: Value mutation (Value() != 200, got %u)", r.Value());
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Value mutation");
+			}
+		}
+
+		return allPassed;
 	}
 
-	static BOOL TestMoveTransfersOwnership()
+	// =====================================================================
+	// Move semantics suite
+	// =====================================================================
+
+	static BOOL TestMoveSemanticsSuite()
 	{
-		BOOL destroyed = false;
+		BOOL allPassed = true;
+
+		// Move construction
 		{
-			auto r1 = Result<Tracked, UINT32>::Ok(Tracked(3, &destroyed));
+			// Move Ok
+			auto ok1 = Result<UINT32, UINT32>::Ok(42);
+			auto ok2 = static_cast<Result<UINT32, UINT32> &&>(ok1);
+			if (!ok2.IsOk() || ok2.Value() != 42)
 			{
-				auto r2 = static_cast<Result<Tracked, UINT32> &&>(r1);
+				LOG_ERROR("  FAILED: Move construction (Ok value mismatch after move)");
+				allPassed = false;
+			}
+			else
+			{
+				// Move Err
+				auto err1 = Result<UINT32, Error>::Err(Error::Socket_OpenFailed_Connect);
+				auto err2 = static_cast<Result<UINT32, Error> &&>(err1);
+				if (!err2.IsErr())
+				{
+					LOG_ERROR("  FAILED: Move construction (Err IsErr() false after move)");
+					allPassed = false;
+				}
+				else if (err2.Error().Code != Error::Socket_OpenFailed_Connect)
+				{
+					LOG_ERROR("  FAILED: Move construction (Err code mismatch after move)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Move construction");
+				}
+			}
+		}
+
+		// Move assignment
+		{
+			auto r = Result<UINT32, UINT32>::Ok(10);
+			if (!r.IsOk() || r.Value() != 10)
+			{
+				LOG_ERROR("  FAILED: Move assignment (initial Ok(10) check failed)");
+				allPassed = false;
+			}
+			else
+			{
+				// Reassign from Err
+				r = Result<UINT32, UINT32>::Err(20);
+				if (!r.IsErr())
+				{
+					LOG_ERROR("  FAILED: Move assignment (after reassign to Err: IsErr() false)");
+					allPassed = false;
+				}
+				else
+				{
+					// Reassign back to Ok
+					r = Result<UINT32, UINT32>::Ok(30);
+					if (!r.IsOk() || r.Value() != 30)
+					{
+						LOG_ERROR("  FAILED: Move assignment (after reassign to Ok(30): check failed)");
+						allPassed = false;
+					}
+					else
+					{
+						LOG_INFO("  PASSED: Move assignment");
+					}
+				}
+			}
+		}
+
+		// Void move construction
+		{
+			auto ok1 = Result<void, UINT32>::Ok();
+			auto ok2 = static_cast<Result<void, UINT32> &&>(ok1);
+			if (!ok2.IsOk())
+			{
+				LOG_ERROR("  FAILED: Void move construction (Ok IsOk() false)");
+				allPassed = false;
+			}
+			else
+			{
+				auto err1 = Result<void, UINT32>::Err(7);
+				auto err2 = static_cast<Result<void, UINT32> &&>(err1);
+				if (!err2.IsErr())
+				{
+					LOG_ERROR("  FAILED: Void move construction (Err IsErr() false)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Void move construction");
+				}
+			}
+		}
+
+		// Non-trivial destructor
+		{
+			BOOL destroyed = false;
+			{
+				auto r = Result<Tracked, UINT32>::Ok(Tracked(1, &destroyed));
 				if (destroyed)
 				{
-					LOG_ERROR("Tracked destroyed after move (r2 still alive)");
-					return false;
-				}
-				if (r2.Value().value != 3)
-				{
-					LOG_ERROR("Tracked value mismatch after move: expected 3");
-					return false;
+					LOG_ERROR("  FAILED: Non-trivial destructor (destroyed prematurely inside scope)");
+					allPassed = false;
 				}
 			}
-			// r2 out of scope — destructor fires
-			if (!destroyed)
+			if (allPassed)
 			{
-				LOG_ERROR("Tracked not destroyed after r2 scope exit");
-				return false;
+				if (!destroyed)
+				{
+					LOG_ERROR("  FAILED: Non-trivial destructor (not destroyed after scope exit)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Non-trivial destructor");
+				}
 			}
 		}
-		// r1 source was nullified by move — no double-destroy
-		return true;
+
+		// Move transfers ownership
+		{
+			BOOL destroyed = false;
+			{
+				auto r1 = Result<Tracked, UINT32>::Ok(Tracked(3, &destroyed));
+				{
+					auto r2 = static_cast<Result<Tracked, UINT32> &&>(r1);
+					if (destroyed)
+					{
+						LOG_ERROR("  FAILED: Move transfers ownership (destroyed after move, r2 still alive)");
+						allPassed = false;
+					}
+					else if (r2.Value().value != 3)
+					{
+						LOG_ERROR("  FAILED: Move transfers ownership (value mismatch: expected 3)");
+						allPassed = false;
+					}
+				}
+				// r2 out of scope — destructor fires
+				if (allPassed && !destroyed)
+				{
+					LOG_ERROR("  FAILED: Move transfers ownership (not destroyed after r2 scope exit)");
+					allPassed = false;
+				}
+			}
+			// r1 source was nullified by move — no double-destroy
+			if (allPassed)
+			{
+				LOG_INFO("  PASSED: Move transfers ownership");
+			}
+		}
+
+		return allPassed;
 	}
 
 	// =====================================================================
-	// Error chaining (E = Error)
+	// Error chaining suite
 	// =====================================================================
 
-	static BOOL TestSingleError()
+	static BOOL TestErrorChainingSuite()
 	{
-		auto r = Result<UINT32, Error>::Err(Error::Dns_ConnectFailed);
-		if (!r.IsErr())
+		BOOL allPassed = true;
+
+		// Single error storage
 		{
-			LOG_ERROR("SingleError: IsErr() false");
-			return false;
+			auto r = Result<UINT32, Error>::Err(Error::Dns_ConnectFailed);
+			if (!r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Single error storage (IsErr() false)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = r.Error();
+				if (err.Code != Error::Dns_ConnectFailed)
+				{
+					LOG_ERROR("  FAILED: Single error storage (Code mismatch)");
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Single error storage (Platform mismatch)");
+					allPassed = false;
+				}
+				else if (err.Depth != 0)
+				{
+					LOG_ERROR("  FAILED: Single error storage (Depth should be 0)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Single error storage");
+				}
+			}
 		}
 
-		const Error &err = r.Error();
-		if (err.Code != Error::Dns_ConnectFailed)
+		// Two-arg Err chaining
 		{
-			LOG_ERROR("SingleError: Code mismatch");
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("SingleError: Platform mismatch");
-			return false;
-		}
-		if (err.Depth != 0)
-		{
-			LOG_ERROR("SingleError: Depth should be 0");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestTwoArgErrChaining()
-	{
-		// 2-arg Err chains both: outer=Socket_OpenFailed_Connect, inner=Windows(0xC0000034)
-		auto r = Result<UINT32, Error>::Err(
-			Error::Windows(0xC0000034),
-			Error::Socket_OpenFailed_Connect);
-		if (!r.IsErr())
-		{
-			LOG_ERROR("TwoArgErr: IsErr() false");
-			return false;
-		}
-
-		const Error &err = r.Error();
-		// Outermost code is Socket_OpenFailed_Connect
-		if (err.Code != Error::Socket_OpenFailed_Connect)
-		{
-			LOG_ERROR("TwoArgErr: Code mismatch, expected Socket_OpenFailed_Connect, got %u",
-				(UINT32)err.Code);
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("TwoArgErr: Platform mismatch, expected Runtime");
-			return false;
-		}
-		// Inner chain has the Windows NTSTATUS
-		if (err.Depth != 1)
-		{
-			LOG_ERROR("TwoArgErr: Depth mismatch, expected 1, got %u", (UINT32)err.Depth);
-			return false;
-		}
-		if (err.InnerCodes[0] != 0xC0000034)
-		{
-			LOG_ERROR("TwoArgErr: InnerCodes[0] mismatch, expected 0xC0000034");
-			return false;
-		}
-		if (err.InnerPlatforms[0] != Error::PlatformKind::Windows)
-		{
-			LOG_ERROR("TwoArgErr: InnerPlatforms[0] mismatch, expected Windows");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestPropagationErrChaining()
-	{
-		// Build an inner error with its own chain
-		auto inner = Result<UINT32, Error>::Err(
-			Error::Posix(111),
-			Error::Socket_WriteFailed_Send);
-
-		// Propagate — both inner chain and outer site code are preserved
-		auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
-		if (!outer.IsErr())
-		{
-			LOG_ERROR("PropagationErr: IsErr() false");
-			return false;
+			auto r = Result<UINT32, Error>::Err(
+				Error::Windows(0xC0000034),
+				Error::Socket_OpenFailed_Connect);
+			if (!r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Two-arg Err chaining (IsErr() false)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = r.Error();
+				if (err.Code != Error::Socket_OpenFailed_Connect)
+				{
+					LOG_ERROR("  FAILED: Two-arg Err chaining (Code mismatch, expected Socket_OpenFailed_Connect, got %u)",
+						(UINT32)err.Code);
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Two-arg Err chaining (Platform mismatch)");
+					allPassed = false;
+				}
+				else if (err.Depth != 1)
+				{
+					LOG_ERROR("  FAILED: Two-arg Err chaining (Depth mismatch, expected 1, got %u)", (UINT32)err.Depth);
+					allPassed = false;
+				}
+				else if (err.InnerCodes[0] != 0xC0000034)
+				{
+					LOG_ERROR("  FAILED: Two-arg Err chaining (InnerCodes[0] mismatch)");
+					allPassed = false;
+				}
+				else if (err.InnerPlatforms[0] != Error::PlatformKind::Windows)
+				{
+					LOG_ERROR("  FAILED: Two-arg Err chaining (InnerPlatforms[0] mismatch)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Two-arg Err chaining");
+				}
+			}
 		}
 
-		const Error &err = outer.Error();
-		// Outermost code is Tls_WriteFailed_Send
-		if (err.Code != Error::Tls_WriteFailed_Send)
+		// Propagation Err chaining
 		{
-			LOG_ERROR("PropagationErr: Code mismatch, expected Tls_WriteFailed_Send, got %u",
-				(UINT32)err.Code);
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("PropagationErr: Platform mismatch");
-			return false;
-		}
-		// Inner chain: [0]=Socket_WriteFailed_Send, [1]=Posix(111)
-		if (err.Depth != 2)
-		{
-			LOG_ERROR("PropagationErr: Depth mismatch, expected 2, got %u", (UINT32)err.Depth);
-			return false;
-		}
-		if (err.InnerCodes[0] != (UINT32)Error::Socket_WriteFailed_Send)
-		{
-			LOG_ERROR("PropagationErr: InnerCodes[0] mismatch");
-			return false;
-		}
-		if (err.InnerPlatforms[0] != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("PropagationErr: InnerPlatforms[0] mismatch");
-			return false;
-		}
-		if (err.InnerCodes[1] != 111)
-		{
-			LOG_ERROR("PropagationErr: InnerCodes[1] mismatch, expected 111");
-			return false;
-		}
-		if (err.InnerPlatforms[1] != Error::PlatformKind::Posix)
-		{
-			LOG_ERROR("PropagationErr: InnerPlatforms[1] mismatch, expected Posix");
-			return false;
-		}
-		return true;
-	}
+			auto inner = Result<UINT32, Error>::Err(
+				Error::Posix(111),
+				Error::Socket_WriteFailed_Send);
 
-	static BOOL TestMultiLevelChaining()
-	{
-		// Simulate: OS -> Socket -> TLS -> HTTP (4 levels)
-		// Level 1: OS error
-		auto osResult = Result<void, Error>::Err(Error::Windows(0xC0000034));
-
-		// Level 2: Socket wraps OS
-		auto socketResult = Result<void, Error>::Err(osResult, Error::Socket_OpenFailed_Connect);
-
-		// Level 3: TLS wraps Socket
-		auto tlsResult = Result<void, Error>::Err(socketResult, Error::Tls_OpenFailed_Socket);
-
-		// Level 4: HTTP wraps TLS
-		auto httpResult = Result<void, Error>::Err(tlsResult, Error::Http_OpenFailed);
-
-		const Error &err = httpResult.Error();
-
-		// Outermost
-		if (err.Code != Error::Http_OpenFailed)
-		{
-			LOG_ERROR("MultiLevel: Code mismatch, expected Http_OpenFailed");
-			return false;
+			auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
+			if (!outer.IsErr())
+			{
+				LOG_ERROR("  FAILED: Propagation Err chaining (IsErr() false)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = outer.Error();
+				if (err.Code != Error::Tls_WriteFailed_Send)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (Code mismatch, expected Tls_WriteFailed_Send, got %u)",
+						(UINT32)err.Code);
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (Platform mismatch)");
+					allPassed = false;
+				}
+				else if (err.Depth != 2)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (Depth mismatch, expected 2, got %u)", (UINT32)err.Depth);
+					allPassed = false;
+				}
+				else if (err.InnerCodes[0] != (UINT32)Error::Socket_WriteFailed_Send)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (InnerCodes[0] mismatch)");
+					allPassed = false;
+				}
+				else if (err.InnerPlatforms[0] != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (InnerPlatforms[0] mismatch)");
+					allPassed = false;
+				}
+				else if (err.InnerCodes[1] != 111)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (InnerCodes[1] mismatch)");
+					allPassed = false;
+				}
+				else if (err.InnerPlatforms[1] != Error::PlatformKind::Posix)
+				{
+					LOG_ERROR("  FAILED: Propagation Err chaining (InnerPlatforms[1] mismatch)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Propagation Err chaining");
+				}
+			}
 		}
 
-		// Full chain depth = 3 inner entries
-		if (err.Depth != 3)
+		// Multi-level error chaining
 		{
-			LOG_ERROR("MultiLevel: Depth mismatch, expected 3, got %u", (UINT32)err.Depth);
-			return false;
+			// Simulate: OS -> Socket -> TLS -> HTTP (4 levels)
+			auto osResult = Result<void, Error>::Err(Error::Windows(0xC0000034));
+			auto socketResult = Result<void, Error>::Err(osResult, Error::Socket_OpenFailed_Connect);
+			auto tlsResult = Result<void, Error>::Err(socketResult, Error::Tls_OpenFailed_Socket);
+			auto httpResult = Result<void, Error>::Err(tlsResult, Error::Http_OpenFailed);
+
+			const Error &err = httpResult.Error();
+
+			if (err.Code != Error::Http_OpenFailed)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (Code mismatch, expected Http_OpenFailed)");
+				allPassed = false;
+			}
+			else if (err.Depth != 3)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (Depth mismatch, expected 3, got %u)", (UINT32)err.Depth);
+				allPassed = false;
+			}
+			else if (err.InnerCodes[0] != (UINT32)Error::Tls_OpenFailed_Socket)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (InnerCodes[0] mismatch)");
+				allPassed = false;
+			}
+			else if (err.InnerCodes[1] != (UINT32)Error::Socket_OpenFailed_Connect)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (InnerCodes[1] mismatch)");
+				allPassed = false;
+			}
+			else if (err.InnerCodes[2] != 0xC0000034)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (InnerCodes[2] mismatch)");
+				allPassed = false;
+			}
+			else if (err.InnerPlatforms[2] != Error::PlatformKind::Windows)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (InnerPlatforms[2] mismatch)");
+				allPassed = false;
+			}
+			else if (err.RootCode() != 0xC0000034)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (RootCode mismatch)");
+				allPassed = false;
+			}
+			else if (err.RootPlatform() != Error::PlatformKind::Windows)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (RootPlatform mismatch)");
+				allPassed = false;
+			}
+			else if (err.TotalDepth() != 4)
+			{
+				LOG_ERROR("  FAILED: Multi-level chaining (TotalDepth mismatch, expected 4)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Multi-level error chaining");
+			}
 		}
 
-		// Inner[0] = Tls_OpenFailed_Socket (Runtime)
-		if (err.InnerCodes[0] != (UINT32)Error::Tls_OpenFailed_Socket)
-		{
-			LOG_ERROR("MultiLevel: InnerCodes[0] mismatch");
-			return false;
-		}
-
-		// Inner[1] = Socket_OpenFailed_Connect (Runtime)
-		if (err.InnerCodes[1] != (UINT32)Error::Socket_OpenFailed_Connect)
-		{
-			LOG_ERROR("MultiLevel: InnerCodes[1] mismatch");
-			return false;
-		}
-
-		// Inner[2] = 0xC0000034 (Windows) — root cause
-		if (err.InnerCodes[2] != 0xC0000034)
-		{
-			LOG_ERROR("MultiLevel: InnerCodes[2] mismatch, expected 0xC0000034");
-			return false;
-		}
-		if (err.InnerPlatforms[2] != Error::PlatformKind::Windows)
-		{
-			LOG_ERROR("MultiLevel: InnerPlatforms[2] mismatch, expected Windows");
-			return false;
-		}
-
-		// RootCode/RootPlatform accessors
-		if (err.RootCode() != 0xC0000034)
-		{
-			LOG_ERROR("MultiLevel: RootCode mismatch");
-			return false;
-		}
-		if (err.RootPlatform() != Error::PlatformKind::Windows)
-		{
-			LOG_ERROR("MultiLevel: RootPlatform mismatch");
-			return false;
-		}
-		if (err.TotalDepth() != 4)
-		{
-			LOG_ERROR("MultiLevel: TotalDepth mismatch, expected 4");
-			return false;
-		}
-
-		return true;
-	}
-
-	// =====================================================================
-	// Non-chainable E
-	// =====================================================================
-
-	static BOOL TestNonChainableErr()
-	{
-		auto r1 = Result<UINT32, UINT32>::Err(42);
-		if (!r1.IsErr())
-		{
-			LOG_ERROR("NonChainable Err(42): IsErr() false");
-			return false;
-		}
-		if (r1.IsOk())
-		{
-			LOG_ERROR("NonChainable Err(42): IsOk() true");
-			return false;
-		}
-
-		auto r2 = Result<void, UINT32>::Err(7);
-		if (!r2.IsErr())
-		{
-			LOG_ERROR("NonChainable void Err(7): IsErr() false");
-			return false;
-		}
-
-		// Ok path still works
-		auto r3 = Result<UINT32, UINT32>::Ok(100);
-		if (!r3.IsOk() || r3.Value() != 100)
-		{
-			LOG_ERROR("NonChainable Ok(100): check failed");
-			return false;
-		}
-		return true;
+		return allPassed;
 	}
 
 	// =====================================================================
-	// Type aliases
+	// Compact specialization suite
 	// =====================================================================
 
-	static BOOL TestTypeAliases()
+	static BOOL TestCompactSpecializationSuite()
 	{
-		static_assert(__is_same(Result<UINT32, UINT64>::ValueType, UINT32));
-		static_assert(__is_same(Result<UINT32, UINT64>::ErrorType, UINT64));
-		static_assert(__is_same(Result<void, UINT32>::ValueType, void));
-		static_assert(__is_same(Result<void, UINT32>::ErrorType, UINT32));
-		return true;
+		BOOL allPassed = true;
+
+		// Compact size
+		{
+			static_assert(sizeof(Result<void, Error>) == sizeof(Error),
+				"Compact specialization must equal sizeof(Error)");
+			static_assert(sizeof(Result<void, UINT32>) > sizeof(UINT32),
+				"Primary template Result<void, UINT32> should have m_isOk overhead");
+			LOG_INFO("  PASSED: Compact specialization size");
+		}
+
+		// Compact void Ok
+		{
+			auto r = Result<void, Error>::Ok();
+			if (!r.IsOk())
+			{
+				LOG_ERROR("  FAILED: Compact void Ok (IsOk() returned false)");
+				allPassed = false;
+			}
+			else if (r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Compact void Ok (IsErr() returned true)");
+				allPassed = false;
+			}
+			else if (!r)
+			{
+				LOG_ERROR("  FAILED: Compact void Ok (operator BOOL returned false)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Compact void Ok");
+			}
+		}
+
+		// Compact void Err
+		{
+			auto r = Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
+			if (!r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Compact void Err (IsErr() returned false)");
+				allPassed = false;
+			}
+			else if (r.IsOk())
+			{
+				LOG_ERROR("  FAILED: Compact void Err (IsOk() returned true)");
+				allPassed = false;
+			}
+			else if (r)
+			{
+				LOG_ERROR("  FAILED: Compact void Err (operator BOOL returned true)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = r.Error();
+				if (err.Code != Error::Socket_CreateFailed_Open)
+				{
+					LOG_ERROR("  FAILED: Compact void Err (Code mismatch)");
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Compact void Err (Platform mismatch)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Compact void Err");
+				}
+			}
+		}
+
+		// Compact void propagation Err
+		{
+			auto inner = Result<UINT32, Error>::Err(
+				Error::Posix(111),
+				Error::Socket_WriteFailed_Send);
+
+			auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
+			if (!outer.IsErr())
+			{
+				LOG_ERROR("  FAILED: Compact void propagation (IsErr() false)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = outer.Error();
+				if (err.Code != Error::Tls_WriteFailed_Send)
+				{
+					LOG_ERROR("  FAILED: Compact void propagation (Code mismatch, expected Tls_WriteFailed_Send, got %u)",
+						(UINT32)err.Code);
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Compact void propagation (Platform mismatch)");
+					allPassed = false;
+				}
+				else if (err.Depth != 2)
+				{
+					LOG_ERROR("  FAILED: Compact void propagation (Depth mismatch, expected 2, got %u)", (UINT32)err.Depth);
+					allPassed = false;
+				}
+				else if (err.InnerCodes[0] != (UINT32)Error::Socket_WriteFailed_Send)
+				{
+					LOG_ERROR("  FAILED: Compact void propagation (InnerCodes[0] mismatch)");
+					allPassed = false;
+				}
+				else if (err.InnerCodes[1] != 111)
+				{
+					LOG_ERROR("  FAILED: Compact void propagation (InnerCodes[1] mismatch)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Compact void propagation Err");
+				}
+			}
+		}
+
+		// Compact void two-arg Err
+		{
+			auto r = Result<void, Error>::Err(
+				Error::Windows(0xC0000034),
+				Error::Socket_OpenFailed_Connect);
+			if (!r.IsErr())
+			{
+				LOG_ERROR("  FAILED: Compact void two-arg Err (IsErr() false)");
+				allPassed = false;
+			}
+			else
+			{
+				const Error &err = r.Error();
+				if (err.Code != Error::Socket_OpenFailed_Connect)
+				{
+					LOG_ERROR("  FAILED: Compact void two-arg Err (Code mismatch, expected Socket_OpenFailed_Connect, got %u)",
+						(UINT32)err.Code);
+					allPassed = false;
+				}
+				else if (err.Platform != Error::PlatformKind::Runtime)
+				{
+					LOG_ERROR("  FAILED: Compact void two-arg Err (Platform mismatch)");
+					allPassed = false;
+				}
+				else if (err.Depth != 1)
+				{
+					LOG_ERROR("  FAILED: Compact void two-arg Err (Depth mismatch, expected 1, got %u)", (UINT32)err.Depth);
+					allPassed = false;
+				}
+				else if (err.InnerCodes[0] != 0xC0000034)
+				{
+					LOG_ERROR("  FAILED: Compact void two-arg Err (InnerCodes[0] mismatch)");
+					allPassed = false;
+				}
+				else if (err.InnerPlatforms[0] != Error::PlatformKind::Windows)
+				{
+					LOG_ERROR("  FAILED: Compact void two-arg Err (InnerPlatforms[0] mismatch)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Compact void two-arg Err");
+				}
+			}
+		}
+
+		// Compact Error() on Ok is well-defined
+		{
+			auto r = Result<void, Error>::Ok();
+			const Error &err = r.Error();
+			if (err.Code != Error::None)
+			{
+				LOG_ERROR("  FAILED: Compact Error() on Ok (Code != None)");
+				allPassed = false;
+			}
+			else if (err.Platform != Error::PlatformKind::Runtime)
+			{
+				LOG_ERROR("  FAILED: Compact Error() on Ok (Platform != Runtime)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Compact Error() on Ok is well-defined");
+			}
+		}
+
+		// Compact void move construction
+		{
+			// Move Ok
+			auto ok1 = Result<void, Error>::Ok();
+			auto ok2 = static_cast<Result<void, Error> &&>(ok1);
+			if (!ok2.IsOk())
+			{
+				LOG_ERROR("  FAILED: Compact void move construction (Ok IsOk() false)");
+				allPassed = false;
+			}
+			else
+			{
+				// Move Err
+				auto err1 = Result<void, Error>::Err(Error::Dns_ConnectFailed);
+				auto err2 = static_cast<Result<void, Error> &&>(err1);
+				if (!err2.IsErr())
+				{
+					LOG_ERROR("  FAILED: Compact void move construction (Err IsErr() false)");
+					allPassed = false;
+				}
+				else if (err2.Error().Code != Error::Dns_ConnectFailed)
+				{
+					LOG_ERROR("  FAILED: Compact void move construction (Code mismatch after move)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Compact void move construction");
+				}
+			}
+		}
+
+		return allPassed;
 	}
 
 	// =====================================================================
-	// Compact specialization (Result<void, Error>)
+	// Error accessors suite
 	// =====================================================================
 
-	static BOOL TestCompactSize()
+	static BOOL TestErrorAccessorsSuite()
 	{
-		static_assert(sizeof(Result<void, Error>) == sizeof(Error),
-			"Compact specialization must equal sizeof(Error)");
-		// Primary template is NOT affected
-		static_assert(sizeof(Result<void, UINT32>) > sizeof(UINT32),
-			"Primary template Result<void, UINT32> should have m_isOk overhead");
-		return true;
-	}
+		BOOL allPassed = true;
 
-	static BOOL TestCompactOk()
-	{
-		auto r = Result<void, Error>::Ok();
-		if (!r.IsOk())
+		// Root cause accessors
 		{
-			LOG_ERROR("Compact Ok: IsOk() returned false");
-			return false;
-		}
-		if (r.IsErr())
-		{
-			LOG_ERROR("Compact Ok: IsErr() returned true");
-			return false;
-		}
-		if (!r)
-		{
-			LOG_ERROR("Compact Ok: operator BOOL returned false");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestCompactErr()
-	{
-		auto r = Result<void, Error>::Err(Error::Socket_CreateFailed_Open);
-		if (!r.IsErr())
-		{
-			LOG_ERROR("Compact Err: IsErr() returned false");
-			return false;
-		}
-		if (r.IsOk())
-		{
-			LOG_ERROR("Compact Err: IsOk() returned true");
-			return false;
-		}
-		if (r)
-		{
-			LOG_ERROR("Compact Err: operator BOOL returned true");
-			return false;
-		}
-
-		const Error &err = r.Error();
-		if (err.Code != Error::Socket_CreateFailed_Open)
-		{
-			LOG_ERROR("Compact Err: Code mismatch");
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("Compact Err: Platform mismatch");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestCompactPropagation()
-	{
-		auto inner = Result<UINT32, Error>::Err(
-			Error::Posix(111),
-			Error::Socket_WriteFailed_Send);
-
-		auto outer = Result<void, Error>::Err(inner, Error::Tls_WriteFailed_Send);
-		if (!outer.IsErr())
-		{
-			LOG_ERROR("Compact propagation: IsErr() false");
-			return false;
+			// Single error — root is itself
+			Error single(Error::Socket_CreateFailed_Open);
+			if (single.RootCode() != (UINT32)Error::Socket_CreateFailed_Open)
+			{
+				LOG_ERROR("  FAILED: Root cause accessors (single error RootCode mismatch)");
+				allPassed = false;
+			}
+			else if (single.RootPlatform() != Error::PlatformKind::Runtime)
+			{
+				LOG_ERROR("  FAILED: Root cause accessors (single error RootPlatform mismatch)");
+				allPassed = false;
+			}
+			else if (single.TotalDepth() != 1)
+			{
+				LOG_ERROR("  FAILED: Root cause accessors (single error TotalDepth mismatch)");
+				allPassed = false;
+			}
+			else
+			{
+				// Chained error — root is the innermost
+				Error chained = Error::Wrap(Error::Windows(0xC0000001), Error::Socket_CreateFailed_Open);
+				if (chained.RootCode() != 0xC0000001)
+				{
+					LOG_ERROR("  FAILED: Root cause accessors (chained RootCode mismatch)");
+					allPassed = false;
+				}
+				else if (chained.RootPlatform() != Error::PlatformKind::Windows)
+				{
+					LOG_ERROR("  FAILED: Root cause accessors (chained RootPlatform mismatch)");
+					allPassed = false;
+				}
+				else if (chained.TotalDepth() != 2)
+				{
+					LOG_ERROR("  FAILED: Root cause accessors (chained TotalDepth mismatch)");
+					allPassed = false;
+				}
+				else
+				{
+					LOG_INFO("  PASSED: Error root cause accessors");
+				}
+			}
 		}
 
-		const Error &err = outer.Error();
-		// Outermost code is Tls_WriteFailed_Send
-		if (err.Code != Error::Tls_WriteFailed_Send)
+		// Chain overflow truncation
 		{
-			LOG_ERROR("Compact propagation: Code mismatch, expected Tls_WriteFailed_Send, got %u",
-				(UINT32)err.Code);
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("Compact propagation: Platform mismatch");
-			return false;
-		}
-		// Inner chain preserved
-		if (err.Depth != 2)
-		{
-			LOG_ERROR("Compact propagation: Depth mismatch, expected 2, got %u", (UINT32)err.Depth);
-			return false;
-		}
-		if (err.InnerCodes[0] != (UINT32)Error::Socket_WriteFailed_Send)
-		{
-			LOG_ERROR("Compact propagation: InnerCodes[0] mismatch");
-			return false;
-		}
-		if (err.InnerCodes[1] != 111)
-		{
-			LOG_ERROR("Compact propagation: InnerCodes[1] mismatch");
-			return false;
-		}
-		return true;
-	}
+			Error err(Error::Socket_CreateFailed_Open);
+			for (UINT32 i = 0; i < Error::MaxDepth + 2; i++)
+			{
+				err = Error::Wrap(err, 100 + i);
+			}
 
-	static BOOL TestCompactTwoArgErr()
-	{
-		auto r = Result<void, Error>::Err(
-			Error::Windows(0xC0000034),
-			Error::Socket_OpenFailed_Connect);
-		if (!r.IsErr())
-		{
-			LOG_ERROR("Compact two-arg Err: IsErr() false");
-			return false;
+			if (err.Depth > Error::MaxInnerDepth)
+			{
+				LOG_ERROR("  FAILED: Chain overflow (Depth %u exceeds MaxInnerDepth %u)",
+					(UINT32)err.Depth, (UINT32)Error::MaxInnerDepth);
+				allPassed = false;
+			}
+			else if (err.Code == Error::None)
+			{
+				LOG_ERROR("  FAILED: Chain overflow (Code is None after overflow)");
+				allPassed = false;
+			}
+			else
+			{
+				LOG_INFO("  PASSED: Error chain overflow truncation");
+			}
 		}
 
-		const Error &err = r.Error();
-		// Outermost is Socket_OpenFailed_Connect
-		if (err.Code != Error::Socket_OpenFailed_Connect)
+		// Non-chainable E type
 		{
-			LOG_ERROR("Compact two-arg Err: Code mismatch, expected Socket_OpenFailed_Connect, got %u",
-				(UINT32)err.Code);
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("Compact two-arg Err: Platform mismatch");
-			return false;
-		}
-		// Inner has the Windows NTSTATUS
-		if (err.Depth != 1)
-		{
-			LOG_ERROR("Compact two-arg Err: Depth mismatch, expected 1, got %u", (UINT32)err.Depth);
-			return false;
-		}
-		if (err.InnerCodes[0] != 0xC0000034)
-		{
-			LOG_ERROR("Compact two-arg Err: InnerCodes[0] mismatch");
-			return false;
-		}
-		if (err.InnerPlatforms[0] != Error::PlatformKind::Windows)
-		{
-			LOG_ERROR("Compact two-arg Err: InnerPlatforms[0] mismatch");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestCompactErrorOnOk()
-	{
-		auto r = Result<void, Error>::Ok();
-		// Unlike the primary template (UB), the compact specialization
-		// returns a well-defined Error{None, Runtime} on Ok results
-		const Error &err = r.Error();
-		if (err.Code != Error::None)
-		{
-			LOG_ERROR("Compact Error() on Ok: Code != None");
-			return false;
-		}
-		if (err.Platform != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("Compact Error() on Ok: Platform != Runtime");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestCompactMoveConstruction()
-	{
-		// Move Ok
-		auto ok1 = Result<void, Error>::Ok();
-		auto ok2 = static_cast<Result<void, Error> &&>(ok1);
-		if (!ok2.IsOk())
-		{
-			LOG_ERROR("Compact move Ok: IsOk() false");
-			return false;
+			auto r1 = Result<UINT32, UINT32>::Err(42);
+			if (!r1.IsErr())
+			{
+				LOG_ERROR("  FAILED: Non-chainable E type (Err(42) IsErr() false)");
+				allPassed = false;
+			}
+			else if (r1.IsOk())
+			{
+				LOG_ERROR("  FAILED: Non-chainable E type (Err(42) IsOk() true)");
+				allPassed = false;
+			}
+			else
+			{
+				auto r2 = Result<void, UINT32>::Err(7);
+				if (!r2.IsErr())
+				{
+					LOG_ERROR("  FAILED: Non-chainable E type (void Err(7) IsErr() false)");
+					allPassed = false;
+				}
+				else
+				{
+					auto r3 = Result<UINT32, UINT32>::Ok(100);
+					if (!r3.IsOk() || r3.Value() != 100)
+					{
+						LOG_ERROR("  FAILED: Non-chainable E type (Ok(100) check failed)");
+						allPassed = false;
+					}
+					else
+					{
+						LOG_INFO("  PASSED: Non-chainable E type");
+					}
+				}
+			}
 		}
 
-		// Move Err
-		auto err1 = Result<void, Error>::Err(Error::Dns_ConnectFailed);
-		auto err2 = static_cast<Result<void, Error> &&>(err1);
-		if (!err2.IsErr())
+		// Type aliases
 		{
-			LOG_ERROR("Compact move Err: IsErr() false");
-			return false;
-		}
-		if (err2.Error().Code != Error::Dns_ConnectFailed)
-		{
-			LOG_ERROR("Compact move Err: Code mismatch after move");
-			return false;
-		}
-		return true;
-	}
-
-	// =====================================================================
-	// Error chain accessors
-	// =====================================================================
-
-	static BOOL TestErrorRootCause()
-	{
-		// Single error — root is itself
-		Error single(Error::Socket_CreateFailed_Open);
-		if (single.RootCode() != (UINT32)Error::Socket_CreateFailed_Open)
-		{
-			LOG_ERROR("RootCause: single error RootCode mismatch");
-			return false;
-		}
-		if (single.RootPlatform() != Error::PlatformKind::Runtime)
-		{
-			LOG_ERROR("RootCause: single error RootPlatform mismatch");
-			return false;
-		}
-		if (single.TotalDepth() != 1)
-		{
-			LOG_ERROR("RootCause: single error TotalDepth mismatch");
-			return false;
+			static_assert(__is_same(Result<UINT32, UINT64>::ValueType, UINT32));
+			static_assert(__is_same(Result<UINT32, UINT64>::ErrorType, UINT64));
+			static_assert(__is_same(Result<void, UINT32>::ValueType, void));
+			static_assert(__is_same(Result<void, UINT32>::ErrorType, UINT32));
+			LOG_INFO("  PASSED: Type aliases");
 		}
 
-		// Chained error — root is the innermost
-		Error chained = Error::Wrap(Error::Windows(0xC0000001), Error::Socket_CreateFailed_Open);
-		if (chained.RootCode() != 0xC0000001)
-		{
-			LOG_ERROR("RootCause: chained RootCode mismatch");
-			return false;
-		}
-		if (chained.RootPlatform() != Error::PlatformKind::Windows)
-		{
-			LOG_ERROR("RootCause: chained RootPlatform mismatch");
-			return false;
-		}
-		if (chained.TotalDepth() != 2)
-		{
-			LOG_ERROR("RootCause: chained TotalDepth mismatch");
-			return false;
-		}
-		return true;
-	}
-
-	static BOOL TestErrorChainOverflow()
-	{
-		// Build a chain deeper than MaxInnerDepth to verify truncation
-		Error err(Error::Socket_CreateFailed_Open);
-		for (UINT32 i = 0; i < Error::MaxDepth + 2; i++)
-		{
-			err = Error::Wrap(err, 100 + i);
-		}
-
-		// Depth should be capped at MaxInnerDepth
-		if (err.Depth > Error::MaxInnerDepth)
-		{
-			LOG_ERROR("ChainOverflow: Depth %u exceeds MaxInnerDepth %u",
-				(UINT32)err.Depth, (UINT32)Error::MaxInnerDepth);
-			return false;
-		}
-
-		// Should still be a valid error
-		if (err.Code == Error::None)
-		{
-			LOG_ERROR("ChainOverflow: Code is None after overflow");
-			return false;
-		}
-		return true;
+		return allPassed;
 	}
 };

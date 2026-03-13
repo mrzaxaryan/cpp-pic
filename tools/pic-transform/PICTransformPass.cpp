@@ -442,6 +442,83 @@ namespace
     return true;
   }
 
+  /// Structural replacement for ConstantAggregate globals that contain pointer
+  /// elements (e.g., `const char *args[] = {"cmd.exe", nullptr}`).
+  /// Instead of byte-packing (which cannot serialize relocatable pointers),
+  /// this creates a stack alloca and emits element-wise stores using the
+  /// original Constant values.  Pointer elements that reference other globals
+  /// (e.g., string literals) are stored directly; when those globals are
+  /// processed later in Phase 2, collectUsesInFunction finds and patches
+  /// the store instructions automatically.
+  static bool replaceAggregateGlobalInFunction(Function &F, GlobalVariable &GV,
+                                                const DataLayout &DL)
+  {
+    SmallVector<UseInfo, 8> Uses;
+    collectUsesInFunction(GV, F, Uses);
+    if (Uses.empty())
+      return false;
+
+    BasicBlock &Entry = F.getEntryBlock();
+    IRBuilder<> AllocaBuilder(&Entry, Entry.getFirstInsertionPt());
+
+    Type *AllocTy = GV.getValueType();
+    Align AllocAlign = GV.getAlign().value_or(DL.getABITypeAlign(AllocTy));
+
+    AllocaInst *Alloca = AllocaBuilder.CreateAlloca(
+        AllocTy, nullptr, GV.getName() + ".local");
+    Alloca->setAlignment(AllocAlign);
+
+    IRBuilder<> StoreBuilder(Alloca->getNextNode());
+    StoreBuilder.CreateLifetimeStart(Alloca);
+
+    Constant *Init = GV.getInitializer();
+
+    if (auto *AT = dyn_cast<ArrayType>(AllocTy))
+    {
+      for (unsigned I = 0; I < AT->getNumElements(); ++I)
+      {
+        Constant *Elem = Init->getAggregateElement(I);
+        Value *ElemPtr = StoreBuilder.CreateConstInBoundsGEP2_64(
+            AllocTy, Alloca, 0, I);
+        StoreBuilder.CreateStore(Elem, ElemPtr);
+      }
+    }
+    else if (auto *ST = dyn_cast<StructType>(AllocTy))
+    {
+      for (unsigned I = 0; I < ST->getNumElements(); ++I)
+      {
+        Constant *Elem = Init->getAggregateElement(I);
+        Value *ElemPtr = StoreBuilder.CreateStructGEP(AllocTy, Alloca, I);
+        StoreBuilder.CreateStore(Elem, ElemPtr);
+      }
+    }
+
+    for (auto &UI : Uses)
+    {
+      if (!UI.OuterC)
+      {
+        UI.U->set(Alloca);
+      }
+      else
+      {
+        auto *UserInst = cast<Instruction>(UI.U->getUser());
+
+        IRBuilder<> B(UserInst);
+        if (auto *PHI = dyn_cast<PHINode>(UserInst))
+        {
+          unsigned OpIdx = UI.U->getOperandNo();
+          BasicBlock *IncomingBB = PHI->getIncomingBlock(OpIdx);
+          B.SetInsertPoint(IncomingBB->getTerminator());
+        }
+
+        Value *Replacement = materializeConstant(B, UI.OuterC, GV, Alloca);
+        UI.U->set(Replacement);
+      }
+    }
+
+    return true;
+  }
+
   // ============================================================================
   // Function pointer PIC transformation
   // ============================================================================
@@ -608,6 +685,7 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
     SmallVector<uint8_t, 256> Bytes;
   };
   std::vector<GlobalInfo> Globals;
+  std::vector<GlobalVariable *> AggregateGlobals;
 
   unsigned TotalGlobals = 0;
   unsigned SkippedGlobals = 0;
@@ -623,6 +701,16 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
     Info.GV = &GV;
     if (!extractConstantBytes(DL, GV.getInitializer(), Info.Bytes))
     {
+      // ConstantAggregates with pointer elements (e.g., arrays of pointers)
+      // cannot be byte-serialized but can be structurally reconstructed.
+      if (isa<ConstantAggregate>(GV.getInitializer()))
+      {
+        errs() << "pic-transform: '" << GV.getName() << "' ("
+               << *GV.getValueType()
+               << ") will use structural replacement\n";
+        AggregateGlobals.push_back(&GV);
+        continue;
+      }
       errs() << "pic-transform: warning: cannot serialize '"
              << GV.getName() << "' (" << *GV.getValueType()
              << ") -- skipping\n";
@@ -635,6 +723,7 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
 
   errs() << "pic-transform: scanned " << TotalGlobals << " global(s), "
          << Globals.size() << " transformable, "
+         << AggregateGlobals.size() << " structural, "
          << SkippedGlobals << " skipped (" << TotalBytes << " bytes total)\n";
 
   // ── Phase 0: Replace inline ConstantFP uses with integer bitcasts ──────
@@ -927,7 +1016,7 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
   else
     errs() << "pic-transform: [phase 1] no function pointer references found\n";
 
-  if (Globals.empty() && !Changed)
+  if (Globals.empty() && AggregateGlobals.empty() && !Changed)
   {
     errs() << "pic-transform: no transformations needed, module unchanged\n";
     return PreservedAnalyses::all();
@@ -936,13 +1025,29 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
   // ── Phase 2: Replace global constants with stack immediates ─────────────
   errs() << "pic-transform: [phase 2] transforming " << Globals.size()
          << " global constant(s) to stack immediates ("
-         << TotalBytes << " bytes)\n";
+         << TotalBytes << " bytes), "
+         << AggregateGlobals.size()
+         << " aggregate(s) structurally\n";
 
   unsigned ReplacedUses = 0;
   for (Function &F : M)
   {
     if (F.isDeclaration())
       continue;
+
+    // Structural aggregates first: their element-wise stores may reference
+    // other globals (e.g., string literals).  Processing them first ensures
+    // that when those globals are replaced below, collectUsesInFunction
+    // finds and patches the store instructions created here.
+    for (auto *GV : AggregateGlobals)
+    {
+      if (GV && replaceAggregateGlobalInFunction(F, *GV, DL))
+      {
+        ++ReplacedUses;
+        Changed = true;
+      }
+    }
+
     for (auto &Info : Globals)
     {
       if (replaceGlobalInFunction(F, *Info.GV, Info.Bytes, DL))
@@ -980,6 +1085,22 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
         Progress = true;
       }
     }
+    for (auto *&GV : AggregateGlobals)
+    {
+      if (!GV)
+        continue;
+      GV->removeDeadConstantUsers();
+      if (GV->use_empty())
+      {
+        errs() << "pic-transform: [cleanup] deleted aggregate global '"
+               << GV->getName() << "'\n";
+        GV->eraseFromParent();
+        GV = nullptr;
+        ++DeletedGlobals;
+        Changed = true;
+        Progress = true;
+      }
+    }
   }
 
   // Warn about remaining globals
@@ -1002,10 +1123,13 @@ PreservedAnalyses PICTransformPass::run(Module &M, ModuleAnalysisManager &MAM)
   }
 
   // ── Summary ───────────────────────────────────────────────────────────
+  unsigned TotalTransformed = Globals.size() + AggregateGlobals.size();
   errs() << "pic-transform: summary: "
          << FPConstCount << " FP constants, "
-         << Globals.size() << " globals (" << DeletedGlobals << " deleted, "
-         << (Globals.size() - DeletedGlobals) << " retained), "
+         << TotalTransformed << " globals ("
+         << AggregateGlobals.size() << " structural, "
+         << DeletedGlobals << " deleted, "
+         << (TotalTransformed - DeletedGlobals) << " retained), "
          << ResidualGlobals << " residual warning(s)\n";
 
   return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();

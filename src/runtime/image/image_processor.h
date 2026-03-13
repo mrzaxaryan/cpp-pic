@@ -75,6 +75,8 @@ struct ContourResult
 			delete[] Hierarchy;
 			Hierarchy = nullptr;
 		}
+		ContourCount = 0;
+		HierarchyCount = 0;
 	}
 };
 

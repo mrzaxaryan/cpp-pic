@@ -94,23 +94,15 @@ jobs:
           OPTS="${{ matrix.opts }}"
           : "${OPTS:=O0 O1 O2 O3 Os Oz Og}"
           for opt in ${OPTS}; do
-            # O0 and Og build in both debug and release; others only release
-            if [ "$opt" = "O0" ] || [ "$opt" = "Og" ]; then
-              modes="debug release"
-            else
-              modes="release"
-            fi
-            for mode in ${modes}; do
-              preset="${{ matrix.target }}-${mode}"
-              build_dir="build/${mode}"
-              out_dir="${mode}/${opt}"
-              echo "=== Building -${opt} (${preset}) ==="
-              rm -rf build
-              cmake --preset "${preset}" -DOPTIMIZATION_LEVEL=${opt}
-              cmake --build --preset "${preset}"
-              mkdir -p "${out_dir}"
-              find "${build_dir}" -type f -not -path "*/cmake/*" -exec cp {} "${out_dir}/" \;
-            done
+            preset="${{ matrix.target }}-release"
+            build_dir="build/release"
+            out_dir="release/${opt}"
+            echo "=== Building -${opt} (${preset}) ==="
+            rm -rf build
+            cmake --preset "${preset}" -DOPTIMIZATION_LEVEL=${opt}
+            cmake --build --preset "${preset}"
+            mkdir -p "${out_dir}"
+            find "${build_dir}" -type f -not -path "*/cmake/*" -exec cp {} "${out_dir}/" \;
           done
 
       - name: Upload artifacts
@@ -119,9 +111,7 @@ jobs:
         with:
           name: build-${{ matrix.artifact }}
           retention-days: 1
-          path: |
-            release/
-            debug/
+          path: release/
 
   # ═════════════════════════════════════════════════════════════════════════
   # Test — native loader (python3 tools/pyloader/loader.py)
@@ -136,7 +126,7 @@ jobs:
         with: { name: build-linux-x86_64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -154,7 +144,7 @@ jobs:
         with: { name: build-linux-aarch64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -172,7 +162,7 @@ jobs:
         with: { name: build-android-x86_64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -190,7 +180,7 @@ jobs:
         with: { name: build-android-aarch64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -209,7 +199,7 @@ jobs:
       - name: Test shellcode (PIC loader)
         shell: pwsh
         run: |
-          foreach ($dir in Get-ChildItem -Path release,debug -Directory -ErrorAction SilentlyContinue) {
+          foreach ($dir in Get-ChildItem -Path release -Directory -ErrorAction SilentlyContinue) {
             foreach ($bin in Get-ChildItem -Path $dir.FullName -Filter "*.bin") {
               Write-Host "=== Testing PIC -$($dir.Name) ==="
               python tools/pyloader/loader.py --arch i386 $bin.FullName
@@ -227,7 +217,7 @@ jobs:
       - name: Test shellcode (PIC loader)
         shell: pwsh
         run: |
-          foreach ($dir in Get-ChildItem -Path release,debug -Directory -ErrorAction SilentlyContinue) {
+          foreach ($dir in Get-ChildItem -Path release -Directory -ErrorAction SilentlyContinue) {
             foreach ($bin in Get-ChildItem -Path $dir.FullName -Filter "*.bin") {
               Write-Host "=== Testing PIC -$($dir.Name) ==="
               python tools/pyloader/loader.py --arch x86_64 $bin.FullName
@@ -245,7 +235,7 @@ jobs:
       - name: Test shellcode (PIC loader)
         shell: pwsh
         run: |
-          foreach ($dir in Get-ChildItem -Path release,debug -Directory -ErrorAction SilentlyContinue) {
+          foreach ($dir in Get-ChildItem -Path release -Directory -ErrorAction SilentlyContinue) {
             foreach ($bin in Get-ChildItem -Path $dir.FullName -Filter "*.bin") {
               Write-Host "=== Testing PIC -$($dir.Name) ==="
               python tools/pyloader/loader.py --arch aarch64 $bin.FullName
@@ -262,7 +252,7 @@ jobs:
         with: { name: build-macos-aarch64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -280,7 +270,7 @@ jobs:
         with: { name: build-macos-x86_64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -298,7 +288,7 @@ jobs:
         with: { name: build-ios-aarch64, path: . }
       - name: Test shellcode (PIC loader)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for bin in "$dir"*.bin; do
               [ -f "$bin" ] || continue
@@ -327,7 +317,7 @@ jobs:
             -v "$PWD:/work" -w /work \
             python:3.11-slim-bullseye \
             bash -c '
-              for dir in release/*/ debug/*/; do
+              for dir in release/*/; do
                 opt=$(basename "$dir")
                 for bin in "$dir"*.bin; do
                   [ -f "$bin" ] || continue
@@ -348,7 +338,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y qemu-user-static
       - name: Test ELF (QEMU riscv32)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for elf in "$dir"*.elf; do
               [ -f "$elf" ] || continue
@@ -376,7 +366,7 @@ jobs:
           distro: ubuntu22.04
           install: apt-get update && apt-get install -y python3
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for bin in "$dir"*.bin; do
                 [ -f "$bin" ] || continue
@@ -399,7 +389,7 @@ jobs:
           distro: ubuntu22.04
           install: apt-get update && apt-get install -y python3
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for bin in "$dir"*.bin; do
                 [ -f "$bin" ] || continue
@@ -422,7 +412,7 @@ jobs:
           distro: ubuntu22.04
           install: apt-get update && apt-get install -y python3
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for bin in "$dir"*.bin; do
                 [ -f "$bin" ] || continue
@@ -450,7 +440,7 @@ jobs:
           prepare: pkg install -y python3
           usesh: true
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for bin in "$dir"*.bin; do
                 [ -f "$bin" ] || continue
@@ -475,7 +465,7 @@ jobs:
           prepare: pkg install -y python3
           usesh: true
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for bin in "$dir"*.bin; do
                 [ -f "$bin" ] || continue
@@ -499,7 +489,7 @@ jobs:
           prepare: pkg install -y python3
           usesh: true
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for elf in "$dir"*.elf; do
                 [ -f "$elf" ] || continue
@@ -524,7 +514,7 @@ jobs:
           sync: scp
           usesh: true
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for elf in "$dir"*.elf; do
                 [ -f "$elf" ] || continue
@@ -552,7 +542,7 @@ jobs:
           sync: scp
           usesh: true
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for elf in "$dir"*.elf; do
                 [ -f "$elf" ] || continue
@@ -575,7 +565,7 @@ jobs:
           sync: scp
           usesh: true
           run: |
-            for dir in release/*/ debug/*/; do
+            for dir in release/*/; do
               opt=$(basename "$dir")
               for bin in "$dir"*.bin; do
                 [ -f "$bin" ] || continue
@@ -602,7 +592,7 @@ jobs:
           sudo apt-get install -y qemu-system-x86 ovmf libslirp0 qemu-system-common dosfstools mtools
       - name: Test UEFI (QEMU x86_64)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for efi in "$dir"*.efi; do
               [ -f "$efi" ] || continue
@@ -640,7 +630,7 @@ jobs:
           sudo apt-get install -y qemu-system-arm qemu-efi-aarch64 libslirp0 qemu-system-common dosfstools mtools
       - name: Test UEFI (QEMU aarch64)
         run: |
-          for dir in release/*/ debug/*/; do
+          for dir in release/*/; do
             opt=$(basename "$dir")
             for efi in "$dir"*.efi; do
               [ -f "$efi" ] || continue

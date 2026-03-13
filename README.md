@@ -408,6 +408,8 @@ The `-fno-jump-tables` flag is particularly critical - without it, `switch` stat
 
 **3. Post-Build Verification:** The build system automatically verifies that the final binary contains no data sections (`.rdata`, `.rodata`, `.data`, `.bss`, `.got`, `.plt`). This check runs after every build via `cmake/VerifyPICMode.cmake`.
 
+> **Note on debug builds:** Debug optimization levels (`-O0`, `-Og`) do not pass PIC verification because the compiler preserves data sections that are normally eliminated at higher optimization levels. Supporting fully position-independent debug builds is technically feasible but would require significant additional work in the pic-transform LLVM pass to handle unoptimized IR patterns. Debug presets are available for local development and debugging with standard tooling, but the output binaries are not suitable for PIC/shellcode execution. PIC verification is automatically skipped for `-O0` and `-Og` builds.
+
 ---
 ## Platform Implementations
 

@@ -468,6 +468,7 @@ struct DrmGemClose
 constexpr UINT32 DRM_MODE_CONNECTED = 1;
 
 /// DRM ioctl numbers: _IOWR('d', nr, struct) = (3<<30)|(sizeof<<16)|(0x64<<8)|nr
+/// Note: _IOWR encoding is identical on standard and MIPS (3<<30 == 6<<29 == 0xC0000000)
 constexpr USIZE DRM_IOCTL_MODE_GETRESOURCES = 0xC04064A0;
 constexpr USIZE DRM_IOCTL_MODE_GETCRTC      = 0xC06864A1;
 constexpr USIZE DRM_IOCTL_MODE_GETENCODER   = 0xC01464A6;
@@ -475,8 +476,13 @@ constexpr USIZE DRM_IOCTL_MODE_GETCONNECTOR = 0xC05064A7;
 constexpr USIZE DRM_IOCTL_MODE_GETFB        = 0xC01C64AD;
 constexpr USIZE DRM_IOCTL_MODE_MAP_DUMB     = 0xC01064B3;
 
-/// DRM GEM close: _IOW('d', 0x09, drm_gem_close) = (1<<30)|(8<<16)|(0x64<<8)|0x09
+/// DRM GEM close: _IOW('d', 0x09, drm_gem_close)
+/// MIPS _IOW direction = 4 at bit 29; standard _IOW direction = 1 at bit 30
+#if defined(ARCHITECTURE_MIPS64)
+constexpr USIZE DRM_IOCTL_GEM_CLOSE         = 0x80086409;
+#else
 constexpr USIZE DRM_IOCTL_GEM_CLOSE         = 0x40086409;
+#endif
 
 // =============================================================================
 // Internal helpers — shared
@@ -962,17 +968,16 @@ Result<ScreenDeviceList, Error> Screen::GetDevices()
 }
 
 // =============================================================================
-// Screen::Capture (DRM or framebuffer dispatch)
+// Internal helper — framebuffer capture by device index
 // =============================================================================
 
-Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer)
+/// @brief Capture screen via Linux framebuffer (/dev/fb<N>)
+/// @param fbIndex Framebuffer device number (0-7)
+/// @param device Display device descriptor (for resolution validation)
+/// @param buffer Output RGB pixel buffer
+/// @return Ok on success, Err on failure
+static Result<void, Error> FbCapture(UINT32 fbIndex, const ScreenDevice &device, Span<RGB> buffer)
 {
-	// DRM device: Left < 0 encodes -(cardIndex + 1)
-	if (device.Left < 0)
-		return DrmCapture(device, buffer);
-
-	// Framebuffer device: Left encodes /dev/fb index
-	UINT32 fbIndex = (UINT32)device.Left;
 	if (fbIndex > 7)
 		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
 
@@ -1048,6 +1053,42 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 	System::Call(SYS_MUNMAP, (USIZE)mapped, (USIZE)finfo.SmemLen);
 
 	return Result<void, Error>::Ok();
+}
+
+/// @brief Try framebuffer capture across all /dev/fb devices matching resolution
+/// @param device Display device descriptor (for resolution matching)
+/// @param buffer Output RGB pixel buffer
+/// @return Ok on success, Err if no matching framebuffer found
+static Result<void, Error> FbCaptureFallback(const ScreenDevice &device, Span<RGB> buffer)
+{
+	for (UINT32 i = 0; i < 8; i++)
+	{
+		auto result = FbCapture(i, device, buffer);
+		if (result.IsOk())
+			return result;
+	}
+	return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+}
+
+// =============================================================================
+// Screen::Capture (DRM or framebuffer dispatch)
+// =============================================================================
+
+Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer)
+{
+	// DRM device: Left < 0 encodes -(cardIndex + 1)
+	if (device.Left < 0)
+	{
+		auto result = DrmCapture(device, buffer);
+		if (result.IsOk())
+			return result;
+
+		// DRM capture failed (e.g., no DRM master on Linux 5.1+) — try framebuffer
+		return FbCaptureFallback(device, buffer);
+	}
+
+	// Framebuffer device: Left encodes /dev/fb index
+	return FbCapture((UINT32)device.Left, device, buffer);
 }
 
 #endif // platform selection

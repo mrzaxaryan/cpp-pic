@@ -2,24 +2,34 @@
  * @file screen.cc
  * @brief POSIX Screen Implementation (Linux/Android/FreeBSD/Solaris)
  *
- * @details Implements screen device enumeration and capture via two backends:
+ * @details Implements screen device enumeration and capture via three backends:
  *
- * 1. DRM dumb buffers (/dev/dri/card0..card7): The preferred backend on
- *    modern Linux, Android, and FreeBSD. Enumerates connectors, encoders,
- *    and CRTCs via DRM mode-setting ioctls. Capture maps the active
- *    framebuffer via DRM_IOCTL_MODE_MAP_DUMB. Requires DRM master or
- *    CAP_SYS_ADMIN for framebuffer mapping. DRM devices are encoded in
- *    ScreenDevice as Left = -(cardIndex + 1), Top = crtcId.
+ * 1. X11 raw protocol (/tmp/.X11-unix/X<N>): The preferred backend on
+ *    Linux desktops running X11 compositors (GNOME, KDE, XFCE, etc.).
+ *    Speaks the X11 wire protocol directly over a Unix domain socket —
+ *    no libX11 dependency. Authenticates via MIT-MAGIC-COOKIE-1 from
+ *    ~/.Xauthority and captures the root window using GetImage (opcode 73)
+ *    in ZPixmap format. X11 devices are encoded in ScreenDevice as
+ *    Left = -(1000 + displayNum).
  *
- * 2. Linux framebuffer (/dev/fb0..fb7): Legacy fallback when DRM is
- *    unavailable. Uses FBIOGET_VSCREENINFO and FBIOGET_FSCREENINFO ioctls
- *    with mmap to read pixel data. Shared between Linux, Android, and
- *    FreeBSD (via linuxkpi compatibility). On Android, /dev/graphics/fb0..fb7
- *    is tried when /dev/fb* is unavailable. ScreenDevice::Left stores the
- *    framebuffer index.
+ * 2. DRM dumb buffers (/dev/dri/card0..card7): Fallback for non-X11
+ *    environments (VMs, TTY consoles, embedded). Enumerates connectors,
+ *    encoders, and CRTCs via DRM mode-setting ioctls. Capture maps the
+ *    active framebuffer via DRM_IOCTL_MODE_MAP_DUMB. Requires DRM master
+ *    or CAP_SYS_ADMIN for framebuffer mapping. DRM devices are encoded in
+ *    ScreenDevice as Left = -(cardIndex + 1), Top = crtcId. If the mapped
+ *    buffer is all-black (GPU-composited scanout), falls back to
+ *    framebuffer.
  *
- * GetDevices() tries DRM first; if no displays are found, falls back to
- * framebuffer. Capture() dispatches based on the Left field encoding.
+ * 3. Linux framebuffer (/dev/fb0..fb7): Legacy fallback when both X11 and
+ *    DRM are unavailable. Uses FBIOGET_VSCREENINFO and FBIOGET_FSCREENINFO
+ *    ioctls with mmap to read pixel data. Shared between Linux, Android,
+ *    and FreeBSD (via linuxkpi compatibility). On Android,
+ *    /dev/graphics/fb0..fb7 is tried when /dev/fb* is unavailable.
+ *    ScreenDevice::Left stores the framebuffer index.
+ *
+ * GetDevices() tries X11 first (Linux only), then DRM, then framebuffer.
+ * Capture() dispatches based on the Left field encoding.
  *
  * Solaris uses the SunOS framebuffer API (sys/fbio.h) with FBIOGTYPE
  * ioctl to query /dev/fb device parameters and mmap to read pixel data.
@@ -37,6 +47,7 @@
 
 #include "platform/screen/screen.h"
 #include "core/memory/memory.h"
+#include "platform/system/environment.h"
 
 #if defined(PLATFORM_LINUX)
 #include "platform/kernel/linux/syscall.h"
@@ -910,7 +921,861 @@ static Result<void, Error> DrmCapture(const ScreenDevice &device, Span<RGB> buff
 }
 
 // =============================================================================
-// Screen::GetDevices (DRM first, framebuffer fallback)
+// X11 raw protocol — screen capture via Unix domain socket
+// =============================================================================
+//
+// Captures the composited desktop by speaking the X11 wire protocol directly
+// over a Unix domain socket (/tmp/.X11-unix/X<N>). This works on X11 desktops
+// with compositors (GNOME, KDE, XFCE, etc.) where DRM dumb buffers and
+// /dev/fb* return black images because the GPU compositor owns the scanout
+// buffers.
+//
+// Protocol flow:
+// 1. Parse $DISPLAY to get display number
+// 2. Connect to /tmp/.X11-unix/X<N> (AF_UNIX stream socket)
+// 3. Read ~/.Xauthority for MIT-MAGIC-COOKIE-1 authentication
+// 4. Perform X11 connection setup handshake
+// 5. Send GetImage (opcode 73) on the root window in ZPixmap format
+// 6. Read pixel data and convert to RGB using visual color masks
+//
+// @see X Window System Protocol, X Consortium Standard
+//      https://www.x.org/releases/X11R7.7/doc/xproto/x11protocol.html
+
+#if defined(PLATFORM_LINUX)
+
+/// @brief Unix domain socket address family (AF_UNIX = AF_LOCAL)
+constexpr UINT16 X11_AF_UNIX = 1;
+
+/// @brief Stream socket type for X11 (architecture-dependent)
+#if defined(ARCHITECTURE_MIPS64)
+constexpr INT32 X11_SOCK_STREAM = 2;
+#else
+constexpr INT32 X11_SOCK_STREAM = 1;
+#endif
+
+/// @brief X11 GetImage request opcode
+/// @see X11 Protocol Section 8 — GetImage
+constexpr UINT8 X11_OPCODE_GETIMAGE = 73;
+
+/// @brief ZPixmap format for GetImage (pixels stored as full-depth values)
+constexpr UINT8 X11_FORMAT_ZPIXMAP = 2;
+
+/// @brief Xauthority family: local Unix connection
+constexpr UINT16 XAUTH_FAMILY_LOCAL = 256;
+
+/// @brief Xauthority family: wildcard (matches any host/display)
+constexpr UINT16 XAUTH_FAMILY_WILD = 65535;
+
+/// @brief Unix domain socket address (sockaddr_un equivalent)
+struct SockAddrUn
+{
+	UINT16 SunFamily; ///< Address family (AF_UNIX = 1)
+	CHAR SunPath[108]; ///< Socket pathname
+};
+
+#pragma pack(push, 1)
+
+/// @brief X11 connection setup request (12 bytes, followed by auth data)
+/// @see X11 Protocol Section 8 — Connection Setup
+struct X11SetupRequest
+{
+	UINT8 ByteOrder;     ///< 0x6C = LSBFirst (little-endian), 0x42 = MSBFirst
+	UINT8 Pad0;
+	UINT16 MajorVersion; ///< Protocol major version (11)
+	UINT16 MinorVersion; ///< Protocol minor version (0)
+	UINT16 AuthNameLen;  ///< Length of authorization protocol name
+	UINT16 AuthDataLen;  ///< Length of authorization protocol data
+	UINT16 Pad1;
+};
+
+/// @brief X11 GetImage request (20 bytes)
+/// @see X11 Protocol Section 8 — GetImage
+struct X11GetImageRequest
+{
+	UINT8 Opcode;     ///< 73 (GetImage)
+	UINT8 Format;     ///< 2 = ZPixmap
+	UINT16 Length;    ///< Request length in 4-byte units (5)
+	UINT32 Drawable;  ///< Root window ID
+	INT16 X;          ///< Source X coordinate
+	INT16 Y;          ///< Source Y coordinate
+	UINT16 Width;     ///< Capture width in pixels
+	UINT16 Height;    ///< Capture height in pixels
+	UINT32 PlaneMask; ///< 0xFFFFFFFF for all bit planes
+};
+
+#pragma pack(pop)
+
+/// @brief Parsed X11 connection info needed for screen capture
+struct X11ConnectionInfo
+{
+	UINT32 RootWindow;  ///< Root window XID from connection setup
+	UINT32 Width;       ///< Root window width in pixels
+	UINT32 Height;      ///< Root window height in pixels
+	UINT32 RootDepth;   ///< Root window depth (bits per pixel component)
+	UINT32 RootVisual;  ///< Root window visual ID
+	UINT32 Bpp;         ///< Bits per pixel for root depth (from pixmap formats)
+	UINT32 RedMask;     ///< Red channel bitmask from visual
+	UINT32 GreenMask;   ///< Green channel bitmask from visual
+	UINT32 BlueMask;    ///< Blue channel bitmask from visual
+};
+
+// --- Unix domain socket helpers (mirror patterns from posix/socket.cc) ---
+
+/// @brief Create a Unix domain stream socket
+/// @return Socket fd on success, negative errno on failure
+static SSIZE UnixSocket()
+{
+#if defined(ARCHITECTURE_I386)
+	USIZE args[3] = {(USIZE)X11_AF_UNIX, (USIZE)X11_SOCK_STREAM, 0};
+	return System::Call(SYS_SOCKETCALL, SOCKOP_SOCKET, (USIZE)args);
+#else
+	return System::Call(SYS_SOCKET, (USIZE)X11_AF_UNIX, (USIZE)X11_SOCK_STREAM, (USIZE)0);
+#endif
+}
+
+/// @brief Connect a Unix domain socket to a server address
+/// @param fd Socket file descriptor
+/// @param addr Unix socket address
+/// @param len Size of address structure
+/// @return 0 on success, negative errno on failure
+static SSIZE UnixDoConnect(SSIZE fd, const SockAddrUn *addr, UINT32 len)
+{
+#if defined(ARCHITECTURE_I386)
+	USIZE args[3] = {(USIZE)fd, (USIZE)addr, (USIZE)len};
+	return System::Call(SYS_SOCKETCALL, SOCKOP_CONNECT, (USIZE)args);
+#else
+	return System::Call(SYS_CONNECT, (USIZE)fd, (USIZE)addr, (USIZE)len);
+#endif
+}
+
+/// @brief Send data on a connected socket
+/// @param fd Socket file descriptor
+/// @param buf Data buffer
+/// @param len Number of bytes to send
+/// @return Bytes sent on success, negative errno on failure
+static SSIZE UnixSend(SSIZE fd, const VOID *buf, USIZE len)
+{
+#if defined(ARCHITECTURE_I386)
+	USIZE args[4] = {(USIZE)fd, (USIZE)buf, len, 0};
+	return System::Call(SYS_SOCKETCALL, SOCKOP_SEND, (USIZE)args);
+#else
+	return System::Call(SYS_SENDTO, (USIZE)fd, (USIZE)buf, len, 0, 0, 0);
+#endif
+}
+
+/// @brief Receive data from a connected socket
+/// @param fd Socket file descriptor
+/// @param buf Output buffer
+/// @param len Maximum bytes to receive
+/// @return Bytes received on success, negative errno on failure
+static SSIZE UnixRecv(SSIZE fd, VOID *buf, USIZE len)
+{
+#if defined(ARCHITECTURE_I386)
+	USIZE args[4] = {(USIZE)fd, (USIZE)buf, len, 0};
+	return System::Call(SYS_SOCKETCALL, SOCKOP_RECV, (USIZE)args);
+#else
+	return System::Call(SYS_RECVFROM, (USIZE)fd, (USIZE)buf, len, 0, 0, 0);
+#endif
+}
+
+/// @brief Receive exactly len bytes, looping on partial reads
+/// @param fd Socket file descriptor
+/// @param buf Output buffer
+/// @param len Exact number of bytes to receive
+/// @return true if all bytes received, false on error or EOF
+static BOOL UnixRecvAll(SSIZE fd, VOID *buf, USIZE len)
+{
+	UINT8 *p = (UINT8 *)buf;
+	USIZE remaining = len;
+	while (remaining > 0)
+	{
+		SSIZE n = UnixRecv(fd, p, remaining);
+		if (n <= 0)
+			return false;
+		p += n;
+		remaining -= (USIZE)n;
+	}
+	return true;
+}
+
+/// @brief Send all bytes, looping on partial writes
+/// @param fd Socket file descriptor
+/// @param buf Data buffer
+/// @param len Exact number of bytes to send
+/// @return true if all bytes sent, false on error
+static BOOL UnixSendAll(SSIZE fd, const VOID *buf, USIZE len)
+{
+	const UINT8 *p = (const UINT8 *)buf;
+	USIZE remaining = len;
+	while (remaining > 0)
+	{
+		SSIZE n = UnixSend(fd, p, remaining);
+		if (n <= 0)
+			return false;
+		p += n;
+		remaining -= (USIZE)n;
+	}
+	return true;
+}
+
+/// @brief Open a file for reading (architecture-specific open/openat)
+/// @param path Null-terminated file path
+/// @return File descriptor on success, negative errno on failure
+static SSIZE X11OpenFile(const CHAR *path)
+{
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+	return System::Call(SYS_OPENAT, (USIZE)AT_FDCWD, (USIZE)path, (USIZE)O_RDONLY);
+#else
+	return System::Call(SYS_OPEN, (USIZE)path, (USIZE)O_RDONLY);
+#endif
+}
+
+/// @brief Parse the DISPLAY environment variable to extract the display number
+/// @details Handles formats ":N", ":N.S", and "localhost:N". Returns false for
+/// remote displays (hostname other than "localhost") since those require TCP
+/// forwarding, not a local Unix socket.
+/// @param displayNum [out] Extracted display number
+/// @return true if a valid local display was found and parsed
+static BOOL X11ParseDisplay(UINT32 &displayNum)
+{
+	CHAR display[64];
+	USIZE len = Environment::GetVariable("DISPLAY", Span<CHAR>(display, sizeof(display)));
+	if (len == 0)
+		return false;
+
+	// Find the colon separator
+	USIZE colonPos = 0;
+	BOOL found = false;
+	for (USIZE i = 0; i < len; i++)
+	{
+		if (display[i] == ':')
+		{
+			colonPos = i;
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+		return false;
+
+	// If text before colon, only accept empty or "localhost"
+	if (colonPos > 0)
+	{
+		auto localhost = "localhost";
+		if (colonPos != 9)
+			return false;
+		for (USIZE i = 0; i < 9; i++)
+		{
+			if (display[i] != ((const CHAR *)localhost)[i])
+				return false;
+		}
+	}
+
+	// Parse decimal display number after the colon
+	displayNum = 0;
+	for (USIZE i = colonPos + 1; i < len; i++)
+	{
+		if (display[i] == '.')
+			break; // Screen number separator — ignore screen
+		if (display[i] < '0' || display[i] > '9')
+			return false;
+		displayNum = displayNum * 10 + (UINT32)(display[i] - '0');
+	}
+
+	return true;
+}
+
+/// @brief Read a big-endian UINT16 from a byte pointer
+/// @details Xauthority files use big-endian field encoding regardless of host
+/// byte order.
+static UINT16 ReadBE16(const UINT8 *p)
+{
+	return (UINT16)((UINT16)p[0] << 8) | (UINT16)p[1];
+}
+
+/// @brief Read MIT-MAGIC-COOKIE-1 auth data from the Xauthority file
+/// @details Tries $XAUTHORITY first, then falls back to $HOME/.Xauthority.
+/// Parses the binary Xauthority format to find an entry matching the display
+/// number with MIT-MAGIC-COOKIE-1 authentication.
+/// @param displayNum Display number to match
+/// @param cookie [out] 16-byte buffer to receive the cookie
+/// @return Cookie length (16 on success, 0 if not found or file unreadable)
+/// @see xauth(1), Xsecurity(7)
+static USIZE X11ReadAuth(UINT32 displayNum, UINT8 *cookie)
+{
+	// Determine Xauthority file path
+	CHAR path[256];
+	USIZE pathLen = Environment::GetVariable("XAUTHORITY", Span<CHAR>(path, sizeof(path)));
+
+	if (pathLen == 0)
+	{
+		CHAR home[128];
+		USIZE homeLen = Environment::GetVariable("HOME", Span<CHAR>(home, sizeof(home)));
+		if (homeLen == 0)
+			return 0;
+		auto xauthSuffix = "/.Xauthority";
+		Memory::Copy(path, home, homeLen);
+		Memory::Copy(path + homeLen, (const CHAR *)xauthSuffix, 13);
+		pathLen = homeLen + 12;
+	}
+
+	SSIZE fd = X11OpenFile(path);
+	if (fd < 0)
+		return 0;
+
+	// Xauthority files are typically small (< 1KB)
+	UINT8 authBuf[2048];
+	SSIZE bytesRead = System::Call(SYS_READ, (USIZE)fd, (USIZE)authBuf, sizeof(authBuf));
+	System::Call(SYS_CLOSE, (USIZE)fd);
+
+	if (bytesRead <= 0)
+		return 0;
+
+	// Convert display number to ASCII string for matching
+	CHAR displayStr[12];
+	USIZE displayStrLen = 0;
+	{
+		UINT32 num = displayNum;
+		CHAR tmp[12];
+		USIZE tmpLen = 0;
+		if (num == 0)
+		{
+			tmp[tmpLen++] = '0';
+		}
+		else
+		{
+			while (num > 0)
+			{
+				tmp[tmpLen++] = '0' + (CHAR)(num % 10);
+				num /= 10;
+			}
+		}
+		for (USIZE i = 0; i < tmpLen; i++)
+			displayStr[i] = tmp[tmpLen - 1 - i];
+		displayStr[tmpLen] = '\0';
+		displayStrLen = tmpLen;
+	}
+
+	// Parse Xauthority entries (binary format, multi-byte fields big-endian)
+	auto mitCookieName = "MIT-MAGIC-COOKIE-1";
+	const UINT8 *p = authBuf;
+	const UINT8 *end = authBuf + bytesRead;
+
+	while (p + 4 <= end)
+	{
+		UINT16 family = ReadBE16(p); p += 2;
+
+		if (p + 2 > end) break;
+		UINT16 addrLen = ReadBE16(p); p += 2;
+		if (p + addrLen > end) break;
+		p += addrLen; // skip address
+
+		if (p + 2 > end) break;
+		UINT16 numLen = ReadBE16(p); p += 2;
+		if (p + numLen > end) break;
+		const UINT8 *numStr = p;
+		p += numLen;
+
+		if (p + 2 > end) break;
+		UINT16 nameLen = ReadBE16(p); p += 2;
+		if (p + nameLen > end) break;
+		const UINT8 *nameStr = p;
+		p += nameLen;
+
+		if (p + 2 > end) break;
+		UINT16 dataLen = ReadBE16(p); p += 2;
+		if (p + dataLen > end) break;
+		const UINT8 *dataStr = p;
+		p += dataLen;
+
+		// Match: local/wild family, matching display number, MIT-MAGIC-COOKIE-1
+		BOOL familyMatch = (family == XAUTH_FAMILY_LOCAL || family == XAUTH_FAMILY_WILD);
+		BOOL displayMatch = false;
+
+		if (family == XAUTH_FAMILY_WILD)
+		{
+			displayMatch = true;
+		}
+		else if (numLen == displayStrLen)
+		{
+			displayMatch = true;
+			for (USIZE i = 0; i < displayStrLen; i++)
+			{
+				if (numStr[i] != (UINT8)displayStr[i])
+				{
+					displayMatch = false;
+					break;
+				}
+			}
+		}
+
+		if (familyMatch && displayMatch && nameLen == 18 && dataLen == 16)
+		{
+			BOOL nameMatch = true;
+			for (USIZE i = 0; i < 18; i++)
+			{
+				if (nameStr[i] != (UINT8)((const CHAR *)mitCookieName)[i])
+				{
+					nameMatch = false;
+					break;
+				}
+			}
+			if (nameMatch)
+			{
+				Memory::Copy(cookie, dataStr, 16);
+				return 16;
+			}
+		}
+	}
+
+	return 0;
+}
+
+/// @brief Compute the shift amount and bit width from a color channel mask
+/// @param mask Color channel bitmask (e.g. 0x00FF0000 for 8-bit red at bit 16)
+/// @param shift [out] Number of bits to right-shift to reach the LSB
+/// @param width [out] Number of contiguous set bits in the mask
+static VOID X11ComputeMaskShift(UINT32 mask, UINT32 &shift, UINT32 &width)
+{
+	shift = 0;
+	width = 0;
+	if (mask == 0)
+		return;
+	UINT32 m = mask;
+	while ((m & 1) == 0)
+	{
+		m >>= 1;
+		shift++;
+	}
+	while (m & 1)
+	{
+		m >>= 1;
+		width++;
+	}
+}
+
+/// @brief Extract an 8-bit color component from a pixel value using a mask
+/// @param pixel Raw pixel value
+/// @param shift Bit position of the component (from X11ComputeMaskShift)
+/// @param width Bit width of the component (from X11ComputeMaskShift)
+/// @return Scaled 8-bit color value
+static UINT8 X11ExtractChannel(UINT32 pixel, UINT32 shift, UINT32 width)
+{
+	if (width == 0)
+		return 0;
+	UINT32 value = (pixel >> shift) & ((1u << width) - 1);
+	if (width < 8)
+		value = (value * 255) / ((1u << width) - 1);
+	else if (width > 8)
+		value >>= (width - 8);
+	return (UINT8)value;
+}
+
+/// @brief Open X11 connection, perform protocol handshake, return connection info
+/// @details Connects to the X11 server via Unix domain socket, authenticates
+/// using MIT-MAGIC-COOKIE-1 (or no auth), and parses the connection setup
+/// response to extract root window ID, screen dimensions, and visual color
+/// masks needed for GetImage pixel conversion.
+/// @param displayNum X11 display number (from $DISPLAY)
+/// @param info [out] Populated with root window, dimensions, visual info
+/// @return Socket fd on success (caller must close), negative on failure
+static SSIZE X11OpenConnection(UINT32 displayNum, X11ConnectionInfo &info)
+{
+	// Build socket path: /tmp/.X11-unix/X<N>
+	auto socketBase = "/tmp/.X11-unix/X";
+	CHAR socketPath[32];
+	Memory::Copy(socketPath, (const CHAR *)socketBase, 17);
+
+	USIZE pos = 16;
+	if (displayNum == 0)
+	{
+		socketPath[pos++] = '0';
+	}
+	else
+	{
+		CHAR tmp[8];
+		USIZE tmpLen = 0;
+		UINT32 num = displayNum;
+		while (num > 0)
+		{
+			tmp[tmpLen++] = '0' + (CHAR)(num % 10);
+			num /= 10;
+		}
+		for (USIZE i = 0; i < tmpLen; i++)
+			socketPath[pos++] = tmp[tmpLen - 1 - i];
+	}
+	socketPath[pos] = '\0';
+
+	// Create Unix domain socket
+	SSIZE fd = UnixSocket();
+	if (fd < 0)
+		return -1;
+
+	// Connect to X11 server
+	SockAddrUn addr;
+	Memory::Zero(&addr, sizeof(addr));
+	addr.SunFamily = X11_AF_UNIX;
+	Memory::Copy(addr.SunPath, socketPath, pos + 1);
+
+	if (UnixDoConnect(fd, &addr, sizeof(addr)) < 0)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	// Read Xauthority cookie for MIT-MAGIC-COOKIE-1 authentication
+	UINT8 authCookie[16];
+	USIZE cookieLen = X11ReadAuth(displayNum, authCookie);
+
+	// Build connection setup request
+	auto mitCookieName = "MIT-MAGIC-COOKIE-1";
+	UINT16 authNameLen = (cookieLen > 0) ? 18 : 0;
+	UINT16 authDataLen = (cookieLen > 0) ? 16 : 0;
+	UINT16 authNamePad = (4 - (authNameLen % 4)) % 4;
+	UINT16 authDataPad = (4 - (authDataLen % 4)) % 4;
+
+	X11SetupRequest setupReq;
+	setupReq.ByteOrder = 0x6C; // LSBFirst (little-endian)
+	setupReq.Pad0 = 0;
+	setupReq.MajorVersion = 11;
+	setupReq.MinorVersion = 0;
+	setupReq.AuthNameLen = authNameLen;
+	setupReq.AuthDataLen = authDataLen;
+	setupReq.Pad1 = 0;
+
+	USIZE reqSize = sizeof(setupReq) + authNameLen + authNamePad + authDataLen + authDataPad;
+	UINT8 reqBuf[64];
+	Memory::Zero(reqBuf, sizeof(reqBuf));
+	Memory::Copy(reqBuf, &setupReq, sizeof(setupReq));
+
+	USIZE off = sizeof(setupReq);
+	if (authNameLen > 0)
+	{
+		Memory::Copy(reqBuf + off, (const CHAR *)mitCookieName, 18);
+		off += 18 + authNamePad;
+		Memory::Copy(reqBuf + off, authCookie, 16);
+		off += 16 + authDataPad;
+	}
+
+	if (!UnixSendAll(fd, reqBuf, reqSize))
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	// Read the 8-byte response prefix
+	UINT8 prefix[8];
+	if (!UnixRecvAll(fd, prefix, 8))
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	if (prefix[0] != 1) // Status: 0=Failed, 1=Success, 2=Authenticate
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	// Read the remaining setup data
+	UINT16 additionalLen = *(UINT16 *)(prefix + 6); // 4-byte units
+	USIZE dataLen = (USIZE)additionalLen * 4;
+	if (dataLen > 8192 || dataLen < 32)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	UINT8 respBuf[8192];
+	if (!UnixRecvAll(fd, respBuf, dataLen))
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	// Parse connection setup response:
+	// Offset  0: release-number       (CARD32)
+	// Offset  4: resource-id-base     (CARD32)
+	// Offset  8: resource-id-mask     (CARD32)
+	// Offset 12: motion-buffer-size   (CARD32)
+	// Offset 16: vendor-length        (CARD16)
+	// Offset 18: max-request-length   (CARD16)
+	// Offset 20: number-of-screens    (CARD8)
+	// Offset 21: number-of-formats    (CARD8)
+	// Offset 22-27: byte-order, bitmap fields, keycodes
+	// Offset 28: unused               (4 bytes)
+	// Offset 32: vendor string (vendorLength, padded to 4)
+	// Then: pixmap formats (numFormats * 8 bytes)
+	// Then: screen structures
+	UINT16 vendorLen = *(UINT16 *)(respBuf + 16);
+	UINT8 numScreens = respBuf[20];
+	UINT8 numFormats = respBuf[21];
+
+	if (numScreens == 0)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	UINT16 vendorPad = (4 - (vendorLen % 4)) % 4;
+	USIZE formatStart = 32 + vendorLen + vendorPad;
+	USIZE screenStart = formatStart + (USIZE)numFormats * 8;
+
+	if (screenStart + 40 > dataLen)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return -1;
+	}
+
+	// Parse first screen:
+	// Offset  0: root window          (CARD32)
+	// Offset  4: default-colormap     (CARD32)
+	// Offset  8: white-pixel          (CARD32)
+	// Offset 12: black-pixel          (CARD32)
+	// Offset 16: current-input-masks  (CARD32)
+	// Offset 20: width-in-pixels      (CARD16)
+	// Offset 22: height-in-pixels     (CARD16)
+	// Offset 24: width-in-mm          (CARD16)
+	// Offset 26: height-in-mm         (CARD16)
+	// Offset 28: min-installed-maps   (CARD16)
+	// Offset 30: max-installed-maps   (CARD16)
+	// Offset 32: root-visual          (CARD32)
+	// Offset 36: backing-stores       (CARD8)
+	// Offset 37: save-unders          (CARD8)
+	// Offset 38: root-depth           (CARD8)
+	// Offset 39: number-of-depths     (CARD8)
+	const UINT8 *screen = respBuf + screenStart;
+	info.RootWindow = *(UINT32 *)(screen + 0);
+	info.Width = *(UINT16 *)(screen + 20);
+	info.Height = *(UINT16 *)(screen + 22);
+	info.RootVisual = *(UINT32 *)(screen + 32);
+	info.RootDepth = screen[38];
+	UINT8 numDepths = screen[39];
+
+	// Find BPP from pixmap format matching root depth
+	info.Bpp = 0;
+	for (UINT8 i = 0; i < numFormats; i++)
+	{
+		const UINT8 *fmt = respBuf + formatStart + (USIZE)i * 8;
+		if (fmt[0] == info.RootDepth)
+		{
+			info.Bpp = fmt[1];
+			break;
+		}
+	}
+	if (info.Bpp == 0)
+		info.Bpp = 32; // Sensible default for modern displays
+
+	// Walk depth/visual tree to find root visual's color masks
+	info.RedMask = 0;
+	info.GreenMask = 0;
+	info.BlueMask = 0;
+
+	const UINT8 *depthPtr = screen + 40;
+	for (UINT8 d = 0; d < numDepths; d++)
+	{
+		if ((USIZE)(depthPtr - respBuf) + 8 > dataLen)
+			break;
+
+		// DEPTH: depth(1), unused(1), num-visuals(2), unused(4)
+		UINT16 numVisuals = *(UINT16 *)(depthPtr + 2);
+		const UINT8 *visualPtr = depthPtr + 8;
+
+		for (UINT16 v = 0; v < numVisuals; v++)
+		{
+			if ((USIZE)(visualPtr - respBuf) + 24 > dataLen)
+				break;
+
+			// VISUALTYPE: visual-id(4), class(1), bits-per-rgb(1),
+			//             colormap-entries(2), red-mask(4), green-mask(4),
+			//             blue-mask(4), unused(4)
+			UINT32 visualId = *(UINT32 *)(visualPtr + 0);
+			if (visualId == info.RootVisual)
+			{
+				info.RedMask = *(UINT32 *)(visualPtr + 8);
+				info.GreenMask = *(UINT32 *)(visualPtr + 12);
+				info.BlueMask = *(UINT32 *)(visualPtr + 16);
+			}
+			visualPtr += 24;
+		}
+
+		depthPtr = visualPtr;
+	}
+
+	// Default to XRGB8888 if visual not found (common TrueColor layout)
+	if (info.RedMask == 0 && info.GreenMask == 0 && info.BlueMask == 0)
+	{
+		info.RedMask = 0x00FF0000;
+		info.GreenMask = 0x0000FF00;
+		info.BlueMask = 0x000000FF;
+	}
+
+	return fd;
+}
+
+/// @brief Enumerate displays via X11 connection
+/// @details Connects to the X11 server to read the root window dimensions.
+/// X11 displays are encoded as Left = -(1000 + displayNum) to distinguish
+/// from DRM devices (Left = -(1..8)) and framebuffer devices (Left = 0..7).
+/// @param tempDevices Output array for discovered devices
+/// @param deviceCount [in/out] Current device count, incremented per device
+/// @param maxDevices Maximum capacity of tempDevices
+static VOID X11GetDevices(ScreenDevice *tempDevices, UINT32 &deviceCount, UINT32 maxDevices)
+{
+	if (deviceCount >= maxDevices)
+		return;
+
+	UINT32 displayNum = 0;
+	if (!X11ParseDisplay(displayNum))
+		return;
+
+	X11ConnectionInfo info;
+	Memory::Zero(&info, sizeof(info));
+
+	SSIZE fd = X11OpenConnection(displayNum, info);
+	if (fd < 0)
+		return;
+
+	System::Call(SYS_CLOSE, (USIZE)fd);
+
+	if (info.Width == 0 || info.Height == 0)
+		return;
+
+	tempDevices[deviceCount].Left = -(INT32)(1000 + displayNum);
+	tempDevices[deviceCount].Top = 0;
+	tempDevices[deviceCount].Width = info.Width;
+	tempDevices[deviceCount].Height = info.Height;
+	tempDevices[deviceCount].Primary = (deviceCount == 0);
+	deviceCount++;
+}
+
+/// @brief Capture screen via X11 GetImage on root window
+/// @details Opens an X11 connection, sends a GetImage request for the full
+/// root window in ZPixmap format, reads the pixel data line by line, and
+/// converts to RGB using the visual's color masks.
+/// @param device Display device with Left = -(1000 + displayNum)
+/// @param buffer Output RGB pixel buffer (must be device.Width * device.Height)
+/// @return Ok on success, Err on connection/capture failure
+static Result<void, Error> X11Capture(const ScreenDevice &device, Span<RGB> buffer)
+{
+	UINT32 displayNum = (UINT32)(-(device.Left + 1000));
+
+	X11ConnectionInfo info;
+	Memory::Zero(&info, sizeof(info));
+
+	SSIZE fd = X11OpenConnection(displayNum, info);
+	if (fd < 0)
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+
+	// Send GetImage request for the full root window
+	X11GetImageRequest req;
+	req.Opcode = X11_OPCODE_GETIMAGE;
+	req.Format = X11_FORMAT_ZPIXMAP;
+	req.Length = 5; // 20 bytes / 4
+	req.Drawable = info.RootWindow;
+	req.X = 0;
+	req.Y = 0;
+	req.Width = (UINT16)device.Width;
+	req.Height = (UINT16)device.Height;
+	req.PlaneMask = 0xFFFFFFFF;
+
+	if (!UnixSendAll(fd, &req, sizeof(req)))
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	}
+
+	// Read 32-byte reply header
+	// Reply format: type(1), depth(1), sequence(2), length(4),
+	//               visual(4), unused(20)
+	UINT8 replyHeader[32];
+	if (!UnixRecvAll(fd, replyHeader, 32))
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	}
+
+	// Byte 0 must be 1 (Reply), not 0 (Error)
+	if (replyHeader[0] != 1)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	}
+
+	UINT32 replyDataLen = *(UINT32 *)(replyHeader + 4); // 4-byte units
+	USIZE totalDataBytes = (USIZE)replyDataLen * 4;
+
+	// Compute scanline metrics
+	UINT32 bytesPerPixel = info.Bpp / 8;
+	if (bytesPerPixel == 0)
+		bytesPerPixel = 4;
+	UINT32 bytesPerLine = device.Width * bytesPerPixel;
+	UINT32 linePad = (4 - (bytesPerLine % 4)) % 4;
+	UINT32 paddedBytesPerLine = bytesPerLine + linePad;
+
+	// Precompute color channel shift amounts from visual masks
+	UINT32 redShift, redWidth, greenShift, greenWidth, blueShift, blueWidth;
+	X11ComputeMaskShift(info.RedMask, redShift, redWidth);
+	X11ComputeMaskShift(info.GreenMask, greenShift, greenWidth);
+	X11ComputeMaskShift(info.BlueMask, blueShift, blueWidth);
+
+	PRGB rgbBuf = buffer.Data();
+
+	// Read and convert pixel data one scanline at a time
+	// 32KB buffer supports up to 8192 pixels at 32bpp per scanline
+	UINT8 lineBuf[32768];
+	USIZE bytesConsumed = 0;
+
+	for (UINT32 y = 0; y < device.Height; y++)
+	{
+		if (paddedBytesPerLine > sizeof(lineBuf))
+		{
+			System::Call(SYS_CLOSE, (USIZE)fd);
+			return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+		}
+
+		if (!UnixRecvAll(fd, lineBuf, paddedBytesPerLine))
+		{
+			System::Call(SYS_CLOSE, (USIZE)fd);
+			return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+		}
+		bytesConsumed += paddedBytesPerLine;
+
+		for (UINT32 x = 0; x < device.Width; x++)
+		{
+			UINT8 *src = lineBuf + (USIZE)x * bytesPerPixel;
+			UINT32 pixel = 0;
+
+			// Assemble pixel value from little-endian bytes
+			for (UINT32 b = 0; b < bytesPerPixel; b++)
+				pixel |= (UINT32)src[b] << (b * 8);
+
+			rgbBuf[y * device.Width + x].Red = X11ExtractChannel(pixel, redShift, redWidth);
+			rgbBuf[y * device.Width + x].Green = X11ExtractChannel(pixel, greenShift, greenWidth);
+			rgbBuf[y * device.Width + x].Blue = X11ExtractChannel(pixel, blueShift, blueWidth);
+		}
+	}
+
+	// Drain any remaining reply padding
+	while (bytesConsumed < totalDataBytes)
+	{
+		UINT8 discard[256];
+		USIZE remaining = totalDataBytes - bytesConsumed;
+		if (remaining > sizeof(discard))
+			remaining = sizeof(discard);
+		if (!UnixRecvAll(fd, discard, remaining))
+			break;
+		bytesConsumed += remaining;
+	}
+
+	System::Call(SYS_CLOSE, (USIZE)fd);
+	return Result<void, Error>::Ok();
+}
+
+#endif // PLATFORM_LINUX
+
+// =============================================================================
+// Screen::GetDevices (X11 first, DRM second, framebuffer fallback)
 // =============================================================================
 
 Result<ScreenDeviceList, Error> Screen::GetDevices()
@@ -919,8 +1784,14 @@ Result<ScreenDeviceList, Error> Screen::GetDevices()
 	ScreenDevice tempDevices[maxDevices];
 	UINT32 deviceCount = 0;
 
-	// Try DRM first (/dev/dri/card*)
-	DrmGetDevices(tempDevices, deviceCount, maxDevices);
+#if defined(PLATFORM_LINUX)
+	// Try X11 first (works on composited desktops where DRM/framebuffer fail)
+	X11GetDevices(tempDevices, deviceCount, maxDevices);
+#endif
+
+	// Try DRM (/dev/dri/card*)
+	if (deviceCount == 0)
+		DrmGetDevices(tempDevices, deviceCount, maxDevices);
 
 	// Fall back to framebuffer (/dev/fb*)
 	if (deviceCount == 0)
@@ -1071,19 +1942,52 @@ static Result<void, Error> FbCaptureFallback(const ScreenDevice &device, Span<RG
 }
 
 // =============================================================================
-// Screen::Capture (DRM or framebuffer dispatch)
+// Screen::Capture (X11, DRM, or framebuffer dispatch)
 // =============================================================================
 
 Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer)
 {
-	// DRM device: Left < 0 encodes -(cardIndex + 1)
+#if defined(PLATFORM_LINUX)
+	// X11 device: Left <= -1000 encodes -(1000 + displayNum)
+	if (device.Left <= -1000)
+	{
+		auto result = X11Capture(device, buffer);
+		if (result.IsOk())
+			return result;
+
+		// X11 capture failed — fall through to DRM/framebuffer
+	}
+#endif
+
+	// DRM device: Left < 0 (and > -1000) encodes -(cardIndex + 1)
 	if (device.Left < 0)
 	{
 		auto result = DrmCapture(device, buffer);
 		if (result.IsOk())
-			return result;
+		{
+			// DRM capture can "succeed" but return all-black data when the
+			// scanout buffer is GPU-allocated (not a dumb buffer). Sample
+			// pixels to detect this and fall back to framebuffer.
+			PRGB rgbBuf = buffer.Data();
+			USIZE pixelCount = (USIZE)device.Width * (USIZE)device.Height;
+			BOOL allBlack = true;
 
-		// DRM capture failed (e.g., no DRM master on Linux 5.1+) — try framebuffer
+			// Sample up to 256 evenly spaced pixels
+			USIZE step = pixelCount / 256;
+			if (step == 0)
+				step = 1;
+
+			for (USIZE i = 0; i < pixelCount && allBlack; i += step)
+			{
+				if (rgbBuf[i].Red != 0 || rgbBuf[i].Green != 0 || rgbBuf[i].Blue != 0)
+					allBlack = false;
+			}
+
+			if (!allBlack)
+				return result;
+		}
+
+		// DRM capture failed or returned all-black — try framebuffer
 		return FbCaptureFallback(device, buffer);
 	}
 

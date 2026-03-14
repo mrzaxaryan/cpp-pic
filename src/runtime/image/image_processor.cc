@@ -435,9 +435,8 @@ static VOID StepCCW(Point *current, Point pivot)
 	result.Hierarchy = outHierarchy;
 	result.HierarchyCount = hierarchyVector.Count;
 
-	// Release the pointer array without deleting the pointed-to point arrays
-	// (ownership transferred to outContours)
-	(void)contourVector.Release();
+	delete[] contourVector.Data;
+	contourVector.Release();
 
 	return Result<ContourResult, Error>::Ok(result);
 }

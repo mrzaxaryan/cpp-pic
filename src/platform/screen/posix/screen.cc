@@ -48,6 +48,10 @@
 #include "platform/screen/screen.h"
 #include "core/memory/memory.h"
 #include "platform/system/environment.h"
+#if defined(PLATFORM_ANDROID)
+#include "platform/system/process.h"
+#include "platform/system/pipe.h"
+#endif
 
 #if defined(PLATFORM_LINUX)
 #include "platform/kernel/linux/syscall.h"
@@ -1775,7 +1779,475 @@ static Result<void, Error> X11Capture(const ScreenDevice &device, Span<RGB> buff
 #endif // PLATFORM_LINUX
 
 // =============================================================================
-// Screen::GetDevices (X11 first, DRM second, framebuffer fallback)
+// Android screencap — screen capture via /system/bin/screencap
+// =============================================================================
+//
+// Captures the display by forking /system/bin/screencap and reading its raw
+// output from a pipe. This is the only reliable capture method on modern
+// Android (10+) where /dev/fb*, /dev/graphics/fb*, and /dev/dri/card* are
+// either absent or blocked by SELinux. The screencap tool uses SurfaceFlinger
+// internally, providing access to the composited display without requiring
+// Binder IPC from position-independent code.
+//
+// Raw output format (no flags):
+//   UINT32 width
+//   UINT32 height
+//   UINT32 pixelFormat  (1=RGBA_8888, 2=RGBX_8888, 4=RGB_565, 5=BGRA_8888)
+//   UINT8  pixelData[]  (width * height * bytesPerPixel)
+
+#if defined(PLATFORM_ANDROID)
+
+/// @brief Android screencap device encoding in ScreenDevice::Left
+constexpr INT32 SCREENCAP_DEVICE_LEFT = -2000;
+
+/// @brief Android pixel format constants (system/graphics.h HAL_PIXEL_FORMAT_*)
+constexpr UINT32 ANDROID_PIXEL_FORMAT_RGBA_8888 = 1;
+constexpr UINT32 ANDROID_PIXEL_FORMAT_RGBX_8888 = 2;
+constexpr UINT32 ANDROID_PIXEL_FORMAT_RGB_565   = 4;
+constexpr UINT32 ANDROID_PIXEL_FORMAT_BGRA_8888 = 5;
+
+/// @brief Read exactly len bytes from a pipe, looping on partial reads
+/// @param pipe Pipe to read from
+/// @param buf Output buffer
+/// @param len Exact number of bytes to read
+/// @return true if all bytes read, false on error or EOF
+static BOOL PipeReadAll(Pipe &pipe, UINT8 *buf, USIZE len)
+{
+	USIZE remaining = len;
+	while (remaining > 0)
+	{
+		auto result = pipe.Read(Span<UINT8>(buf + (len - remaining), remaining));
+		if (result.IsErr())
+			return false;
+		USIZE n = result.Value();
+		if (n == 0)
+			return false;
+		remaining -= n;
+	}
+	return true;
+}
+
+/// @brief Find the screencap binary path
+/// @return Path to screencap, or nullptr if not found
+static const CHAR *FindScreencap()
+{
+	auto path1 = "/system/bin/screencap";
+	auto path2 = "/vendor/bin/screencap";
+
+	// Try to open to check existence (cheaper than Process::Create failure)
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+	SSIZE fd = System::Call(SYS_OPENAT, (USIZE)AT_FDCWD, (USIZE)(const CHAR *)path1, (USIZE)O_RDONLY);
+#else
+	SSIZE fd = System::Call(SYS_OPEN, (USIZE)(const CHAR *)path1, (USIZE)O_RDONLY);
+#endif
+	if (fd >= 0)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return (const CHAR *)path1;
+	}
+
+#if defined(ARCHITECTURE_AARCH64) || defined(ARCHITECTURE_RISCV64) || defined(ARCHITECTURE_RISCV32)
+	fd = System::Call(SYS_OPENAT, (USIZE)AT_FDCWD, (USIZE)(const CHAR *)path2, (USIZE)O_RDONLY);
+#else
+	fd = System::Call(SYS_OPEN, (USIZE)(const CHAR *)path2, (USIZE)O_RDONLY);
+#endif
+	if (fd >= 0)
+	{
+		System::Call(SYS_CLOSE, (USIZE)fd);
+		return (const CHAR *)path2;
+	}
+
+	return nullptr;
+}
+
+/// @brief Spawn screencap with optional -d display_id argument
+/// @param screencapPath Path to screencap binary
+/// @param displayId Display ID string (nullptr for no -d flag)
+/// @param stdoutPipe Pipe whose write end is connected to screencap's stdout
+/// @return Process on success, Err on failure
+static Result<Process, Error> SpawnScreencap(const CHAR *screencapPath, const CHAR *displayId, Pipe &stdoutPipe)
+{
+	auto arg0 = "screencap";
+
+	if (displayId != nullptr)
+	{
+		auto dashD = "-d";
+		const CHAR *args[] = {(const CHAR *)arg0, (const CHAR *)dashD, displayId, nullptr};
+		return Process::Create(screencapPath, args, -1, stdoutPipe.WriteEnd(), -1);
+	}
+	else
+	{
+		const CHAR *args[] = {(const CHAR *)arg0, nullptr};
+		return Process::Create(screencapPath, args, -1, stdoutPipe.WriteEnd(), -1);
+	}
+}
+
+/// @brief Run screencap and read the 16-byte header
+/// @param screencapPath Path to screencap binary
+/// @param displayId Display ID string (nullptr for default)
+/// @param width [out] Display width
+/// @param height [out] Display height
+/// @return true on success
+static BOOL ScreencapReadHeader(const CHAR *screencapPath, const CHAR *displayId,
+								UINT32 &width, UINT32 &height)
+{
+	auto pipeResult = Pipe::Create();
+	if (pipeResult.IsErr())
+		return false;
+	Pipe &stdoutPipe = pipeResult.Value();
+
+	auto procResult = SpawnScreencap(screencapPath, displayId, stdoutPipe);
+	if (procResult.IsErr())
+		return false;
+	Process &proc = procResult.Value();
+
+	(void)stdoutPipe.CloseWrite();
+
+	// Read 16 bytes — covers Android <9 (12-byte) and 9+ (16-byte) headers
+	UINT8 header[16];
+	BOOL ok = PipeReadAll(stdoutPipe, header, 16);
+
+	(void)proc.Terminate();
+	(void)proc.Wait();
+
+	if (!ok)
+		return false;
+
+	width = *(UINT32 *)(header + 0);
+	height = *(UINT32 *)(header + 4);
+
+	return (width > 0 && height > 0 && width <= 16384 && height <= 16384);
+}
+
+/// @brief Get display IDs from dumpsys SurfaceFlinger
+/// @details Runs "dumpsys SurfaceFlinger --display-id" and parses the output
+/// to extract display ID strings. On multi-display devices (foldables),
+/// screencap requires -d <display-id> to specify which display to capture.
+/// @param ids [out] Array of display ID string buffers
+/// @param maxIds Maximum number of IDs to extract
+/// @return Number of display IDs found
+static UINT32 GetAndroidDisplayIds(CHAR ids[][32], UINT32 maxIds)
+{
+	auto pipeResult = Pipe::Create();
+	if (pipeResult.IsErr())
+		return 0;
+	Pipe &stdoutPipe = pipeResult.Value();
+
+	auto dumpsysPath = "/system/bin/dumpsys";
+	auto arg0 = "dumpsys";
+	auto arg1 = "SurfaceFlinger";
+	auto arg2 = "--display-id";
+	const CHAR *args[] = {
+		(const CHAR *)arg0,
+		(const CHAR *)arg1,
+		(const CHAR *)arg2,
+		nullptr
+	};
+
+	auto procResult = Process::Create(
+		(const CHAR *)dumpsysPath, args,
+		-1, stdoutPipe.WriteEnd(), -1);
+
+	if (procResult.IsErr())
+		return 0;
+	Process &proc = procResult.Value();
+
+	(void)stdoutPipe.CloseWrite();
+
+	// Read dumpsys output (typically small — a few display ID lines)
+	CHAR buf[1024];
+	USIZE totalRead = 0;
+	while (totalRead < sizeof(buf) - 1)
+	{
+		auto result = stdoutPipe.Read(Span<UINT8>((UINT8 *)buf + totalRead, sizeof(buf) - 1 - totalRead));
+		if (result.IsErr() || result.Value() == 0)
+			break;
+		totalRead += result.Value();
+	}
+	buf[totalRead] = '\0';
+
+	(void)proc.Wait();
+
+	// Parse output: each line with a long decimal number is a display ID
+	// Example output:
+	//   Display 0 (HWC display 0): port=0 pnpId=SEC ...
+	//     id=4619827259835644929
+	//   Display 2 (HWC display 1): port=1 pnpId=SEC ...
+	//     id=4619827259835644930
+	// Or just bare IDs, one per line
+	UINT32 count = 0;
+	USIZE i = 0;
+	while (i < totalRead && count < maxIds)
+	{
+		// Skip whitespace/newlines
+		while (i < totalRead && (buf[i] == ' ' || buf[i] == '\t' || buf[i] == '\n' || buf[i] == '\r'))
+			i++;
+
+		if (i >= totalRead)
+			break;
+
+		// Check for "id=" prefix (Samsung/AOSP format)
+		BOOL hasIdPrefix = false;
+		if (i + 3 <= totalRead && buf[i] == 'i' && buf[i + 1] == 'd' && buf[i + 2] == '=')
+		{
+			i += 3;
+			hasIdPrefix = true;
+		}
+
+		// Read a token (until whitespace/newline)
+		USIZE tokenStart = i;
+		while (i < totalRead && buf[i] != ' ' && buf[i] != '\t' && buf[i] != '\n' && buf[i] != '\r')
+			i++;
+		USIZE tokenLen = i - tokenStart;
+
+		if (tokenLen == 0)
+			continue;
+
+		// Check if token is a number (display IDs are decimal numbers)
+		BOOL isNumber = true;
+		for (USIZE j = tokenStart; j < tokenStart + tokenLen; j++)
+		{
+			if (buf[j] < '0' || buf[j] > '9')
+			{
+				isNumber = false;
+				break;
+			}
+		}
+
+		// Accept: bare long numbers (>3 digits) or numbers after "id="
+		if (isNumber && (hasIdPrefix || tokenLen > 3) && tokenLen < 31)
+		{
+			Memory::Copy(ids[count], buf + tokenStart, tokenLen);
+			ids[count][tokenLen] = '\0';
+			count++;
+		}
+	}
+
+	return count;
+}
+
+/// @brief Enumerate displays via Android screencap
+/// @details On multi-display devices (foldables like Samsung Z Fold),
+/// screencap requires -d <display-id>. Enumerates display IDs via
+/// "dumpsys SurfaceFlinger --display-id", then probes each with screencap.
+/// Falls back to screencap without -d for single-display devices.
+/// ScreenDevice::Left encodes -(2000 + displayIndex).
+/// ScreenDevice::Top stores the display ID string hash for capture dispatch.
+/// @param tempDevices Output array for discovered devices
+/// @param deviceCount [in/out] Current device count
+/// @param maxDevices Maximum capacity
+static VOID ScreencapGetDevices(ScreenDevice *tempDevices, UINT32 &deviceCount, UINT32 maxDevices)
+{
+	if (deviceCount >= maxDevices)
+		return;
+
+	const CHAR *screencapPath = FindScreencap();
+	if (screencapPath == nullptr)
+		return;
+
+	// Try to enumerate display IDs (needed for multi-display/foldable devices)
+	CHAR displayIds[4][32];
+	UINT32 displayCount = GetAndroidDisplayIds(displayIds, 4);
+
+	if (displayCount > 0)
+	{
+		// Multi-display device: probe each display with screencap -d <id>
+		for (UINT32 i = 0; i < displayCount && deviceCount < maxDevices; i++)
+		{
+			UINT32 width = 0, height = 0;
+			if (!ScreencapReadHeader(screencapPath, displayIds[i], width, height))
+				continue;
+
+			tempDevices[deviceCount].Left = -(INT32)(2000 + i);
+			tempDevices[deviceCount].Top = (INT32)i; // index into displayIds
+			tempDevices[deviceCount].Width = width;
+			tempDevices[deviceCount].Height = height;
+			tempDevices[deviceCount].Primary = (deviceCount == 0);
+			deviceCount++;
+		}
+	}
+
+	// Fallback: try screencap without -d (single-display devices)
+	if (deviceCount == 0)
+	{
+		UINT32 width = 0, height = 0;
+		if (!ScreencapReadHeader(screencapPath, nullptr, width, height))
+			return;
+
+		tempDevices[deviceCount].Left = SCREENCAP_DEVICE_LEFT;
+		tempDevices[deviceCount].Top = 0;
+		tempDevices[deviceCount].Width = width;
+		tempDevices[deviceCount].Height = height;
+		tempDevices[deviceCount].Primary = true;
+		deviceCount++;
+	}
+}
+
+/// @brief Convert screencap pixel data to RGB
+/// @param src Source pixel pointer
+/// @param dst Destination RGB pixel
+/// @param format Android pixel format constant
+/// @param bytesPerPixel Bytes per source pixel
+static VOID ScreencapPixelToRGB(const UINT8 *src, RGB &dst, UINT32 format)
+{
+	if (format == ANDROID_PIXEL_FORMAT_RGBA_8888 ||
+		format == ANDROID_PIXEL_FORMAT_RGBX_8888)
+	{
+		dst.Red = src[0];
+		dst.Green = src[1];
+		dst.Blue = src[2];
+	}
+	else if (format == ANDROID_PIXEL_FORMAT_BGRA_8888)
+	{
+		dst.Red = src[2];
+		dst.Green = src[1];
+		dst.Blue = src[0];
+	}
+	else // RGB_565
+	{
+		UINT16 pixel = (UINT16)src[0] | ((UINT16)src[1] << 8);
+		dst.Red = (UINT8)(((pixel >> 11) & 0x1F) * 255 / 31);
+		dst.Green = (UINT8)(((pixel >> 5) & 0x3F) * 255 / 63);
+		dst.Blue = (UINT8)((pixel & 0x1F) * 255 / 31);
+	}
+}
+
+/// @brief Capture screen via Android screencap tool
+/// @details Handles both single-display (Left = -2000) and multi-display
+/// (Left = -(2000 + displayIndex)) devices. For multi-display, retrieves
+/// display IDs via dumpsys and passes -d to screencap.
+/// @param device Display device from ScreencapGetDevices
+/// @param buffer Output RGB pixel buffer
+/// @return Ok on success, Err on failure
+static Result<void, Error> ScreencapCapture(const ScreenDevice &device, Span<RGB> buffer)
+{
+	const CHAR *screencapPath = FindScreencap();
+	if (screencapPath == nullptr)
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+
+	// Determine display ID for screencap -d
+	const CHAR *displayId = nullptr;
+	CHAR displayIdBuf[32];
+
+	INT32 displayIndex = -(device.Left + 2000);
+	if (displayIndex >= 0 && displayIndex < 4)
+	{
+		// Multi-display: re-enumerate to get the display ID string
+		CHAR displayIds[4][32];
+		UINT32 displayCount = GetAndroidDisplayIds(displayIds, 4);
+		if ((UINT32)displayIndex < displayCount)
+		{
+			USIZE len = 0;
+			while (displayIds[displayIndex][len] != '\0' && len < 31)
+				len++;
+			Memory::Copy(displayIdBuf, displayIds[displayIndex], len + 1);
+			displayId = displayIdBuf;
+		}
+	}
+
+	auto pipeResult = Pipe::Create();
+	if (pipeResult.IsErr())
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	Pipe &stdoutPipe = pipeResult.Value();
+
+	auto procResult = SpawnScreencap(screencapPath, displayId, stdoutPipe);
+	if (procResult.IsErr())
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	Process &proc = procResult.Value();
+
+	(void)stdoutPipe.CloseWrite();
+
+	// Read 16-byte header (Android 9+ adds colorspace field at offset 12)
+	UINT8 header[16];
+	if (!PipeReadAll(stdoutPipe, header, 16))
+	{
+		(void)proc.Terminate();
+		(void)proc.Wait();
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	}
+
+	UINT32 width = *(UINT32 *)(header + 0);
+	UINT32 height = *(UINT32 *)(header + 4);
+	UINT32 format = *(UINT32 *)(header + 8);
+
+	// Detect 12-byte vs 16-byte header (Android 9+ colorspace: 0-2)
+	UINT32 colorspace = *(UINT32 *)(header + 12);
+	BOOL oldHeader = (colorspace > 2);
+	UINT8 *extraBytes = oldHeader ? (header + 12) : nullptr;
+	UINT32 extraLen = oldHeader ? 4 : 0;
+
+	if (width != device.Width || height != device.Height)
+	{
+		(void)proc.Terminate();
+		(void)proc.Wait();
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	}
+
+	// Determine bytes per pixel
+	UINT32 bytesPerPixel;
+	if (format == ANDROID_PIXEL_FORMAT_RGBA_8888 ||
+		format == ANDROID_PIXEL_FORMAT_RGBX_8888 ||
+		format == ANDROID_PIXEL_FORMAT_BGRA_8888)
+	{
+		bytesPerPixel = 4;
+	}
+	else if (format == ANDROID_PIXEL_FORMAT_RGB_565)
+	{
+		bytesPerPixel = 2;
+	}
+	else
+	{
+		(void)proc.Terminate();
+		(void)proc.Wait();
+		return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+	}
+
+	PRGB rgbBuf = buffer.Data();
+	UINT32 bytesPerLine = width * bytesPerPixel;
+	UINT8 lineBuf[16384];
+
+	for (UINT32 y = 0; y < height; y++)
+	{
+		if (bytesPerLine > sizeof(lineBuf))
+		{
+			(void)proc.Terminate();
+			(void)proc.Wait();
+			return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+		}
+
+		// On pre-Android 9, we consumed 4 extra bytes from the header.
+		if (extraLen > 0 && y == 0)
+		{
+			Memory::Copy(lineBuf, extraBytes, extraLen);
+			if (!PipeReadAll(stdoutPipe, lineBuf + extraLen, bytesPerLine - extraLen))
+			{
+				(void)proc.Terminate();
+				(void)proc.Wait();
+				return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+			}
+		}
+		else if (!PipeReadAll(stdoutPipe, lineBuf, bytesPerLine))
+		{
+			(void)proc.Terminate();
+			(void)proc.Wait();
+			return Result<void, Error>::Err(Error(Error::Screen_CaptureFailed));
+		}
+
+		for (UINT32 x = 0; x < width; x++)
+		{
+			UINT8 *src = lineBuf + (USIZE)x * bytesPerPixel;
+			ScreencapPixelToRGB(src, rgbBuf[y * width + x], format);
+		}
+	}
+
+	(void)proc.Wait();
+	return Result<void, Error>::Ok();
+}
+
+#endif // PLATFORM_ANDROID
+
+// =============================================================================
+// Screen::GetDevices (X11 first, DRM second, framebuffer/screencap fallback)
 // =============================================================================
 
 Result<ScreenDeviceList, Error> Screen::GetDevices()
@@ -1822,6 +2294,13 @@ Result<ScreenDeviceList, Error> Screen::GetDevices()
 			deviceCount++;
 		}
 	}
+
+#if defined(PLATFORM_ANDROID)
+	// Android last resort: use screencap tool (works on modern Android 10+
+	// where /dev/fb* and /dev/dri/* are absent or blocked by SELinux)
+	if (deviceCount == 0)
+		ScreencapGetDevices(tempDevices, deviceCount, maxDevices);
+#endif
 
 	if (deviceCount == 0)
 		return Result<ScreenDeviceList, Error>::Err(Error(Error::Screen_GetDevicesFailed));
@@ -1957,6 +2436,12 @@ Result<void, Error> Screen::Capture(const ScreenDevice &device, Span<RGB> buffer
 
 		// X11 capture failed — fall through to DRM/framebuffer
 	}
+#endif
+
+#if defined(PLATFORM_ANDROID)
+	// Android screencap device: Left <= -2000 encodes -(2000 + displayIndex)
+	if (device.Left <= SCREENCAP_DEVICE_LEFT)
+		return ScreencapCapture(device, buffer);
 #endif
 
 	// DRM device: Left < 0 (and > -1000) encodes -(cardIndex + 1)
